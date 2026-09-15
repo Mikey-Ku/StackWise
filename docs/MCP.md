@@ -35,6 +35,8 @@ Claude's changes appear on the canvas within about two seconds, with a toast and
 
 Unzip it as a new project folder and run `claude` there. Claude Code asks once whether to trust the project's MCP server.
 
+To bring a project's plan back into WhyStack in another browser, use **Import plan file** on its `whystack.plan.json`. It keeps the plan's id, so changes Claude makes in that project keep showing up.
+
 Other builders get the spec, setup, tasks, decisions and plan file, without the `.claude` folder.
 
 ## Tools

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type DragEvent } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -8,8 +8,8 @@ import {
   Handle,
   Position,
   ReactFlow,
-  useNodesInitialized,
   useReactFlow,
+  useStore,
   type Edge,
   type Node,
   type NodeProps,
@@ -37,39 +37,55 @@ function sideToward(from: { x: number; y: number }, to: { x: number; y: number }
   return dy >= 0 ? { source: Position.Bottom, target: Position.Top } : { source: Position.Top, target: Position.Bottom };
 }
 
-/** Parts sit on an ellipse around the app, clockwise from hosting at the top, spaced evenly. */
-const POSITION = Object.fromEntries(
-  OUTER.map((slot, i) => {
-    const angle = ((-90 + (i * 360) / OUTER.length) * Math.PI) / 180;
-    return [slot, { x: Math.round(560 * Math.cos(angle)), y: Math.round(400 * Math.sin(angle)) }];
-  }),
-) as Record<OuterSlot, { x: number; y: number }>;
-
-const SIDE = Object.fromEntries(
-  OUTER.map((slot) => {
-    const { source, target } = sideToward({ x: 0, y: 0 }, POSITION[slot]);
-    return [slot, { app: source, slot: target }];
-  }),
-) as Record<OuterSlot, { app: Position; slot: Position }>;
+/**
+ * The parts on the canvas sit on an ellipse around the app, clockwise from the top, spaced evenly
+ * among the ones that are showing, so a small plan is as balanced as a big one. The ellipse grows
+ * with the number of parts so cards don't overlap.
+ */
+function layout(visible: OuterSlot[]) {
+  const rx = Math.min(660, Math.max(380, 300 + visible.length * 26));
+  const ry = Math.round(rx * 0.85);
+  const position = Object.fromEntries(
+    visible.map((slot, i) => {
+      const angle = ((-90 + (i * 360) / visible.length) * Math.PI) / 180;
+      return [slot, { x: Math.round(rx * Math.cos(angle)), y: Math.round(ry * Math.sin(angle)) }];
+    }),
+  ) as Record<OuterSlot, { x: number; y: number }>;
+  const side = Object.fromEntries(
+    visible.map((slot) => {
+      const { source, target } = sideToward({ x: 0, y: 0 }, position[slot]);
+      return [slot, { app: source, slot: target }];
+    }),
+  ) as Record<OuterSlot, { app: Position; slot: Position }>;
+  return { position, side };
+}
 
 /** Room for the "show all parts" button and the preview banner above the plan. */
 const FIT_PADDING = { top: "60px", right: "28px", bottom: "28px", left: "28px" } as const;
 
-/** Keep the plan in view when the panel resizes or the set of visible parts changes. */
+/**
+ * Keep the plan in view when the step, the visible parts or the canvas size change. A fit only
+ * happens once every node has been measured, because fitting earlier zooms to the box of the old
+ * nodes. Zoom is capped at 100% so a two-part plan doesn't fill the screen.
+ */
 function AutoFit({ shape }: { shape: string }) {
   const { fitView } = useReactFlow();
-  // Fitting before React Flow has measured the nodes zooms to the wrong box, so wait for it.
-  const measured = useNodesInitialized();
+  const ready = useStore((state) => {
+    if (state.nodeLookup.size === 0 || state.width === 0 || state.height === 0) return false;
+    for (const node of state.nodeLookup.values()) if (!node.measured?.width || !node.measured?.height) return false;
+    return true;
+  });
+  const size = useStore((state) => `${Math.round(state.width)}x${Math.round(state.height)}`);
+  const fitted = useRef("");
   useEffect(() => {
-    if (!measured) return;
-    const frame = requestAnimationFrame(() => fitView({ padding: FIT_PADDING, duration: 250 }));
+    const key = `${shape}|${size}`;
+    if (!ready || fitted.current === key) return;
+    const frame = requestAnimationFrame(() => {
+      void fitView({ padding: FIT_PADDING, maxZoom: 1, duration: fitted.current ? 250 : 0 });
+      fitted.current = key;
+    });
     return () => cancelAnimationFrame(frame);
-  }, [fitView, shape, measured]);
-  useEffect(() => {
-    const onResize = () => fitView({ padding: FIT_PADDING });
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [fitView]);
+  }, [fitView, ready, shape, size]);
   return null;
 }
 
@@ -318,6 +334,7 @@ export function PlanCanvas({
       return draggedOption.slots.includes(slot) ? "is-over" : "is-bad";
     };
     const touching = (slot: SlotId, filter: (r: CheckResult) => boolean) => rec.results.filter((r) => r.slots.includes(slot) && filter(r));
+    const { position: POSITION, side: SIDE } = layout(visible);
     const framework = rec.selection.framework ? index.optionsById.get(rec.selection.framework) : undefined;
 
     const nodes: Node[] = [
@@ -393,6 +410,7 @@ export function PlanCanvas({
     }
     for (const [key, results] of pairs) {
       const [a, b] = key.split("|") as [OuterSlot, OuterSlot];
+      if (!POSITION[a] || !POSITION[b]) continue;
       const sides = sideToward(POSITION[a], POSITION[b]);
       edges.push({
         id: `pair-${key}`,
@@ -457,7 +475,7 @@ export function PlanCanvas({
             nodeTypes={nodeTypes}
             nodeOrigin={[0.5, 0.5]}
             fitView
-            fitViewOptions={{ padding: FIT_PADDING }}
+            fitViewOptions={{ padding: FIT_PADDING, maxZoom: 1 }}
             minZoom={0.25}
             maxZoom={1.6}
             nodesDraggable={false}

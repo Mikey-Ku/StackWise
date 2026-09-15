@@ -55,4 +55,6 @@ Planning tool for beginners building web apps with AI builders. A deterministic 
 - Some sites answer a missing icon URL with an HTML page and a 200. The logo fetcher trusts file bytes (`sniffImage`), not names or content types.
 - The stdio MCP server must never write to stdout except JSON-RPC; log to stderr. `.mcp.json` runs it with `pnpm --silent --dir <WhyStack>` so the process starts in WhyStack's folder, and Claude Code passes the project in `CLAUDE_PROJECT_DIR`.
 - `/api/mcp` and `/api/pair` refuse non-local Host and Origin headers. Test them with `curl` against localhost, or the SDK's `StreamableHTTPClientTransport`.
+- The canvas fits only after React Flow has measured every node (`AutoFit` reads the store) and never zooms past 100%. Fitting on `useNodesInitialized` alone ran before new nodes had sizes and left the canvas zoomed in on the old ones. Parts are spaced evenly among the visible ones, on an ellipse that grows with their count.
+- Never call `navigator.clipboard.readText()` from a Playwright evaluate: Chrome waits on a permission prompt and the tool hangs. Capture copied text by wrapping `writeText`.
 - The right panel is 340px. Anything new in Details or the palette needs to wrap; long URLs and env var names in the checklist use `overflow-wrap: anywhere`.

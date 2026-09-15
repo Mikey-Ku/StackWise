@@ -45,7 +45,8 @@ export function Palette({
   }, [catalog.options, index, input]);
 
   const q = query.trim().toLowerCase();
-  const matches = (o: Option) => !q || `${o.name} ${o.summary} ${o.provider}`.toLowerCase().includes(q);
+  // Part names count too, so "scraping" or "domain" finds every option in that part.
+  const matches = (o: Option) => !q || `${o.name} ${o.summary} ${o.provider} ${o.slots.map((slot) => index.slotsById.get(slot)?.label ?? slot).join(" ")}`.toLowerCase().includes(q);
   const slots = catalog.slots.filter((s) => !onlyNeeded || rec.needed.includes(s.id) || rec.selection[s.id]);
 
   return (
