@@ -121,6 +121,15 @@ export function checkCatalog(catalog: Catalog): string[] {
     if (need.only_if && !needIds.has(need.only_if)) problems.push(`need ${need.id}: only_if refers to unknown need "${need.only_if}"`);
   }
 
+  for (const option of catalog.options) {
+    const logo = catalog.logos[option.id];
+    if (!logo) problems.push(`${option.id}: has no logo in logos.json`);
+    else if (!logo.file) problems.push(`${option.id}: its logo isn't downloaded yet (run pnpm build:logos -- --only ${option.id})`);
+  }
+  for (const id of Object.keys(catalog.logos)) {
+    if (!index.optionsById.has(id)) problems.push(`logos.json has a logo for unknown option "${id}"`);
+  }
+
   const learnSlots = catalog.learn.slots as Partial<Learn["slots"]>;
   for (const slot of catalog.slots) {
     const entry = learnSlots[slot.id as SlotId];

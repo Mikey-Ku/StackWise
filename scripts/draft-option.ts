@@ -7,6 +7,7 @@ import { checkCatalog, valueMatches } from "@/engine/integrity";
 import { optionSchema, slotIdSchema, type Fact, type FactValue, type Option } from "@/engine/schema";
 import { todayIso } from "@/engine/staleness";
 import { ROOT, args, createUntilDone, projectCatalog, requireAi, textOf } from "./lib";
+import { fromSite, readManifest, writeManifest } from "./logos";
 
 /**
  * pnpm draft:option --id resend --name "Resend" --slot email --website https://resend.com
@@ -126,13 +127,26 @@ async function main() {
     builder_notes: draft.builder_notes.map((n) => n.replace(/\s*\u2014\s*/g, ", ")),
   });
 
-  const problems = checkCatalog({ ...catalog, options: [...catalog.options.filter((o) => o.id !== id), option] }).filter((p) => p.startsWith(`${id}:`));
+  const problems = checkCatalog({ ...catalog, options: [...catalog.options.filter((o) => o.id !== id), option] })
+    .filter((p) => p.startsWith(`${id}:`))
+    .filter((p) => !p.includes("has no logo")); // the logo is added below
   if (problems.length) {
     console.error(`The draft doesn't pass the data checks:\n${problems.join("\n")}`);
     process.exit(1);
   }
   fs.writeFileSync(target, `${JSON.stringify(option, null, 2)}\n`);
   console.log(`Wrote data/options/${id}.json (${option.coverage}).`);
+
+  const logos = readManifest();
+  if (!logos[id]?.file) {
+    try {
+      logos[id] = await fromSite(id, website);
+      writeManifest(logos);
+      console.log(`Saved its logo from ${logos[id].source}. If it looks wrong, point data/logos.json at a Simple Icons slug and run pnpm build:logos -- --only ${id}.`);
+    } catch (error) {
+      console.log(`Couldn't fetch a logo (${(error as Error).message}). Add one to data/logos.json and run pnpm build:logos -- --only ${id}.`);
+    }
+  }
   if (missing.length || nullFacts.length || unverified.length) {
     console.log(`Needs a person: ${[...new Set([...missing, ...nullFacts, ...unverified])].join(", ")}`);
   }

@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { evaluatePlan, worstLevel, type Option, type SlotId } from "@/engine";
+import { cardStats, evaluatePlan, optionStats, worstLevel, type Option, type SlotId, type Stat } from "@/engine";
 import type { PlanModel } from "./usePlans";
-import { VERDICT_UI, VerdictDot, cx, type Verdict } from "./ui";
+import { Logo, StatChips, VERDICT_UI, cx, type Verdict } from "./ui";
 
 export function Palette({
   model,
@@ -35,6 +35,15 @@ export function Palette({
     return map;
   }, [catalog.options, index, input, rec.selection]);
 
+  // Cost and key facts for each option in each slot, at the audience size in the plan.
+  const stats = useMemo(() => {
+    const map = new Map<string, Stat[]>();
+    for (const option of catalog.options) {
+      for (const slot of option.slots) map.set(`${slot}:${option.id}`, cardStats(optionStats(index, option, slot, input)));
+    }
+    return map;
+  }, [catalog.options, index, input]);
+
   const q = query.trim().toLowerCase();
   const matches = (o: Option) => !q || `${o.name} ${o.summary} ${o.provider}`.toLowerCase().includes(q);
   const slots = catalog.slots.filter((s) => !onlyNeeded || rec.needed.includes(s.id) || rec.selection[s.id]);
@@ -47,7 +56,7 @@ export function Palette({
           <input type="checkbox" checked={onlyNeeded} onChange={(e) => setOnlyNeeded(e.target.checked)} />
           Only parts my plan uses
         </label>
-        <p className="mk-hint">Drag onto the canvas, or press Use. The dot shows what would happen with the rest of your plan.</p>
+        <p className="mk-hint">Drag onto the canvas, or press Use. The dot on each logo shows what would happen with the rest of your plan. Costs are for the audience size in your plan.</p>
       </div>
       {slots.map((slot) => {
         const options = catalog.options
@@ -75,15 +84,14 @@ export function Palette({
                   }}
                   onDragEnd={onDragEnd}
                 >
-                  <div className="ws-opt__main">
-                    <div className="ws-opt__name">
-                      <VerdictDot level={preview} title={`If used: ${VERDICT_UI[preview].label}`} />
-                      <span>{option.name}</span>
-                      {inPlan && <span className="mk-badge mk-badge--accent">In plan</span>}
-                      {option.coverage === "partial" && <span className="mk-badge ws-badge--unknown">Not verified</span>}
-                    </div>
-                    <p className="ws-opt__summary">{option.summary}</p>
+                  <Logo logo={catalog.logos[option.id]} name={option.name} size={32} status={{ level: preview, title: `If used: ${VERDICT_UI[preview].label}` }} />
+                  <div className="ws-opt__name">
+                    <span>{option.name}</span>
+                    {inPlan && <span className="mk-badge mk-badge--accent">In plan</span>}
+                    {option.coverage === "partial" && <span className="mk-badge ws-badge--unknown">Not verified</span>}
                   </div>
+                  <p className="ws-opt__summary">{option.summary}</p>
+                  <StatChips stats={stats.get(`${slot.id}:${option.id}`) ?? []} className="ws-opt__stats" />
                   <button
                     type="button"
                     className="mk-btn mk-btn--secondary mk-sm"

@@ -176,6 +176,17 @@ export const learnSchema = z.object({
 });
 export type Learn = z.infer<typeof learnSchema>;
 
+/**
+ * Where each option's logo comes from: a Simple Icons slug or the service's own website. `file` and
+ * `source` are filled in by scripts/build-logos.ts once the file is in public/logos.
+ */
+const logoFile = z.string().regex(/^[a-z0-9-]+\.(svg|png|ico|webp|jpg)$/);
+export const logoSchema = z.discriminatedUnion("from", [
+  z.object({ from: z.literal("simple-icons"), slug: z.string().min(1), file: logoFile.optional(), source: httpUrl.optional() }),
+  z.object({ from: z.literal("site"), url: httpUrl, file: logoFile.optional(), source: httpUrl.optional() }),
+]);
+export type Logo = z.infer<typeof logoSchema>;
+
 export interface Catalog {
   slots: SlotDef[];
   facts: Record<string, FactDef>;
@@ -185,6 +196,7 @@ export interface Catalog {
   productRules: ProductRule[];
   planning: Planning;
   learn: Learn;
+  logos: Record<string, Logo>;
 }
 
 export type Answer = "yes" | "no" | "not_sure";

@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { indexCatalog } from "./evaluate";
@@ -35,6 +36,11 @@ describe("data", () => {
     expect(Object.values(rec.selection).filter(Boolean).length).toBe(rec.needed.length);
     expect(rec.needed).not.toContain("jobs");
     expect(elapsed).toBeLessThan(1500);
+  });
+
+  it("has a logo file on disk for every option", () => {
+    const missing = catalog.options.filter((o) => !fs.existsSync(path.join(__dirname, "..", "..", "public", "logos", catalog.logos[o.id]?.file ?? "none")));
+    expect(missing.map((o) => o.id)).toEqual([]);
   });
 
   it("has teaching content for every part and every term it uses", () => {

@@ -61,6 +61,26 @@ Everything WhyStack knows is in `data/`. Changes go through pull requests, and `
 
 **Product rules** (`data/rules/product.json`) name an exact pair. Their severity can be `blocked`, `warning` or `info`, never "works", so they can't overrule a capability rule. A product rule's `info` note is a perk and adds a small bonus to a plan's score; a capability rule's `info` note is neutral.
 
+## Logos: `data/logos.json`
+
+Every option needs a logo. Each entry says where it comes from, and `pnpm build:logos` downloads it into `public/logos/` and fills in `file` and `source`:
+
+```json
+{
+  "vercel": { "from": "simple-icons", "slug": "vercel", "file": "vercel.svg", "source": "https://simpleicons.org/?q=vercel" },
+  "groq": { "from": "site", "url": "https://groq.com", "file": "groq.png", "source": "https://groq.com/apple-touch-icon.png" }
+}
+```
+
+- **`simple-icons`** draws the brand's mark from the [Simple Icons](https://simpleicons.org) package in its brand color. Near-white brand colors are drawn in ink so they show on white cards. Prefer this when the brand is there.
+- **`site`** takes the icon the company's own website declares: apple-touch-icon first, then SVG, then the largest icon, then `/favicon.ico`, then Google's favicon service for sites that refuse scripted requests. Icons marked for dark mode are skipped because they're usually white.
+- To add or fix one, write the entry with only `from` and `slug` or `url`, then run `pnpm build:logos -- --only <id>` and look at it in the palette. `draft:option` fetches the site icon for a new service on its own.
+- The files are committed, so the app never loads a logo from another site. Logos are trademarks of their owners and are shown only to identify each service.
+
+## Stats
+
+The numbers on cards, canvas parts, Details and Compare come from `src/engine/stats.ts`, read from the facts above. Nothing new is stored. An unverified fact shows as "Not verified" and never as a guess, and cards skip a stat the cost already implies.
+
 ## Teaching content: `data/learn.json`
 
 `slots` has one entry per part (`what`, `why`, `choosing`, `watch_for`, `terms`), and `terms` is the glossary (`term`, `plain`, `matters`). Every term a part mentions must exist. It is written to stay true: no prices, limits or dates.
@@ -105,6 +125,7 @@ The framework files (`nextjs`, `react-vite`, `sveltekit`) and `sqlite-file` were
 - every file parses against the schemas
 - every fact key and value is valid, and full options have every required fact
 - every rule's needs and facts exist, and product rules point at real options in the right slots
+- every option has a logo entry, and its file exists in `public/logos/`
 - no em dashes anywhere in the data
 - every pair of fully researched options gets a real verdict under every rule, with all needs on
 - every slot has at least one fully researched option

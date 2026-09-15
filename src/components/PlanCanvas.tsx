@@ -15,9 +15,9 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { costLine, inSentence, worstLevel, type CheckResult, type SlotId } from "@/engine";
+import { cardStats, inSentence, money, optionStats, SIZE_PHRASE, worstLevel, type CheckResult, type Logo as LogoFile, type SlotId, type Stat } from "@/engine";
 import type { PlanModel } from "./usePlans";
-import { VerdictBadge, VerdictDot, cx, type Verdict } from "./ui";
+import { Logo, StatChips, VerdictBadge, VerdictDot, cx, type Verdict } from "./ui";
 
 /**
  * The canvas is a graph with typed connections (see docs/DECISIONS.md), shown for now as one app
@@ -51,6 +51,9 @@ const SIDE = Object.fromEntries(
   }),
 ) as Record<OuterSlot, { app: Position; slot: Position }>;
 
+/** Room for the "show all parts" button and the preview banner above the plan. */
+const FIT_PADDING = { top: "60px", right: "28px", bottom: "28px", left: "28px" } as const;
+
 /** Keep the plan in view when the panel resizes or the set of visible parts changes. */
 function AutoFit({ shape }: { shape: string }) {
   const { fitView } = useReactFlow();
@@ -58,11 +61,11 @@ function AutoFit({ shape }: { shape: string }) {
   const measured = useNodesInitialized();
   useEffect(() => {
     if (!measured) return;
-    const frame = requestAnimationFrame(() => fitView({ padding: 0.08, duration: 250 }));
+    const frame = requestAnimationFrame(() => fitView({ padding: FIT_PADDING, duration: 250 }));
     return () => cancelAnimationFrame(frame);
   }, [fitView, shape, measured]);
   useEffect(() => {
-    const onResize = () => fitView({ padding: 0.08 });
+    const onResize = () => fitView({ padding: FIT_PADDING });
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [fitView]);
@@ -95,6 +98,7 @@ type DropState = "" | "is-over" | "is-bad";
 type AppData = {
   appName: string;
   frameworkName?: string;
+  frameworkLogo?: LogoFile;
   frameworkLevel: Verdict;
   needs: string[];
   drop: DropState;
@@ -111,6 +115,7 @@ function AppNode({ data }: NodeProps<Node<AppData>>) {
       <div className="ws-app__name">{data.appName}</div>
       <div className="ws-app__fw">
         <span className="mk-faint">built with</span>
+        {data.frameworkName && <Logo logo={data.frameworkLogo} name={data.frameworkName} size={20} />}
         <strong>{data.frameworkName ?? "no framework yet"}</strong>
         {data.frameworkName && <VerdictDot level={data.frameworkLevel} />}
       </div>
@@ -132,8 +137,9 @@ type SlotData = {
   label: string;
   hint: string;
   optionName?: string;
+  logo?: LogoFile;
   level: Verdict;
-  cost?: string;
+  stats: Stat[];
   auto: boolean;
   needed: boolean;
   cleared: boolean;
@@ -171,8 +177,11 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
         </div>
       ) : (
         <>
-          <div className="ws-slot__name">{data.optionName}</div>
-          {data.cost && <div className="ws-slot__cost">{data.cost}</div>}
+          <div className="ws-slot__name">
+            <Logo logo={data.logo} name={data.optionName!} size={26} />
+            <span>{data.optionName}</span>
+          </div>
+          <StatChips stats={data.stats} />
           <div className="ws-slot__foot">
             <span className="mk-faint">{data.auto ? "Picked for you" : "Your choice"}</span>
             <span className="mk-row mk-gap-1">
@@ -193,6 +202,68 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
 }
 
 const nodeTypes = { app: AppNode, slot: SlotNode };
+
+/** The whole plan in five numbers above the canvas: what it costs, when that changes, and how much setup it takes. */
+function PlanStatsBar({ model }: { model: PlanModel }) {
+  const { stats } = model;
+  const nowNotes = [`for ${SIZE_PHRASE[stats.now.size]}`, stats.now.hasUsage && "plus usage", stats.now.hasUnknown && "some prices not verified"].filter(Boolean).join(", ");
+  const jump = stats.firstIncrease;
+  const checksLevel: Verdict = stats.problems === 0 ? "works" : stats.worst;
+  return (
+    <dl className="ws-planstats" aria-label="Your plan at a glance">
+      <div className="ws-planstats__item">
+        <dt>Monthly cost</dt>
+        <dd>
+          <strong>
+            {money(stats.now.monthlyUsd)}
+            <small>/mo</small>
+          </strong>
+          <span>{nowNotes}</span>
+        </dd>
+      </div>
+      <div className="ws-planstats__item">
+        <dt>As you grow</dt>
+        <dd>
+          {jump ? (
+            <>
+              <strong>
+                {money(jump.monthlyUsd)}
+                <small>/mo</small>
+              </strong>
+              <span>at {SIZE_PHRASE[jump.size]}</span>
+            </>
+          ) : (
+            <>
+              <strong>No jump</strong>
+              <span>{stats.now.size === "more" ? "you picked the largest size" : "plan prices stay the same"}</span>
+            </>
+          )}
+        </dd>
+      </div>
+      <div className="ws-planstats__item">
+        <dt>Accounts</dt>
+        <dd>
+          <strong>{stats.accounts}</strong>
+          <span>to sign up for</span>
+        </dd>
+      </div>
+      <div className="ws-planstats__item">
+        <dt>Setup steps</dt>
+        <dd>
+          <strong>{stats.setupSteps}</strong>
+          <span>in the checklist</span>
+        </dd>
+      </div>
+      <div className={cx("ws-planstats__item", `ws-planstats__item--${checksLevel}`)}>
+        <dt>Checks</dt>
+        <dd>
+          <strong>{stats.problems === 0 ? "All clear" : stats.problems}</strong>
+          <span>{stats.problems === 0 ? "every connection works" : `thing${stats.problems === 1 ? "" : "s"} to look at`}</span>
+        </dd>
+      </div>
+    </dl>
+  );
+}
 
 function truncate(text: string, max = 34): string {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}...` : text;
@@ -251,6 +322,7 @@ export function PlanCanvas({
         data: {
           appName: plan.appName.trim() || "Your app",
           frameworkName: framework?.name,
+          frameworkLogo: framework ? index.catalog.logos[framework.id] : undefined,
           frameworkLevel: worstLevel(touching("framework", (r) => r.slots.length === 1)),
           needs: index.catalog.needs.filter((n) => input.answers[n.id] === "yes").map((n) => n.label),
           drop: dropClass("framework"),
@@ -279,8 +351,9 @@ export function PlanCanvas({
           label: def.label,
           hint: def.empty_hint,
           optionName: option?.name,
+          logo: option ? index.catalog.logos[option.id] : undefined,
           level: option ? worstLevel(touching(slot, () => true)) : level,
-          cost: option ? costLine(index, option, slot, input).headline : undefined,
+          stats: option ? cardStats(optionStats(index, option, slot, input), 2) : [],
           auto: rec.autoPicked.includes(slot),
           needed,
           cleared: plan.pinned[slot] === "",
@@ -340,54 +413,57 @@ export function PlanCanvas({
 
   return (
     <ActionsContext.Provider value={actions}>
-      <div
-        className={cx("ws-canvas", dragging && "is-dragging")}
-        onDragOver={(e) => {
-          if (!dragging) return;
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "move";
-          const slot = slotAt(e) ?? "pane";
-          if (slot !== over) setOver(slot);
-        }}
-        onDragLeave={(e) => {
-          if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as globalThis.Node | null)) setOver(null);
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          const optionId = e.dataTransfer.getData("application/x-whystack-option") || dragging;
-          setOver(null);
-          onDropped();
-          if (!optionId) return;
-          const error = model.place(optionId, slotAt(e) ?? undefined, selectedSlot);
-          if (error) onToast(error);
-        }}
-      >
-        {plan.step !== "plan" && (
-          <div className="ws-canvas__banner">
-            {plan.step === "describe" ? "Describe your app to fill this in." : "Preview from your answers so far. Confirm them to lock in the plan."}
-          </div>
-        )}
-        <button type="button" className="ws-canvas__toggle mk-btn mk-btn--secondary mk-sm" onClick={onToggleShowAll}>
-          {showAll ? "Hide optional parts" : hiddenCount > 0 ? `Show all parts (+${hiddenCount})` : "Show all parts"}
-        </button>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          nodeOrigin={[0.5, 0.5]}
-          fitView
-          fitViewOptions={{ padding: 0.08 }}
-          minZoom={0.25}
-          maxZoom={1.6}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          elementsSelectable={false}
-          onEdgeClick={(_, edge) => onSelect(edge.target.replace("slot-", "") as SlotId)}
+      <div className="ws-canvas-frame">
+        {plan.step !== "describe" && <PlanStatsBar model={model} />}
+        <div
+          className={cx("ws-canvas", dragging && "is-dragging")}
+          onDragOver={(e) => {
+            if (!dragging) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            const slot = slotAt(e) ?? "pane";
+            if (slot !== over) setOver(slot);
+          }}
+          onDragLeave={(e) => {
+            if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as globalThis.Node | null)) setOver(null);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const optionId = e.dataTransfer.getData("application/x-whystack-option") || dragging;
+            setOver(null);
+            onDropped();
+            if (!optionId) return;
+            const error = model.place(optionId, slotAt(e) ?? undefined, selectedSlot);
+            if (error) onToast(error);
+          }}
         >
-          <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="var(--mk-line-strong)" />
-          <Controls showInteractive={false} position="bottom-right" />
-          <AutoFit shape={`${plan.step}|${visible.join(",")}`} />
-        </ReactFlow>
+          {plan.step !== "plan" && (
+            <div className="ws-canvas__banner">
+              {plan.step === "describe" ? "Describe your app to fill this in." : "Preview from your answers so far. Confirm them to lock in the plan."}
+            </div>
+          )}
+          <button type="button" className="ws-canvas__toggle mk-btn mk-btn--secondary mk-sm" onClick={onToggleShowAll}>
+            {showAll ? "Hide optional parts" : hiddenCount > 0 ? `Show all parts (+${hiddenCount})` : "Show all parts"}
+          </button>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            nodeOrigin={[0.5, 0.5]}
+            fitView
+            fitViewOptions={{ padding: FIT_PADDING }}
+            minZoom={0.25}
+            maxZoom={1.6}
+            nodesDraggable={false}
+            nodesConnectable={false}
+            elementsSelectable={false}
+            onEdgeClick={(_, edge) => onSelect(edge.target.replace("slot-", "") as SlotId)}
+          >
+            <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="var(--mk-line-strong)" />
+            <Controls showInteractive={false} position="bottom-right" />
+            <AutoFit shape={`${plan.step}|${visible.join(",")}`} />
+          </ReactFlow>
+        </div>
       </div>
     </ActionsContext.Provider>
   );

@@ -14,7 +14,8 @@
     "eval:prefill": "tsx --env-file-if-exists=.env.local scripts/eval-prefill.ts",
     "eval:plain-llm": "tsx --env-file-if-exists=.env.local scripts/eval-plain-llm.ts",
     "check:sources": "tsx --env-file-if-exists=.env.local scripts/check-sources.ts",
-    "draft:option": "tsx --env-file-if-exists=.env.local scripts/draft-option.ts"
+    "draft:option": "tsx --env-file-if-exists=.env.local scripts/draft-option.ts",
+    "build:logos": "tsx scripts/build-logos.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
@@ -30,6 +31,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "simple-icons": "^16.31.0",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"

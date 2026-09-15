@@ -24,6 +24,7 @@ pnpm eval:prefill     # AI pre-fill vs the keyword baseline (needs cases in eval
 pnpm eval:plain-llm   # how often a plain LLM picks a stack that breaks a rule
 pnpm check:sources    # reread every fact's source page with Claude; --apply to update
 pnpm draft:option -- --id resend --name "Resend" --slot email --website https://resend.com
+pnpm build:logos      # refetch logos into public/logos; -- --only <id,id> for a few
 ```
 
 ## What it does
@@ -35,17 +36,18 @@ pnpm draft:option -- --id resend --name "Resend" --slot email --website https://
 
 **The canvas**
 - Your app in the middle, with slots for hosting, database, login, email, file storage, payments, AI, background jobs and a phone app. Optional parts stay hidden until you need them, drag something that fits, or show all parts.
-- Drag options from a palette of 58 (38 fully researched), or press Use. Each option shows a dot for what would happen if you used it. Dropping something in the wrong slot is refused with a reason.
+- Drag options from a palette of 58 (38 fully researched), or press Use. Every option has its logo, a dot for what would happen if you used it, and quick stats at your audience size: cost now, the first paid plan, how far the free plan goes, and the trait that matters for that part (download fees, sales tax, the cheapest AI model, whether iPhone builds need a Mac). Dropping something in the wrong slot is refused with a reason.
+- A strip above the canvas sums up the plan: monthly cost, where the cost first jumps as you grow, accounts to sign up for, setup steps, and checks.
 - Every check shows up as a colored line or badge: works, works with a warning, doesn't work, missing a piece, or not verified yet.
 - Undo and redo (Cmd or Ctrl+Z).
 
 **Understanding**
-- Details for every part: every check with its reason and fix, the cost at your size, how it scored for your priority, a comparison table, and the sourced facts behind it, flagged when they may be out of date.
-- Compare two or three options side by side.
+- Details for every part: its stats, every check with its reason and fix, the cost at your size, how it scored for your priority, a comparison table, and the sourced facts behind it, flagged when they may be out of date.
+- Compare two or three options side by side, stat by stat, each with its note and source.
 - "Explain my plan": a plain-language summary written only from the computed plan.
 - Learn: what each part of an app is, what matters when choosing, where beginners slip, and a glossary of 39 terms.
 - Close calls, and what would change if a "not sure" answer turned out to be yes.
-- Cost at every audience size, so you see each free plan run out before it happens.
+- Cost at every audience size, and a line for each part of the plan, so you see each free plan run out before it happens.
 
 **Leaving with a plan**
 - Spec pack: SPEC.md, SETUP.md, PROMPT.txt, CLAUDE.md or AGENTS.md for your builder, and DECISIONS.md with the reasoning for every part. Environment variable names follow your framework.
@@ -76,12 +78,14 @@ data/                 everything WhyStack knows, as JSON
   facts.json          what each fact means and its allowed values
   slots.json          the parts of an app
   learn.json          teaching content and glossary
+  logos.json          where each option's logo comes from
   planning.json       sizes, priorities and weights, builders
+public/logos/         the logo files, committed
 src/engine/           the logic, no React, fully tested
 src/ai/               Claude pre-fill and explanations, optional
 src/components/       the workspace UI
 src/app/api/          status, prefill and explain routes
-scripts/              evals, source checker, option drafter
+scripts/              evals, source checker, option drafter, logo fetcher
 evals/                eval cases (written by a person) and how to run them
 docs/                 DECISIONS.md, LEARNING.md, DATA.md
 ```

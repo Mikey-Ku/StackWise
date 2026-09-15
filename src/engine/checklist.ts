@@ -22,6 +22,7 @@ export interface ChecklistItem {
   /** Stable across sessions so checked boxes survive a reload. */
   id: string;
   slot: SlotId;
+  optionId: string;
   optionName: string;
   text: string;
   env: string[];
@@ -44,6 +45,7 @@ export function buildChecklist(index: CatalogIndex, selection: Selection): Check
       setup.push({
         id: `setup:${option.id}:${i}`,
         slot,
+        optionId: option.id,
         optionName: option.name,
         text: step.step,
         env: step.env.map((name) => adaptEnvName(name, selection.framework)),
@@ -54,13 +56,14 @@ export function buildChecklist(index: CatalogIndex, selection: Selection): Check
       setup.push({
         id: `setup:${option.id}:quickstart`,
         slot,
+        optionId: option.id,
         optionName: option.name,
         text: `Follow ${option.name}'s official quickstart. Its setup steps haven't been researched yet.`,
         env: [],
         source: option.website,
       });
     }
-    build.push({ id: `build:${slot}:${option.id}`, slot, optionName: option.name, text: def.build_task.replace("{option}", option.name), env: [] });
+    build.push({ id: `build:${slot}:${option.id}`, slot, optionId: option.id, optionName: option.name, text: def.build_task.replace("{option}", option.name), env: [] });
   }
   return { setup, build };
 }
