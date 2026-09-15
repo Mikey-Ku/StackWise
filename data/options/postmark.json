@@ -1,0 +1,49 @@
+{
+  "id": "postmark",
+  "name": "Postmark",
+  "provider": "postmark",
+  "slots": ["email"],
+  "summary": "Postmark is an email sending service focused on fast, reliable delivery of transactional email like receipts and password resets.",
+  "website": "https://postmarkapp.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "just_me",
+      "note": "Free plan sends only 100 emails a month total, no overages allowed; Postmark markets it for testing, not real user traffic.",
+      "source": "https://postmarkapp.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 15,
+      "note": "Basic plan starts at $15/month for 10,000 emails, then $1.80 per extra 1,000 sent.",
+      "source": "https://postmarkapp.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Postmark supports standard SMTP as well as its API, so moving away mainly means swapping SMTP credentials.",
+      "source": "https://postmarkapp.com/developer",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "The official postmark npm package is Postmark's documented Node.js client and ships with TypeScript types.",
+      "source": "https://postmarkapp.com/developer/user-guide/send-email-with-api",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Postmark account and confirm a sender signature or verify a sending domain.", "env": [], "source": "https://postmarkapp.com/developer/user-guide/send-email-with-api" },
+    { "step": "Install the SDK with npm install postmark.", "env": [], "source": "https://postmarkapp.com/developer/user-guide/send-email-with-api" },
+    { "step": "Copy the Server API Token from the server's API Tokens page and add it to your environment file.", "env": ["POSTMARK_SERVER_TOKEN"], "source": "https://postmarkapp.com/developer/user-guide/send-email-with-api" },
+    { "step": "Create a ServerClient with the token and call sendEmail() from a server route.", "env": [], "source": "https://postmarkapp.com/developer/user-guide/send-email-with-api" }
+  ],
+  "builder_notes": [
+    "Every send needs a confirmed sender signature or verified domain first, or the API returns a 422 error.",
+    "Use a separate Server API Token per environment (development, staging, production) so access can be isolated and revoked independently."
+  ]
+}

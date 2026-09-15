@@ -3,7 +3,13 @@
     "label": "Free plan covers",
     "help": "The biggest group of monthly users a small app can serve on the free plan.",
     "type": "enum",
-    "values": ["none", "just_me", "up_to_100", "up_to_1000", "more"]
+    "values": [
+      "none",
+      "just_me",
+      "up_to_100",
+      "up_to_1000",
+      "more"
+    ]
   },
   "first_paid_usd_month": {
     "label": "First paid plan",
@@ -14,19 +20,32 @@
     "label": "Easy to switch away",
     "help": "How much rework it takes to move to something else later.",
     "type": "enum",
-    "values": ["high", "medium", "low"]
+    "values": [
+      "high",
+      "medium",
+      "low"
+    ]
   },
   "runtime_model": {
     "label": "How server code runs",
     "help": "Serverless code starts per request; a server stays running.",
     "type": "enum",
-    "values": ["serverless", "server", "edge", "static"]
+    "values": [
+      "serverless",
+      "server",
+      "edge",
+      "static"
+    ]
   },
   "persistent_disk": {
     "label": "Permanent disk",
     "help": "Whether files your app writes survive restarts and redeploys.",
     "type": "enum",
-    "values": ["none", "paid_addon", "included"]
+    "values": [
+      "none",
+      "paid_addon",
+      "included"
+    ]
   },
   "long_lived_connections": {
     "label": "Holds live connections",
@@ -52,19 +71,30 @@
     "label": "Framework support",
     "help": "How well each framework runs on this host.",
     "type": "framework_map",
-    "values": ["full", "partial", "none"]
+    "values": [
+      "full",
+      "partial",
+      "none"
+    ]
   },
   "storage_model": {
     "label": "Where data is kept",
     "help": "Hosted by the provider, or a file on your own server's disk.",
     "type": "enum",
-    "values": ["hosted", "local_file"]
+    "values": [
+      "hosted",
+      "local_file"
+    ]
   },
   "data_model": {
     "label": "Data model",
     "help": "Tables with relations, JSON-like documents, or simple keys and values.",
     "type": "enum",
-    "values": ["relational", "document", "key_value"]
+    "values": [
+      "relational",
+      "document",
+      "key_value"
+    ]
   },
   "realtime_built_in": {
     "label": "Live updates built in",
@@ -134,6 +164,36 @@
   "has_server_code": {
     "label": "Can run server code",
     "help": "Whether the framework has a place for private, server-only code.",
+    "type": "boolean"
+  },
+  "uses_react": {
+    "label": "Built with React",
+    "help": "Whether screens are written with React, the most common way to build web interfaces.",
+    "type": "boolean"
+  },
+  "builtin_email_production_ready": {
+    "label": "Sends its own login emails",
+    "help": "Whether sign-up and password-reset emails work for a real launch without your own email service.",
+    "type": "boolean"
+  },
+  "long_running": {
+    "label": "Runs long jobs",
+    "help": "Whether one job can run for 10 minutes or more without being cut off.",
+    "type": "boolean"
+  },
+  "schedules": {
+    "label": "Scheduled runs",
+    "help": "Whether jobs can run on a schedule, like every morning.",
+    "type": "boolean"
+  },
+  "shares_react_skills": {
+    "label": "Uses React",
+    "help": "Whether the phone app is written with React, so React web skills carry over.",
+    "type": "boolean"
+  },
+  "needs_mac_for_ios": {
+    "label": "Needs a Mac for iPhone builds",
+    "help": "Whether building the iPhone version requires owning a Mac.",
     "type": "boolean"
   }
 }

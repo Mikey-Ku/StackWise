@@ -4,12 +4,14 @@ import { z } from "zod";
 import {
   capabilityRuleSchema,
   factDefSchema,
+  learnSchema,
   needSchema,
   optionSchema,
   planningSchema,
   productRuleSchema,
   slotDefSchema,
   type Catalog,
+  type Learn,
 } from "./schema";
 
 /** Node-only: reads /data from disk. Never import this from a client component. */
@@ -33,11 +35,16 @@ function parse<T>(schema: z.ZodType<T>, value: unknown, label: string): T {
   return result.data;
 }
 
+/** Teaching content is optional at load time; the data checks report it if it's missing. */
+export const EMPTY_LEARN = { slots: {}, terms: {} } as unknown as Learn;
+
 export function loadCatalog(dataDir = path.join(process.cwd(), "data")): Catalog {
   const file = (name: string) => readJson(path.join(dataDir, name));
   const optionDir = path.join(dataDir, "options");
+  const learnPath = path.join(dataDir, "learn.json");
 
   return {
+    learn: fs.existsSync(learnPath) ? parse(learnSchema, readJson(learnPath), "learn.json") : EMPTY_LEARN,
     slots: parse(z.array(slotDefSchema), file("slots.json"), "slots.json"),
     facts: parse(z.record(z.string(), factDefSchema), file("facts.json"), "facts.json"),
     needs: parse(z.array(needSchema), file("needs.json"), "needs.json"),

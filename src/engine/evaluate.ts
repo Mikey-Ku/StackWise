@@ -34,6 +34,7 @@ export interface CheckResult {
   explanation: string;
   fix?: string;
   builder?: string;
+  sources?: string[];
   missingFacts?: { optionId: string; fact: string }[];
 }
 
@@ -82,10 +83,21 @@ export function readFact(index: CatalogIndex, option: Option, factKey: string): 
   return { known: true, value: fact.value };
 }
 
-/** The slots a capability rule reads, in canonical slot order. */
+/** The slots a capability rule reads, in canonical slot order, including slots it only checks for emptiness. */
 export function ruleSlots(rule: CapabilityRule): SlotId[] {
   const used = new Set<SlotId>();
   for (const c of rule.when) {
+    used.add(c.slot);
+    if (c.key_from_slot) used.add(c.key_from_slot);
+  }
+  return SLOT_IDS.filter((s) => used.has(s));
+}
+
+/** The slots a rule reads facts from. A rule only applies once all of these are filled. */
+export function factSlots(rule: CapabilityRule): SlotId[] {
+  const used = new Set<SlotId>();
+  for (const c of rule.when) {
+    if (c.filled !== undefined) continue;
     used.add(c.slot);
     if (c.key_from_slot) used.add(c.key_from_slot);
   }
@@ -96,7 +108,8 @@ type ConditionOutcome = { kind: "true" } | { kind: "false" } | { kind: "unknown"
 
 function evaluateCondition(index: CatalogIndex, selection: Selection, condition: Condition): ConditionOutcome {
   const option = optionIn(index, selection, condition.slot);
-  if (!option) return { kind: "false" };
+  if (condition.filled !== undefined) return { kind: Boolean(option) === condition.filled ? "true" : "false" };
+  if (!option || !condition.fact) return { kind: "false" };
 
   const read = readFact(index, option, condition.fact);
   if (!read.known) return { kind: "unknown", optionId: option.id, fact: condition.fact };
@@ -141,13 +154,13 @@ export function evaluateCapabilityRule(
   rule: CapabilityRule,
 ): CheckResult | null {
   if (!rule.needs.every((n) => needIsOn(index, input, n))) return null;
+  if (!factSlots(rule).every((s) => optionIn(index, selection, s))) return null;
   const slots = ruleSlots(rule);
-  if (!slots.every((s) => optionIn(index, selection, s))) return null;
 
   const outcomes = rule.when.map((c) => evaluateCondition(index, selection, c));
   if (outcomes.some((o) => o.kind === "false")) return null;
 
-  const key = `${rule.id}:${slots.map((s) => selection[s]).join("+")}`;
+  const key = `${rule.id}:${slots.map((s) => selection[s] || "empty").join("+")}`;
   const fill = (text: string) => fillTemplate(index, selection, text);
   const unknown = outcomes.filter((o): o is Extract<ConditionOutcome, { kind: "unknown" }> => o.kind === "unknown");
 
@@ -178,6 +191,7 @@ export function evaluateCapabilityRule(
     explanation: fill(rule.explanation),
     fix: rule.fix ? fill(rule.fix) : undefined,
     builder: rule.builder ? fill(rule.builder) : undefined,
+    sources: rule.sources,
   };
 }
 
@@ -201,6 +215,7 @@ export function evaluateProductRule(
     explanation: fill(rule.explanation),
     fix: rule.fix ? fill(rule.fix) : undefined,
     builder: rule.builder ? fill(rule.builder) : undefined,
+    sources: rule.sources,
   };
 }
 

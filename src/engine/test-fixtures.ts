@@ -38,8 +38,8 @@ const base = (covers: string, price: number | null, portability = "high") => ({
 });
 
 export const fixtureOptions: Option[] = [
-  option("fw-server", "open-source", ["framework"], { ...base("more", null), language: "TypeScript", has_server_code: true }),
-  option("fw-browser", "open-source", ["framework"], { ...base("more", null), language: "TypeScript", has_server_code: false }),
+  option("fw-server", "open-source", ["framework"], { ...base("more", null), language: "TypeScript", has_server_code: true, uses_react: true }),
+  option("fw-browser", "open-source", ["framework"], { ...base("more", null), language: "TypeScript", has_server_code: false, uses_react: true }),
   option("host-serverless", "cloudco", ["hosting"], {
     ...base("up_to_1000", 20, "medium"),
     runtime_model: "serverless",
@@ -77,9 +77,15 @@ export const fixtureOptions: Option[] = [
     serverless_friendly: true,
     mobile_sdk: true,
   }),
-  option("login-acme", "acme", ["login"], { ...base("more", 25), mobile_sdk: true, prebuilt_ui: true }),
-  option("login-solo", "soloauth", ["login"], { ...base("more", 25), mobile_sdk: true, prebuilt_ui: true }),
-  option("login-cheap", "cheapauth", ["login"], { ...base("more", 20), mobile_sdk: true, prebuilt_ui: true }),
+  option("login-acme", "acme", ["login"], { ...base("more", 25), mobile_sdk: true, prebuilt_ui: true, builtin_email_production_ready: true }),
+  option("login-solo", "soloauth", ["login"], { ...base("more", 25), mobile_sdk: true, prebuilt_ui: true, builtin_email_production_ready: true }),
+  option("login-cheap", "cheapauth", ["login"], { ...base("more", 20), mobile_sdk: true, prebuilt_ui: true, builtin_email_production_ready: true }),
+  option("login-lib", "open-source", ["login"], { ...base("more", null), mobile_sdk: false, prebuilt_ui: false, builtin_email_production_ready: false }),
+  option("jobs-durable", "jobco", ["jobs"], { ...base("up_to_1000", 20), sdk_typescript: true, long_running: true, schedules: true }),
+  option("jobs-caller", "callco", ["jobs"], { ...base("up_to_1000", 10), sdk_typescript: true, long_running: false, schedules: false }),
+  option("email-send", "mailco", ["email"], { ...base("up_to_1000", 20), sdk_typescript: true }),
+  option("mobile-react", "mobileco", ["mobile"], { ...base("up_to_1000", 19), language: "TypeScript", shares_react_skills: true, needs_mac_for_ios: false }),
+  option("mobile-other", "open-source", ["mobile"], { ...base("more", null), language: "Dart", shares_react_skills: false, needs_mac_for_ios: true }),
   option("files-direct", "acme", ["files"], { ...base("up_to_1000", 25), direct_uploads: true, egress_fees: true }),
   option("pay-card", "payco", ["payments"], {
     ...base("more", null),

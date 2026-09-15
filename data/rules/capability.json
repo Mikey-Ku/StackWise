@@ -4,8 +4,16 @@
     "severity": "blocked",
     "needs": [],
     "when": [
-      { "slot": "hosting", "fact": "persistent_disk", "is": "none" },
-      { "slot": "database", "fact": "storage_model", "is": "local_file" }
+      {
+        "slot": "hosting",
+        "fact": "persistent_disk",
+        "is": "none"
+      },
+      {
+        "slot": "database",
+        "fact": "storage_model",
+        "is": "local_file"
+      }
     ],
     "title": "Your data would disappear",
     "explanation": "{hosting} doesn't give your app a permanent disk, and {database} keeps data in a file on that disk. Anything people save would be lost on the next deploy or restart.",
@@ -17,8 +25,16 @@
     "severity": "warning",
     "needs": [],
     "when": [
-      { "slot": "hosting", "fact": "persistent_disk", "is": "paid_addon" },
-      { "slot": "database", "fact": "storage_model", "is": "local_file" }
+      {
+        "slot": "hosting",
+        "fact": "persistent_disk",
+        "is": "paid_addon"
+      },
+      {
+        "slot": "database",
+        "fact": "storage_model",
+        "is": "local_file"
+      }
     ],
     "title": "Only works with a paid disk",
     "explanation": "{database} keeps data in a file, so {hosting} needs a paid permanent disk attached. Without it, the data is wiped on every redeploy.",
@@ -29,7 +45,14 @@
     "id": "framework-not-supported",
     "severity": "blocked",
     "needs": [],
-    "when": [{ "slot": "hosting", "fact": "framework_support", "key_from_slot": "framework", "is": "none" }],
+    "when": [
+      {
+        "slot": "hosting",
+        "fact": "framework_support",
+        "key_from_slot": "framework",
+        "is": "none"
+      }
+    ],
     "title": "{hosting} can't run {framework}",
     "explanation": "{hosting} doesn't support {framework}, so your app would not run there.",
     "fix": "Pick a host that supports {framework}."
@@ -38,7 +61,14 @@
     "id": "framework-partial-support",
     "severity": "warning",
     "needs": [],
-    "when": [{ "slot": "hosting", "fact": "framework_support", "key_from_slot": "framework", "is": "partial" }],
+    "when": [
+      {
+        "slot": "hosting",
+        "fact": "framework_support",
+        "key_from_slot": "framework",
+        "is": "partial"
+      }
+    ],
     "title": "{framework} needs extra setup on {hosting}",
     "explanation": "{hosting} runs {framework} through an adapter or with some features missing. Expect extra setup and check which features work.",
     "fix": "Follow {hosting}'s official guide for {framework}, or pick a host with full support.",
@@ -47,10 +77,20 @@
   {
     "id": "live-updates-nowhere",
     "severity": "warning",
-    "needs": ["live_updates"],
+    "needs": [
+      "live_updates"
+    ],
     "when": [
-      { "slot": "hosting", "fact": "long_lived_connections", "is": false },
-      { "slot": "database", "fact": "realtime_built_in", "is": false }
+      {
+        "slot": "hosting",
+        "fact": "long_lived_connections",
+        "is": false
+      },
+      {
+        "slot": "database",
+        "fact": "realtime_built_in",
+        "is": false
+      }
     ],
     "title": "Nothing can push live updates",
     "explanation": "You want changes to show up instantly. {hosting} can't hold live connections open, and {database} has no live updates built in, so pages won't update without a refresh.",
@@ -60,10 +100,20 @@
   {
     "id": "live-updates-through-database",
     "severity": "info",
-    "needs": ["live_updates"],
+    "needs": [
+      "live_updates"
+    ],
     "when": [
-      { "slot": "hosting", "fact": "long_lived_connections", "is": false },
-      { "slot": "database", "fact": "realtime_built_in", "is": true }
+      {
+        "slot": "hosting",
+        "fact": "long_lived_connections",
+        "is": false
+      },
+      {
+        "slot": "database",
+        "fact": "realtime_built_in",
+        "is": true
+      }
     ],
     "title": "Live updates come from your database",
     "explanation": "{hosting} can't hold live connections, but {database} can push changes to browsers directly, so live updates still work.",
@@ -72,27 +122,59 @@
   {
     "id": "long-jobs-need-workers",
     "severity": "warning",
-    "needs": ["long_jobs"],
-    "when": [{ "slot": "hosting", "fact": "background_workers", "is": false }],
+    "needs": [
+      "long_jobs"
+    ],
+    "when": [
+      {
+        "slot": "hosting",
+        "fact": "background_workers",
+        "is": false
+      },
+      {
+        "slot": "jobs",
+        "filled": false
+      }
+    ],
     "title": "Long jobs can get cut off",
     "explanation": "Requests on {hosting} have a time limit and it can't run background workers, so work that takes minutes can be stopped halfway.",
-    "fix": "Pick a host with background workers, like Render or Railway, or add a job service.",
+    "fix": "Pick a host with background workers, or add a background jobs service that can run long work.",
     "builder": "Never run long tasks inside a web request. Queue them and process them in the background."
   },
   {
     "id": "schedule-needs-cron",
     "severity": "warning",
-    "needs": ["scheduled_tasks"],
-    "when": [{ "slot": "hosting", "fact": "scheduled_jobs", "is": false }],
+    "needs": [
+      "scheduled_tasks"
+    ],
+    "when": [
+      {
+        "slot": "hosting",
+        "fact": "scheduled_jobs",
+        "is": false
+      },
+      {
+        "slot": "jobs",
+        "filled": false
+      }
+    ],
     "title": "No built-in way to run things on a schedule",
     "explanation": "{hosting} has no scheduled jobs, so daily emails or nightly cleanups need another service.",
-    "fix": "Pick a host with scheduled jobs, or use a scheduler from your database provider."
+    "fix": "Pick a host with scheduled jobs, or add a background jobs service that runs on a schedule."
   },
   {
     "id": "browser-only-app-with-payments",
     "severity": "warning",
-    "needs": ["users_pay"],
-    "when": [{ "slot": "framework", "fact": "has_server_code", "is": false }],
+    "needs": [
+      "users_pay"
+    ],
+    "when": [
+      {
+        "slot": "framework",
+        "fact": "has_server_code",
+        "is": false
+      }
+    ],
     "title": "Your payment keys need a server",
     "explanation": "{framework} apps run only in the browser, and anyone can read what's in the browser. Payment secret keys must live on a server.",
     "fix": "Pick a framework with server code, like Next.js or SvelteKit, or add server functions from your backend provider.",
@@ -101,8 +183,16 @@
   {
     "id": "browser-only-app-with-ai",
     "severity": "warning",
-    "needs": ["ai_features"],
-    "when": [{ "slot": "framework", "fact": "has_server_code", "is": false }],
+    "needs": [
+      "ai_features"
+    ],
+    "when": [
+      {
+        "slot": "framework",
+        "fact": "has_server_code",
+        "is": false
+      }
+    ],
     "title": "Your AI key needs a server",
     "explanation": "{framework} apps run only in the browser, so an AI API key placed there can be copied and run up your bill.",
     "fix": "Pick a framework with server code, like Next.js or SvelteKit, or call the AI from a server function.",
@@ -111,10 +201,20 @@
   {
     "id": "free-plan-not-commercial",
     "severity": "warning",
-    "needs": ["users_pay"],
+    "needs": [
+      "users_pay"
+    ],
     "when": [
-      { "slot": "hosting", "fact": "free_plan_commercial_use", "is": false },
-      { "slot": "hosting", "fact": "free_plan_covers", "not": "none" }
+      {
+        "slot": "hosting",
+        "fact": "free_plan_commercial_use",
+        "is": false
+      },
+      {
+        "slot": "hosting",
+        "fact": "free_plan_covers",
+        "not": "none"
+      }
     ],
     "title": "{hosting}'s free plan doesn't allow charging customers",
     "explanation": "You plan to take payments, and {hosting}'s free plan is for non-commercial projects. Budget for its paid plan from launch.",
@@ -125,8 +225,19 @@
     "severity": "warning",
     "needs": [],
     "when": [
-      { "slot": "hosting", "fact": "runtime_model", "in": ["serverless", "edge"] },
-      { "slot": "database", "fact": "serverless_friendly", "is": false }
+      {
+        "slot": "hosting",
+        "fact": "runtime_model",
+        "in": [
+          "serverless",
+          "edge"
+        ]
+      },
+      {
+        "slot": "database",
+        "fact": "serverless_friendly",
+        "is": false
+      }
     ],
     "title": "Serverless code can run out of database connections",
     "explanation": "{hosting} starts many short-lived copies of your code, and each one opens its own connection to {database}. Busy moments can hit the connection limit.",
@@ -136,8 +247,16 @@
   {
     "id": "mobile-login",
     "severity": "warning",
-    "needs": ["might_go_mobile"],
-    "when": [{ "slot": "login", "fact": "mobile_sdk", "is": false }],
+    "needs": [
+      "might_go_mobile"
+    ],
+    "when": [
+      {
+        "slot": "login",
+        "fact": "mobile_sdk",
+        "is": false
+      }
+    ],
     "title": "{login} won't follow you to a phone app",
     "explanation": "You might build a phone app later, and {login} has no official mobile SDK, so you may have to switch login providers and move every account.",
     "fix": "Pick a login provider with a mobile SDK, like Supabase Auth, Clerk or Firebase Auth."
@@ -145,16 +264,32 @@
   {
     "id": "mobile-database",
     "severity": "info",
-    "needs": ["might_go_mobile"],
-    "when": [{ "slot": "database", "fact": "mobile_sdk", "is": false }],
+    "needs": [
+      "might_go_mobile"
+    ],
+    "when": [
+      {
+        "slot": "database",
+        "fact": "mobile_sdk",
+        "is": false
+      }
+    ],
     "title": "A phone app would reach {database} through your server",
     "explanation": "{database} has no official mobile SDK, so a future phone app would call your own server instead of the database directly. That's normal, just more work."
   },
   {
     "id": "large-uploads-through-server",
     "severity": "warning",
-    "needs": ["large_uploads"],
-    "when": [{ "slot": "files", "fact": "direct_uploads", "is": false }],
+    "needs": [
+      "large_uploads"
+    ],
+    "when": [
+      {
+        "slot": "files",
+        "fact": "direct_uploads",
+        "is": false
+      }
+    ],
     "title": "Big uploads will pass through your server",
     "explanation": "{files} can't take uploads straight from the browser, so large files travel through your server, where size and time limits can break them.",
     "fix": "Pick storage with direct uploads, like Supabase Storage, Cloudflare R2 or Amazon S3.",
@@ -163,8 +298,16 @@
   {
     "id": "large-uploads-go-direct",
     "severity": "info",
-    "needs": ["large_uploads"],
-    "when": [{ "slot": "files", "fact": "direct_uploads", "is": true }],
+    "needs": [
+      "large_uploads"
+    ],
+    "when": [
+      {
+        "slot": "files",
+        "fact": "direct_uploads",
+        "is": true
+      }
+    ],
     "title": "Big uploads go straight to storage",
     "explanation": "{files} lets browsers upload directly, so large files skip your server and its size limits.",
     "builder": "Upload large files straight from the browser to {files} with signed upload URLs. Do not send them through server functions."
@@ -172,26 +315,291 @@
   {
     "id": "you-handle-sales-tax",
     "severity": "info",
-    "needs": ["users_pay"],
-    "when": [{ "slot": "payments", "fact": "merchant_of_record", "is": false }],
+    "needs": [
+      "users_pay"
+    ],
+    "when": [
+      {
+        "slot": "payments",
+        "fact": "merchant_of_record",
+        "is": false
+      }
+    ],
     "title": "You handle sales tax",
     "explanation": "{payments} processes payments but isn't the legal seller, so sales tax and VAT are your job. A merchant of record, like Paddle, handles that for you."
   },
   {
     "id": "downloads-cost-money",
     "severity": "info",
-    "needs": ["uploads"],
-    "when": [{ "slot": "files", "fact": "egress_fees", "is": true }],
+    "needs": [
+      "uploads"
+    ],
+    "when": [
+      {
+        "slot": "files",
+        "fact": "egress_fees",
+        "is": true
+      }
+    ],
     "title": "Downloads cost money past the free amount",
     "explanation": "{files} charges when people download files beyond its free allowance, so popular images or videos can raise your bill."
   },
   {
     "id": "ai-paid-from-first-request",
     "severity": "info",
-    "needs": ["ai_features"],
-    "when": [{ "slot": "ai", "fact": "free_tier", "is": false }],
+    "needs": [
+      "ai_features"
+    ],
+    "when": [
+      {
+        "slot": "ai",
+        "fact": "free_tier",
+        "is": false
+      }
+    ],
     "title": "AI costs money from the first request",
     "explanation": "{ai} has no free tier, so every request is billed. Set a monthly spending limit before you launch.",
     "builder": "Set usage limits per user and handle AI provider errors and rate limits gracefully."
+  },
+  {
+    "needs": [
+      "long_jobs"
+    ],
+    "id": "long-jobs-service-too-short",
+    "severity": "warning",
+    "when": [
+      {
+        "slot": "jobs",
+        "fact": "long_running",
+        "is": false
+      }
+    ],
+    "title": "{jobs} can't run long jobs on its own",
+    "explanation": "{jobs} starts your jobs by calling your own app, so each job still has to finish inside your host's request time limit.",
+    "fix": "Pick a jobs service that runs long work itself, or a host with background workers.",
+    "builder": "Split long work into short steps that each finish well inside the host's request time limit."
+  },
+  {
+    "needs": [
+      "long_jobs"
+    ],
+    "id": "long-jobs-in-service",
+    "severity": "info",
+    "when": [
+      {
+        "slot": "jobs",
+        "fact": "long_running",
+        "is": true
+      }
+    ],
+    "title": "Long jobs run in {jobs}",
+    "explanation": "{jobs} can keep a job going for minutes or longer, so slow work doesn't have to fit inside a web request.",
+    "builder": "Run anything slow as a {jobs} job, never inside a web request."
+  },
+  {
+    "needs": [
+      "scheduled_tasks"
+    ],
+    "id": "schedule-service-without-cron",
+    "severity": "warning",
+    "when": [
+      {
+        "slot": "hosting",
+        "fact": "scheduled_jobs",
+        "is": false
+      },
+      {
+        "slot": "jobs",
+        "fact": "schedules",
+        "is": false
+      }
+    ],
+    "title": "Nothing runs your scheduled tasks",
+    "explanation": "Neither {hosting} nor {jobs} can run code on a schedule, so daily emails or nightly cleanups won't happen by themselves.",
+    "fix": "Pick a jobs service or a host with scheduled runs."
+  },
+  {
+    "needs": [
+      "scheduled_tasks"
+    ],
+    "id": "schedules-in-service",
+    "severity": "info",
+    "when": [
+      {
+        "slot": "jobs",
+        "fact": "schedules",
+        "is": true
+      }
+    ],
+    "title": "Scheduled tasks run in {jobs}",
+    "explanation": "{jobs} can start jobs on a schedule, like every morning, without a server that stays awake.",
+    "builder": "Define scheduled tasks as {jobs} schedules, and make each run safe to repeat if it retries."
+  },
+  {
+    "needs": [
+      "login"
+    ],
+    "id": "login-emails-need-a-sender",
+    "severity": "warning",
+    "when": [
+      {
+        "slot": "login",
+        "fact": "builtin_email_production_ready",
+        "is": false
+      },
+      {
+        "slot": "email",
+        "filled": false
+      }
+    ],
+    "title": "Login emails need an email service",
+    "explanation": "{login} doesn't send sign-up and password-reset emails reliably enough for a launch on its own. Without an email service, people can get stuck unable to confirm their account.",
+    "fix": "Add an email service in Email, then connect it as {login}'s email sender."
+  },
+  {
+    "needs": [
+      "login"
+    ],
+    "id": "login-emails-through-service",
+    "severity": "info",
+    "when": [
+      {
+        "slot": "login",
+        "fact": "builtin_email_production_ready",
+        "is": false
+      },
+      {
+        "slot": "email",
+        "filled": true
+      }
+    ],
+    "title": "Login emails go through {email}",
+    "explanation": "{login} can hand its sign-up and password-reset emails to {email}, which is built to deliver them.",
+    "builder": "Configure {email} as {login}'s email sender (custom SMTP or its email hook) before launch."
+  },
+  {
+    "needs": [
+      "sends_email"
+    ],
+    "id": "browser-only-app-with-email",
+    "severity": "warning",
+    "when": [
+      {
+        "slot": "framework",
+        "fact": "has_server_code",
+        "is": false
+      }
+    ],
+    "title": "Your email key needs a server",
+    "explanation": "{framework} apps run only in the browser, so an email API key placed there can be copied and used to send spam from your domain.",
+    "fix": "Pick a framework with server code, like Next.js or SvelteKit, or send email from a server function.",
+    "builder": "Send email only from server code. Never expose the email API key to the browser."
+  },
+  {
+    "needs": [],
+    "id": "mobile-app-login",
+    "severity": "warning",
+    "when": [
+      {
+        "slot": "mobile",
+        "filled": true
+      },
+      {
+        "slot": "login",
+        "fact": "mobile_sdk",
+        "is": false
+      }
+    ],
+    "title": "Your phone app can't use {login} directly",
+    "explanation": "{login} has no official mobile SDK, so signing in from the phone app means building that connection yourself or switching login providers.",
+    "fix": "Pick a login provider with a mobile SDK, like Supabase Auth, Clerk or Firebase Auth."
+  },
+  {
+    "needs": [],
+    "id": "mobile-app-database",
+    "severity": "info",
+    "when": [
+      {
+        "slot": "mobile",
+        "filled": true
+      },
+      {
+        "slot": "database",
+        "fact": "mobile_sdk",
+        "is": false
+      }
+    ],
+    "title": "Your phone app reaches {database} through your server",
+    "explanation": "{database} has no official mobile SDK, so the phone app will call your own server, which then talks to the database.",
+    "builder": "Give the phone app a small API on the server instead of database credentials. Phone apps can be unpacked, so never ship database keys inside one."
+  },
+  {
+    "needs": [],
+    "id": "mobile-react-shared",
+    "severity": "info",
+    "when": [
+      {
+        "slot": "framework",
+        "fact": "uses_react",
+        "is": true
+      },
+      {
+        "slot": "mobile",
+        "fact": "shares_react_skills",
+        "is": true
+      }
+    ],
+    "title": "Your web and phone apps share React skills",
+    "explanation": "{framework} and {mobile} both use React, so what you learn building one screen carries over to the other."
+  },
+  {
+    "needs": [],
+    "id": "mobile-react-split",
+    "severity": "info",
+    "when": [
+      {
+        "slot": "framework",
+        "fact": "uses_react",
+        "is": true
+      },
+      {
+        "slot": "mobile",
+        "fact": "shares_react_skills",
+        "is": false
+      }
+    ],
+    "title": "Two different ways of building screens",
+    "explanation": "{framework} uses React and {mobile} doesn't, so the web app and the phone app are built with different tools and languages."
+  },
+  {
+    "needs": [],
+    "id": "ios-builds-need-a-mac",
+    "severity": "info",
+    "when": [
+      {
+        "slot": "mobile",
+        "fact": "needs_mac_for_ios",
+        "is": true
+      }
+    ],
+    "title": "Building the iPhone version needs a Mac",
+    "explanation": "With {mobile}, building and publishing the iPhone app requires a Mac with Xcode. The Android version doesn't."
+  },
+  {
+    "id": "mobile-app-store-fees",
+    "severity": "info",
+    "needs": [],
+    "when": [
+      {
+        "slot": "mobile",
+        "filled": true
+      }
+    ],
+    "title": "Publishing a phone app costs money",
+    "explanation": "To publish on the App Store you join the Apple Developer Program for $99 a year, and Google Play charges a one-time $25 registration fee. These are separate from {mobile}.",
+    "sources": [
+      "https://developer.apple.com/programs/enroll/",
+      "https://support.google.com/googleplay/android-developer/answer/6112435?hl=en"
+    ]
   }
 ]

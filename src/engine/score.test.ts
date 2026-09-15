@@ -50,6 +50,14 @@ describe("recommend", () => {
     }
   });
 
+  it("stays exact when rules check slots outside the search", () => {
+    const plan = input({ saves_data: "yes", login: "yes", long_jobs: "yes", scheduled_tasks: "yes", sends_email: "yes" }, { priority: "launch_fast" });
+    const pinnedSets: Selection[] = [{}, { jobs: "jobs-caller" }, { mobile: "mobile-other" }, { email: "" }, { jobs: "jobs-durable", mobile: "mobile-react" }];
+    for (const pinned of pinnedSets) {
+      expect(recommend(index, plan, pinned).score.total).toBeCloseTo(bruteForceBest(plan, pinned), 9);
+    }
+  });
+
   it("changes the host when the audience outgrows a free plan", () => {
     // Just you: both hosts are free, so the cheaper paid plan wins.
     expect(recommend(index, input({}, { size: "just_me" })).selection.hosting).toBe("host-server");

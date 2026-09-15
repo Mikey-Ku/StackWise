@@ -41,6 +41,13 @@
       "source": "https://supabase.com/ui/docs/react/password-based-auth",
       "retrieved": "2026-09-15",
       "status": "draft"
+    },
+    "builtin_email_production_ready": {
+      "value": false,
+      "note": "Built-in sending is capped at 2 emails per hour and is explicitly not meant for production; Supabase says to add custom SMTP.",
+      "source": "https://supabase.com/docs/guides/auth/auth-smtp",
+      "retrieved": "2026-09-15",
+      "status": "draft"
     }
   },
   "setup": [

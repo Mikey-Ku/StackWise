@@ -1,0 +1,65 @@
+{
+  "id": "trigger-dev",
+  "name": "Trigger.dev",
+  "provider": "trigger-dev",
+  "slots": ["jobs"],
+  "summary": "Trigger.dev is a background job platform where you write long-running tasks as normal async code, with built-in retries and scheduling.",
+  "website": "https://trigger.dev",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free plan gives $5 of usage credit a month rather than a fixed run count; a short task costs a fraction of a cent, so it stretches to roughly thousands of runs.",
+      "source": "https://trigger.dev/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 10,
+      "note": "Hobby plan starts at $10/month for $10 of included usage credit and 50 concurrent runs.",
+      "source": "https://trigger.dev/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "The platform is open source (Apache 2.0) and self-hostable, but tasks are written with Trigger.dev's own task() and schedules.task() SDK.",
+      "source": "https://trigger.dev/docs/open-source-self-hosting",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "The @trigger.dev/sdk package is TypeScript-native and is the primary, documented way to define tasks.",
+      "source": "https://trigger.dev/docs/quick-start",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "long_running": {
+      "value": true,
+      "note": "Tasks execute indefinitely by default, with no forced cutoff, unless you opt into a maxDuration setting.",
+      "source": "https://trigger.dev/docs/tasks/overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "schedules": {
+      "value": true,
+      "note": "Cron-based scheduled tasks are built in via schedules.task(), though the free plan can't fire more than once an hour.",
+      "source": "https://trigger.dev/docs/tasks/scheduled",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Sign up at Trigger.dev and create a new project.", "env": [], "source": "https://trigger.dev/docs/quick-start" },
+    { "step": "Run npx trigger.dev@latest init in your project to connect it and generate a trigger folder.", "env": [], "source": "https://trigger.dev/docs/quick-start" },
+    { "step": "Install the SDK (@trigger.dev/sdk) and write your first task with task() or schedules.task().", "env": [], "source": "https://trigger.dev/docs/quick-start" },
+    { "step": "Create an API key in the dashboard and set it as TRIGGER_SECRET_KEY in your environment file.", "env": ["TRIGGER_SECRET_KEY"], "source": "https://trigger.dev/docs/quick-start" },
+    { "step": "Run npx trigger.dev@latest dev locally, then deploy with npx trigger.dev@latest deploy.", "env": [], "source": "https://trigger.dev/docs/quick-start" }
+  ],
+  "builder_notes": [
+    "Define scheduled jobs with schedules.task() and one-off background jobs with task(); trigger them from your app with tasks.trigger().",
+    "Keep TRIGGER_SECRET_KEY server-side only; it should never reach client-side code.",
+    "Free-plan cron schedules can't fire more than once per hour, so design around that if you need finer-grained timing."
+  ]
+}

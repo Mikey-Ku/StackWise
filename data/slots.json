@@ -4,7 +4,14 @@
     "label": "Framework",
     "verb": "built with",
     "empty_hint": "What your app is built with",
-    "required_facts": ["free_plan_covers", "first_paid_usd_month", "portability", "language", "has_server_code"],
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "language",
+      "has_server_code",
+      "uses_react"
+    ],
     "build_task": "Create the {option} app and push it to a GitHub repository."
   },
   {
@@ -48,7 +55,14 @@
     "label": "Login",
     "verb": "logs people in with",
     "empty_hint": "How people sign up and sign in",
-    "required_facts": ["free_plan_covers", "first_paid_usd_month", "portability", "mobile_sdk", "prebuilt_ui"],
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "mobile_sdk",
+      "prebuilt_ui",
+      "builtin_email_production_ready"
+    ],
     "build_task": "Add sign-up, sign-in and sign-out with {option}, and protect pages that need a logged-in user."
   },
   {
@@ -56,7 +70,13 @@
     "label": "File storage",
     "verb": "keeps files in",
     "empty_hint": "Where uploaded photos and files go",
-    "required_facts": ["free_plan_covers", "first_paid_usd_month", "portability", "direct_uploads", "egress_fees"],
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "direct_uploads",
+      "egress_fees"
+    ],
     "build_task": "Add uploads with {option}, including size limits and who is allowed to see each file."
   },
   {
@@ -64,7 +84,14 @@
     "label": "Payments",
     "verb": "takes payments with",
     "empty_hint": "How people pay you",
-    "required_facts": ["free_plan_covers", "first_paid_usd_month", "portability", "merchant_of_record", "subscriptions", "fee_summary"],
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "merchant_of_record",
+      "subscriptions",
+      "fee_summary"
+    ],
     "build_task": "Add checkout with {option} and handle its webhooks so paid access updates automatically."
   },
   {
@@ -72,7 +99,57 @@
     "label": "AI",
     "verb": "calls AI from",
     "empty_hint": "Which AI model provider your features use",
-    "required_facts": ["free_plan_covers", "first_paid_usd_month", "portability", "free_tier", "sdk_typescript", "cheap_model_price"],
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "free_tier",
+      "sdk_typescript",
+      "cheap_model_price"
+    ],
     "build_task": "Add the AI features with {option}, calling it from server code with a spending limit set."
+  },
+  {
+    "id": "jobs",
+    "label": "Background jobs",
+    "verb": "runs jobs with",
+    "empty_hint": "Work that runs later, on a schedule, or for a long time",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "sdk_typescript",
+      "long_running",
+      "schedules"
+    ],
+    "build_task": "Move slow and scheduled work into {option}: reminders, cleanups and anything that takes more than a few seconds."
+  },
+  {
+    "id": "email",
+    "label": "Email",
+    "verb": "sends email with",
+    "empty_hint": "Confirmations, receipts and password resets",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "sdk_typescript"
+    ],
+    "build_task": "Send transactional email with {option} from a verified domain, from server code only."
+  },
+  {
+    "id": "mobile",
+    "label": "Phone app",
+    "verb": "has a phone app built with",
+    "empty_hint": "An iPhone and Android app that shares your backend",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "language",
+      "shares_react_skills",
+      "needs_mac_for_ios"
+    ],
+    "build_task": "Build the phone app with {option}, using the same login and database as the web app."
   }
 ]

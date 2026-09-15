@@ -31,7 +31,14 @@ describe("data", () => {
     const rec = recommend(index, { answers, size: "up_to_1000", priority: "spend_zero" });
     const elapsed = performance.now() - started;
     expect(rec.results.filter((r) => r.level === "blocked")).toEqual([]);
-    expect(Object.values(rec.selection).filter(Boolean).length).toBe(catalog.slots.length);
+    // Background jobs and the phone app are optional parts; every needed part gets filled.
+    expect(Object.values(rec.selection).filter(Boolean).length).toBe(rec.needed.length);
+    expect(rec.needed).not.toContain("jobs");
     expect(elapsed).toBeLessThan(1500);
+  });
+
+  it("has teaching content for every part and every term it uses", () => {
+    for (const slot of catalog.slots) expect(catalog.learn.slots[slot.id], slot.id).toBeDefined();
+    expect(Object.keys(catalog.learn.terms).length).toBeGreaterThanOrEqual(30);
   });
 });
