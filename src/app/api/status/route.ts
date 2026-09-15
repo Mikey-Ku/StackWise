@@ -5,5 +5,5 @@ import { aiLimitPerHour } from "@/ai/rate-limit";
 export const dynamic = "force-dynamic";
 
 export function GET() {
-  return NextResponse.json({ ai: aiEnabled(), model: AI_MODEL, limitPerHour: aiLimitPerHour() });
+  return NextResponse.json({ ai: aiEnabled(), model: AI_MODEL, limitPerHour: aiLimitPerHour(), root: process.cwd() });
 }

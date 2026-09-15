@@ -26,7 +26,18 @@ pnpm eval:plain-llm   # how often a plain LLM picks a stack that breaks a rule
 pnpm check:sources    # reread every fact's source page with Claude; --apply to update
 pnpm draft:option -- --id resend --name "Resend" --slot email --website https://resend.com
 pnpm build:logos      # refetch logos into public/logos; -- --only <id,id> for a few
+pnpm mcp              # WhyStack's MCP server over stdio (exported projects start it themselves)
 ```
+
+## Pair with Claude
+
+WhyStack is also an MCP server, so Claude uses its rules instead of guessing. Click **Pair with Claude** in the app, then add it to Claude Code once:
+
+```bash
+claude mcp add --transport http --scope user whystack http://localhost:4310/api/mcp
+```
+
+Claude can check stacks, compare options, estimate costs and change the plan you share; its changes appear on the canvas with its reasons, and Undo reverses them. **Export project** gives Claude Code a ready project: tasks, an agent per part, `/next-step`, and an `.mcp.json` that starts WhyStack's server. See [docs/MCP.md](docs/MCP.md).
 
 ## What it does
 
@@ -51,7 +62,8 @@ pnpm build:logos      # refetch logos into public/logos; -- --only <id,id> for a
 - Cost at every audience size, and a line for each part of the plan, so you see each free plan run out before it happens. Domains are counted by the year, app store accounts as yearly and one-time fees, hosting shows the traffic each plan includes, and one subscription that covers several parts (like a Supabase plan) is counted once.
 
 **Leaving with a plan**
-- Spec pack: SPEC.md, SETUP.md, PROMPT.txt, CLAUDE.md or AGENTS.md for your builder, and DECISIONS.md with the reasoning for every part. Environment variable names follow your framework.
+- Project pack, as a zip: SPEC.md, SETUP.md, TASKS.md, DECISIONS.md with the reasoning for every part, the plan file, and PROMPT.txt, AGENTS.md or CLAUDE.md for your builder. For Claude Code it adds `.mcp.json`, a build agent per part, a stack guard, a setup guide, a reviewer and a `/next-step` skill. Environment variable names follow your framework.
+- Pair with Claude through WhyStack's MCP server: 11 tools, a shared plan, and a Claude tab showing what Claude did.
 - Build checklist: every account, key and build step in order, checked off as you go.
 - Copy the reasoning for one part, to paste into a proposal or pull request.
 - Several saved plans, share links (the whole plan lives in the link, no account needed), and plan files to export and import.
@@ -85,10 +97,11 @@ public/logos/         the logo files, committed
 src/engine/           the logic, no React, fully tested
 src/ai/               Claude pre-fill and explanations, optional
 src/components/       the workspace UI
-src/app/api/          status, prefill and explain routes
+src/app/api/          status, prefill, explain, mcp and pair routes
+src/mcp/              the MCP server, its stdio command, and shared plans in .whystack/
 scripts/              evals, source checker, option drafter, logo fetcher
 evals/                eval cases (written by a person) and how to run them
-docs/                 DECISIONS.md, LEARNING.md, DATA.md
+docs/                 DECISIONS.md, LEARNING.md, DATA.md, MCP.md
 ```
 
 Start with [docs/LEARNING.md](docs/LEARNING.md) for how it works, and [docs/DECISIONS.md](docs/DECISIONS.md) for why it's shaped this way.

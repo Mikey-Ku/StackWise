@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { decodeSharedPlan, staleFacts, todayIso, type Catalog, type SlotId } from "@/engine";
 import { ChecklistPanel } from "./ChecklistPanel";
+import { ClaudePanel, PairDialog } from "./PairDialog";
 import { CompareDialog, type CompareRequest } from "./CompareDialog";
 import { Inspector } from "./Inspector";
 import { LearnPanel } from "./LearnPanel";
@@ -12,15 +13,17 @@ import { PlanCanvas } from "./PlanCanvas";
 import { PlanMenu } from "./PlanMenu";
 import { Planner, type AiStatus } from "./Planner";
 import { SpecDialog } from "./SpecDialog";
+import { usePairing, type ClaudeActivity } from "./usePairing";
 import { newId, usePlans } from "./usePlans";
 import { cx } from "./ui";
 
-type Tab = "options" | "details" | "learn" | "checklist";
+type Tab = "options" | "details" | "learn" | "checklist" | "claude";
 const TABS: { id: Tab; label: string }[] = [
   { id: "options", label: "Options" },
   { id: "details", label: "Details" },
   { id: "learn", label: "Learn" },
   { id: "checklist", label: "Checklist" },
+  { id: "claude", label: "Claude" },
 ];
 
 export default function Workspace({ catalog, problems }: { catalog: Catalog; problems: string[] }) {
@@ -34,6 +37,12 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const [specDate, setSpecDate] = useState<string | null>(null);
   const [compare, setCompare] = useState<CompareRequest | null>(null);
   const [ai, setAi] = useState<AiStatus | null>(null);
+  const [pairOpen, setPairOpen] = useState(false);
+  const onClaudeChange = useCallback((appName: string, change: ClaudeActivity | undefined) => {
+    const what = change ? `${change.summary}${change.changes.length ? `: ${change.changes.slice(0, 2).join("; ")}${change.changes.length > 2 ? ` (+${change.changes.length - 2})` : ""}` : ""}` : "updated the plan";
+    setToast(`Claude changed ${appName.trim() || "your plan"}. ${what}. Undo reverses it.`);
+  }, []);
+  const pairing = usePairing({ history, dispatch, onClaudeChange });
   const leftRef = useRef<HTMLElement>(null);
   const today = useMemo(() => todayIso(), []);
   const stale = useMemo(() => staleFacts(catalog, today).length, [catalog, today]);
@@ -111,6 +120,9 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           </span>
         </div>
         <div className="mk-row mk-gap-3 ws-top__right">
+          <button type="button" className={cx("mk-btn mk-sm", pairing.enabled ? "mk-btn--secondary ws-paired" : "mk-btn--ghost")} onClick={() => setPairOpen(true)} title="Plan together with Claude Code through WhyStack's MCP server">
+            {pairing.enabled ? "Paired with Claude" : "Pair with Claude"}
+          </button>
           <span className={cx("mk-badge", ai?.ai ? "mk-badge--accent" : "ws-badge--unknown")} title={ai?.ai ? `Model: ${ai.model}` : "Set ANTHROPIC_API_KEY in .env.local to turn on AI reading and explanations."}>
             {ai === null ? "AI ..." : ai.ai ? "AI on" : "AI off"}
           </span>
@@ -118,7 +130,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             {verified}/{factCount} facts reviewed · {researched}/{catalog.options.length} options researched{stale ? ` · ${stale} may be out of date` : ""}
           </span>
           <button type="button" className="mk-btn mk-btn--primary mk-sm" disabled={plan.step !== "plan"} onClick={() => setSpecDate(todayIso())}>
-            Export spec pack
+            Export project
           </button>
         </div>
       </header>
@@ -166,6 +178,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             )}
             {tab === "learn" && <LearnPanel catalog={catalog} focus={selectedSlot} />}
             {tab === "checklist" && <ChecklistPanel model={model} onToast={setToast} />}
+            {tab === "claude" && <ClaudePanel activity={pairing.activity} enabled={pairing.enabled} onOpenPairing={() => setPairOpen(true)} />}
           </div>
         </aside>
       </div>
@@ -176,7 +189,8 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         </div>
       )}
 
-      <SpecDialog model={model} generatedOn={specDate} onClose={() => setSpecDate(null)} />
+      <SpecDialog model={model} generatedOn={specDate} whystackRoot={ai?.root} onClose={() => setSpecDate(null)} onToast={setToast} />
+      <PairDialog open={pairOpen} enabled={pairing.enabled} reachable={pairing.reachable} onToggle={pairing.setEnabled} onClose={() => setPairOpen(false)} onToast={setToast} />
       <CompareDialog model={model} request={compare} today={today} onClose={() => setCompare(null)} onToast={setToast} />
     </div>
   );

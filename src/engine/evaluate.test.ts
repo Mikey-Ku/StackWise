@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluatePlan, worstLevel } from "./evaluate";
+import { fillTemplate, evaluatePlan, worstLevel } from "./evaluate";
 import { fixtureIndex, fixtureProductRules, input } from "./test-fixtures";
 
 const index = fixtureIndex();
@@ -112,6 +112,8 @@ describe("rules that check whether a slot is filled", () => {
   it("keeps a self-run scraper out of serverless functions", () => {
     const serverless = evaluatePlan(index, { hosting: "host-serverless", scraping: "scrape-lib" }, input());
     expect(find(serverless, "self-run-scraper-on-serverless")?.level).toBe("warning");
+    expect(find(evaluatePlan(index, { hosting: "host-server", domain: "domain-cheap" }, input()), "own-domain-needs-paid-host")?.explanation).toContain("domain-cheap's domain");
+    expect(fillTemplate(index, { hosting: "host-serverless" }, "{hosting}'s free plan")).toBe("host-serverless' free plan");
     expect(find(evaluatePlan(index, { hosting: "host-server", scraping: "scrape-lib" }, input()), "self-run-scraper-on-serverless")).toBeUndefined();
     expect(find(evaluatePlan(index, { hosting: "host-serverless", scraping: "scrape-api" }, input()), "self-run-scraper-on-serverless")).toBeUndefined();
     expect(find(evaluatePlan(index, { scraping: "scrape-api" }, input({ scrapes_sites: "yes" })), "scraper-javascript-costs-extra")?.level).toBe("info");

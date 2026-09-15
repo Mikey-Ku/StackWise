@@ -1,7 +1,8 @@
 "use client";
 
+import { strToU8, zipSync } from "fflate";
 import { useState, type CSSProperties } from "react";
-import type { CatalogIndex, FactDef, FactValue, Level, Logo as LogoFile, Stat } from "@/engine";
+import type { Level, Logo as LogoFile, Stat } from "@/engine";
 
 export type Verdict = Level | "works";
 
@@ -109,43 +110,6 @@ export function cx(...parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(" ");
 }
 
-const VALUE_LABELS: Record<string, string> = {
-  none: "None",
-  just_me: "Just you",
-  up_to_100: "Up to 100 people",
-  up_to_1000: "Up to 1,000 people",
-  more: "More than 1,000 people",
-  high: "Easy",
-  medium: "Some work",
-  low: "Hard",
-  serverless: "Serverless functions",
-  server: "Always-on server",
-  edge: "Edge functions",
-  static: "Static files only",
-  paid_addon: "Paid add-on",
-  included: "Included",
-  hosted: "Hosted for you",
-  local_file: "A file on your server",
-  relational: "Tables (relational)",
-  document: "Documents",
-  key_value: "Keys and values",
-  full: "full",
-  partial: "partial",
-};
-
-/** A fact value in words a beginner reads. */
-export function formatFactValue(index: CatalogIndex, def: FactDef | undefined, value: FactValue): string {
-  if (value === null) return def?.type === "number_or_null" ? "No monthly plan" : "Not verified";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (typeof value === "number") return def?.type === "number_or_null" ? `$${value}/month` : String(value);
-  if (typeof value === "object") {
-    return Object.entries(value)
-      .map(([id, level]) => `${index.optionsById.get(id)?.name ?? id}: ${VALUE_LABELS[level] ?? level}`)
-      .join(", ");
-  }
-  return VALUE_LABELS[value] ?? value;
-}
-
 export async function copyText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);
@@ -153,6 +117,17 @@ export async function copyText(text: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** Many files as one zip inside a folder, so dotfiles like .mcp.json and folders like .claude survive the download. */
+export function downloadZip(name: string, folder: string, files: { name: string; content: string }[]): void {
+  const zipped = zipSync(Object.fromEntries(files.map((f) => [`${folder}/${f.name}`, strToU8(f.content)])), { level: 6 });
+  const url = URL.createObjectURL(new Blob([new Uint8Array(zipped)], { type: "application/zip" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function downloadText(name: string, content: string, type = "text/plain;charset=utf-8"): void {

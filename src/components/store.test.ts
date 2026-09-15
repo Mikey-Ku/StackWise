@@ -83,6 +83,20 @@ describe("plan store", () => {
     expect(h.store.order).toEqual(["p9", "p1"]);
   });
 
+  it("applies Claude's change to the open plan as one undoable step, and quietly to other plans", () => {
+    const h = run(start(), { type: "applyPrefill", by: "keywords", features: [], guesses: { uploads: { answer: "yes", evidence: "photo" } } });
+    const plan = { ...toSharedPlan(active(h)), answers: { uploads: "yes" as const, sends_email: "yes" as const }, pinned: { email: "resend" } };
+    const changed = run(h, { type: "applyRemote", id: "p1", plan });
+    expect(active(changed)).toMatchObject({ answers: { uploads: "yes", sends_email: "yes" }, pinned: { email: "resend" }, guesses: {}, step: "plan" });
+    expect(active(run(changed, { type: "undo" })).pinned).toEqual({});
+
+    const two = run(changed, { type: "newPlan", id: "p2", now: NOW });
+    const quiet = run(two, { type: "applyRemote", id: "p1", plan: { ...plan, appName: "Renamed by Claude" } });
+    expect(quiet.store.plans.p1.appName).toBe("Renamed by Claude");
+    expect(quiet.past).toEqual(two.past);
+    expect(run(quiet, { type: "applyRemote", id: "missing", plan })).toBe(quiet);
+  });
+
   it("tracks checklist items", () => {
     const h = run(start(), { type: "toggleCheck", itemId: "setup:render:0" }, { type: "toggleCheck", itemId: "build:hosting:render" }, { type: "toggleCheck", itemId: "setup:render:0" });
     expect(active(h).checked).toEqual({ "setup:render:0": false, "build:hosting:render": true });
