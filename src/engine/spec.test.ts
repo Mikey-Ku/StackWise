@@ -55,6 +55,6 @@ describe("spec pack", () => {
   });
 
   it("never writes an em dash", () => {
-    for (const file of buildSpecPack(index, plan, selection, details)) expect(file.content).not.toContain("—");
+    for (const file of buildSpecPack(index, plan, selection, details)) expect(file.content).not.toContain("\u2014");
   });
 });

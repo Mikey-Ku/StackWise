@@ -33,7 +33,7 @@ describe("AI pre-fill", () => {
         { need: "live_updates", answer: "unclear", evidence: "" },
         { need: "users_pay", answer: "no", evidence: "Customers pay a deposit" },
       ],
-      features: ["Book a time — as a guest", "Pay a deposit", "Pay a deposit", " "],
+      features: ["Book a time \u2014 as a guest", "Pay a deposit", "Pay a deposit", " "],
     });
     expect(result.guesses).toEqual({
       users_pay: { answer: "yes", evidence: "Customers pay a deposit" },
@@ -87,11 +87,11 @@ describe("plan explanation", () => {
     const text = templateSummary(brief);
     expect(text).toContain("Fade is planned with");
     expect(text).toContain("your data would disappear");
-    expect(text).not.toContain("—");
+    expect(text).not.toContain("\u2014");
   });
 
   it("asks the model to use only the brief, and strips em dashes from what comes back", async () => {
-    const { client, calls } = fakeClient({ stop_reason: "end_turn", content: [{ type: "text", text: "Fade runs on host — simple." }] });
+    const { client, calls } = fakeClient({ stop_reason: "end_turn", content: [{ type: "text", text: "Fade runs on host \u2014 simple." }] });
     expect(await aiExplain(client, brief)).toBe("Fade runs on host, simple.");
     expect(String(calls[0].system)).toContain("Use only the plan below");
     expect(JSON.stringify(calls[0].messages)).toContain("Your data would disappear");
@@ -116,6 +116,6 @@ describe("AI helpers", () => {
   });
 
   it("replaces em dashes with commas", () => {
-    expect(withoutEmDashes("fast — and cheap")).toBe("fast, and cheap");
+    expect(withoutEmDashes("fast \u2014 and cheap")).toBe("fast, and cheap");
   });
 });

@@ -91,7 +91,12 @@ function weighted(scores: Record<Criterion, number>, weights: Weights): number {
   return CRITERIA.reduce((sum, c) => sum + scores[c] * weights[c], 0);
 }
 
-export function resultAdjustment(index: CatalogIndex, level: Level): number {
+/**
+ * How a verdict moves a plan's score. Only a product rule's note is a perk worth a bonus (two
+ * services built to work together). A capability rule's note is neutral: some are good news, some
+ * are costs to know about ("downloads cost money"), and none should tip a ranking on their own.
+ */
+export function resultAdjustment(index: CatalogIndex, level: Level, source: CheckResult["source"]): number {
   const { penalties } = index.catalog.planning;
   switch (level) {
     case "blocked":
@@ -103,7 +108,7 @@ export function resultAdjustment(index: CatalogIndex, level: Level): number {
     case "unknown":
       return -penalties.unknown;
     case "info":
-      return penalties.info_bonus;
+      return source === "product" ? penalties.info_bonus : 0;
   }
 }
 
@@ -137,7 +142,7 @@ export function scorePlan(index: CatalogIndex, selection: Selection, input: Plan
     total += w;
   }
   const saved = accountsSaved(index, selection);
-  const adjustments = results.filter((r) => r.source !== "coverage").reduce((sum, r) => sum + resultAdjustment(index, r.level), 0);
+  const adjustments = results.filter((r) => r.source !== "coverage").reduce((sum, r) => sum + resultAdjustment(index, r.level, r.source), 0);
   total += saved * weights.accounts + adjustments;
   return { total, perSlot, accountsSaved: saved, adjustments };
 }
@@ -189,7 +194,7 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
       for (const rule of unaryRules) {
         if (searched(rule)[0] !== slot) continue;
         const result = evaluateCapabilityRule(index, selection, input, rule);
-        if (result) value += resultAdjustment(index, result.level);
+        if (result) value += resultAdjustment(index, result.level, result.source);
       }
       unary.set(`${slot}:${option.id}`, value);
     }
@@ -210,11 +215,11 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
             const slots = searched(rule);
             if (slots[0] !== a || slots[1] !== b) continue;
             const result = evaluateCapabilityRule(index, selection, input, rule);
-            if (result) value += resultAdjustment(index, result.level);
+            if (result) value += resultAdjustment(index, result.level, result.source);
           }
           for (const rule of index.catalog.productRules) {
             const result = evaluateProductRule(index, selection, input, rule);
-            if (result) value += resultAdjustment(index, result.level);
+            if (result) value += resultAdjustment(index, result.level, result.source);
           }
           pairValue.set(`${a}:${oa.id}|${b}:${ob.id}`, value);
           max = Math.max(max, value);
@@ -360,7 +365,7 @@ export function closeCalls(index: CatalogIndex, input: PlanInput, recommendation
     if (decidedBy === "checks") {
       const chosenResults = recommendation.results.filter((r) => r.slots.includes(slot));
       const problems = (results: CheckResult[]) => results.filter((r) => r.level !== "info").length;
-      const extraPerk = chosenResults.find((r) => r.level === "info" && !runner.results.some((q) => q.ruleId === r.ruleId));
+      const extraPerk = chosenResults.find((r) => r.level === "info" && r.source === "product" && !runner.results.some((q) => q.ruleId === r.ruleId));
       if (problems(chosenResults) < problems(runner.results)) decidedBy = "fewer_problems";
       else if (extraPerk) {
         decidedBy = "perks";

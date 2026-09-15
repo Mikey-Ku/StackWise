@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildChecklist, checklistProgress } from "./checklist";
+import { adaptEnvName, buildChecklist, checklistProgress } from "./checklist";
 import { costBySize } from "./cost";
 import { buildDecisionRecord, slotReasoning } from "./decisions";
 import { decodeSharedPlan, encodeSharedPlan, type SharedPlan } from "./share";
@@ -36,6 +36,13 @@ describe("checklist", () => {
   it("gives an unresearched option a quickstart step instead of nothing", () => {
     const list = buildChecklist(index, { hosting: "host-partial" });
     expect(list.setup[0].text).toContain("official quickstart");
+  });
+
+  it("renames browser-visible variables for the plan's framework", () => {
+    expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "sveltekit")).toBe("PUBLIC_SUPABASE_URL");
+    expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "react-vite")).toBe("VITE_SUPABASE_URL");
+    expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "nextjs")).toBe("NEXT_PUBLIC_SUPABASE_URL");
+    expect(adaptEnvName("STRIPE_SECRET_KEY", "sveltekit")).toBe("STRIPE_SECRET_KEY");
   });
 
   it("counts progress from checked ids", () => {
@@ -97,7 +104,7 @@ describe("decision record", () => {
     const order = ["## Framework", "## Database", "## Payments", "## Hosting"].map((h) => record.indexOf(h));
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(record).not.toContain("—");
+    expect(record).not.toContain("\u2014");
   });
 
   it("returns nothing for an empty slot", () => {

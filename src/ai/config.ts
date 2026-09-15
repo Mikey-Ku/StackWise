@@ -44,5 +44,5 @@ export function describeAiError(error: unknown): string {
 
 /** Michael's writing rule, enforced on anything a model writes before it reaches the page. */
 export function withoutEmDashes(text: string): string {
-  return text.replace(/\s*—\s*/g, ", ");
+  return text.replace(/\s*\u2014\s*/g, ", ");
 }

@@ -102,7 +102,7 @@ async function main() {
     if (!valid || !sourced) unverified.push(item.key);
     facts[item.key] = {
       value: valid ? value : null,
-      note: item.note.replace(/\s*—\s*/g, ", ") || "Couldn't be verified.",
+      note: item.note.replace(/\s*\u2014\s*/g, ", ") || "Couldn't be verified.",
       source: sourced ? item.source : website,
       retrieved: today,
       status: "draft",
@@ -118,12 +118,12 @@ async function main() {
     name,
     provider: id,
     slots: [slot],
-    summary: draft.summary.replace(/\s*—\s*/g, ", "),
+    summary: draft.summary.replace(/\s*\u2014\s*/g, ", "),
     website,
     coverage: missing.length || nullFacts.length || unverified.length ? "partial" : "full",
     facts,
     setup: draft.setup.filter((s) => s.step.trim()),
-    builder_notes: draft.builder_notes.map((n) => n.replace(/\s*—\s*/g, ", ")),
+    builder_notes: draft.builder_notes.map((n) => n.replace(/\s*\u2014\s*/g, ", ")),
   });
 
   const problems = checkCatalog({ ...catalog, options: [...catalog.options.filter((o) => o.id !== id), option] }).filter((p) => p.startsWith(`${id}:`));

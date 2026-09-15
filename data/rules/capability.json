@@ -572,6 +572,25 @@
     "explanation": "{framework} uses React and {mobile} doesn't, so the web app and the phone app are built with different tools and languages."
   },
   {
+    "id": "mobile-react-split-web",
+    "severity": "info",
+    "needs": [],
+    "when": [
+      {
+        "slot": "framework",
+        "fact": "uses_react",
+        "is": false
+      },
+      {
+        "slot": "mobile",
+        "fact": "shares_react_skills",
+        "is": true
+      }
+    ],
+    "title": "Two different ways of building screens",
+    "explanation": "{mobile} uses React and {framework} doesn't, so the web app and the phone app are built with different tools."
+  },
+  {
     "needs": [],
     "id": "ios-builds-need-a-mac",
     "severity": "info",

@@ -9,3 +9,5 @@ export * from "./checklist";
 export * from "./decisions";
 export * from "./share";
 export * from "./staleness";
+export * from "./text";
+export * from "./summary";
