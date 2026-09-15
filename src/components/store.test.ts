@@ -1,0 +1,111 @@
+import { describe, expect, it } from "vitest";
+import { initialStore, migrate, reduce, toSharedPlan, type History, type StoreAction } from "./store";
+
+const NOW = "2026-09-15T12:00:00.000Z";
+
+function start(): History {
+  return { store: initialStore("p1", NOW), past: [], future: [] };
+}
+
+function run(history: History, ...actions: StoreAction[]): History {
+  return actions.reduce((h, a) => reduce(h, a, NOW), history);
+}
+
+const active = (h: History) => h.store.plans[h.store.activeId];
+
+describe("plan store", () => {
+  it("applies a pre-fill as marked guesses without overwriting confirmed answers", () => {
+    const h = run(
+      start(),
+      { type: "answer", needId: "login", answer: "no" },
+      {
+        type: "applyPrefill",
+        by: "ai",
+        features: ["Book a time", "Pay a deposit"],
+        guesses: { login: { answer: "yes", evidence: "log in" }, users_pay: { answer: "yes", evidence: "pay a deposit" } },
+      },
+    );
+    const plan = active(h);
+    expect(plan.answers).toEqual({ login: "no", users_pay: "yes" });
+    expect(plan.guesses).toEqual({ users_pay: { answer: "yes", evidence: "pay a deposit", by: "ai" } });
+    expect(plan.features).toBe("Book a time\nPay a deposit");
+    expect(plan.step).toBe("confirm");
+  });
+
+  it("drops an old guess that a new reading doesn't repeat", () => {
+    const h = run(
+      start(),
+      { type: "applyPrefill", by: "keywords", features: [], guesses: { uploads: { answer: "yes", evidence: "photo" } } },
+      { type: "applyPrefill", by: "ai", features: [], guesses: { users_pay: { answer: "yes", evidence: "pay" } } },
+    );
+    expect(active(h).answers).toEqual({ users_pay: "yes" });
+  });
+
+  it("confirms a guess when it's answered, and all guesses when the plan is built", () => {
+    const h = run(
+      start(),
+      { type: "applyPrefill", by: "keywords", features: [], guesses: { login: { answer: "yes", evidence: "log in" }, uploads: { answer: "yes", evidence: "photo" } } },
+      { type: "answer", needId: "login", answer: "yes" },
+    );
+    expect(Object.keys(active(h).guesses)).toEqual(["uploads"]);
+    expect(active(run(h, { type: "confirmAll" })).guesses).toEqual({});
+  });
+
+  it("undoes and redoes plan changes but not typing", () => {
+    let h = run(start(), { type: "setText", field: "appName", value: "Fade" }, { type: "place", slot: "hosting", optionId: "render" }, { type: "clearSlot", slot: "database" });
+    expect(h.past).toHaveLength(2);
+    h = run(h, { type: "undo" });
+    expect(active(h).pinned).toEqual({ hosting: "render" });
+    expect(active(h).appName).toBe("Fade");
+    h = run(h, { type: "undo" }, { type: "undo" });
+    expect(active(h).pinned).toEqual({});
+    h = run(h, { type: "redo" });
+    expect(active(h).pinned).toEqual({ hosting: "render" });
+    h = run(h, { type: "autoPick", slot: "hosting" });
+    expect(h.future).toEqual([]);
+  });
+
+  it("keeps several plans, and deleting the last one leaves a blank plan", () => {
+    let h = run(start(), { type: "setText", field: "appName", value: "Fade" }, { type: "duplicatePlan", id: "p2", now: NOW });
+    expect(h.store.order).toEqual(["p2", "p1"]);
+    expect(active(h).appName).toBe("Fade (copy)");
+    h = run(h, { type: "newPlan", id: "p3", now: NOW }, { type: "switchPlan", id: "p1" });
+    expect(active(h).appName).toBe("Fade");
+    h = run(h, { type: "deletePlan", now: NOW, fallbackId: "x" }, { type: "deletePlan", now: NOW, fallbackId: "x" }, { type: "deletePlan", now: NOW, fallbackId: "fresh" });
+    expect(h.store.order).toEqual(["fresh"]);
+    expect(active(h).appName).toBe("");
+  });
+
+  it("imports a shared plan as a new plan, ready to view", () => {
+    const shared = toSharedPlan({ ...active(run(start(), { type: "setText", field: "appName", value: "Fade" }, { type: "place", slot: "hosting", optionId: "render" })) });
+    const h = run(start(), { type: "importPlan", id: "p9", now: NOW, plan: shared });
+    expect(active(h)).toMatchObject({ id: "p9", appName: "Fade", pinned: { hosting: "render" }, step: "plan" });
+    expect(h.store.order).toEqual(["p9", "p1"]);
+  });
+
+  it("tracks checklist items", () => {
+    const h = run(start(), { type: "toggleCheck", itemId: "setup:render:0" }, { type: "toggleCheck", itemId: "build:hosting:render" }, { type: "toggleCheck", itemId: "setup:render:0" });
+    expect(active(h).checked).toEqual({ "setup:render:0": false, "build:hosting:render": true });
+    expect(h.past).toHaveLength(0);
+  });
+});
+
+describe("saved data from the first release", () => {
+  it("wraps a version 1 plan into a store and converts its keyword guesses", () => {
+    const store = migrate(
+      { version: 1, step: "plan", appName: "Fade", description: "d", features: "", answers: { login: "yes" }, guesses: { uploads: "photo" }, size: "up_to_100", priority: "learn", builderId: "cursor", pinned: { hosting: "render" }, selectedSlot: "hosting" },
+      "p1",
+      NOW,
+    )!;
+    const plan = store.plans.p1;
+    expect(plan).toMatchObject({ appName: "Fade", priority: "learn", pinned: { hosting: "render" }, checked: {} });
+    expect(plan.guesses).toEqual({ uploads: { answer: "yes", evidence: "photo", by: "keywords" } });
+    expect("selectedSlot" in plan).toBe(false);
+  });
+
+  it("ignores anything it doesn't recognize", () => {
+    expect(migrate(null, "p", NOW)).toBeNull();
+    expect(migrate({ version: 7 }, "p", NOW)).toBeNull();
+    expect(migrate({ version: 2, activeId: "gone", plans: {} }, "p", NOW)).toBeNull();
+  });
+});
