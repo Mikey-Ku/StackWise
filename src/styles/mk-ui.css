@@ -1,0 +1,1030 @@
+/*! Mikey Ku Collection — michaelkujr.me design language. Swap the accent with data-accent on <html>. */
+/* ---- tokens/core.css ---- */
+/* ============================================================
+   mk-ui / core.css
+   Theme-independent primitives. Never contains a color.
+   Every theme file overrides only the semantic layer.
+   ============================================================ */
+
+:root {
+  /* --- spacing: 4px base, named by step not by t-shirt size --- */
+  --mk-1: 4px;
+  --mk-2: 8px;
+  --mk-3: 12px;
+  --mk-4: 16px;
+  --mk-5: 20px;
+  --mk-6: 24px;
+  --mk-8: 32px;
+  --mk-10: 40px;
+  --mk-12: 48px;
+  --mk-16: 64px;
+
+  /* --- type scale: 1.2 minor third, clamped for mobile --- */
+  --mk-text-xs: 11px;
+  --mk-text-sm: 13px;
+  --mk-text-base: 15px;
+  --mk-text-md: 17px;
+  --mk-text-lg: 21px;
+  --mk-text-xl: 27px;
+  --mk-text-2xl: clamp(30px, 4vw, 38px);
+  --mk-text-3xl: clamp(38px, 6vw, 54px);
+
+  --mk-leading-tight: 1.15;
+  --mk-leading-snug: 1.35;
+  --mk-leading-body: 1.6;
+
+  /* --- motion --- */
+  --mk-dur-fast: 90ms;
+  --mk-dur: 160ms;
+  --mk-dur-slow: 320ms;
+  --mk-ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+
+  /* --- layout --- */
+  --mk-container: 1180px;
+
+  /* --- control size: one vocabulary for every component ---
+     `md` is the default and lives on :root, so a bare .mk-btn is already
+     medium. Adding .mk-sm / .mk-md / .mk-lg rewrites these four values,
+     and every control reads them — so "small" means the same thing on a
+     button, an input and a badge, on any page.
+
+     They cascade on purpose: put .mk-sm on a toolbar and everything
+     inside it is small, without touching a single child. */
+  --mk-ctl-h: 44px;
+  --mk-ctl-px: 1.4rem;
+  --mk-ctl-fs: var(--mk-text-sm);
+  --mk-ctl-gap: 0.5rem;
+
+  /* --- defaults a theme is expected to override --- */
+  --mk-radius-sm: 4px;
+  --mk-radius: 8px;
+  --mk-radius-lg: 12px;
+  --mk-radius-full: 999px;
+  --mk-border-w: 1px;
+}
+
+.mk-sm { --mk-ctl-h: 34px; --mk-ctl-px: 0.9rem; --mk-ctl-fs: var(--mk-text-xs); --mk-ctl-gap: 0.375rem; }
+.mk-md { --mk-ctl-h: 44px; --mk-ctl-px: 1.4rem; --mk-ctl-fs: var(--mk-text-sm); --mk-ctl-gap: 0.5rem; }
+.mk-lg { --mk-ctl-h: 52px; --mk-ctl-px: 1.9rem; --mk-ctl-fs: var(--mk-text-base); --mk-ctl-gap: 0.625rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --mk-dur-fast: 0ms;
+    --mk-dur: 0ms;
+    --mk-dur-slow: 0ms;
+  }
+}
+
+/* ---- tokens/theme-mk.css ---- */
+/* ============================================================
+   THE BASE — lifted from michaelkujr.me
+   Not invented here. Every value below is either taken directly from
+   src/styles/tokens.css on the personal site, or derived from a rule
+   the site's components already follow.
+
+   The character, in three lines:
+     white paper, cool near-black ink, ONE restrained accent
+     small radius (4px) — crisp, not soft
+     slow expo-out easing, and things lift rather than glow
+   ============================================================ */
+
+:root {
+  /* ---- ramp: the only place a literal colour appears ---- */
+  --paper: #ffffff;
+  --paper-sunk: #f6f7f6;
+  --ink: #15171a;
+  --ink-soft: #52565c;
+  --ink-faint: #888d8f;
+  --line: #e7e8ea;
+  --line-strong: #d5d7da;
+
+  /* Emerald is the site's current accent. The site's own token file
+     documents these swaps; they are wired to [data-accent] below. */
+  --accent: #0f7d54;
+  --accent-deep: #0b5c3d;
+
+  /* ---- type: Space Grotesk display, Inter body ---- */
+  --mk-font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --mk-font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mk-font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --mk-display-wdth: 100;
+  --mk-display-track: -0.025em;
+
+  /* ---- semantic: everything else reads from the ramp ---- */
+  --mk-bg: var(--paper);
+  --mk-surface: var(--paper);
+  --mk-surface-2: var(--paper-sunk);
+  --mk-surface-sunk: var(--paper-sunk);
+
+  --mk-line: var(--line);
+  --mk-line-strong: var(--line-strong);
+
+  --mk-text: var(--ink);
+  --mk-text-muted: var(--ink-soft);
+  --mk-text-faint: var(--ink-faint);
+
+  --mk-accent: var(--accent);
+  --mk-accent-hover: var(--accent-deep);
+  --mk-accent-ink: var(--paper);
+  --mk-accent-soft: color-mix(in srgb, var(--accent) 8%, transparent);
+
+  --mk-data: var(--accent);
+  --mk-data-soft: var(--mk-accent-soft);
+  --mk-ok: var(--accent);
+  --mk-ok-soft: var(--mk-accent-soft);
+  --mk-warn: #9a6a00;
+  --mk-warn-soft: rgba(154, 106, 0, 0.09);
+  --mk-danger: #b3243c;
+  --mk-danger-soft: rgba(179, 36, 60, 0.08);
+
+  /* Small radius is a large part of the character. Do not round these up. */
+  --mk-radius-sm: 2px;
+  --mk-radius: 4px;
+  --mk-radius-lg: 10px;
+
+  /* The site never uses a resting shadow — depth appears only on hover,
+     and it is long and soft rather than tight and dark. */
+  --mk-shadow-1: none;
+  --mk-shadow-2: 0 18px 40px -24px rgba(23, 21, 15, 0.35);
+
+  /* Focus is the accent, outset. Matches the site exactly. */
+  --mk-focus-ring: 0 0 0 3px var(--mk-bg), 0 0 0 5px var(--mk-accent);
+
+  /* ---- motion: expo-out, unhurried ---- */
+  --mk-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mk-dur-fast: 0.25s;
+  --mk-dur: 0.4s;
+  --mk-dur-slow: 0.6s;
+}
+
+/* ---- accent swaps, straight off the site's own token comments ---- */
+[data-accent="cobalt"] { --accent: #2f5fe0; --accent-deep: #1d44b8; }
+[data-accent="indigo"] { --accent: #5b4bd6; --accent-deep: #4334b0; }
+[data-accent="slate"]  { --accent: #3f5366; --accent-deep: #2c3b49; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --mk-dur-fast: 0s; --mk-dur: 0s; --mk-dur-slow: 0s; }
+}
+
+/* ---------- the site's signature devices ---------- */
+
+/* Section labels carry a leading hairline. It is the one piece of
+   ornament the site allows itself, and it is what makes a heading read
+   as a section rather than as a sentence. */
+.mk-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-xs);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mk-text-faint);
+}
+.mk-eyebrow::before {
+  content: "";
+  width: 1.75rem;
+  height: 1px;
+  background: var(--mk-line-strong);
+  flex: none;
+}
+
+body {
+  line-height: 1.65;
+  letter-spacing: -0.011em;
+}
+
+h1, h2, h3, h4 {
+  font-weight: 500;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+/* ---- css/base.css ---- */
+/* ============================================================
+   mk-ui / base.css
+   Reset + element defaults. Reads only from tokens.
+   ============================================================ */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background-color: var(--mk-bg);
+  color: var(--mk-text);
+  font-family: var(--mk-font-body);
+  font-size: var(--mk-text-base);
+  line-height: var(--mk-leading-body);
+  font-variation-settings: "wdth" var(--mk-display-wdth, 100);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color var(--mk-dur-slow) var(--mk-ease),
+              color var(--mk-dur-slow) var(--mk-ease);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--mk-font-display);
+  line-height: var(--mk-leading-tight);
+  letter-spacing: var(--mk-display-track);
+  font-weight: 650;
+  margin: 0;
+}
+
+h1 { font-size: var(--mk-text-2xl); }
+h2 { font-size: var(--mk-text-xl); }
+h3 { font-size: var(--mk-text-lg); }
+h4 { font-size: var(--mk-text-md); }
+
+p { margin: 0; }
+
+a {
+  color: var(--mk-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+img, svg { display: block; max-width: 100%; }
+
+/* Any class that sets `display` outbids the UA's [hidden] rule on specificity,
+   so `el.hidden = true` silently stops working. Settle it once, here. */
+[hidden] { display: none !important; }
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* One focus treatment for the entire system. Themes restyle the ring,
+   never remove it. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--mk-focus-ring);
+  border-radius: var(--mk-radius-sm);
+}
+
+::selection {
+  background: var(--mk-accent);
+  color: var(--mk-accent-ink);
+}
+
+/* --- utilities, deliberately few --- */
+.mk-stack { display: flex; flex-direction: column; }
+.mk-row { display: flex; align-items: center; }
+.mk-wrap { flex-wrap: wrap; }
+.mk-gap-1 { gap: var(--mk-1); }
+.mk-gap-2 { gap: var(--mk-2); }
+.mk-gap-3 { gap: var(--mk-3); }
+.mk-gap-4 { gap: var(--mk-4); }
+.mk-gap-5 { gap: var(--mk-5); }
+.mk-gap-6 { gap: var(--mk-6); }
+.mk-gap-8 { gap: var(--mk-8); }
+.mk-gap-10 { gap: var(--mk-10); }
+.mk-gap-12 { gap: var(--mk-12); }
+.mk-grow { flex: 1; }
+
+.mk-muted { color: var(--mk-text-muted); }
+.mk-faint { color: var(--mk-text-faint); }
+.mk-mono { font-family: var(--mk-font-mono); }
+.mk-num { font-family: var(--mk-font-mono); font-variant-numeric: tabular-nums; }
+
+.mk-eyebrow {
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: var(--mk-text-faint);
+}
+
+.mk-container {
+  max-width: var(--mk-container);
+  margin-inline: auto;
+  padding-inline: var(--mk-6);
+}
+
+.mk-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* ---- css/components.css ---- */
+/* ============================================================
+   mk-ui / components.css
+   Layer 1: plain classes. Works in Jinja, Streamlit, raw HTML,
+   HTMX, or React. No build step, no framework.
+   ============================================================ */
+
+/* ---------- Button ---------- */
+/* Geometry and motion here are taken from the buttons on michaelkujr.me:
+   display face at 500, 1.4rem side padding, 4px radius, and a 2px lift on
+   hover. The lift is the whole personality — no glow, no fill flash. */
+.mk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mk-ctl-gap);
+  height: var(--mk-ctl-h);
+  padding-inline: var(--mk-ctl-px);
+  border: var(--mk-border-w) solid transparent;
+  border-radius: var(--mk-radius);
+  background: transparent;
+  color: var(--mk-text);
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-ctl-fs);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--mk-dur-fast) var(--mk-ease),
+              border-color var(--mk-dur-fast) var(--mk-ease),
+              color var(--mk-dur-fast) var(--mk-ease),
+              transform var(--mk-dur-fast) var(--mk-ease);
+}
+
+.mk-btn:hover:not(:disabled) { transform: translateY(-2px); }
+.mk-btn:active:not(:disabled) { transform: translateY(0); }
+.mk-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+
+/* A trailing glyph walks forward with the hover. Leading icons are left
+   alone, which is why this targets the last child rather than every svg. */
+.mk-btn > svg:last-child { transition: transform var(--mk-dur-fast) var(--mk-ease); }
+.mk-btn:hover:not(:disabled) > svg:last-child { transform: translateX(3px); }
+
+.mk-btn--primary {
+  background: var(--mk-accent);
+  color: var(--mk-accent-ink);
+  border-color: var(--mk-accent);
+}
+.mk-btn--primary:hover:not(:disabled) { background: var(--mk-accent-hover); border-color: var(--mk-accent-hover); }
+
+.mk-btn--secondary {
+  background: var(--mk-surface);
+  border-color: var(--mk-line-strong);
+  color: var(--mk-text);
+}
+.mk-btn--secondary:hover:not(:disabled) { border-color: var(--mk-accent); color: var(--mk-accent); }
+
+.mk-btn--ghost { color: var(--mk-text-muted); }
+.mk-btn--ghost:hover:not(:disabled) { background: var(--mk-surface-2); color: var(--mk-text); }
+
+.mk-btn--danger {
+  background: var(--mk-danger-soft);
+  color: var(--mk-danger);
+  border-color: color-mix(in srgb, var(--mk-danger) 45%, transparent);
+}
+.mk-btn--danger:hover:not(:disabled) { background: var(--mk-danger); color: #fff; border-color: var(--mk-danger); }
+
+.mk-btn--icon { padding-inline: 0; width: var(--mk-ctl-h); gap: 0; }
+
+/* ---------- Form ---------- */
+.mk-field { display: flex; flex-direction: column; gap: var(--mk-2); }
+
+.mk-label { color: var(--mk-text-muted); font-weight: 600; }
+
+/* Inputs read the same size vocabulary as buttons, at 60% of the button's
+   side padding — a field needs less inset than a label does. */
+.mk-input,
+.mk-select,
+.mk-textarea {
+  width: 100%;
+  height: var(--mk-ctl-h);
+  padding: 0 calc(var(--mk-ctl-px) * 0.6);
+  background: var(--mk-surface);
+  border: var(--mk-border-w) solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  color: var(--mk-text);
+  font-size: var(--mk-ctl-fs);
+  transition: border-color var(--mk-dur-fast) var(--mk-ease), background-color var(--mk-dur-fast) var(--mk-ease);
+}
+.mk-textarea {
+  height: auto;
+  min-height: calc(var(--mk-ctl-h) * 2);
+  padding: calc(var(--mk-ctl-px) * 0.45) calc(var(--mk-ctl-px) * 0.6);
+  resize: vertical;
+  line-height: var(--mk-leading-snug);
+}
+.mk-input::placeholder, .mk-textarea::placeholder { color: var(--mk-text-faint); }
+.mk-input:hover, .mk-select:hover, .mk-textarea:hover { border-color: var(--mk-line-strong); }
+
+.mk-select {
+  appearance: none;
+  padding-right: var(--mk-8);
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 18px) 51%, calc(100% - 13px) 51%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.mk-hint { font-size: var(--mk-text-xs); color: var(--mk-text-faint); }
+
+.mk-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mk-2);
+  font-size: var(--mk-text-sm);
+  cursor: pointer;
+}
+.mk-check input { accent-color: var(--mk-accent); width: 15px; height: 15px; cursor: pointer; }
+
+.mk-switch { display: inline-flex; align-items: center; gap: var(--mk-3); cursor: pointer; font-size: var(--mk-text-sm); }
+.mk-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.mk-switch__track {
+  width: 38px; height: 21px;
+  border-radius: var(--mk-radius-full);
+  background: var(--mk-surface-sunk);
+  border: var(--mk-border-w) solid var(--mk-line-strong);
+  position: relative;
+  transition: background-color var(--mk-dur) var(--mk-ease), border-color var(--mk-dur) var(--mk-ease);
+  flex: none;
+}
+.mk-switch__track::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 2px;
+  width: 15px; height: 15px;
+  border-radius: var(--mk-radius-full);
+  background: var(--mk-text-muted);
+  transition: transform var(--mk-dur) var(--mk-ease), background-color var(--mk-dur) var(--mk-ease);
+}
+.mk-switch input:checked + .mk-switch__track { background: var(--mk-accent); border-color: var(--mk-accent); }
+.mk-switch input:checked + .mk-switch__track::after { transform: translateX(17px); background: var(--mk-accent-ink); }
+.mk-switch input:focus-visible + .mk-switch__track { box-shadow: var(--mk-focus-ring); }
+
+/* ---------- Card ---------- */
+.mk-card {
+  background: var(--mk-surface);
+  border: var(--mk-border-w) solid var(--mk-line);
+  border-radius: var(--mk-radius-lg);
+  overflow: hidden;
+}
+
+/* Cards rest flat and earn their shadow on hover — the site never shows a
+   resting elevation. Opt in with .mk-card--interactive; a card that isn't
+   clickable shouldn't pretend to be. */
+.mk-card--interactive {
+  transition: transform var(--mk-dur) var(--mk-ease),
+              border-color var(--mk-dur) var(--mk-ease),
+              box-shadow var(--mk-dur) var(--mk-ease);
+}
+.mk-card--interactive:hover {
+  transform: translateY(-4px);
+  border-color: var(--mk-line-strong);
+  box-shadow: var(--mk-shadow-2);
+}
+.mk-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mk-4);
+  padding: var(--mk-4) var(--mk-5);
+  border-bottom: var(--mk-border-w) solid var(--mk-line);
+}
+.mk-card__body { padding: var(--mk-5); }
+.mk-card__foot {
+  padding: var(--mk-3) var(--mk-5);
+  border-top: var(--mk-border-w) solid var(--mk-line);
+  background: var(--mk-surface-2);
+}
+
+/* ---------- Badge ---------- */
+/* A badge is a control's height at a third scale, so a badge sitting beside
+   a small button and one beside a large button stay in proportion. */
+.mk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mk-1);
+  height: calc(var(--mk-ctl-h) * 0.5);
+  padding-inline: calc(var(--mk-ctl-px) * 0.4);
+  border-radius: var(--mk-radius-sm);
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text-muted);
+  border: var(--mk-border-w) solid transparent;
+  font-family: var(--mk-font-mono);
+  font-size: calc(var(--mk-ctl-fs) * 0.85);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.mk-badge--ok { background: var(--mk-ok-soft); color: var(--mk-ok); border-color: color-mix(in srgb, var(--mk-ok) 30%, transparent); }
+.mk-badge--warn { background: var(--mk-warn-soft); color: var(--mk-warn); border-color: color-mix(in srgb, var(--mk-warn) 30%, transparent); }
+.mk-badge--danger { background: var(--mk-danger-soft); color: var(--mk-danger); border-color: color-mix(in srgb, var(--mk-danger) 34%, transparent); }
+.mk-badge--accent { background: var(--mk-accent-soft); color: var(--mk-accent); border-color: color-mix(in srgb, var(--mk-accent) 30%, transparent); }
+
+.mk-dot { width: 6px; height: 6px; border-radius: var(--mk-radius-full); background: currentColor; flex: none; }
+
+/* ---------- Meter ---------- */
+.mk-meter {
+  height: 8px;
+  border-radius: var(--mk-radius-full);
+  background: var(--mk-surface-sunk);
+  border: var(--mk-border-w) solid var(--mk-line);
+  overflow: hidden;
+}
+.mk-meter__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
+  color: var(--mk-data);
+  transition: width var(--mk-dur-slow) var(--mk-ease);
+}
+.mk-meter--ok .mk-meter__fill { color: var(--mk-ok); }
+.mk-meter--warn .mk-meter__fill { color: var(--mk-warn); }
+.mk-meter--danger .mk-meter__fill { color: var(--mk-danger); }
+
+/* ---------- Stat ---------- */
+.mk-stat { display: flex; flex-direction: column; gap: var(--mk-1); }
+.mk-stat__value {
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-xl);
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: var(--mk-display-track);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Table ---------- */
+.mk-table { width: 100%; border-collapse: collapse; font-size: var(--mk-text-sm); }
+.mk-table th {
+  text-align: left;
+  padding: var(--mk-2) var(--mk-4);
+  color: var(--mk-text-faint);
+  font-weight: 600;
+  border-bottom: var(--mk-border-w) solid var(--mk-line);
+  white-space: nowrap;
+}
+.mk-table td {
+  padding: var(--mk-3) var(--mk-4);
+  border-bottom: var(--mk-border-w) solid var(--mk-line);
+}
+.mk-table tbody tr:last-child td { border-bottom: none; }
+.mk-table tbody tr { transition: background-color var(--mk-dur) var(--mk-ease); }
+.mk-table tbody tr:hover { background: var(--mk-accent-soft); }
+.mk-table__num { text-align: right; font-family: var(--mk-font-mono); font-variant-numeric: tabular-nums; }
+.mk-table-wrap { overflow-x: auto; }
+
+/* ---------- Tabs ---------- */
+/* A different job from .mk-seg: tabs switch between views, a segmented
+   control filters one. Hence the underline rather than the inset pill —
+   a tab belongs to the content below it. */
+.mk-tabs {
+  position: relative;
+  display: flex;
+  gap: var(--mk-5);
+  border-bottom: var(--mk-border-w) solid var(--mk-line);
+}
+.mk-tabs__ind {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  width: var(--w, 0px);
+  transform: translateX(var(--x, 0px));
+  background: var(--mk-accent);
+  transition: transform var(--mk-dur) var(--mk-ease), width var(--mk-dur) var(--mk-ease);
+  pointer-events: none;
+}
+.mk-tab {
+  padding: var(--mk-3) 0;
+  border: 0;
+  background: transparent;
+  color: var(--mk-text-muted);
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-ctl-fs);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--mk-dur-fast) var(--mk-ease);
+}
+.mk-tab:hover { color: var(--mk-text); }
+.mk-tab[aria-selected="true"] { color: var(--mk-text); }
+
+/* ---------- Dropzone ---------- */
+.mk-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mk-2);
+  padding: var(--mk-8) var(--mk-5);
+  border: 1.5px dashed var(--mk-line-strong);
+  border-radius: var(--mk-radius-lg);
+  background: var(--mk-surface-2);
+  color: var(--mk-text-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--mk-dur) var(--mk-ease), background-color var(--mk-dur) var(--mk-ease), color var(--mk-dur) var(--mk-ease);
+}
+.mk-drop:hover, .mk-drop.is-over {
+  border-color: var(--mk-accent);
+  background: var(--mk-accent-soft);
+  color: var(--mk-accent);
+}
+
+/* ---------- Alert ---------- */
+.mk-alert {
+  display: flex;
+  gap: var(--mk-3);
+  padding: var(--mk-3) var(--mk-4);
+  border: var(--mk-border-w) solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  background: var(--mk-surface);
+  font-size: var(--mk-text-sm);
+}
+.mk-alert--ok { background: var(--mk-ok-soft); border-color: color-mix(in srgb, var(--mk-ok) 30%, transparent); border-left-color: var(--mk-ok); }
+.mk-alert--warn { background: var(--mk-warn-soft); border-color: color-mix(in srgb, var(--mk-warn) 30%, transparent); border-left-color: var(--mk-warn); }
+.mk-alert--danger { background: var(--mk-danger-soft); border-color: color-mix(in srgb, var(--mk-danger) 34%, transparent); border-left-color: var(--mk-danger); }
+
+/* ---------- Code ---------- */
+.mk-code {
+  margin: 0;
+  padding: var(--mk-4);
+  background: var(--mk-surface-sunk);
+  border: var(--mk-border-w) solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-xs);
+  line-height: 1.75;
+  color: var(--mk-text-muted);
+  overflow-x: auto;
+}
+.mk-code .k { color: var(--mk-accent); }
+.mk-code .n { color: var(--mk-data); }
+.mk-code .s { color: var(--mk-ok); }
+
+.mk-kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border: var(--mk-border-w) solid var(--mk-line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--mk-radius-sm);
+  background: var(--mk-surface-2);
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-xs);
+  color: var(--mk-text-muted);
+}
+
+/* ---------- Skeleton ---------- */
+/* Built from the line tokens, not the surface tokens. A theme is free to
+   make surface and surface-sunk identical — several do — and a skeleton
+   built from those would vanish onto its own background. */
+.mk-skeleton {
+  border-radius: var(--mk-radius-sm);
+  background: linear-gradient(90deg, var(--mk-line) 25%, var(--mk-line-strong) 50%, var(--mk-line) 75%);
+  background-size: 200% 100%;
+  animation: mk-shimmer 1.4s linear infinite;
+}
+@keyframes mk-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .mk-skeleton { animation: none; } }
+
+/* ---------- Segmented control ---------- */
+/* The indicator is one element that travels, not a background that jumps
+   between options. --x and --w are written by JS from the active button. */
+.mk-seg {
+  position: relative;
+  display: inline-flex;
+  padding: 3px;
+  border: var(--mk-border-w) solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  background: var(--mk-surface-sunk);
+}
+.mk-seg__ind {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: var(--w, 0px);
+  transform: translateX(var(--x, 0px));
+  border-radius: calc(var(--mk-radius) - 3px);
+  background: var(--mk-surface-2);
+  border: var(--mk-border-w) solid var(--mk-line-strong);
+  transition: transform var(--mk-dur-slow) var(--mk-ease), width var(--mk-dur-slow) var(--mk-ease);
+  pointer-events: none;
+}
+.mk-seg__opt {
+  position: relative;
+  z-index: 1;
+  height: 28px;
+  padding-inline: var(--mk-4);
+  border: 0;
+  background: transparent;
+  color: var(--mk-text-muted);
+  font: inherit;
+  font-size: var(--mk-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--mk-dur) var(--mk-ease);
+}
+.mk-seg__opt:hover { color: var(--mk-text); }
+.mk-seg__opt[aria-selected="true"] { color: var(--mk-text); }
+
+/* ---------- Animated checkbox ---------- */
+.mk-tick { display: inline-flex; align-items: center; gap: var(--mk-3); cursor: pointer; font-size: var(--mk-text-sm); }
+.mk-tick input { position: absolute; opacity: 0; width: 0; height: 0; }
+.mk-tick__box {
+  width: 20px; height: 20px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--mk-line-strong);
+  border-radius: var(--mk-radius-sm);
+  background: var(--mk-surface-sunk);
+  transition: background-color var(--mk-dur) var(--mk-ease), border-color var(--mk-dur) var(--mk-ease);
+  flex: none;
+}
+.mk-tick__box svg { width: 13px; height: 13px; overflow: visible; }
+.mk-tick__box path {
+  fill: none;
+  stroke: var(--mk-accent-ink);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  transition: stroke-dashoffset var(--mk-dur-slow) var(--mk-ease);
+}
+.mk-tick input:checked + .mk-tick__box { background: var(--mk-accent); border-color: var(--mk-accent); }
+.mk-tick input:checked + .mk-tick__box path { stroke-dashoffset: 0; }
+.mk-tick input:focus-visible + .mk-tick__box { box-shadow: var(--mk-focus-ring); }
+
+/* ---------- Spinner ---------- */
+.mk-spinner { display: inline-flex; gap: 5px; align-items: center; }
+.mk-spinner i {
+  width: 7px; height: 7px;
+  border-radius: var(--mk-radius-full);
+  background: currentColor;
+  animation: mk-bounce 1.05s var(--mk-ease) infinite;
+}
+.mk-spinner i:nth-child(2) { animation-delay: 0.13s; }
+.mk-spinner i:nth-child(3) { animation-delay: 0.26s; }
+@keyframes mk-bounce {
+  0%, 70%, 100% { transform: translateY(0); opacity: 0.35; }
+  35% { transform: translateY(-6px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .mk-spinner i { animation: none; opacity: 0.7; } }
+
+/* ---------- Toast ---------- */
+.mk-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-3);
+  padding: var(--mk-3) var(--mk-4);
+  border: var(--mk-border-w) solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  background: var(--mk-surface-2);
+  box-shadow: var(--mk-shadow-2);
+  font-size: var(--mk-text-sm);
+  animation: mk-toast-in var(--mk-dur-slow) var(--mk-ease);
+}
+.mk-toast[data-leaving] { animation: mk-toast-out var(--mk-dur) var(--mk-ease) forwards; }
+@keyframes mk-toast-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mk-toast-out {
+  to { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
+
+/* ---------- Copy button ---------- */
+/* Both labels are stacked; only one is visible, so the button never
+   changes width mid-swap. */
+.mk-copy { position: relative; overflow: hidden; }
+.mk-copy__swap { display: grid; }
+.mk-copy__swap > span {
+  grid-area: 1 / 1;
+  transition: opacity var(--mk-dur) var(--mk-ease), transform var(--mk-dur) var(--mk-ease);
+}
+.mk-copy__swap > span:last-child { opacity: 0; transform: translateY(7px); color: var(--mk-ok); }
+.mk-copy[data-copied] .mk-copy__swap > span:first-child { opacity: 0; transform: translateY(-7px); }
+.mk-copy[data-copied] .mk-copy__swap > span:last-child { opacity: 1; transform: none; }
+
+/* ---------- Hover lift ---------- */
+.mk-lift { transition: transform var(--mk-dur) var(--mk-ease), box-shadow var(--mk-dur) var(--mk-ease); }
+.mk-lift:hover { transform: translateY(-2px); box-shadow: var(--mk-shadow-2); }
+
+/* ---------- Radio ---------- */
+.mk-radio { display: inline-flex; align-items: center; gap: var(--mk-3); cursor: pointer; font-size: var(--mk-ctl-fs); }
+.mk-radio input { position: absolute; opacity: 0; width: 0; height: 0; }
+.mk-radio__dot {
+  width: 20px; height: 20px; flex: none;
+  display: grid; place-items: center;
+  border: 1.5px solid var(--mk-line-strong);
+  border-radius: var(--mk-radius-full);
+  background: var(--mk-surface);
+  transition: border-color var(--mk-dur-fast) var(--mk-ease);
+}
+.mk-radio__dot::after {
+  content: "";
+  width: 9px; height: 9px;
+  border-radius: var(--mk-radius-full);
+  background: var(--mk-accent);
+  transform: scale(0);
+  transition: transform var(--mk-dur-fast) var(--mk-ease);
+}
+.mk-radio input:checked + .mk-radio__dot { border-color: var(--mk-accent); }
+.mk-radio input:checked + .mk-radio__dot::after { transform: scale(1); }
+.mk-radio input:focus-visible + .mk-radio__dot { box-shadow: var(--mk-focus-ring); }
+
+/* ---------- Slider ---------- */
+.mk-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 4px;
+  border-radius: var(--mk-radius-full);
+  background: var(--mk-line);
+  cursor: pointer;
+}
+/* The two thumb selectors cannot be combined — an unrecognised selector
+   invalidates the whole rule, so they are written out separately. */
+.mk-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: var(--mk-radius-full);
+  background: var(--mk-accent);
+  border: 2px solid var(--mk-surface);
+  box-shadow: 0 0 0 1px var(--mk-line-strong);
+  transition: transform var(--mk-dur-fast) var(--mk-ease);
+}
+.mk-slider::-moz-range-thumb {
+  width: 14px; height: 14px;
+  border-radius: var(--mk-radius-full);
+  background: var(--mk-accent);
+  border: 2px solid var(--mk-surface);
+  box-shadow: 0 0 0 1px var(--mk-line-strong);
+  transition: transform var(--mk-dur-fast) var(--mk-ease);
+}
+.mk-slider:hover::-webkit-slider-thumb { transform: scale(1.15); }
+.mk-slider:hover::-moz-range-thumb { transform: scale(1.15); }
+.mk-slider:focus-visible { box-shadow: var(--mk-focus-ring); }
+
+/* ---------- Search ---------- */
+.mk-search { position: relative; display: flex; align-items: center; width: 100%; }
+.mk-search > svg {
+  position: absolute;
+  left: calc(var(--mk-ctl-px) * 0.6);
+  width: 15px; height: 15px;
+  color: var(--mk-text-faint);
+  pointer-events: none;
+}
+.mk-search .mk-input { padding-left: calc(var(--mk-ctl-px) * 0.6 + 23px); }
+.mk-search__clear {
+  position: absolute; right: calc(var(--mk-ctl-px) * 0.4);
+  display: grid; place-items: center;
+  width: 20px; height: 20px; padding: 0;
+  border: 0; border-radius: var(--mk-radius-full);
+  background: var(--mk-surface-sunk); color: var(--mk-text-muted);
+  font-size: 11px; line-height: 1; cursor: pointer;
+  opacity: 0; transform: scale(0.8);
+  transition: opacity var(--mk-dur-fast) var(--mk-ease), transform var(--mk-dur-fast) var(--mk-ease);
+}
+.mk-search[data-filled] .mk-search__clear { opacity: 1; transform: none; }
+
+/* ---------- Avatar ---------- */
+.mk-avatar {
+  width: var(--mk-ctl-h); height: var(--mk-ctl-h); flex: none;
+  display: grid; place-items: center; overflow: hidden;
+  border-radius: var(--mk-radius-full);
+  background: var(--mk-surface-sunk);
+  border: var(--mk-border-w) solid var(--mk-line);
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-ctl-fs); font-weight: 500;
+  color: var(--mk-text-muted);
+}
+.mk-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mk-avatar--accent { background: var(--mk-accent); border-color: var(--mk-accent); color: var(--mk-accent-ink); }
+.mk-avatar--square { border-radius: var(--mk-radius); }
+/* The ring is the page colour, so a stack reads as overlapping discs
+   rather than as one blob. */
+.mk-avatars { display: flex; }
+.mk-avatars .mk-avatar + .mk-avatar { margin-left: -10px; box-shadow: 0 0 0 2px var(--mk-surface); }
+
+/* ---------- Divider ---------- */
+.mk-divider { border: 0; border-top: var(--mk-border-w) solid var(--mk-line); margin: 0; }
+.mk-divider--label {
+  display: flex; align-items: center; gap: var(--mk-4);
+  border: 0;
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-xs); text-transform: uppercase; letter-spacing: 0.16em;
+  color: var(--mk-text-faint);
+}
+.mk-divider--label::before,
+.mk-divider--label::after { content: ""; flex: 1; height: 1px; background: var(--mk-line); }
+
+/* ---------- Accordion ---------- */
+.mk-acc { border-top: var(--mk-border-w) solid var(--mk-line); }
+.mk-acc__item { border-bottom: var(--mk-border-w) solid var(--mk-line); }
+.mk-acc__trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--mk-4);
+  width: 100%; padding: var(--mk-4) 0;
+  border: 0; background: transparent; color: var(--mk-text);
+  font-family: var(--mk-font-display); font-size: var(--mk-ctl-fs); font-weight: 500;
+  text-align: left; cursor: pointer;
+  transition: color var(--mk-dur-fast) var(--mk-ease);
+}
+.mk-acc__trigger:hover { color: var(--mk-accent); }
+.mk-acc__trigger i { font-style: normal; color: var(--mk-text-faint); transition: transform var(--mk-dur) var(--mk-ease); }
+.mk-acc__trigger[aria-expanded="true"] i { transform: rotate(90deg); }
+/* grid-template-rows animates to the panel's natural height without
+   anyone measuring a pixel or hardcoding a max-height. */
+.mk-acc__panel {
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows var(--mk-dur) var(--mk-ease);
+}
+.mk-acc__trigger[aria-expanded="true"] + .mk-acc__panel { grid-template-rows: 1fr; }
+.mk-acc__panel > div { overflow: hidden; }
+.mk-acc__panel p { padding-bottom: var(--mk-4); color: var(--mk-text-muted); font-size: var(--mk-text-sm); }
+
+/* ---------- Tooltip ---------- */
+/* Delayed in, instant out. A tooltip that waits to appear is helpful; one
+   that waits to leave is in the way. */
+.mk-tip { position: relative; display: inline-flex; }
+.mk-tip__bubble {
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  padding: 5px var(--mk-2);
+  border-radius: var(--mk-radius-sm);
+  background: var(--ink, #15171a); color: var(--paper, #fff);
+  font-size: var(--mk-text-xs); white-space: nowrap;
+  opacity: 0; translate: -50% 4px; pointer-events: none;
+  transition: opacity var(--mk-dur-fast) var(--mk-ease), translate var(--mk-dur-fast) var(--mk-ease);
+  z-index: 20;
+}
+.mk-tip:hover .mk-tip__bubble,
+.mk-tip:focus-within .mk-tip__bubble {
+  opacity: 1; translate: -50% 0;
+  transition-delay: 0.4s;
+}
+
+/* ---------- Popover ---------- */
+.mk-pop-wrap { position: relative; display: inline-flex; }
+.mk-pop {
+  position: absolute; top: calc(100% + 6px); left: 0;
+  min-width: 180px; padding: var(--mk-2);
+  background: var(--mk-surface);
+  border: var(--mk-border-w) solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  box-shadow: var(--mk-shadow-2);
+  opacity: 0; transform: translateY(-4px); pointer-events: none;
+  transition: opacity var(--mk-dur-fast) var(--mk-ease), transform var(--mk-dur-fast) var(--mk-ease);
+  z-index: 20;
+}
+.mk-pop-wrap[data-open] .mk-pop { opacity: 1; transform: none; pointer-events: auto; }
+.mk-pop__item {
+  display: block; width: 100%; padding: var(--mk-2) var(--mk-3);
+  border: 0; border-radius: var(--mk-radius-sm);
+  background: transparent; color: var(--mk-text);
+  font: inherit; font-size: var(--mk-text-sm); text-align: left; cursor: pointer;
+  transition: background-color var(--mk-dur-fast) var(--mk-ease), color var(--mk-dur-fast) var(--mk-ease);
+}
+.mk-pop__item:hover { background: var(--mk-surface-sunk); color: var(--mk-accent); }
+
+/* ---------- Modal & drawer ---------- */
+/* Built on <dialog>, which gives the focus trap, the inert background and
+   Escape-to-close for free. allow-discrete plus @starting-style is what
+   lets an element animate in and out of the top layer at all. */
+.mk-modal {
+  padding: 0; border: 0;
+  max-width: min(92vw, 440px);
+  background: var(--mk-surface); color: var(--mk-text);
+  border-radius: var(--mk-radius-lg);
+  box-shadow: var(--mk-shadow-2);
+  opacity: 0; transform: translateY(8px) scale(0.97);
+  transition: opacity var(--mk-dur) var(--mk-ease), transform var(--mk-dur) var(--mk-ease),
+              overlay var(--mk-dur) allow-discrete, display var(--mk-dur) allow-discrete;
+}
+.mk-modal[open] { opacity: 1; transform: none; }
+@starting-style { .mk-modal[open] { opacity: 0; transform: translateY(8px) scale(0.97); } }
+
+.mk-modal::backdrop {
+  background: rgba(21, 23, 26, 0);
+  transition: background var(--mk-dur) var(--mk-ease),
+              overlay var(--mk-dur) allow-discrete, display var(--mk-dur) allow-discrete;
+}
+.mk-modal[open]::backdrop { background: rgba(21, 23, 26, 0.38); }
+@starting-style { .mk-modal[open]::backdrop { background: rgba(21, 23, 26, 0); } }
+
+.mk-modal__body { padding: var(--mk-6); }
+.mk-modal__body h3 { font-size: var(--mk-text-md); margin-bottom: var(--mk-2); }
+.mk-modal__body p { color: var(--mk-text-muted); font-size: var(--mk-text-sm); }
+.mk-modal__foot {
+  display: flex; justify-content: flex-end; gap: var(--mk-2);
+  padding: var(--mk-4) var(--mk-6);
+  border-top: var(--mk-border-w) solid var(--mk-line);
+}
+
+/* Same element, anchored to an edge: the difference is where it comes
+   from, not what it is. */
+.mk-drawer {
+  max-width: min(92vw, 340px);
+  width: 100%;
+  height: 100dvh; max-height: 100dvh;
+  margin: 0 0 0 auto;
+  border-radius: 0;
+  transform: translateX(16px);
+}
+.mk-drawer[open] { transform: none; }
+@starting-style { .mk-drawer[open] { transform: translateX(16px); } }

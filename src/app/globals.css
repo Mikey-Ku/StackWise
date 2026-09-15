@@ -1,0 +1,656 @@
+/* WhyStack layout on top of mk-ui (src/styles/mk-ui.css, copied from Projects/mk-ui at 3df5687).
+   Tokens only: every color, radius and duration below comes from mk-ui. */
+
+:root {
+  --mk-font-display: var(--font-display), "Space Grotesk", "Inter", system-ui, sans-serif;
+  --mk-font-body: var(--font-body), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mk-font-mono: var(--font-mono), "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ws-left: 340px;
+  --ws-right: 340px;
+  --ws-top: 56px;
+}
+
+html,
+body {
+  height: 100%;
+}
+body {
+  overflow: hidden;
+}
+
+/* ---------- frame ---------- */
+.ws {
+  display: grid;
+  grid-template-rows: var(--ws-top) auto minmax(0, 1fr);
+  height: 100vh;
+}
+.ws-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mk-4);
+  padding-inline: var(--mk-5);
+  border-bottom: 1px solid var(--mk-line);
+  background: var(--mk-surface);
+}
+.ws-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-md);
+  font-weight: 650;
+  letter-spacing: var(--mk-display-track);
+}
+.ws-mark::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: var(--mk-radius-sm);
+  background: var(--mk-accent);
+}
+.ws-top__sep {
+  width: 1px;
+  height: 18px;
+  background: var(--mk-line-strong);
+}
+.ws-top__app {
+  font-size: var(--mk-text-sm);
+}
+.ws-problems {
+  margin: var(--mk-3) var(--mk-5) 0;
+}
+.ws-body {
+  display: grid;
+  grid-template-columns: var(--ws-left) minmax(0, 1fr) var(--ws-right);
+  min-height: 0;
+}
+.ws-left {
+  overflow-y: auto;
+  padding: var(--mk-6) var(--mk-5) var(--mk-12);
+  border-right: 1px solid var(--mk-line);
+  background: var(--mk-surface);
+}
+.ws-center {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: var(--mk-surface-sunk);
+}
+.ws-right {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--mk-line);
+  background: var(--mk-surface);
+}
+.ws-right__tabs {
+  padding-inline: var(--mk-5);
+}
+.ws-right__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.ws-tab-on {
+  color: var(--mk-text);
+  box-shadow: inset 0 -2px 0 var(--mk-accent);
+}
+.ws-h2 {
+  font-size: var(--mk-text-xl);
+}
+.ws-h3 {
+  font-size: var(--mk-text-lg);
+}
+
+/* Small badges inside dense UI read the small size vocabulary. */
+.ws-slot .mk-badge,
+.ws-app .mk-badge,
+.ws-opt .mk-badge,
+.ws-compare .mk-badge,
+.ws-issue .mk-badge,
+.ws-result .mk-badge {
+  --mk-ctl-h: 34px;
+  --mk-ctl-px: 0.9rem;
+  --mk-ctl-fs: 11px;
+}
+
+/* ---------- controls ---------- */
+.ws-seg {
+  flex-wrap: wrap;
+  align-self: flex-start;
+}
+.ws-seg .mk-seg__opt {
+  border-radius: calc(var(--mk-radius) - 2px);
+}
+.ws-seg .mk-seg__opt[data-on="true"] {
+  color: var(--mk-text);
+  background: var(--mk-surface);
+  box-shadow: inset 0 0 0 1px var(--mk-line-strong);
+}
+.ws-q {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-2);
+  padding: var(--mk-3) var(--mk-4);
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius);
+}
+.ws-q.is-guessed {
+  border-color: color-mix(in srgb, var(--mk-accent) 40%, transparent);
+  background: var(--mk-accent-soft);
+}
+.ws-q__text p:first-child {
+  font-size: var(--mk-text-sm);
+  font-weight: 500;
+  line-height: var(--mk-leading-snug);
+}
+.ws-priorities {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mk-2);
+}
+.ws-priority {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--mk-3);
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  background: var(--mk-surface);
+  font-size: var(--mk-text-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-priority span {
+  color: var(--mk-text-faint);
+  font-size: var(--mk-text-xs);
+  line-height: var(--mk-leading-snug);
+}
+.ws-priority:hover {
+  border-color: var(--mk-line-strong);
+}
+.ws-priority.is-on {
+  border-color: var(--mk-accent);
+  box-shadow: inset 0 0 0 1px var(--mk-accent);
+}
+.ws-details {
+  border-top: 1px solid var(--mk-line);
+  padding-top: var(--mk-3);
+}
+.ws-details > summary {
+  margin-bottom: var(--mk-3);
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+.ws-issue {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-2);
+  padding: var(--mk-2) var(--mk-3);
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  background: var(--mk-surface);
+  font-size: var(--mk-text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.ws-issue:hover {
+  border-color: var(--mk-line-strong);
+}
+.ws-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mk-2);
+  padding: var(--mk-3) var(--mk-4);
+  border-left: 2px solid var(--mk-line-strong);
+  background: var(--mk-surface-sunk);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-snug);
+}
+.ws-note ul {
+  margin: 0;
+  padding-left: 1.1em;
+}
+.ws-start-over {
+  align-self: flex-start;
+}
+.ws-link {
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--mk-text-muted);
+  font: inherit;
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.ws-link:hover {
+  color: var(--mk-accent);
+}
+
+/* ---------- verdicts ---------- */
+.ws-vdot {
+  display: inline-block;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--mk-ok);
+}
+.ws-vdot--warning {
+  background: var(--mk-warn);
+}
+.ws-vdot--blocked,
+.ws-vdot--missing {
+  background: var(--mk-danger);
+}
+.ws-vdot--unknown {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--mk-text-faint);
+}
+.ws-badge--unknown {
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text-muted);
+  border-color: var(--mk-line-strong);
+  border-style: dashed;
+}
+
+/* ---------- canvas ---------- */
+.ws-canvas {
+  position: absolute;
+  inset: 0;
+}
+.ws-canvas .react-flow {
+  background: transparent;
+}
+/* mk-ui's reset caps every svg at max-width: 100%. React Flow draws each edge in an svg inside a
+   zero-width layer, so the cap shrinks it to 0px and Chrome stops painting it. */
+.ws-canvas .react-flow svg {
+  max-width: none;
+}
+.ws-canvas__banner {
+  position: absolute;
+  z-index: 5;
+  top: var(--mk-4);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border: 1px solid var(--mk-line-strong);
+  border-radius: var(--mk-radius);
+  background: var(--mk-surface);
+  color: var(--mk-text-muted);
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-xs);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ws-node {
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-line-strong);
+  border-radius: var(--mk-radius-lg);
+  font-family: var(--mk-font-body);
+  cursor: pointer;
+  transition: border-color var(--mk-dur-fast) var(--mk-ease), box-shadow var(--mk-dur-fast) var(--mk-ease), background-color var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-node:hover {
+  box-shadow: var(--mk-shadow-2);
+}
+.ws-node.is-selected {
+  border-color: var(--mk-accent);
+  box-shadow: 0 0 0 3px var(--mk-accent-soft);
+}
+.ws-node.is-over {
+  border-style: dashed;
+  border-color: var(--mk-accent);
+  background: var(--mk-accent-soft);
+}
+.ws-node.is-bad {
+  border-style: dashed;
+  border-color: var(--mk-danger);
+  background: var(--mk-danger-soft);
+}
+.ws-node .react-flow__handle {
+  width: 1px;
+  min-width: 0;
+  height: 1px;
+  min-height: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.ws-app {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-2);
+  width: 250px;
+  padding: var(--mk-4) var(--mk-5);
+  border: 1.5px solid var(--mk-text);
+}
+.ws-app__name {
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-lg);
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: var(--mk-display-track);
+}
+.ws-app__fw {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--mk-text-sm);
+}
+.ws-app__needs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--mk-1);
+}
+.ws-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 212px;
+  padding: var(--mk-3) var(--mk-4);
+}
+.ws-slot__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mk-2);
+}
+.ws-slot__name {
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-md);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: var(--mk-display-track);
+}
+.ws-slot__cost {
+  color: var(--mk-text-muted);
+  font-family: var(--mk-font-mono);
+  font-size: 11px;
+}
+.ws-slot__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--mk-line);
+  font-size: 11px;
+}
+.ws-slot.is-empty {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--mk-surface) 70%, transparent);
+}
+.ws-slot.is-unneeded {
+  opacity: 0.55;
+}
+.ws-slot__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--mk-text-muted);
+  font-size: var(--mk-text-xs);
+  line-height: var(--mk-leading-snug);
+}
+.ws-canvas .react-flow__edge-path {
+  stroke: var(--mk-line-strong);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.ws-canvas .ws-edge--works .react-flow__edge-path,
+.ws-canvas .ws-edge--info .react-flow__edge-path {
+  stroke: var(--mk-ok);
+}
+.ws-canvas .ws-edge--warning .react-flow__edge-path {
+  stroke: var(--mk-warn);
+  stroke-width: 2.5;
+}
+.ws-canvas .ws-edge--blocked .react-flow__edge-path,
+.ws-canvas .ws-edge--missing .react-flow__edge-path {
+  stroke: var(--mk-danger);
+  stroke-width: 2.5;
+}
+.ws-canvas .ws-edge--unknown .react-flow__edge-path {
+  stroke: var(--mk-text-faint);
+  stroke-dasharray: 2 4;
+}
+.ws-canvas .ws-edge.is-dashed .react-flow__edge-path,
+.ws-canvas .ws-edge.is-pair .react-flow__edge-path {
+  stroke-dasharray: 6 5;
+}
+.ws-canvas .react-flow__edge-text {
+  fill: var(--mk-text-muted);
+  font-family: var(--mk-font-mono);
+  font-size: 11px;
+}
+.ws-canvas .ws-edge--blocked .react-flow__edge-text,
+.ws-canvas .ws-edge--missing .react-flow__edge-text {
+  fill: var(--mk-danger);
+}
+.ws-canvas .ws-edge--warning .react-flow__edge-text {
+  fill: var(--mk-warn);
+}
+.ws-canvas .react-flow__edge-textbg {
+  fill: var(--mk-surface);
+  stroke: var(--mk-line);
+}
+
+/* ---------- palette ---------- */
+.ws-palette {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-5);
+  padding: 0 var(--mk-5) var(--mk-12);
+}
+.ws-palette__top {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-2);
+  padding-block: var(--mk-4) var(--mk-2);
+  background: var(--mk-surface);
+}
+.ws-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ws-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.ws-opt {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-3);
+  padding: var(--mk-2) var(--mk-3);
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  background: var(--mk-surface);
+  cursor: grab;
+  transition: border-color var(--mk-dur-fast) var(--mk-ease), transform var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-opt:hover {
+  border-color: var(--mk-line-strong);
+  transform: translateY(-1px);
+}
+.ws-opt:active {
+  cursor: grabbing;
+}
+.ws-opt.is-in-plan {
+  border-color: color-mix(in srgb, var(--mk-accent) 45%, transparent);
+}
+.ws-opt__main {
+  flex: 1;
+  min-width: 0;
+}
+.ws-opt__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--mk-text-sm);
+  font-weight: 600;
+}
+.ws-opt__summary {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--mk-text-faint);
+  font-size: var(--mk-text-xs);
+  line-height: var(--mk-leading-snug);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* ---------- inspector ---------- */
+.ws-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-6);
+  padding: var(--mk-5) var(--mk-5) var(--mk-12);
+}
+.ws-inspector--empty {
+  padding-top: var(--mk-8);
+}
+.ws-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--mk-3) var(--mk-4);
+  border: 1px solid var(--mk-line);
+  border-left-width: 3px;
+  border-radius: var(--mk-radius);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-snug);
+}
+.ws-result--blocked,
+.ws-result--missing {
+  border-left-color: var(--mk-danger);
+}
+.ws-result--warning {
+  border-left-color: var(--mk-warn);
+}
+.ws-result--unknown {
+  border-left-color: var(--mk-text-faint);
+  border-left-style: dashed;
+}
+.ws-result--info,
+.ws-result--works {
+  border-left-color: var(--mk-ok);
+}
+.ws-score {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--mk-text-xs);
+}
+.ws-compare th,
+.ws-compare td {
+  padding: var(--mk-2);
+}
+.ws-compare tr.is-current td {
+  background: var(--mk-accent-soft);
+}
+.ws-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-3);
+  margin: 0;
+}
+.ws-fact {
+  display: grid;
+  grid-template-columns: 38% 1fr;
+  gap: var(--mk-3);
+  padding-bottom: var(--mk-3);
+  border-bottom: 1px solid var(--mk-line);
+  font-size: var(--mk-text-xs);
+  line-height: var(--mk-leading-snug);
+}
+.ws-fact dt {
+  color: var(--mk-text-muted);
+  font-weight: 600;
+}
+.ws-fact dd {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+}
+.ws-small-link {
+  font-size: var(--mk-text-xs);
+}
+
+/* ---------- spec pack, toast, loading ---------- */
+.ws-spec {
+  width: min(900px, calc(100vw - 48px));
+  max-width: none;
+}
+.ws-spec__pre {
+  max-height: 56vh;
+  overflow: auto;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+.ws-toast {
+  position: fixed;
+  z-index: 50;
+  bottom: var(--mk-6);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--mk-3) var(--mk-4);
+  border-radius: var(--mk-radius);
+  background: var(--mk-text);
+  color: var(--mk-surface);
+  font-size: var(--mk-text-sm);
+  box-shadow: var(--mk-shadow-2);
+}
+.ws-loading {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+  color: var(--mk-text-faint);
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-sm);
+}
+
+@media (max-width: 1100px) {
+  body {
+    overflow: auto;
+  }
+  .ws {
+    height: auto;
+    min-height: 100vh;
+    grid-template-rows: auto auto auto;
+  }
+  .ws-top {
+    flex-wrap: wrap;
+    padding-block: var(--mk-3);
+  }
+  .ws-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ws-left,
+  .ws-right {
+    border: 0;
+    border-bottom: 1px solid var(--mk-line);
+  }
+  .ws-center {
+    height: 72vh;
+  }
+  .ws-right__body {
+    max-height: 72vh;
+  }
+}
