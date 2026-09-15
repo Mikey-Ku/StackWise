@@ -1,0 +1,79 @@
+{
+  "id": "supabase-db",
+  "name": "Supabase",
+  "provider": "supabase",
+  "slots": ["database"],
+  "summary": "Supabase is a hosted Postgres database that comes with a ready-made API, realtime updates, and login built in.",
+  "website": "https://supabase.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free plan: 500 MB database, 5 GB egress, 50,000 monthly active users, but the project pauses after 7 days with no activity.",
+      "source": "https://supabase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 25,
+      "note": "Pro plan starts at $25/month per project: 8 GB disk, 100 GB storage, 250 GB egress, 100,000 MAU, then usage-based overage.",
+      "source": "https://supabase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "It is standard Postgres, so you can dump and restore the database to any other Postgres host with little rework.",
+      "source": "https://supabase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "storage_model": {
+      "value": "hosted",
+      "note": "Supabase runs and manages the Postgres server for you in the cloud.",
+      "source": "https://supabase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "data_model": {
+      "value": "relational",
+      "note": "Supabase's database is Postgres, a standard SQL relational database.",
+      "source": "https://supabase.com/docs/guides/database/overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "realtime_built_in": {
+      "value": true,
+      "note": "Supabase Realtime streams database inserts, updates, and deletes to connected browsers over websockets, no extra service needed.",
+      "source": "https://supabase.com/docs/guides/realtime/postgres-changes",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "serverless_friendly": {
+      "value": true,
+      "note": "A built-in pooler (Supavisor) and an HTTP API (PostgREST) both work well from serverless functions.",
+      "source": "https://supabase.com/docs/guides/platform/compute-and-disk",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "mobile_sdk": {
+      "value": true,
+      "note": "Official SDKs exist for Flutter, Swift (iOS), Kotlin (Android), and React Native through the JS client.",
+      "source": "https://supabase.com/blog/client-libraries-v2",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Supabase account and a new project at supabase.com.", "env": [], "source": "https://supabase.com/docs/guides/getting-started/quickstarts/nextjs" },
+    { "step": "Scaffold a Next.js app with the official Supabase starter template, which installs @supabase/supabase-js and @supabase/ssr for you.", "env": [], "source": "https://supabase.com/docs/guides/getting-started/quickstarts/nextjs" },
+    { "step": "Copy the Project URL and publishable key from the project's Connect panel in the dashboard.", "env": [], "source": "https://supabase.com/docs/guides/getting-started/quickstarts/nextjs" },
+    { "step": "Add the URL and key to your environment file.", "env": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"], "source": "https://supabase.com/docs/guides/getting-started/quickstarts/nextjs" },
+    { "step": "Create a table in the SQL editor and turn on Row Level Security with a policy before reading or writing from the app.", "env": [], "source": "https://supabase.com/docs/guides/getting-started/quickstarts/nextjs" }
+  ],
+  "builder_notes": [
+    "Use the publishable key in browser code and keep the secret key only on the server; never expose the secret key to the browser.",
+    "Turn on Row Level Security on every table and add a policy; without one, the API leaves the table unprotected.",
+    "In serverless or edge functions use the pooled connection string, not the direct one, since the free tier caps direct connections at 60."
+  ]
+}

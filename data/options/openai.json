@@ -1,0 +1,85 @@
+{
+  "id": "openai",
+  "name": "OpenAI API",
+  "provider": "openai",
+  "slots": ["ai"],
+  "summary": "OpenAI's API lets your app call GPT models to generate text, understand images, and power AI features.",
+  "website": "https://openai.com/api",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "No free API allowance; you must add a payment method before making calls, then pay per token used.",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No flat monthly plan for the API; it is pay-as-you-go per token (ChatGPT Plus is a separate consumer product).",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Proprietary API, but its request and response shape is the de facto format many other AI providers copy.",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_tier": {
+      "value": false,
+      "note": "No ongoing free rate-limited tier; billing must be enabled first and every call is metered.",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "Official TypeScript/JavaScript SDK is published as the \"openai\" npm package.",
+      "source": "https://developers.openai.com/api/docs/quickstart",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "cheap_model_price": {
+      "value": "gpt-5-nano: $0.05 input / $0.40 output per million tokens",
+      "note": "Cheapest current general-purpose text model; gpt-5-mini is next at $0.25 input / $2.00 output per million tokens.",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create an OpenAI account and add a payment method; the API will not respond without billing enabled.",
+      "env": [],
+      "source": "https://developers.openai.com/api/docs/quickstart"
+    },
+    {
+      "step": "Create an API key from the dashboard.",
+      "env": [],
+      "source": "https://developers.openai.com/api/docs/quickstart"
+    },
+    {
+      "step": "Set the key as an environment variable.",
+      "env": ["OPENAI_API_KEY"],
+      "source": "https://developers.openai.com/api/docs/quickstart"
+    },
+    {
+      "step": "Install the SDK with npm install openai.",
+      "env": [],
+      "source": "https://developers.openai.com/api/docs/quickstart"
+    },
+    {
+      "step": "Import OpenAI and call the API from a server-side route handler or server action.",
+      "env": [],
+      "source": "https://developers.openai.com/api/docs/quickstart"
+    }
+  ],
+  "builder_notes": [
+    "Keep OPENAI_API_KEY on the server; call it from API routes or server actions, never from client components.",
+    "Set explicit max token limits and handle rate-limit errors, since cost scales directly with tokens used.",
+    "Pick the smallest model (gpt-5-nano or gpt-5-mini) that meets quality needs before reaching for a bigger, pricier one."
+  ]
+}

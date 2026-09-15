@@ -1,0 +1,14 @@
+{
+  "id": "auth0",
+  "name": "Auth0",
+  "provider": "okta",
+  "slots": [
+    "login"
+  ],
+  "summary": "A hosted login service from Okta with many sign-in methods.",
+  "website": "https://auth0.com",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

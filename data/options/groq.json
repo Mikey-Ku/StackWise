@@ -1,0 +1,14 @@
+{
+  "id": "groq",
+  "name": "Groq",
+  "provider": "groq",
+  "slots": [
+    "ai"
+  ],
+  "summary": "An AI API that runs open models very quickly.",
+  "website": "https://groq.com",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

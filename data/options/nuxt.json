@@ -1,0 +1,14 @@
+{
+  "id": "nuxt",
+  "name": "Nuxt",
+  "provider": "open-source",
+  "slots": [
+    "framework"
+  ],
+  "summary": "A framework for full web apps using Vue, with pages and server code in one project.",
+  "website": "https://nuxt.com",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

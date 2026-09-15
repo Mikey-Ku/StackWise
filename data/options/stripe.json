@@ -1,0 +1,85 @@
+{
+  "id": "stripe",
+  "name": "Stripe",
+  "provider": "stripe",
+  "slots": ["payments"],
+  "summary": "Stripe is a payment processor that lets your app accept credit card and other online payments.",
+  "website": "https://stripe.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "No monthly fee or user cap; you only pay per successful transaction (2.9% + 30 cents for US cards).",
+      "source": "https://stripe.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan for standard Payments; pricing is pay-per-transaction with no setup or monthly fees.",
+      "source": "https://stripe.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Proprietary API, but its checkout and webhook model is the format most competitors document a migration path from.",
+      "source": "https://stripe.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "merchant_of_record": {
+      "value": false,
+      "note": "Standard Stripe Payments is not merchant of record. Stripe Tax only calculates tax; the separate Managed Payments product is MoR for an extra 3.5% fee.",
+      "source": "https://docs.stripe.com/payments/managed-payments",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "subscriptions": {
+      "value": true,
+      "note": "Recurring billing is supported through the Stripe Billing product, priced separately from base payment fees.",
+      "source": "https://stripe.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "fee_summary": {
+      "value": "2.9% + 30 cents per successful US card charge",
+      "note": "Domestic card rate; manually entered cards add 0.5% and international cards add 1.5%.",
+      "source": "https://stripe.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a Stripe account and get your publishable and secret API keys from the dashboard.",
+      "env": [],
+      "source": "https://docs.stripe.com/checkout/quickstart"
+    },
+    {
+      "step": "Install the libraries with npm install stripe @stripe/stripe-js.",
+      "env": [],
+      "source": "https://docs.stripe.com/checkout/quickstart"
+    },
+    {
+      "step": "Set your publishable, secret, and webhook signing keys as environment variables.",
+      "env": ["NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
+      "source": "https://docs.stripe.com/checkout/quickstart"
+    },
+    {
+      "step": "Create a Checkout Session in a server route handler and redirect the customer to its URL.",
+      "env": [],
+      "source": "https://docs.stripe.com/checkout/quickstart"
+    },
+    {
+      "step": "Add a webhook endpoint that verifies event signatures and fulfills orders; use the Stripe CLI to forward events locally.",
+      "env": [],
+      "source": "https://docs.stripe.com/checkout/quickstart"
+    }
+  ],
+  "builder_notes": [
+    "Keep STRIPE_SECRET_KEY on the server only; the publishable key is safe to expose to the client.",
+    "Verify webhook signatures before trusting any payment event and before fulfilling an order.",
+    "Use a Stripe-hosted Checkout Session rather than building a custom card form."
+  ]
+}

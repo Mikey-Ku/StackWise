@@ -1,0 +1,16 @@
+{
+  "id": "appwrite",
+  "name": "Appwrite",
+  "provider": "appwrite",
+  "slots": [
+    "database",
+    "login",
+    "files"
+  ],
+  "summary": "An open-source backend with a database, login and file storage, hosted or run yourself.",
+  "website": "https://appwrite.io",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

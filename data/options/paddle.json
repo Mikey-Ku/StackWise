@@ -1,0 +1,85 @@
+{
+  "id": "paddle",
+  "name": "Paddle",
+  "provider": "paddle",
+  "slots": ["payments"],
+  "summary": "Paddle is a payment platform that acts as the legal seller for your software, handling global sales tax and VAT for you.",
+  "website": "https://www.paddle.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "No monthly fee or user cap; you only pay per completed checkout (5% + 50 cents, tax handling included).",
+      "source": "https://www.paddle.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan; pricing is pay-per-transaction with no setup, monthly, or migration fees.",
+      "source": "https://www.paddle.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "low",
+      "note": "Proprietary checkout and merchant-of-record relationship; moving to another provider needs a real rebuild of billing and tax setup.",
+      "source": "https://www.paddle.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "merchant_of_record": {
+      "value": true,
+      "note": "Paddle is merchant of record on every sale: it registers for, collects, files, and remits sales tax and VAT for you.",
+      "source": "https://www.paddle.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "subscriptions": {
+      "value": true,
+      "note": "Native subscription and recurring billing management is included in the core product.",
+      "source": "https://www.paddle.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "fee_summary": {
+      "value": "5% + 50 cents per completed checkout",
+      "note": "Single all-inclusive rate that bundles payment processing, fraud protection, and global tax compliance.",
+      "source": "https://www.paddle.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a Paddle account, starting in sandbox mode for testing before applying for a live account.",
+      "env": [],
+      "source": "https://developer.paddle.com/build/nextjs-supabase-vercel-starter-kit"
+    },
+    {
+      "step": "Create a server-side API key and a client-side token under Paddle > Developer Tools > Authentication.",
+      "env": [],
+      "source": "https://developer.paddle.com/build/nextjs-supabase-vercel-starter-kit"
+    },
+    {
+      "step": "Set your API key, client token, and environment (sandbox or production) as environment variables.",
+      "env": ["PADDLE_API_KEY", "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN", "NEXT_PUBLIC_PADDLE_ENV"],
+      "source": "https://developer.paddle.com/build/nextjs-supabase-vercel-starter-kit"
+    },
+    {
+      "step": "Create a notification destination pointed at your app's /api/webhook route and copy its signing secret.",
+      "env": ["PADDLE_NOTIFICATION_WEBHOOK_SECRET"],
+      "source": "https://developer.paddle.com/build/nextjs-supabase-vercel-starter-kit"
+    },
+    {
+      "step": "Use Paddle.js on the client to open a checkout, and verify webhook signatures on the server to fulfill orders.",
+      "env": [],
+      "source": "https://developer.paddle.com/build/nextjs-supabase-vercel-starter-kit"
+    }
+  ],
+  "builder_notes": [
+    "Keep PADDLE_API_KEY on the server; only the client token is safe to expose to the browser.",
+    "Verify webhook signatures before updating subscription or order state in your database.",
+    "Let Paddle handle sales tax and VAT; do not build separate tax calculation logic on top of it."
+  ]
+}

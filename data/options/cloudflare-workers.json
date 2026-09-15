@@ -1,0 +1,96 @@
+{
+  "id": "cloudflare-workers",
+  "name": "Cloudflare Workers",
+  "provider": "cloudflare",
+  "slots": ["hosting"],
+  "summary": "Cloudflare Workers runs your backend code on servers at the edge, close to users, for fast APIs and small full-stack apps.",
+  "website": "https://workers.cloudflare.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free plan allows 100,000 requests a day (about 3M/month), but only 10ms of CPU time per request, which limits heavier logic.",
+      "source": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 5,
+      "note": "Workers Paid plan is $5/month and includes 10M requests and 30M CPU-milliseconds, then usage-based overage after that.",
+      "source": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "low",
+      "note": "Workers run on a V8 isolate, not Node.js, and apps typically depend on Workers-only KV, R2, D1, or Durable Objects APIs.",
+      "source": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "runtime_model": {
+      "value": "edge",
+      "note": "Code runs on V8 isolates at Cloudflare's edge locations worldwide, not in one region or on a traditional server.",
+      "source": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "persistent_disk": {
+      "value": "none",
+      "note": "There is no filesystem; use Workers KV, R2, or D1 for any state that needs to persist.",
+      "source": "https://developers.cloudflare.com/workers/runtime-apis/websockets/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "long_lived_connections": {
+      "value": true,
+      "note": "Workers natively support the WebSocket API; pair with Durable Objects to coordinate multiple clients like a chat room.",
+      "source": "https://developers.cloudflare.com/workers/runtime-apis/websockets/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "background_workers": {
+      "value": false,
+      "note": "Workers only run in response to a request or a Cron Trigger; there is no always-on background process type.",
+      "source": "https://developers.cloudflare.com/workers/platform/limits/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scheduled_jobs": {
+      "value": true,
+      "note": "Native Cron Triggers run a Worker on a schedule with no extra service needed.",
+      "source": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_commercial_use": {
+      "value": true,
+      "note": "No restriction on commercial use is stated for the Free plan, though it has no SLA and only community support.",
+      "source": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "framework_support": {
+      "value": {
+        "nextjs": "partial",
+        "react-vite": "full",
+        "sveltekit": "full"
+      },
+      "note": "Next.js runs via a beta OpenNext/vinext adapter with limited image optimization; static Vite apps deploy directly; SvelteKit's official adapter-cloudflare supports all core features.",
+      "source": "https://developers.cloudflare.com/workers/frameworks/framework-guides/nextjs/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Run npm create cloudflare@latest and sign in with a Cloudflare account.", "env": [], "source": "https://developers.cloudflare.com/workers/get-started/guide/" },
+    { "step": "Write your Worker code in src/index.ts and add any bindings (KV, R2, D1) to wrangler.jsonc.", "env": [], "source": "https://developers.cloudflare.com/workers/get-started/guide/" },
+    { "step": "Run wrangler deploy to publish to a workers.dev subdomain or a custom domain.", "env": [], "source": "https://developers.cloudflare.com/workers/get-started/guide/" },
+    { "step": "Optionally connect a GitHub repo in the Cloudflare dashboard for automatic deploys on every push.", "env": [], "source": "https://developers.cloudflare.com/workers/get-started/guide/" }
+  ],
+  "builder_notes": [
+    "Each request gets only 10ms of CPU time on the free plan (30 seconds max on paid); heavy computation, image processing, or large loops will hit the limit fast.",
+    "There is no filesystem; use Workers KV, R2, or D1 for any state, and Durable Objects to coordinate multiple WebSocket clients.",
+    "Next.js support runs through a beta adapter, not a native runtime; check the compatibility notes before relying on less common Next.js features."
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "id": "turso",
+  "name": "Turso",
+  "provider": "turso",
+  "slots": ["database"],
+  "summary": "Turso is a hosted database built on SQLite that can run close to your users anywhere in the world.",
+  "website": "https://turso.tech",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free plan: 5 GB storage, 500 million monthly row reads, 10 million row writes, and up to 100 databases.",
+      "source": "https://turso.tech/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 4.99,
+      "note": "The Developer plan is $4.99/month billed yearly and adds 9 GB storage and 2.5 billion monthly row reads.",
+      "source": "https://turso.tech/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "The client engine and data format (SQLite/libSQL, MIT licensed) are portable, but Turso's newer hosted multitenant server is closed source.",
+      "source": "https://turso.tech/what-is-turso",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "storage_model": {
+      "value": "hosted",
+      "note": "The main product is a hosted database; an optional local file copy (embedded replica) can sync from it for faster reads.",
+      "source": "https://docs.turso.tech/features/embedded-replicas/introduction",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "data_model": {
+      "value": "relational",
+      "note": "Turso is built on SQLite/libSQL, a standard SQL database.",
+      "source": "https://turso.tech",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "realtime_built_in": {
+      "value": false,
+      "note": "Change tracking features exist but are still marked experimental, so apps cannot yet rely on built-in live push updates.",
+      "source": "https://turso.tech/blog/introducing-change-data-capture-in-turso-sqlite-rewrite",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "serverless_friendly": {
+      "value": true,
+      "note": "The official client talks over HTTP with no native dependencies, built for edge and serverless functions.",
+      "source": "https://docs.turso.tech/sdk/ts/quickstart",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "mobile_sdk": {
+      "value": true,
+      "note": "Official SDKs exist for Swift (iOS), Kotlin (Android, preview), and React Native.",
+      "source": "https://turso.tech/blog/turso-goes-mobile-with-official-ios-and-android-sdks",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Install the Turso CLI and sign up or log in from the command line.", "env": [], "source": "https://docs.turso.tech/sdk/ts/guides/nextjs" },
+    { "step": "Create a database with the CLI.", "env": [], "source": "https://docs.turso.tech/sdk/ts/guides/nextjs" },
+    { "step": "Get the database URL and an auth token from the CLI.", "env": [], "source": "https://docs.turso.tech/sdk/ts/guides/nextjs" },
+    { "step": "Add them to your environment file.", "env": ["TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN"], "source": "https://docs.turso.tech/sdk/ts/guides/nextjs" },
+    { "step": "Install the client package and connect using the environment variables.", "env": [], "source": "https://docs.turso.tech/sdk/ts/quickstart" }
+  ],
+  "builder_notes": [
+    "Never expose TURSO_AUTH_TOKEN in client-side code, since it grants full database access.",
+    "Use the remote HTTP client in serverless or edge functions, not embedded replicas, since serverless has no persistent local disk.",
+    "Use @libsql/client if you need Drizzle or Prisma ORM support; use @tursodatabase/serverless for a lighter, zero-dependency HTTP client."
+  ]
+}

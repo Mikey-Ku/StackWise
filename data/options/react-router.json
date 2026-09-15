@@ -1,0 +1,14 @@
+{
+  "id": "react-router",
+  "name": "React Router",
+  "provider": "open-source",
+  "slots": [
+    "framework"
+  ],
+  "summary": "A React framework, formerly Remix, for full web apps with server code.",
+  "website": "https://reactrouter.com",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

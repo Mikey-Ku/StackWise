@@ -1,0 +1,96 @@
+{
+  "id": "vercel",
+  "name": "Vercel",
+  "provider": "vercel",
+  "slots": ["hosting"],
+  "summary": "Vercel hosts frontend and full-stack web apps with automatic deployments from Git, built by the creators of Next.js.",
+  "website": "https://vercel.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free Hobby plan includes 100GB bandwidth and 1M function calls a month, enough for roughly 1,000 typical monthly users.",
+      "source": "https://vercel.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 20,
+      "note": "Pro plan is $20 per team member per month and includes $20 of usage credit, 1TB transfer, and 10M edge requests.",
+      "source": "https://vercel.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Next.js code itself is portable, but Vercel's cron jobs, ISR cache, and Blob storage are proprietary and need rework elsewhere.",
+      "source": "https://vercel.com/docs/functions/functions-api-reference",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "runtime_model": {
+      "value": "serverless",
+      "note": "Backend code runs as Vercel Functions (serverless, with an optional Fluid compute pooling model), not a persistent server process.",
+      "source": "https://vercel.com/docs/functions/functions-api-reference",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "persistent_disk": {
+      "value": "none",
+      "note": "Functions have no writable persistent filesystem; use Vercel Blob or an external database or storage service instead.",
+      "source": "https://vercel.com/docs/functions/functions-api-reference",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "long_lived_connections": {
+      "value": false,
+      "note": "Vercel Functions cannot hold WebSocket connections open; Vercel's own guide recommends a third-party realtime service instead.",
+      "source": "https://vercel.com/kb/guide/publish-and-subscribe-to-realtime-data-on-vercel",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "background_workers": {
+      "value": false,
+      "note": "There is no always-on worker service type; only request-triggered or cron-triggered functions are available.",
+      "source": "https://vercel.com/docs/functions/functions-api-reference",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scheduled_jobs": {
+      "value": true,
+      "note": "Native Cron Jobs are supported, up to 100 per project. Hobby plan cron jobs can only run once a day; Pro allows every minute.",
+      "source": "https://vercel.com/docs/cron-jobs",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_commercial_use": {
+      "value": false,
+      "note": "Vercel's pricing page states the Hobby plan is for personal, non-commercial use only; Pro is required to sell a product.",
+      "source": "https://vercel.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "framework_support": {
+      "value": {
+        "nextjs": "full",
+        "react-vite": "full",
+        "sveltekit": "full"
+      },
+      "note": "Next.js is built by Vercel with full SSR and ISR support; static React and Vite apps deploy cleanly; SvelteKit works fully via the official adapter-vercel.",
+      "source": "https://vercel.com/docs/frameworks/full-stack/sveltekit",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Sign up at vercel.com and install the Vercel CLI, or just use the dashboard.", "env": [], "source": "https://vercel.com/docs/getting-started-with-vercel" },
+    { "step": "Import your Git repository (GitHub, GitLab, or Bitbucket) as a new Vercel project.", "env": [], "source": "https://vercel.com/docs/getting-started-with-vercel" },
+    { "step": "Vercel auto-detects your framework's build command; add any environment variables in Project Settings.", "env": [], "source": "https://vercel.com/docs/getting-started-with-vercel" },
+    { "step": "Click Deploy. Every push to your main branch redeploys automatically, and pull requests get their own preview URL.", "env": [], "source": "https://vercel.com/docs/getting-started-with-vercel" }
+  ],
+  "builder_notes": [
+    "Hobby plan forbids commercial use and limits cron jobs to once a day; budget for the $20/month Pro plan if the app will make money or needs frequent cron.",
+    "Do not rely on WebSockets in Vercel Functions; use a third-party realtime service (Ably, Pusher) or a separate always-on server for chat or live features.",
+    "There is no persistent filesystem; store uploads in Vercel Blob or an external service, not local disk."
+  ]
+}

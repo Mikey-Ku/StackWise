@@ -1,0 +1,14 @@
+{
+  "id": "polar",
+  "name": "Polar",
+  "provider": "polar",
+  "slots": [
+    "payments"
+  ],
+  "summary": "A payments platform for developers that acts as the merchant of record.",
+  "website": "https://polar.sh",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

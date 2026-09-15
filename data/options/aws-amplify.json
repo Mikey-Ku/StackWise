@@ -1,0 +1,14 @@
+{
+  "id": "aws-amplify",
+  "name": "AWS Amplify Hosting",
+  "provider": "aws",
+  "slots": [
+    "hosting"
+  ],
+  "summary": "Amazon hosting for web apps, deployed from your Git repository.",
+  "website": "https://aws.amazon.com/amplify/hosting/",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

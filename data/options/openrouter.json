@@ -1,0 +1,14 @@
+{
+  "id": "openrouter",
+  "name": "OpenRouter",
+  "provider": "openrouter",
+  "slots": [
+    "ai"
+  ],
+  "summary": "One API that routes requests to models from many AI providers.",
+  "website": "https://openrouter.ai",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

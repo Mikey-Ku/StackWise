@@ -1,0 +1,14 @@
+{
+  "id": "github-pages",
+  "name": "GitHub Pages",
+  "provider": "github",
+  "slots": [
+    "hosting"
+  ],
+  "summary": "Free hosting for static websites, served straight from a GitHub repository.",
+  "website": "https://pages.github.com",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

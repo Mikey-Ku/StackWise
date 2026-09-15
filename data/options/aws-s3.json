@@ -1,0 +1,78 @@
+{
+  "id": "aws-s3",
+  "name": "Amazon S3",
+  "provider": "aws",
+  "slots": ["files"],
+  "summary": "Amazon S3 is the original and most widely used cloud storage service for storing and serving files of any kind at any scale.",
+  "website": "https://aws.amazon.com/s3/",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_100",
+      "note": "AWS's Always Free tier for S3: 5 GB storage, 20,000 GET and 2,000 PUT requests a month, per secondary sources since AWS's own page omitted the figures.",
+      "source": "https://aws.amazon.com/free/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan; S3 is pay-as-you-go. New accounts also get up to $200 in AWS credits over 6 months.",
+      "source": "https://aws.amazon.com/s3/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "S3's API is the reference object storage interface; most competing providers copy it for compatibility.",
+      "source": "https://aws.amazon.com/s3/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "direct_uploads": {
+      "value": true,
+      "note": "Presigned URLs let a browser PUT a file straight to a bucket, without the file passing through your server.",
+      "source": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "egress_fees": {
+      "value": true,
+      "note": "First 100 GB/month of data transfer out is free across all AWS services combined, then about $0.09 per GB.",
+      "source": "https://aws.amazon.com/s3/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create an AWS account; there is no charge until you actually use a service.",
+      "env": [],
+      "source": "https://aws.amazon.com/s3/getting-started/"
+    },
+    {
+      "step": "Create an S3 bucket and an IAM user with access limited to that bucket, then generate access keys.",
+      "env": [],
+      "source": "https://aws.amazon.com/s3/getting-started/"
+    },
+    {
+      "step": "Install the SDK with npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner.",
+      "env": [],
+      "source": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html"
+    },
+    {
+      "step": "Set your credentials, region, and bucket name as environment variables.",
+      "env": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION", "S3_BUCKET_NAME"],
+      "source": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html"
+    },
+    {
+      "step": "Generate a presigned PUT URL on the server so the browser can upload directly to the bucket.",
+      "env": [],
+      "source": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html"
+    }
+  ],
+  "builder_notes": [
+    "Never put long-lived AWS access keys in client code; generate presigned URLs on the server instead.",
+    "Set a strict bucket policy and CORS configuration; S3 buckets are private by default but easy to misconfigure.",
+    "Watch data transfer out costs if the app serves large files to many users; consider a CDN in front of the bucket."
+  ]
+}

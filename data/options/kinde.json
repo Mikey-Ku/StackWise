@@ -1,0 +1,14 @@
+{
+  "id": "kinde",
+  "name": "Kinde",
+  "provider": "kinde",
+  "slots": [
+    "login"
+  ],
+  "summary": "A hosted login service with ready-made sign-in pages.",
+  "website": "https://kinde.com",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

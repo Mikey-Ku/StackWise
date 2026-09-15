@@ -1,0 +1,14 @@
+{
+  "id": "convex",
+  "name": "Convex",
+  "provider": "convex",
+  "slots": [
+    "database"
+  ],
+  "summary": "A hosted backend where database queries are TypeScript functions and data updates live.",
+  "website": "https://www.convex.dev",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

@@ -1,0 +1,14 @@
+{
+  "id": "paypal",
+  "name": "PayPal",
+  "provider": "paypal",
+  "slots": [
+    "payments"
+  ],
+  "summary": "Accept PayPal and card payments with a PayPal business account.",
+  "website": "https://developer.paypal.com",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}
