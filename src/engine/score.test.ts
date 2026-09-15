@@ -143,6 +143,17 @@ describe("alternatives and close calls", () => {
     expect(login?.runnerUp.id).toBe("login-cheap");
   });
 
+  it("doesn't let a cost note count as a perk", () => {
+    // files-direct triggers "downloads cost money"; a twin without egress fees must not lose to it.
+    const twin = { ...index.catalog.options.find((o) => o.id === "files-direct")!, id: "files-free-egress", provider: "otherstore" };
+    twin.facts = { ...twin.facts, egress_fees: { ...twin.facts.egress_fees, value: false } };
+    const withTwin = fixtureIndex({ options: [...index.catalog.options, twin] });
+    const plan = input({ uploads: "yes" });
+    const rec = recommend(withTwin, plan, { hosting: "host-server" });
+    const byId = (id: string) => scorePlan(withTwin, { ...rec.selection, files: id }, plan, evaluatePlan(withTwin, { ...rec.selection, files: id }, plan)).total;
+    expect(byId("files-direct")).toBeCloseTo(byId("files-free-egress"), 9);
+  });
+
   it("does not call a clear win close", () => {
     const plan = input({ saves_data: "yes", login: "yes" }, { priority: "launch_fast" });
     const rec = recommend(index, plan);

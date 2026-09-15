@@ -12,6 +12,7 @@ import {
   type SlotDef,
   type SlotId,
 } from "./schema";
+import { inSentence } from "./text";
 
 /**
  * The connection logic. Given which option sits in each slot and what the beginner answered,
@@ -136,7 +137,7 @@ export function fillTemplate(index: CatalogIndex, selection: Selection, text: st
   return text.replace(/\{(\w+)\}/g, (whole, slot: string) => {
     if (!(SLOT_IDS as readonly string[]).includes(slot)) return whole;
     const option = optionIn(index, selection, slot as SlotId);
-    return option ? option.name : (index.slotsById.get(slot as SlotId)?.label.toLowerCase() ?? slot);
+    return option ? option.name : (inSentence(index.slotsById.get(slot as SlotId)?.label ?? slot));
   });
 }
 
@@ -234,7 +235,7 @@ function missingPieces(index: CatalogIndex, selection: Selection, input: PlanInp
     if (!needIsOn(index, input, need.id)) continue;
     for (const slot of need.adds_slots) {
       if (optionIn(index, selection, slot)) continue;
-      reasons.set(slot, [...(reasons.get(slot) ?? []), need.label.toLowerCase()]);
+      reasons.set(slot, [...(reasons.get(slot) ?? []), inSentence(need.label)]);
     }
   }
   return [...reasons.entries()].map(([slot, needs]) => {

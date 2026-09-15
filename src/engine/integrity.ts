@@ -77,7 +77,7 @@ export function checkCatalog(catalog: Catalog): string[] {
     }
 
     for (const text of strings(option)) {
-      if (text.includes("—")) problems.push(`${option.id}: contains an em dash`);
+      if (text.includes("\u2014")) problems.push(`${option.id}: contains an em dash`);
     }
   }
 
@@ -134,7 +134,7 @@ export function checkCatalog(catalog: Catalog): string[] {
   }
 
   for (const text of strings([catalog.needs, catalog.capabilityRules, catalog.productRules, catalog.slots, catalog.facts, catalog.learn])) {
-    if (text.includes("—")) problems.push(`rules, questions or teaching text contain an em dash: "${text.slice(0, 60)}"`);
+    if (text.includes("\u2014")) problems.push(`rules, questions or teaching text contain an em dash: "${text.slice(0, 60)}"`);
   }
 
   return problems;

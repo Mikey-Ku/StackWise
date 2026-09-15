@@ -3,6 +3,7 @@ import { needIsOn, optionIn, type CatalogIndex } from "./evaluate";
 import { BUILD_ORDER } from "./checklist";
 import { closeCalls, type Recommendation } from "./score";
 import type { PlanInput } from "./schema";
+import { inSentence } from "./text";
 
 /**
  * Everything an explanation of the plan is allowed to say, as plain data. The AI explanation is
@@ -43,7 +44,7 @@ export function planBrief(index: CatalogIndex, input: PlanInput, rec: Recommenda
   return {
     app: appName.trim() || "This app",
     description: description.trim(),
-    needs: catalog.needs.filter((n) => needIsOn(index, input, n.id)).map((n) => n.label.toLowerCase()),
+    needs: catalog.needs.filter((n) => needIsOn(index, input, n.id)).map((n) => inSentence(n.label)),
     stack,
     problems: rec.results
       .filter((r) => r.level !== "info")
@@ -53,7 +54,7 @@ export function planBrief(index: CatalogIndex, input: PlanInput, rec: Recommenda
       now: `At ${sizeLabel(outlook.now.size)} people: ${describeTotal(outlook.now)}`,
       next: outlook.next ? `At ${sizeLabel(outlook.next.size)} people: ${describeTotal(outlook.next)}` : undefined,
     },
-    closeCalls: closeCalls(index, input, rec).map((c) => `${c.chosen.name} was a close call against ${c.runnerUp.name} for ${index.slotsById.get(c.slot)?.label.toLowerCase()}`),
+    closeCalls: closeCalls(index, input, rec).map((c) => `${c.chosen.name} was a close call against ${c.runnerUp.name} for ${inSentence(index.slotsById.get(c.slot)?.label ?? c.slot)}`),
   };
 }
 
@@ -64,7 +65,7 @@ function list(items: string[]): string {
 
 /** The no-AI explanation: the same brief, in fixed sentences. */
 export function templateSummary(brief: PlanBrief): string {
-  const parts = brief.stack.map((s) => `${s.choice} for ${s.part.toLowerCase()}`);
+  const parts = brief.stack.map((s) => `${s.choice} for ${inSentence(s.part)}`);
   const first = `${brief.app} is planned with ${list(parts)}.`;
   const needs = brief.needs.length ? ` It was shaped by what you said the app needs: ${list(brief.needs)}.` : "";
   const problems = brief.problems.length

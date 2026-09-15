@@ -7,6 +7,17 @@ import type { Selection, SlotId } from "./schema";
  */
 export const BUILD_ORDER: SlotId[] = ["framework", "database", "login", "email", "files", "payments", "ai", "jobs", "mobile", "hosting"];
 
+/**
+ * Quickstarts name browser-visible variables the Next.js way. Each framework has its own prefix
+ * for variables that reach the browser, so rename them to match the plan's framework.
+ */
+const PUBLIC_PREFIX: Record<string, string> = { sveltekit: "PUBLIC_", "react-vite": "VITE_" };
+
+export function adaptEnvName(name: string, frameworkId: string | undefined): string {
+  const prefix = frameworkId ? PUBLIC_PREFIX[frameworkId] : undefined;
+  return prefix && name.startsWith("NEXT_PUBLIC_") ? `${prefix}${name.slice("NEXT_PUBLIC_".length)}` : name;
+}
+
 export interface ChecklistItem {
   /** Stable across sessions so checked boxes survive a reload. */
   id: string;
@@ -35,7 +46,7 @@ export function buildChecklist(index: CatalogIndex, selection: Selection): Check
         slot,
         optionName: option.name,
         text: step.step,
-        env: step.env,
+        env: step.env.map((name) => adaptEnvName(name, selection.framework)),
         source: /^https?:\/\//.test(step.source) ? step.source : undefined,
       });
     });

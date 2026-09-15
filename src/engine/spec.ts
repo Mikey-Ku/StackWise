@@ -1,4 +1,4 @@
-import { BUILD_ORDER } from "./checklist";
+import { BUILD_ORDER, adaptEnvName } from "./checklist";
 import { costBySize, costOutlook, describeTotal } from "./cost";
 import { buildDecisionRecord } from "./decisions";
 import { evaluatePlan, needIsOn, optionIn, type CatalogIndex, type CheckResult } from "./evaluate";
@@ -95,7 +95,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     return `- **${label}, ${l.option.name}:** ${l.headline}.${l.detail ? ` ${l.detail}` : ""}`;
   });
 
-  const envNames = unique(filled.flatMap(({ option }) => option.setup.flatMap((s) => s.env)));
+  const envNames = unique(filled.flatMap(({ option }) => option.setup.flatMap((s) => s.env.map((e) => adaptEnvName(e, selection.framework)))));
   const stackList = filled.map(({ def, option }) => `- ${def.label}: ${option.name}`);
 
   const spec = [
@@ -152,7 +152,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
 
   const setupSections = filled.flatMap(({ def, option }, i) => {
     const steps = option.setup.map((s) => {
-      const env = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${e}\``).join(", ")}.` : "";
+      const env = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${adaptEnvName(e, selection.framework)}\``).join(", ")}.` : "";
       const source = /^https?:\/\//.test(s.source) ? ` ([docs](${s.source}))` : "";
       return `- [ ] ${s.step}${env}${source}`;
     });
