@@ -371,11 +371,6 @@ body {
   line-height: 1.15;
   letter-spacing: var(--mk-display-track);
 }
-.ws-slot__cost {
-  color: var(--mk-text-muted);
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-}
 .ws-slot__foot {
   display: flex;
   align-items: center;
@@ -472,10 +467,17 @@ body {
   justify-content: space-between;
   margin-bottom: 2px;
 }
+/* The logo runs down the left; name and Use share the top row; summary and stats sit under them. */
 .ws-opt {
-  display: flex;
-  align-items: center;
-  gap: var(--mk-3);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "logo name use"
+    "logo summary summary"
+    "logo stats stats";
+  align-items: start;
+  column-gap: var(--mk-3);
+  row-gap: 3px;
   padding: var(--mk-2) var(--mk-3);
   border: 1px solid var(--mk-line);
   border-radius: var(--mk-radius);
@@ -492,10 +494,6 @@ body {
 }
 .ws-opt.is-in-plan {
   border-color: color-mix(in srgb, var(--mk-accent) 45%, transparent);
-}
-.ws-opt__main {
-  flex: 1;
-  min-width: 0;
 }
 .ws-opt__name {
   display: flex;
@@ -844,8 +842,18 @@ body {
   color: var(--mk-text-faint);
   text-decoration: line-through;
 }
+/* Long URLs and environment variable names wrap instead of pushing the panel sideways. */
+.ws-check-item__body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ws-check-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
 .ws-env {
-  margin-right: 6px;
   padding: 1px 5px;
   border-radius: var(--mk-radius-sm);
   background: var(--mk-surface-sunk);
@@ -905,5 +913,362 @@ body {
   }
   .ws-spec {
     width: calc(100vw - 16px);
+  }
+}
+
+/* ---------- v0.3: logos and stats ---------- */
+.ws-logo-wrap {
+  --ws-logo: 20px;
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  width: var(--ws-logo);
+  height: var(--ws-logo);
+}
+.ws-logo {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--mk-line);
+  border-radius: max(4px, calc(var(--ws-logo) * 0.24));
+  background: var(--mk-surface);
+}
+.ws-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+}
+/* Simple Icons are bare marks on a 24px grid, so they get room to breathe. Site icons are either marks
+   or full app-icon squares; a smaller inset and rounded corners suit both. */
+.ws-logo--simple-icons img {
+  width: 64%;
+  height: 64%;
+}
+.ws-logo--site img {
+  width: 80%;
+  height: 80%;
+  border-radius: max(2px, calc(var(--ws-logo) * 0.14));
+}
+.ws-logo--letter {
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text-muted);
+  font-family: var(--mk-font-display);
+  font-size: calc(var(--ws-logo) * 0.48);
+  font-weight: 650;
+  line-height: 1;
+}
+.ws-logo-status {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  box-shadow: 0 0 0 2px var(--mk-surface);
+}
+.ws-logo-status.ws-vdot--unknown {
+  background: var(--mk-surface);
+  box-shadow: inset 0 0 0 1.5px var(--mk-text-faint), 0 0 0 2px var(--mk-surface);
+}
+
+.ws-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ws-stat {
+  max-width: 100%;
+  padding: 1px 6px;
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius-sm);
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+.ws-stat--good {
+  border-color: color-mix(in srgb, var(--mk-ok) 22%, transparent);
+  background: var(--mk-ok-soft);
+  color: var(--mk-ok);
+}
+.ws-stat--warn {
+  border-color: color-mix(in srgb, var(--mk-warn) 26%, transparent);
+  background: var(--mk-warn-soft);
+  color: var(--mk-warn);
+}
+
+.ws-statgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: var(--mk-1) 0 0;
+  overflow: hidden;
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  background: var(--mk-line);
+}
+.ws-statgrid__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--mk-2) var(--mk-3);
+  background: var(--mk-surface);
+}
+.ws-statgrid__item dt {
+  color: var(--mk-text-faint);
+  font-family: var(--mk-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ws-statgrid__item dd {
+  margin: 0;
+  font-size: var(--mk-text-sm);
+  font-weight: 600;
+  line-height: var(--mk-leading-snug);
+  font-variant-numeric: tabular-nums;
+}
+/* An odd count leaves the last cell alone on its row, so it spans both columns. */
+.ws-statgrid__item:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.ws-statgrid__item--good dd,
+.ws-tone--good {
+  color: var(--mk-ok);
+}
+.ws-statgrid__item--warn dd,
+.ws-tone--warn {
+  color: var(--mk-warn);
+}
+.ws-statgrid__item--unknown dd,
+.ws-tone--unknown {
+  color: var(--mk-text-faint);
+  font-weight: 500;
+}
+.ws-compare-grid thead th {
+  color: var(--mk-text);
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-md);
+}
+
+/* Option cards */
+.ws-opt > .ws-logo-wrap {
+  grid-area: logo;
+  margin-top: 1px;
+}
+.ws-opt .ws-opt__name {
+  grid-area: name;
+  align-self: center;
+}
+.ws-opt > .mk-btn {
+  grid-area: use;
+}
+.ws-opt .ws-opt__summary {
+  grid-area: summary;
+}
+.ws-opt .ws-opt__stats {
+  grid-area: stats;
+  margin-top: 4px;
+}
+
+.ws-slot__name {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-2);
+  min-width: 0;
+}
+.ws-slot__name > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ws-inspector__title {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-3);
+}
+.ws-optcell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mk-2);
+  vertical-align: middle;
+}
+.ws-optcell__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.ws-optcell__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  font-variant-numeric: tabular-nums;
+}
+.ws-compare td {
+  vertical-align: middle;
+}
+.ws-compare__use {
+  display: block;
+  margin: 2px 0 0 auto;
+  font-family: var(--mk-font-body);
+}
+.ws-checkgroup {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-2);
+}
+
+.ws-costlines {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius);
+}
+.ws-costlines li + li {
+  border-top: 1px solid var(--mk-line);
+}
+.ws-costlines__row {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-3);
+  width: 100%;
+  padding: var(--mk-2) var(--mk-3);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ws-costlines__row:hover {
+  background: var(--mk-surface-sunk);
+}
+.ws-costlines__name {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  font-size: var(--mk-text-sm);
+  font-weight: 600;
+  line-height: var(--mk-leading-snug);
+}
+.ws-costlines__name .mk-hint {
+  font-weight: 400;
+}
+.ws-costlines__value {
+  max-width: 50%;
+  font-size: var(--mk-text-sm);
+  font-weight: 600;
+  line-height: var(--mk-leading-snug);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The plan in numbers, in a strip above the canvas. */
+.ws-canvas-frame {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ws-canvas-frame > .ws-canvas {
+  position: relative;
+  inset: auto;
+  flex: 1;
+  min-height: 0;
+}
+.ws-planstats {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 1px;
+  margin: 0;
+  border-bottom: 1px solid var(--mk-line);
+  background: var(--mk-line);
+}
+.ws-planstats__item {
+  display: flex;
+  flex: 1 1 128px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--mk-2) var(--mk-4);
+  background: var(--mk-surface);
+}
+.ws-planstats__item dt {
+  color: var(--mk-text-faint);
+  font-family: var(--mk-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ws-planstats__item dd {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+.ws-planstats__item strong {
+  font-family: var(--mk-font-display);
+  font-size: var(--mk-text-lg);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: var(--mk-display-track);
+  font-variant-numeric: tabular-nums;
+}
+.ws-planstats__item small {
+  margin-left: 1px;
+  color: var(--mk-text-muted);
+  font-family: var(--mk-font-body);
+  font-size: var(--mk-text-xs);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.ws-planstats__item dd > span {
+  color: var(--mk-text-muted);
+  font-size: 11px;
+  line-height: var(--mk-leading-snug);
+}
+.ws-planstats__item--works strong {
+  color: var(--mk-ok);
+}
+.ws-planstats__item--warning strong,
+.ws-planstats__item--unknown strong {
+  color: var(--mk-warn);
+}
+.ws-planstats__item--blocked strong,
+.ws-planstats__item--missing strong {
+  color: var(--mk-danger);
+}
+
+@media (max-width: 1100px) {
+  .ws-center {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+  .ws-canvas-frame {
+    position: relative;
+    inset: auto;
+    height: 72vh;
+  }
+}
+@media (max-width: 720px) {
+  .ws-planstats__item {
+    flex-basis: 30%;
+    padding-inline: var(--mk-3);
+  }
+  .ws-planstats__item strong {
+    font-size: var(--mk-text-md);
+  }
+  .ws-planstats__item dd > span {
+    display: none;
   }
 }

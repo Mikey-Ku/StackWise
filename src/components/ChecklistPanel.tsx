@@ -2,16 +2,16 @@
 
 import { checklistProgress, type ChecklistItem } from "@/engine";
 import type { PlanModel } from "./usePlans";
-import { copyText, cx } from "./ui";
+import { Logo, copyText, cx } from "./ui";
 
 function Item({ item, done, onToggle }: { item: ChecklistItem; done: boolean; onToggle: () => void }) {
   return (
     <label className={cx("ws-check-item", done && "is-done")}>
       <input type="checkbox" checked={done} onChange={onToggle} />
-      <span className="mk-stack mk-gap-1">
+      <span className="mk-stack mk-gap-1 ws-check-item__body">
         <span>{item.text}</span>
         {(item.env.length > 0 || item.source) && (
-          <span className="mk-hint">
+          <span className="mk-hint ws-check-item__meta">
             {item.env.map((e) => (
               <code key={e} className="ws-env">
                 {e}
@@ -31,10 +31,10 @@ function Item({ item, done, onToggle }: { item: ChecklistItem; done: boolean; on
 
 /** Spec-driven development, tracked: the setup steps and build order from the plan, checked off as you go. */
 export function ChecklistPanel({ model, onToast }: { model: PlanModel; onToast: (message: string) => void }) {
-  const { checklist, plan, dispatch } = model;
+  const { checklist, plan, dispatch, catalog } = model;
   const progress = checklistProgress(checklist, plan.checked);
   const envNames = [...new Set(checklist.setup.flatMap((i) => i.env))];
-  const groups = [...new Set(checklist.setup.map((i) => i.optionName))];
+  const groups = [...new Map(checklist.setup.map((i) => [i.optionId, i.optionName])).entries()];
 
   if (plan.step !== "plan") {
     return (
@@ -61,11 +61,14 @@ export function ChecklistPanel({ model, onToast }: { model: PlanModel; onToast: 
 
       <section className="mk-stack mk-gap-3">
         <span className="mk-eyebrow">1. Set up accounts and keys</span>
-        {groups.map((name) => (
-          <div key={name} className="mk-stack mk-gap-2">
-            <p className="mk-label">{name}</p>
+        {groups.map(([optionId, name]) => (
+          <div key={optionId} className="mk-stack mk-gap-2">
+            <p className="mk-label ws-checkgroup">
+              <Logo logo={catalog.logos[optionId]} name={name} size={20} />
+              {name}
+            </p>
             {checklist.setup
-              .filter((i) => i.optionName === name)
+              .filter((i) => i.optionId === optionId)
               .map((item) => (
                 <Item key={item.id} item={item} done={Boolean(plan.checked[item.id])} onToggle={() => dispatch({ type: "toggleCheck", itemId: item.id })} />
               ))}

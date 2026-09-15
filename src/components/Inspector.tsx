@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { alternativesFor, costLine, CRITERIA, CRITERION_LABELS, inSentence, isStale, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
+import { alternativesFor, costLine, CRITERIA, CRITERION_LABELS, inSentence, isStale, optionStats, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
 import type { PlanModel } from "./usePlans";
-import { VerdictBadge, copyText, cx, formatFactValue } from "./ui";
+import { Logo, StatGrid, VerdictBadge, copyText, cx, formatFactValue } from "./ui";
 
 function ResultCard({ result }: { result: CheckResult }) {
   return (
@@ -67,6 +67,7 @@ export function Inspector({
   const priority = catalog.planning.priorities.find((p) => p.id === input.priority);
   const scores = rec.score.perSlot[slot]?.scores;
   const cost = option ? costLine(index, option, slot, input) : undefined;
+  const stats = option ? optionStats(index, option, slot, input) : [];
   const pickedHere = picked.filter((id) => alternatives.some((a) => a.option.id === id));
 
   const togglePick = (id: string) => setPicked((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current.filter((x) => alternatives.some((a) => a.option.id === x)), id].slice(-3)));
@@ -75,7 +76,10 @@ export function Inspector({
     <div className="ws-inspector">
       <div className="mk-stack mk-gap-2">
         <span className="mk-eyebrow">{def.label}</span>
-        <h3 className="ws-h3">{option ? option.name : `Nothing in ${def.label} yet`}</h3>
+        <div className="ws-inspector__title">
+          {option && <Logo logo={catalog.logos[option.id]} name={option.name} size={40} />}
+          <h3 className="ws-h3">{option ? option.name : `Nothing in ${def.label} yet`}</h3>
+        </div>
         {option && (
           <div className="mk-row mk-gap-2 mk-wrap">
             <span className="mk-badge">{rec.autoPicked.includes(slot) ? "Picked for you" : "Your choice"}</span>
@@ -86,6 +90,7 @@ export function Inspector({
           </div>
         )}
         <p className="mk-muted">{option ? option.summary : def.empty_hint}</p>
+        {stats.length > 0 && <StatGrid stats={stats} />}
         {option && (
           <button
             type="button"
@@ -172,10 +177,8 @@ export function Inspector({
             <thead>
               <tr>
                 <th aria-label="Pick to compare" />
-                <th>Option</th>
-                <th>With your plan</th>
+                <th>Option, with your plan</th>
                 <th className="mk-table__num">Score</th>
-                <th />
               </tr>
             </thead>
             <tbody>
@@ -187,18 +190,23 @@ export function Inspector({
                       <input type="checkbox" aria-label={`Compare ${alt.option.name}`} checked={pickedHere.includes(alt.option.id)} onChange={() => togglePick(alt.option.id)} />
                     </td>
                     <td>
-                      {alt.option.name}
-                      {alt.option.coverage === "partial" && <div className="mk-hint">not verified</div>}
+                      <span className="ws-optcell">
+                        <Logo logo={catalog.logos[alt.option.id]} name={alt.option.name} size={22} />
+                        <span className="ws-optcell__text">
+                          <span>{alt.option.name}</span>
+                          <span className="ws-optcell__meta">
+                            <VerdictBadge level={alt.worst} short />
+                            {alt.option.coverage === "full" && <span className="mk-hint">{optionStats(index, alt.option, slot, input)[0]?.short}</span>}
+                          </span>
+                        </span>
+                      </span>
                     </td>
-                    <td>
-                      <VerdictBadge level={alt.worst} short />
-                    </td>
-                    <td className="mk-table__num">{current ? "current" : `${alt.delta >= 0 ? "+" : ""}${alt.delta.toFixed(1)}`}</td>
-                    <td>
+                    <td className="mk-table__num">
+                      {current ? "current" : `${alt.delta >= 0 ? "+" : ""}${alt.delta.toFixed(1)}`}
                       {!current && (
                         <button
                           type="button"
-                          className="ws-link"
+                          className="ws-link ws-compare__use"
                           onClick={() => {
                             const error = model.place(alt.option.id, slot);
                             if (error) onToast(error);

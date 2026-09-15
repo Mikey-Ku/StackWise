@@ -11,3 +11,4 @@ export * from "./share";
 export * from "./staleness";
 export * from "./text";
 export * from "./summary";
+export * from "./stats";

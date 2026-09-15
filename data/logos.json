@@ -1,0 +1,350 @@
+{
+  "amazon-ses": {
+    "from": "site",
+    "url": "https://aws.amazon.com/ses/",
+    "file": "amazon-ses.png",
+    "source": "https://a0.awsstatic.com/libra-css/images/site/touch-icon-ipad-144-smile.png"
+  },
+  "anthropic": {
+    "from": "simple-icons",
+    "slug": "anthropic",
+    "file": "anthropic.svg",
+    "source": "https://simpleicons.org/?q=anthropic"
+  },
+  "appwrite": {
+    "from": "simple-icons",
+    "slug": "appwrite",
+    "file": "appwrite.svg",
+    "source": "https://simpleicons.org/?q=appwrite"
+  },
+  "astro": {
+    "from": "simple-icons",
+    "slug": "astro",
+    "file": "astro.svg",
+    "source": "https://simpleicons.org/?q=astro"
+  },
+  "auth0": {
+    "from": "simple-icons",
+    "slug": "auth0",
+    "file": "auth0.svg",
+    "source": "https://simpleicons.org/?q=auth0"
+  },
+  "aws-amplify": {
+    "from": "site",
+    "url": "https://aws.amazon.com/amplify/",
+    "file": "aws-amplify.png",
+    "source": "https://a0.awsstatic.com/libra-css/images/site/touch-icon-ipad-144-smile.png"
+  },
+  "aws-s3": {
+    "from": "site",
+    "url": "https://aws.amazon.com/s3/",
+    "file": "aws-s3.png",
+    "source": "https://a0.awsstatic.com/libra-css/images/site/touch-icon-ipad-144-smile.png"
+  },
+  "backblaze-b2": {
+    "from": "simple-icons",
+    "slug": "backblaze",
+    "file": "backblaze-b2.svg",
+    "source": "https://simpleicons.org/?q=backblaze"
+  },
+  "better-auth": {
+    "from": "simple-icons",
+    "slug": "betterauth",
+    "file": "better-auth.svg",
+    "source": "https://simpleicons.org/?q=betterauth"
+  },
+  "clerk": {
+    "from": "simple-icons",
+    "slug": "clerk",
+    "file": "clerk.svg",
+    "source": "https://simpleicons.org/?q=clerk"
+  },
+  "cloudflare-r2": {
+    "from": "simple-icons",
+    "slug": "cloudflare",
+    "file": "cloudflare-r2.svg",
+    "source": "https://simpleicons.org/?q=cloudflare"
+  },
+  "cloudflare-workers": {
+    "from": "simple-icons",
+    "slug": "cloudflareworkers",
+    "file": "cloudflare-workers.svg",
+    "source": "https://simpleicons.org/?q=cloudflareworkers"
+  },
+  "cloudinary": {
+    "from": "simple-icons",
+    "slug": "cloudinary",
+    "file": "cloudinary.svg",
+    "source": "https://simpleicons.org/?q=cloudinary"
+  },
+  "convex": {
+    "from": "simple-icons",
+    "slug": "convex",
+    "file": "convex.svg",
+    "source": "https://simpleicons.org/?q=convex"
+  },
+  "digitalocean-app-platform": {
+    "from": "simple-icons",
+    "slug": "digitalocean",
+    "file": "digitalocean-app-platform.svg",
+    "source": "https://simpleicons.org/?q=digitalocean"
+  },
+  "expo": {
+    "from": "simple-icons",
+    "slug": "expo",
+    "file": "expo.svg",
+    "source": "https://simpleicons.org/?q=expo"
+  },
+  "firebase-auth": {
+    "from": "simple-icons",
+    "slug": "firebase",
+    "file": "firebase-auth.svg",
+    "source": "https://simpleicons.org/?q=firebase"
+  },
+  "firebase-firestore": {
+    "from": "simple-icons",
+    "slug": "firebase",
+    "file": "firebase-firestore.svg",
+    "source": "https://simpleicons.org/?q=firebase"
+  },
+  "flutter": {
+    "from": "simple-icons",
+    "slug": "flutter",
+    "file": "flutter.svg",
+    "source": "https://simpleicons.org/?q=flutter"
+  },
+  "fly-io": {
+    "from": "simple-icons",
+    "slug": "flydotio",
+    "file": "fly-io.svg",
+    "source": "https://simpleicons.org/?q=flydotio"
+  },
+  "github-pages": {
+    "from": "simple-icons",
+    "slug": "github",
+    "file": "github-pages.svg",
+    "source": "https://simpleicons.org/?q=github"
+  },
+  "google-gemini": {
+    "from": "simple-icons",
+    "slug": "googlegemini",
+    "file": "google-gemini.svg",
+    "source": "https://simpleicons.org/?q=googlegemini"
+  },
+  "groq": {
+    "from": "site",
+    "url": "https://groq.com",
+    "file": "groq.png",
+    "source": "https://groq.com/apple-touch-icon.png"
+  },
+  "inngest": {
+    "from": "site",
+    "url": "https://www.inngest.com",
+    "file": "inngest.svg",
+    "source": "https://www.inngest.com/favicon-june-2025-light.svg"
+  },
+  "kinde": {
+    "from": "site",
+    "url": "https://kinde.com",
+    "file": "kinde.svg",
+    "source": "https://www.kinde.com/icon.svg"
+  },
+  "lemon-squeezy": {
+    "from": "simple-icons",
+    "slug": "lemonsqueezy",
+    "file": "lemon-squeezy.svg",
+    "source": "https://simpleicons.org/?q=lemonsqueezy"
+  },
+  "mistral": {
+    "from": "simple-icons",
+    "slug": "mistralai",
+    "file": "mistral.svg",
+    "source": "https://simpleicons.org/?q=mistralai"
+  },
+  "mongodb-atlas": {
+    "from": "simple-icons",
+    "slug": "mongodb",
+    "file": "mongodb-atlas.svg",
+    "source": "https://simpleicons.org/?q=mongodb"
+  },
+  "native-mobile": {
+    "from": "simple-icons",
+    "slug": "swift",
+    "file": "native-mobile.svg",
+    "source": "https://simpleicons.org/?q=swift"
+  },
+  "neon": {
+    "from": "simple-icons",
+    "slug": "neon",
+    "file": "neon.svg",
+    "source": "https://simpleicons.org/?q=neon"
+  },
+  "netlify": {
+    "from": "simple-icons",
+    "slug": "netlify",
+    "file": "netlify.svg",
+    "source": "https://simpleicons.org/?q=netlify"
+  },
+  "nextjs": {
+    "from": "simple-icons",
+    "slug": "nextdotjs",
+    "file": "nextjs.svg",
+    "source": "https://simpleicons.org/?q=nextdotjs"
+  },
+  "nuxt": {
+    "from": "simple-icons",
+    "slug": "nuxt",
+    "file": "nuxt.svg",
+    "source": "https://simpleicons.org/?q=nuxt"
+  },
+  "openai": {
+    "from": "site",
+    "url": "https://openai.com",
+    "file": "openai.png",
+    "source": "https://www.google.com/s2/favicons?domain=openai.com&sz=128"
+  },
+  "openrouter": {
+    "from": "simple-icons",
+    "slug": "openrouter",
+    "file": "openrouter.svg",
+    "source": "https://simpleicons.org/?q=openrouter"
+  },
+  "paddle": {
+    "from": "simple-icons",
+    "slug": "paddle",
+    "file": "paddle.svg",
+    "source": "https://simpleicons.org/?q=paddle"
+  },
+  "paypal": {
+    "from": "simple-icons",
+    "slug": "paypal",
+    "file": "paypal.svg",
+    "source": "https://simpleicons.org/?q=paypal"
+  },
+  "planetscale": {
+    "from": "simple-icons",
+    "slug": "planetscale",
+    "file": "planetscale.svg",
+    "source": "https://simpleicons.org/?q=planetscale"
+  },
+  "polar": {
+    "from": "site",
+    "url": "https://polar.sh",
+    "file": "polar.png",
+    "source": "https://polar.sh/favicon-dark.png"
+  },
+  "postmark": {
+    "from": "site",
+    "url": "https://postmarkapp.com",
+    "file": "postmark.png",
+    "source": "https://postmarkapp.com/images/apple-touch-icon.png"
+  },
+  "railway": {
+    "from": "simple-icons",
+    "slug": "railway",
+    "file": "railway.svg",
+    "source": "https://simpleicons.org/?q=railway"
+  },
+  "react-router": {
+    "from": "simple-icons",
+    "slug": "reactrouter",
+    "file": "react-router.svg",
+    "source": "https://simpleicons.org/?q=reactrouter"
+  },
+  "react-vite": {
+    "from": "simple-icons",
+    "slug": "vite",
+    "file": "react-vite.svg",
+    "source": "https://simpleicons.org/?q=vite"
+  },
+  "render": {
+    "from": "simple-icons",
+    "slug": "render",
+    "file": "render.svg",
+    "source": "https://simpleicons.org/?q=render"
+  },
+  "resend": {
+    "from": "simple-icons",
+    "slug": "resend",
+    "file": "resend.svg",
+    "source": "https://simpleicons.org/?q=resend"
+  },
+  "sendgrid": {
+    "from": "site",
+    "url": "https://sendgrid.com",
+    "file": "sendgrid.png",
+    "source": "https://www.twilio.com/aem-static/content/dam/twilio-com/core-assets/social/apple-touch-icon.png"
+  },
+  "sqlite-file": {
+    "from": "simple-icons",
+    "slug": "sqlite",
+    "file": "sqlite-file.svg",
+    "source": "https://simpleicons.org/?q=sqlite"
+  },
+  "stripe": {
+    "from": "simple-icons",
+    "slug": "stripe",
+    "file": "stripe.svg",
+    "source": "https://simpleicons.org/?q=stripe"
+  },
+  "supabase-auth": {
+    "from": "simple-icons",
+    "slug": "supabase",
+    "file": "supabase-auth.svg",
+    "source": "https://simpleicons.org/?q=supabase"
+  },
+  "supabase-db": {
+    "from": "simple-icons",
+    "slug": "supabase",
+    "file": "supabase-db.svg",
+    "source": "https://simpleicons.org/?q=supabase"
+  },
+  "supabase-storage": {
+    "from": "simple-icons",
+    "slug": "supabase",
+    "file": "supabase-storage.svg",
+    "source": "https://simpleicons.org/?q=supabase"
+  },
+  "sveltekit": {
+    "from": "simple-icons",
+    "slug": "svelte",
+    "file": "sveltekit.svg",
+    "source": "https://simpleicons.org/?q=svelte"
+  },
+  "trigger-dev": {
+    "from": "site",
+    "url": "https://trigger.dev",
+    "file": "trigger-dev.ico",
+    "source": "https://trigger.dev/favicon.ico"
+  },
+  "turso": {
+    "from": "simple-icons",
+    "slug": "turso",
+    "file": "turso.svg",
+    "source": "https://simpleicons.org/?q=turso"
+  },
+  "uploadthing": {
+    "from": "site",
+    "url": "https://uploadthing.com",
+    "file": "uploadthing.ico",
+    "source": "https://uploadthing.com/favicon.ico"
+  },
+  "upstash-qstash": {
+    "from": "simple-icons",
+    "slug": "upstash",
+    "file": "upstash-qstash.svg",
+    "source": "https://simpleicons.org/?q=upstash"
+  },
+  "vercel": {
+    "from": "simple-icons",
+    "slug": "vercel",
+    "file": "vercel.svg",
+    "source": "https://simpleicons.org/?q=vercel"
+  },
+  "workos-authkit": {
+    "from": "site",
+    "url": "https://workos.com",
+    "file": "workos-authkit.png",
+    "source": "https://cdn.prod.website-files.com/621f54116cab10f6e9215d8b/621f549024eb2947f6f2f7f7_Favicon%20256x256.png"
+  }
+}

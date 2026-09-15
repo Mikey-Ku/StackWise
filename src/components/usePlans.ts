@@ -8,6 +8,7 @@ import {
   costOutlook,
   headsUps,
   indexCatalog,
+  planStats,
   prefillFromKeywords,
   questionsThatMatter,
   recommend,
@@ -67,6 +68,7 @@ export function usePlans(catalog: Catalog) {
   const cost = useMemo(() => costOutlook(index, rec.selection, input), [index, rec.selection, input]);
   const costSizes = useMemo(() => costBySize(index, rec.selection, input), [index, rec.selection, input]);
   const checklist = useMemo(() => buildChecklist(index, rec.selection), [index, rec.selection]);
+  const stats = useMemo(() => planStats(index, input, rec), [index, input, rec]);
 
   /** Put an option on the canvas. Returns a reason when it doesn't fit the slot it was dropped on. */
   const place = useCallback(
@@ -101,7 +103,7 @@ export function usePlans(catalog: Catalog) {
     }
   }, [plan.description, catalog.needs, dispatch]);
 
-  return { history, store, plan, dispatch, catalog, index, input, rec, calls, followups, notSure, cost, costSizes, checklist, place, readDescription, prefill };
+  return { history, store, plan, dispatch, catalog, index, input, rec, calls, followups, notSure, cost, costSizes, checklist, stats, place, readDescription, prefill };
 }
 
 export type PlanModel = ReturnType<typeof usePlans>;

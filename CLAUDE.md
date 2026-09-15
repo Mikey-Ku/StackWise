@@ -7,14 +7,16 @@ Planning tool for beginners building web apps with AI builders. A deterministic 
 - `pnpm dev` runs on port 4310 (hub launch config name: `whystack`)
 - `pnpm test`, `pnpm check:data`, `pnpm typecheck`, `pnpm lint`, `pnpm build`
 - `pnpm eval:prefill`, `pnpm eval:plain-llm`, `pnpm check:sources [--apply]`, `pnpm draft:option -- ...` (these call Claude; they read `.env.local`)
+- `pnpm build:logos [-- --only <id,id>]` downloads logos into `public/logos` (network, no key)
 
 ## Map
 
 - `data/` is the product's knowledge. `src/engine/load.ts` parses it with `schema.ts`; `integrity.ts` holds the cross-file checks `data.test.ts` enforces.
-- `src/engine/evaluate.ts` produces verdicts. `score.ts` ranks and searches (branch and bound, tested against brute force). `followups.ts` picks questions. `cost.ts`, `spec.ts`, `checklist.ts`, `decisions.ts`, `share.ts`, `staleness.ts`, `summary.ts`, `prefill.ts` do what their names say.
+- `src/engine/evaluate.ts` produces verdicts. `score.ts` ranks and searches (branch and bound, tested against brute force). `followups.ts` picks questions. `stats.ts` turns facts into the stats on cards, nodes, Details, Compare and the strip above the canvas. `cost.ts`, `spec.ts`, `checklist.ts`, `decisions.ts`, `share.ts`, `staleness.ts`, `summary.ts`, `prefill.ts` do what their names say.
+- `data/logos.json` says where each logo comes from (Simple Icons slug or the service's site); `scripts/logos.ts` fetches them into `public/logos/`, which is committed. `Logo` in `src/components/ui.tsx` falls back to a letter if a file is missing.
 - `src/ai/` is server-only: `config.ts` (model, client, errors), `prefill.ts`, `explain.ts`, `rate-limit.ts`. Routes in `src/app/api/` always fall back to keywords or a template.
 - `src/components/store.ts` is all plan state as a pure reducer (plans, undo/redo, import, migration from v1); `usePlans.ts` wires it to the engine. `Workspace.tsx` lays out Planner, PlanCanvas, Palette, Inspector, LearnPanel, ChecklistPanel and the dialogs.
-- `scripts/` hold the evals, source checker and option drafter; their pure parts (`eval-core.ts`, `source-check-core.ts`) are tested.
+- `scripts/` hold the evals, source checker, option drafter and logo fetcher; their pure parts (`eval-core.ts`, `source-check-core.ts`, the link ranking in `logos.ts`) are tested.
 
 ## Invariants, do not break
 
@@ -44,3 +46,5 @@ Planning tool for beginners building web apps with AI builders. A deterministic 
 - Browser screenshots in the preview pane can lag a render, and the console buffer keeps errors from earlier hot reloads. Verify state with `javascript_tool` after a reload.
 - In the preview browser, clipboard writes fail because the document isn't focused; the share action falls back to showing the link in the toast.
 - `pnpm` scripts that call Claude use `tsx --env-file-if-exists=.env.local`, which needs Node 22.9 or newer.
+- Site favicons vary: some are white marks meant for dark browser tabs (the fetcher skips `prefers-color-scheme: dark` links), some are wordmarks too small to read. After `build:logos`, look at the palette; switch a bad one to a Simple Icons slug.
+- The right panel is 340px. Anything new in Details or the palette needs to wrap; long URLs and env var names in the checklist use `overflow-wrap: anywhere`.

@@ -1,8 +1,59 @@
 "use client";
 
-import type { CatalogIndex, FactDef, FactValue, Level } from "@/engine";
+import { useState, type CSSProperties } from "react";
+import type { CatalogIndex, FactDef, FactValue, Level, Logo as LogoFile, Stat } from "@/engine";
 
 export type Verdict = Level | "works";
+
+/**
+ * A service's logo from public/logos (see data/logos.json for where each one came from). The name
+ * always sits next to it, so the image is decorative. A missing or broken file shows the first letter.
+ */
+export function Logo({ logo, name, size = 20, status }: { logo: LogoFile | undefined; name: string; size?: number; status?: { level: Verdict; title: string } }) {
+  const [broken, setBroken] = useState<string | null>(null);
+  const style = { "--ws-logo": `${size}px` } as CSSProperties;
+  const file = logo?.file !== broken ? logo?.file : undefined;
+  return (
+    <span className="ws-logo-wrap" style={style}>
+      <span className={cx("ws-logo", file ? `ws-logo--${logo!.from}` : "ws-logo--letter")} aria-hidden>
+        {file ? (
+          // eslint-disable-next-line @next/next/no-img-element -- tiny static icons; next/image's resizing adds nothing here
+          <img src={`/logos/${file}`} alt="" loading="lazy" decoding="async" draggable={false} onError={() => setBroken(file)} />
+        ) : (
+          name.slice(0, 1).toUpperCase()
+        )}
+      </span>
+      {status && <VerdictDot level={status.level} title={status.title} className="ws-logo-status" />}
+    </span>
+  );
+}
+
+/** Short stats as chips, for cards and canvas nodes. Hover shows the full label and the fact's note. */
+export function StatChips({ stats, className }: { stats: Stat[]; className?: string }) {
+  if (stats.length === 0) return null;
+  return (
+    <div className={cx("ws-stats", className)}>
+      {stats.map((s) => (
+        <span key={s.id} className={`ws-stat ws-stat--${s.tone}`} title={s.note ? `${s.label}: ${s.value}\n${s.note}` : `${s.label}: ${s.value}`}>
+          {s.short}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function StatGrid({ stats }: { stats: Stat[] }) {
+  return (
+    <dl className="ws-statgrid">
+      {stats.map((s) => (
+        <div key={s.id} className={`ws-statgrid__item ws-statgrid__item--${s.tone}`} title={s.note}>
+          <dt>{s.label}</dt>
+          <dd>{s.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
 
 export const VERDICT_UI: Record<Verdict, { label: string; short: string; badge: string }> = {
   blocked: { label: "Doesn't work", short: "Doesn't work", badge: "mk-badge--danger" },
@@ -23,8 +74,8 @@ export function VerdictBadge({ level, short = false }: { level: Verdict; short?:
   );
 }
 
-export function VerdictDot({ level, title }: { level: Verdict; title?: string }) {
-  return <span className={`ws-vdot ws-vdot--${level}`} title={title ?? VERDICT_UI[level].label} aria-label={title ?? VERDICT_UI[level].label} role="img" />;
+export function VerdictDot({ level, title, className }: { level: Verdict; title?: string; className?: string }) {
+  return <span className={cx("ws-vdot", `ws-vdot--${level}`, className)} title={title ?? VERDICT_UI[level].label} aria-label={title ?? VERDICT_UI[level].label} role="img" />;
 }
 
 export function Seg<T extends string>({

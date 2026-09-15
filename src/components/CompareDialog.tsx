@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { alternativesFor, costLine, inSentence, isStale, type SlotId } from "@/engine";
+import { alternativesFor, inSentence, isStale, optionStats, type SlotId } from "@/engine";
 import type { PlanModel } from "./usePlans";
-import { VerdictBadge, formatFactValue } from "./ui";
+import { Logo, VerdictBadge, formatFactValue } from "./ui";
 
 export interface CompareRequest {
   slot: SlotId;
@@ -31,7 +31,12 @@ export function CompareDialog({ model, request, today, onClose, onToast }: { mod
   }, [request, index, input, rec.selection]);
 
   const slotDef = request ? index.slotsById.get(request.slot) : undefined;
-  const factKeys = slotDef ? [...new Set([...slotDef.required_facts, ...columns.flatMap((c) => Object.keys(c.option.facts))])] : [];
+  // One row per stat, in the order the first column lists them; a stat an option lacks shows as not researched.
+  const stats = request ? columns.map((c) => optionStats(index, c.option, request.slot, input)) : [];
+  const statRows = [...new Map(stats.flat().map((s) => [s.id, s.label])).entries()];
+  // Facts a stat row already shows, with its note and source, aren't listed again below.
+  const shownByStats = new Set(stats.flat().flatMap((s) => (s.fact ? [s.fact] : [])));
+  const factKeys = slotDef ? [...new Set([...slotDef.required_facts, ...columns.flatMap((c) => Object.keys(c.option.facts))])].filter((key) => !shownByStats.has(key)) : [];
 
   return (
     <dialog ref={ref} className="mk-modal ws-spec" onClose={onClose}>
@@ -53,7 +58,10 @@ export function CompareDialog({ model, request, today, onClose, onToast }: { mod
                   <th />
                   {columns.map((c) => (
                     <th key={c.option.id}>
-                      {c.option.name}
+                      <span className="ws-optcell">
+                        <Logo logo={catalog.logos[c.option.id]} name={c.option.name} size={28} />
+                        <span>{c.option.name}</span>
+                      </span>
                       {rec.selection[request.slot] === c.option.id && <span className="mk-badge mk-badge--accent ws-ml">In plan</span>}
                     </th>
                   ))}
@@ -81,12 +89,38 @@ export function CompareDialog({ model, request, today, onClose, onToast }: { mod
                     </td>
                   ))}
                 </tr>
-                <tr>
-                  <td className="ws-compare-grid__label">Cost at your size</td>
-                  {columns.map((c) => (
-                    <td key={c.option.id}>{costLine(index, c.option, request.slot, input).headline}</td>
-                  ))}
-                </tr>
+                {statRows.map(([id, label]) => (
+                  <tr key={id}>
+                    <td className="ws-compare-grid__label">{label}</td>
+                    {columns.map((c, i) => {
+                      const stat = stats[i].find((s) => s.id === id);
+                      const fact = stat?.fact ? c.option.facts[stat.fact] : undefined;
+                      // "Free at your size" quotes the free plan's note, which its own row shows with a source.
+                      const repeated = !stat?.fact && stats[i].some((s) => s.fact && s.note === stat?.note);
+                      return (
+                        <td key={c.option.id}>
+                          {stat ? (
+                            <>
+                              <strong className={`ws-tone--${stat.tone}`}>{stat.value}</strong>
+                              {stat.note && !repeated && <div className="mk-hint">{stat.note}</div>}
+                              {fact && (
+                                <div className="mk-hint">
+                                  <a href={fact.source} target="_blank" rel="noreferrer">
+                                    Source
+                                  </a>
+                                  , {fact.retrieved}
+                                  {isStale(fact, today) ? ", may be out of date" : ""}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <span className="mk-hint">Not researched</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
                 <tr>
                   <td className="ws-compare-grid__label">Plan score if used</td>
                   {columns.map((c) => (

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { CRITERION_LABELS, describeTotal, inSentence, SIZE_IDS, type CloseCall, type Need, type PriorityId, type SizeId, type SlotId } from "@/engine";
+import { CRITERION_LABELS, describeTotal, inSentence, optionStats, SIZE_IDS, SIZE_PHRASE, type CloseCall, type Need, type PriorityId, type SizeId, type SlotId } from "@/engine";
 import { EXAMPLES } from "./examples";
 import type { PlanModel } from "./usePlans";
-import { Seg, VerdictBadge, cx } from "./ui";
+import { Logo, Seg, VerdictBadge, cx } from "./ui";
 
 const ANSWERS = [
   { id: "yes" as const, label: "Yes" },
@@ -239,7 +239,7 @@ function Explanation({ model }: { model: PlanModel }) {
 }
 
 function PlanStep({ model, onSelect, onOpenChecklist }: { model: PlanModel; onSelect: (slot: SlotId) => void; onOpenChecklist: () => void }) {
-  const { plan, dispatch, catalog, rec, calls, followups, notSure, cost, costSizes, index } = model;
+  const { plan, dispatch, catalog, rec, calls, followups, notSure, cost, costSizes, index, input } = model;
   const problems = rec.results.filter((r) => r.level !== "info");
   const serious = problems.filter((r) => r.level === "blocked" || r.level === "missing");
   const sizeLabel = (id: string) => catalog.planning.sizes.find((s) => s.id === id)?.label ?? id;
@@ -303,8 +303,27 @@ function PlanStep({ model, onSelect, onOpenChecklist }: { model: PlanModel; onSe
       <section className="mk-stack mk-gap-2">
         <span className="mk-eyebrow">Cost</span>
         <p>
-          At {sizeLabel(cost.now.size).toLowerCase()} people: <strong>{describeTotal(cost.now)}</strong>.
+          For {SIZE_PHRASE[cost.now.size]}: <strong>{describeTotal(cost.now)}</strong>.
         </p>
+        <ul className="ws-costlines">
+          {cost.now.lines.map((line) => {
+            const now = optionStats(index, line.option, line.slot, input)[0];
+            return (
+              <li key={line.slot}>
+                <button type="button" className="ws-costlines__row" onClick={() => onSelect(line.slot)}>
+                  <Logo logo={catalog.logos[line.option.id]} name={line.option.name} size={24} />
+                  <span className="ws-costlines__name">
+                    <span>{line.option.name}</span>
+                    <span className="mk-hint">{index.slotsById.get(line.slot)?.label}</span>
+                  </span>
+                  <span className={cx("ws-costlines__value", `ws-tone--${now.tone}`)} title={now.note}>
+                    {now.value}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
         <details className="ws-details ws-details--flush">
           <summary>Cost at every size</summary>
           <div className="mk-table-wrap">

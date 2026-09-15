@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fixtureCatalog } from "@/engine/test-fixtures";
 import { formatComparison, scoreMethod, type EvalCase } from "./eval-core";
 import { htmlToText } from "./lib";
+import { iconCandidates, readableHex } from "./logos";
 import { applyChecks, changesMarkdown, checkPrompt, claimsBySource } from "./source-check-core";
 
 describe("pre-fill eval scoring", () => {
@@ -70,5 +71,32 @@ describe("source checker", () => {
   it("turns an HTML page into readable text without cutting anything", () => {
     const text = htmlToText("<html><style>.a{}</style><script>x()</script><h1>Pricing</h1><p>Free: 100 GB &amp; more</p></html>");
     expect(text).toBe("Pricing\nFree: 100 GB & more");
+  });
+});
+
+describe("logos", () => {
+  it("prefers an apple-touch-icon, then SVG, then the largest icon, and skips icons made for dark mode", () => {
+    const html = `
+      <link rel="icon" href="/favicon-32.png" sizes="32x32">
+      <link rel="icon" href="/white-mark.png" media="(prefers-color-scheme: dark)">
+      <link href="/mark.svg" rel="icon" type="image/svg+xml">
+      <link rel="apple-touch-icon" href="https://cdn.example.com/touch.png" sizes="180x180">
+      <link rel="stylesheet" href="/app.css">`;
+    expect(iconCandidates(html, "https://example.com/pricing")).toEqual([
+      "https://cdn.example.com/touch.png",
+      "https://example.com/mark.svg",
+      "https://example.com/favicon-32.png",
+      "https://example.com/favicon.ico",
+    ]);
+  });
+
+  it("falls back to /favicon.ico once when a page declares nothing", () => {
+    expect(iconCandidates("<link rel=\"icon\" href=\"/favicon.ico\">", "https://example.com")).toEqual(["https://example.com/favicon.ico"]);
+  });
+
+  it("draws near-white brand colors in ink so they show on white cards", () => {
+    expect(readableHex("FFFFFF")).toBe("15171A");
+    expect(readableHex("F7DF1E")).toBe("15171A");
+    expect(readableHex("635BFF")).toBe("635BFF");
   });
 });
