@@ -1274,3 +1274,78 @@ a.ws-costlines__row {
     display: none;
   }
 }
+
+/* ---------- v0.4: pairing with Claude, project pack ---------- */
+.ws-paired {
+  border-color: color-mix(in srgb, var(--mk-accent) 45%, transparent);
+  color: var(--mk-accent);
+}
+.ws-pair {
+  width: min(620px, calc(100vw - 32px));
+}
+.ws-pair__toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mk-3);
+  padding: var(--mk-3) var(--mk-4);
+  border: 1px solid var(--mk-line-strong);
+  border-radius: var(--mk-radius);
+  cursor: pointer;
+}
+.ws-pair__toggle.is-on {
+  border-color: color-mix(in srgb, var(--mk-accent) 45%, transparent);
+  background: var(--mk-accent-soft);
+}
+.ws-pair__toggle input {
+  margin-top: 4px;
+  accent-color: var(--mk-accent);
+}
+.ws-pair__cmd {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ws-pair__examples {
+  margin: 0;
+  padding-left: 1.1em;
+  color: var(--mk-text-muted);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-snug);
+}
+.ws-activity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ws-activity__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--mk-2) var(--mk-3);
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-snug);
+  overflow-wrap: anywhere;
+}
+.ws-activity__item.is-change {
+  border-left: 3px solid var(--mk-accent);
+}
+.ws-activity__item ul {
+  margin: 0;
+  padding-left: 1.1em;
+  color: var(--mk-text-muted);
+}
+.ws-activity__item .mk-badge {
+  --mk-ctl-h: 34px;
+  --mk-ctl-px: 0.9rem;
+  --mk-ctl-fs: 11px;
+}
+.ws-activity__time {
+  margin-left: auto;
+}
+.ws-spec__pick {
+  max-width: 360px;
+}

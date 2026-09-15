@@ -69,6 +69,8 @@ export type StoreAction =
   | { type: "deletePlan"; now: string; fallbackId: string }
   | { type: "switchPlan"; id: string }
   | { type: "importPlan"; id: string; now: string; plan: SharedPlan }
+  /** A change Claude made through WhyStack's MCP server. On the open plan it can be undone. */
+  | { type: "applyRemote"; id: string; plan: SharedPlan }
   | { type: "undo" }
   | { type: "redo" };
 
@@ -189,6 +191,29 @@ export function reduce(history: History, action: StoreAction, now = new Date().t
         step: "plan",
       };
       return { store: { ...withPlan(store, plan), activeId: action.id, order: [action.id, ...store.order] }, past: [], future: [] };
+    }
+    case "applyRemote": {
+      const target = store.plans[action.id];
+      if (!target) return history;
+      const guesses = Object.fromEntries(Object.entries(target.guesses).filter(([needId]) => !(needId in action.plan.answers)));
+      const updated: PlanState = {
+        ...target,
+        appName: action.plan.appName,
+        description: action.plan.description,
+        features: action.plan.features,
+        answers: action.plan.answers,
+        size: action.plan.size,
+        priority: action.plan.priority,
+        builderId: action.plan.builderId,
+        pinned: action.plan.pinned,
+        guesses,
+        // Claude's answers count as confirmed, so show the plan rather than a preview.
+        step: Object.keys(action.plan.answers).length > 0 ? "plan" : target.step,
+        updatedAt: now,
+      };
+      const next = withPlan(store, updated);
+      if (action.id !== store.activeId) return { ...history, store: next };
+      return { store: next, past: [...history.past, target].slice(-HISTORY_LIMIT), future: [] };
     }
     case "undo": {
       const previous = history.past[history.past.length - 1];

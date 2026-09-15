@@ -15,6 +15,8 @@ const ANSWERS = [
 export interface AiStatus {
   ai: boolean;
   model: string;
+  /** Where WhyStack runs from, so exported projects can start its MCP server. */
+  root?: string;
 }
 
 function QuestionRow({ model, need }: { model: PlanModel; need: Need }) {

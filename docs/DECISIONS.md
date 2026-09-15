@@ -160,6 +160,54 @@ Michael asked for a repo and "as many features that I discussed" as possible. Wh
 
 ---
 
+## Round three: more tools, fuller costs, and pairing with Claude (2026-09-15)
+
+## 25. More tools, with setup and costs
+
+**Michael:** Include building tools like scrapers and other tools, even payments, and consider the setup instructions and costs, like using your own URL and Render's costs.
+
+**Claude, from that:** four new parts (web scraping, domain name, analytics, error monitoring) researched from official pages, PayPal and Polar researched to full, and hosting facts for custom domains, free apps that sleep, and included traffic. Domains are billed by the year, app store accounts are yearly and one-time fees, and one subscription that covers several parts is counted once.
+
+**In your words:**
+
+## 26. Payment services ranked by their fee
+
+**Claude, fixing a tie found while testing.** Once PayPal was fully researched, it tied Stripe on everything WhyStack scored and won on alphabetical order despite higher fees. Payment services are now ranked on what they keep from a typical $20 sale.
+
+**In your words:**
+
+## 27. Pairing with Claude, all three ways
+
+**Michael:** All three. Claude as an advisor that asks WhyStack's rules, a shared plan Claude can change, and a project handoff for Claude Code. Claude had recommended the advisor and the handoff first, with the shared plan later.
+
+**In your words:**
+
+## 28. How Claude connects
+
+**Michael:** Both. The running app serves MCP over HTTP for pairing, and exported projects start the server as a command, so they work when WhyStack isn't running.
+
+**In your words:**
+
+## 29. Claude's changes apply like any product's MCP
+
+**Michael:** Apply them like any other product's MCP, and the results should be seen on the platform. Built as: changes save immediately, appear on the canvas within about two seconds with a toast and Claude's reason in the Claude tab, and Undo reverses them. Checks, comparisons and cost estimates show in the Claude tab too.
+
+**In your words:**
+
+## 30. What exporting writes for Claude Code
+
+**Michael:** Everything recommended (the plan file, the MCP config, rules for Claude, and letting Claude update the plan), plus an agentic coding structure with agents to run. Built as: `TASKS.md`, a `build-<part>` agent for every part, `stack-guard`, `setup-guide` and `spec-reviewer` agents, `/next-step` and `/check-stack` skills, and settings that allow WhyStack's tools. See `docs/MCP.md`.
+
+**In your words:**
+
+## 31. The offline server runs from WhyStack's folder
+
+**Michael:** A path to this folder, for now. Publishing it to npm would publish the engine and data, so that waits for the public or private decision.
+
+**In your words:**
+
+---
+
 ## Still open
 
 - **The interviewer question from Q1**, which was skipped: after a three-minute demo, what should an interviewer believe about you? Michael's to write.
@@ -172,6 +220,7 @@ Michael asked for a repo and "as many features that I discussed" as possible. Wh
 - **The eval set.** App descriptions with known right answers. Michael writes every case.
 - **Accounts.** Which login provider and database WhyStack itself should use, if plans should sync across devices.
 - **Public or private repo.** The repo was created private.
+- **Publishing the MCP server to npm**, so exported projects work on other machines. Waits for public or private.
 - **Timing.** The Wheelhouse friends beta was planned for 2026-09-17.
 
 ## What changed from the brainstorm design
@@ -181,8 +230,8 @@ Michael asked for a repo and "as many features that I discussed" as possible. Wh
 | Solo founders and startup teams | Beginners first, experienced users second |
 | Desktop app with an embedded terminal | Web app, no terminal |
 | Electron, node-pty, SQLite | Next.js, JSON in git, localStorage and share links for now |
-| Free-form architecture graph | Slots now (ten parts), typed free-form graph later |
-| MCP server, change center, plan-vs-code checks, Figma | Later expert mode, or dropped for now |
+| Free-form architecture graph | Slots now (14 parts), typed free-form graph later |
+| MCP server, change center, plan-vs-code checks, Figma | MCP server built for pairing and project handoff; the rest later or dropped |
 | 14-input cost simulator | Free-tier limits and first price jump, at every audience size |
 | Claude Code integration at the center | Agent-neutral spec pack for any builder |
 | AI as the planning assistant | AI reads and explains; rules decide; people review facts |

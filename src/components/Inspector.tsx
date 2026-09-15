@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { alternativesFor, costLine, CRITERIA, criterionLabel, inSentence, isStale, optionStats, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
+import { alternativesFor, costLine, CRITERIA, criterionLabel, formatFactValue, inSentence, isStale, optionStats, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
 import type { PlanModel } from "./usePlans";
-import { Logo, StatGrid, VerdictBadge, copyText, cx, formatFactValue } from "./ui";
+import { Logo, StatGrid, VerdictBadge, copyText, cx } from "./ui";
 
 function ResultCard({ result }: { result: CheckResult }) {
   return (

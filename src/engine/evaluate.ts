@@ -132,12 +132,13 @@ function evaluateCondition(index: CatalogIndex, selection: Selection, condition:
   return { kind: matches ? "true" : "false" };
 }
 
-/** Replace {slot} placeholders with the name of the option in that slot. */
+/** Replace {slot} placeholders with the name of the option in that slot ("Cloudflare Workers' plan", not "Workers's"). */
 export function fillTemplate(index: CatalogIndex, selection: Selection, text: string): string {
-  return text.replace(/\{(\w+)\}/g, (whole, slot: string) => {
+  return text.replace(/\{(\w+)\}('s)?/g, (whole, slot: string, possessive: string | undefined) => {
     if (!(SLOT_IDS as readonly string[]).includes(slot)) return whole;
     const option = optionIn(index, selection, slot as SlotId);
-    return option ? option.name : (inSentence(index.slotsById.get(slot as SlotId)?.label ?? slot));
+    const name = option ? option.name : inSentence(index.slotsById.get(slot as SlotId)?.label ?? slot);
+    return possessive ? `${name}${name.endsWith("s") ? "'" : "'s"}` : name;
   });
 }
 

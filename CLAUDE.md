@@ -9,6 +9,7 @@ Planning tool for beginners building web apps with AI builders. A deterministic 
 - `pnpm check:options -- --id <id,id>` checks single option files without loading the catalog (safe while others write data)
 - `pnpm eval:prefill`, `pnpm eval:plain-llm`, `pnpm check:sources [--apply]`, `pnpm draft:option -- ...` (these call Claude; they read `.env.local`)
 - `pnpm build:logos [-- --only <id,id>]` downloads logos into `public/logos` (network, no key)
+- `pnpm mcp` runs WhyStack's MCP server over stdio; the app serves the same tools at `/api/mcp` (docs/MCP.md)
 
 ## Map
 
@@ -17,6 +18,7 @@ Planning tool for beginners building web apps with AI builders. A deterministic 
 - `data/logos.json` says where each logo comes from (Simple Icons slug or the service's site); `scripts/logos.ts` fetches them into `public/logos/`, which is committed. `Logo` in `src/components/ui.tsx` falls back to a letter if a file is missing.
 - `src/ai/` is server-only: `config.ts` (model, client, errors), `prefill.ts`, `explain.ts`, `rate-limit.ts`. Routes in `src/app/api/` always fall back to keywords or a template.
 - `src/components/store.ts` is all plan state as a pure reducer (plans, undo/redo, import, migration from v1); `usePlans.ts` wires it to the engine. `Workspace.tsx` lays out Planner, PlanCanvas, Palette, Inspector, LearnPanel, ChecklistPanel and the dialogs.
+- `src/mcp/` is the MCP server: `server.ts` (11 tools over the engine), `stdio.ts` (the command exported projects start), `registry.ts` (shared plans in `.whystack/`, gitignored), `local.ts` (localhost-only guard). Routes: `src/app/api/mcp` (Streamable HTTP, stateless) and `src/app/api/pair` (the tab shares its plan and polls for Claude's changes via `usePairing.ts`). `src/engine/planops.ts` validates plan changes and builds reports; `src/engine/project.ts` builds the project pack (TASKS.md, agents, skills, `.mcp.json`).
 - `scripts/` hold the evals, source checker, option drafter and logo fetcher; their pure parts (`eval-core.ts`, `source-check-core.ts`, the link ranking in `logos.ts`) are tested.
 
 ## Invariants, do not break
@@ -29,7 +31,8 @@ Planning tool for beginners building web apps with AI builders. A deterministic 
 6. **Every fact has a source URL, a date and a status.** New facts are `draft` until a person reviews them.
 7. **No em dashes** in data, UI copy, generated files or docs. Code uses the `\u2014` escape when it has to mention one. The data, spec and AI tests check.
 8. **Engine tests use fixtures** (`test-fixtures.ts`); only `data.test.ts` reads real data. AI tests use a fake client; nothing in the test suite calls the API.
-9. **Default model is `claude-opus-5`** at low effort with `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`). Don't swap models for cost without Michael asking.
+9. **MCP tools only call the engine.** Claude asks WhyStack; no tool lets it decide a verdict, price or limit. `update_plan` goes through `applyPlanUpdate`, the same validation as the planner.
+10. **Default model is `claude-opus-5`** at low effort with `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`). Don't swap models for cost without Michael asking.
 
 ## Working with Michael
 
@@ -50,4 +53,6 @@ Planning tool for beginners building web apps with AI builders. A deterministic 
 - Site favicons vary: some are white marks meant for dark browser tabs (the fetcher skips `prefers-color-scheme: dark` links), some are wordmarks too small to read. After `build:logos`, look at the palette; switch a bad one to a Simple Icons slug.
 - The search's bound must stay tight. Counting shared accounts only at the leaf let four new parts push the all-yes plan to 25 seconds; they're counted incrementally now. `data.test.ts` fails if that plan takes over 1.5 seconds, so run it after adding parts or options.
 - Some sites answer a missing icon URL with an HTML page and a 200. The logo fetcher trusts file bytes (`sniffImage`), not names or content types.
+- The stdio MCP server must never write to stdout except JSON-RPC; log to stderr. `.mcp.json` runs it with `pnpm --silent --dir <WhyStack>` so the process starts in WhyStack's folder, and Claude Code passes the project in `CLAUDE_PROJECT_DIR`.
+- `/api/mcp` and `/api/pair` refuse non-local Host and Origin headers. Test them with `curl` against localhost, or the SDK's `StreamableHTTPClientTransport`.
 - The right panel is 340px. Anything new in Details or the palette needs to wrap; long URLs and env var names in the checklist use `overflow-wrap: anywhere`.

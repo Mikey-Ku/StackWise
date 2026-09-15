@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { alternativesFor, inSentence, isStale, optionStats, type SlotId } from "@/engine";
+import { alternativesFor, formatFactValue, inSentence, isStale, optionStats, type SlotId } from "@/engine";
 import type { PlanModel } from "./usePlans";
-import { Logo, VerdictBadge, formatFactValue } from "./ui";
+import { Logo, VerdictBadge } from "./ui";
 
 export interface CompareRequest {
   slot: SlotId;
