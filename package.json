@@ -10,9 +10,14 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check:data": "vitest run src/engine/data.test.ts"
+    "check:data": "vitest run src/engine/data.test.ts",
+    "eval:prefill": "tsx --env-file-if-exists=.env.local scripts/eval-prefill.ts",
+    "eval:plain-llm": "tsx --env-file-if-exists=.env.local scripts/eval-plain-llm.ts",
+    "check:sources": "tsx --env-file-if-exists=.env.local scripts/check-sources.ts",
+    "draft:option": "tsx --env-file-if-exists=.env.local scripts/draft-option.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
     "@xyflow/react": "^12.11.0",
     "next": "16.3.4",
     "react": "19.2.8",
@@ -25,6 +30,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"
   },
