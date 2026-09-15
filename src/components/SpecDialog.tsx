@@ -2,15 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildSpecPack } from "@/engine";
-import type { PlanModel } from "./usePlan";
-import { cx } from "./ui";
+import type { PlanModel } from "./usePlans";
+import { copyText, cx, downloadText } from "./ui";
 
-export function SpecDialog({ plan, generatedOn, onClose }: { plan: PlanModel; generatedOn: string | null; onClose: () => void }) {
+export function SpecDialog({ model, generatedOn, onClose }: { model: PlanModel; generatedOn: string | null; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [active, setActive] = useState(0);
   const [copied, setCopied] = useState(false);
   const open = generatedOn !== null;
-  const { state, index, input, rec } = plan;
+  const { plan, index, input, rec } = model;
 
   useEffect(() => {
     const dialog = ref.current;
@@ -23,25 +23,17 @@ export function SpecDialog({ plan, generatedOn, onClose }: { plan: PlanModel; ge
     () =>
       generatedOn
         ? buildSpecPack(index, input, rec.selection, {
-            appName: state.appName,
-            description: state.description,
-            features: state.features,
-            builderId: state.builderId,
+            appName: plan.appName,
+            description: plan.description,
+            features: plan.features,
+            builderId: plan.builderId,
             generatedOn,
           })
         : [],
-    [generatedOn, index, input, rec.selection, state.appName, state.description, state.features, state.builderId],
+    [generatedOn, index, input, rec.selection, plan.appName, plan.description, plan.features, plan.builderId],
   );
   const file = files[Math.min(active, files.length - 1)];
-
-  const download = (name: string, content: string) => {
-    const url = URL.createObjectURL(new Blob([content], { type: "text/plain;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+  const builder = model.catalog.planning.builders.find((b) => b.id === plan.builderId);
 
   return (
     <dialog ref={ref} className="mk-modal ws-spec" onClose={onClose}>
@@ -49,7 +41,7 @@ export function SpecDialog({ plan, generatedOn, onClose }: { plan: PlanModel; ge
         <div className="mk-row mk-gap-3">
           <div className="mk-grow mk-stack mk-gap-1">
             <span className="mk-eyebrow">Spec pack</span>
-            <h3>Hand this to your builder</h3>
+            <h3>Hand this to {builder?.label ?? "your builder"}</h3>
           </div>
           <button type="button" className="mk-btn mk-btn--ghost mk-sm" onClick={onClose}>
             Close
@@ -78,17 +70,15 @@ export function SpecDialog({ plan, generatedOn, onClose }: { plan: PlanModel; ge
             type="button"
             className="mk-btn mk-btn--primary mk-sm"
             onClick={async () => {
-              if (!file) return;
-              await navigator.clipboard.writeText(file.content);
-              setCopied(true);
+              if (file) setCopied(await copyText(file.content));
             }}
           >
             {copied ? "Copied" : `Copy ${file?.name ?? ""}`}
           </button>
-          <button type="button" className="mk-btn mk-btn--secondary mk-sm" onClick={() => file && download(file.name, file.content)}>
+          <button type="button" className="mk-btn mk-btn--secondary mk-sm" onClick={() => file && downloadText(file.name, file.content)}>
             Download {file?.name}
           </button>
-          <button type="button" className="mk-btn mk-btn--ghost mk-sm" onClick={() => files.forEach((f) => download(f.name, f.content))}>
+          <button type="button" className="mk-btn mk-btn--ghost mk-sm" onClick={() => files.forEach((f) => downloadText(f.name, f.content))}>
             Download all {files.length}
           </button>
         </div>

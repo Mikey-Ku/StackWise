@@ -15,18 +15,26 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { costLine, worstLevel, type CheckResult, type SlotId } from "@/engine";
-import type { PlanModel } from "./usePlan";
+import { costLine, inSentence, worstLevel, type CheckResult, type SlotId } from "@/engine";
+import type { PlanModel } from "./usePlans";
 import { VerdictBadge, VerdictDot, cx, type Verdict } from "./ui";
 
 /**
- * The canvas is stored as a graph with typed connections (see docs/DECISIONS.md), shown for now
- * as one app in the middle with a slot for each part of the stack. Every connection has exactly
- * one meaning, so every one can be checked.
+ * The canvas is a graph with typed connections (see docs/DECISIONS.md), shown for now as one app
+ * in the middle with a slot for each part of the stack. Every connection has exactly one meaning,
+ * so every one can be checked. Parts the plan doesn't need stay hidden until they're filled,
+ * "show all parts" is on, or someone drags an option that fits one.
  */
 
 type OuterSlot = Exclude<SlotId, "framework">;
 const OUTER: OuterSlot[] = ["hosting", "database", "login", "email", "files", "payments", "ai", "jobs", "mobile"];
+
+function sideToward(from: { x: number; y: number }, to: { x: number; y: number }): { source: Position; target: Position } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? { source: Position.Right, target: Position.Left } : { source: Position.Left, target: Position.Right };
+  return dy >= 0 ? { source: Position.Bottom, target: Position.Top } : { source: Position.Top, target: Position.Bottom };
+}
 
 /** Parts sit on an ellipse around the app, clockwise from hosting at the top. */
 const POSITION = Object.fromEntries(
@@ -36,7 +44,14 @@ const POSITION = Object.fromEntries(
   }),
 ) as Record<OuterSlot, { x: number; y: number }>;
 
-/** Keep the whole plan in view when the panel resizes or the plan's shape changes. */
+const SIDE = Object.fromEntries(
+  OUTER.map((slot) => {
+    const { source, target } = sideToward({ x: 0, y: 0 }, POSITION[slot]);
+    return [slot, { app: source, slot: target }];
+  }),
+) as Record<OuterSlot, { app: Position; slot: Position }>;
+
+/** Keep the plan in view when the panel resizes or the set of visible parts changes. */
 function AutoFit({ shape }: { shape: string }) {
   const { fitView } = useReactFlow();
   // Fitting before React Flow has measured the nodes zooms to the wrong box, so wait for it.
@@ -53,13 +68,6 @@ function AutoFit({ shape }: { shape: string }) {
   }, [fitView]);
   return null;
 }
-
-const SIDE = Object.fromEntries(
-  OUTER.map((slot) => {
-    const { source, target } = sideToward({ x: 0, y: 0 }, POSITION[slot]);
-    return [slot, { app: source, slot: target }];
-  }),
-) as Record<OuterSlot, { app: Position; slot: Position }>;
 
 interface CanvasActions {
   select: (slot: SlotId) => void;
@@ -82,12 +90,14 @@ function Handles() {
   );
 }
 
+type DropState = "" | "is-over" | "is-bad";
+
 type AppData = {
   appName: string;
   frameworkName?: string;
   frameworkLevel: Verdict;
   needs: string[];
-  drop: "" | "is-over" | "is-bad";
+  drop: DropState;
   selected: boolean;
   preview: boolean;
 };
@@ -127,13 +137,17 @@ type SlotData = {
   auto: boolean;
   needed: boolean;
   cleared: boolean;
-  drop: "" | "is-over" | "is-bad";
+  drop: DropState;
   selected: boolean;
 };
 
 function SlotNode({ data }: NodeProps<Node<SlotData>>) {
   const actions = useActions();
   const empty = !data.optionName;
+  const stop = (fn: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    fn();
+  };
   return (
     <div
       className={cx("ws-node ws-slot", empty && "is-empty", empty && !data.needed && "is-unneeded", data.drop, data.selected && "is-selected")}
@@ -148,16 +162,9 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
       </div>
       {empty ? (
         <div className="ws-slot__empty">
-          <p>{data.needed ? `Your answers need this. Drag a ${data.label.toLowerCase()} option here.` : data.hint}</p>
+          <p>{data.needed ? `Your answers need this. Drag a ${inSentence(data.label)} option here.` : `Optional. ${data.hint}.`}</p>
           {data.needed && data.cleared && (
-            <button
-              type="button"
-              className="mk-btn mk-btn--secondary mk-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                actions.autoPick(data.slot);
-              }}
-            >
+            <button type="button" className="mk-btn mk-btn--secondary mk-sm" onClick={stop(() => actions.autoPick(data.slot))}>
               Pick one for me
             </button>
           )}
@@ -169,27 +176,13 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
           <div className="ws-slot__foot">
             <span className="mk-faint">{data.auto ? "Picked for you" : "Your choice"}</span>
             <span className="mk-row mk-gap-1">
-              {!data.auto && (
-                <button
-                  type="button"
-                  className="ws-link"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    actions.autoPick(data.slot);
-                  }}
-                >
+              {!data.auto && data.needed && (
+                <button type="button" className="ws-link" onClick={stop(() => actions.autoPick(data.slot))}>
                   Re-pick
                 </button>
               )}
-              <button
-                type="button"
-                className="ws-link"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  actions.clear(data.slot);
-                }}
-              >
-                Clear
+              <button type="button" className="ws-link" onClick={stop(() => (data.needed ? actions.clear(data.slot) : actions.autoPick(data.slot)))}>
+                {data.needed ? "Clear" : "Remove"}
               </button>
             </span>
           </div>
@@ -205,27 +198,26 @@ function truncate(text: string, max = 34): string {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}...` : text;
 }
 
-function sideToward(from: { x: number; y: number }, to: { x: number; y: number }): { source: Position; target: Position } {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? { source: Position.Right, target: Position.Left } : { source: Position.Left, target: Position.Right };
-  return dy >= 0 ? { source: Position.Bottom, target: Position.Top } : { source: Position.Top, target: Position.Bottom };
-}
-
 export function PlanCanvas({
-  plan,
+  model,
+  selectedSlot,
   dragging,
+  showAll,
+  onToggleShowAll,
   onDropped,
   onSelect,
   onToast,
 }: {
-  plan: PlanModel;
+  model: PlanModel;
+  selectedSlot: SlotId | null;
   dragging: string | null;
+  showAll: boolean;
+  onToggleShowAll: () => void;
   onDropped: () => void;
   onSelect: (slot: SlotId) => void;
   onToast: (message: string) => void;
 }) {
-  const { state, dispatch, rec, index, input } = plan;
+  const { plan, dispatch, rec, index, input } = model;
   const [over, setOver] = useState<SlotId | "pane" | null>(null);
   const draggedOption = dragging ? index.optionsById.get(dragging) : undefined;
 
@@ -238,15 +230,18 @@ export function PlanCanvas({
     [dispatch, onSelect],
   );
 
-  const dropClass = (slot: SlotId): "" | "is-over" | "is-bad" => {
-    if (!draggedOption || over !== slot) return "";
-    return draggedOption.slots.includes(slot) ? "is-over" : "is-bad";
-  };
+  const visible = useMemo(
+    () => OUTER.filter((slot) => Boolean(rec.selection[slot]) || rec.needed.includes(slot) || showAll || Boolean(draggedOption?.slots.includes(slot))),
+    [rec.selection, rec.needed, showAll, draggedOption],
+  );
 
   const { nodes, edges } = useMemo(() => {
+    const dropClass = (slot: SlotId): DropState => {
+      if (!draggedOption || over !== slot) return "";
+      return draggedOption.slots.includes(slot) ? "is-over" : "is-bad";
+    };
     const touching = (slot: SlotId, filter: (r: CheckResult) => boolean) => rec.results.filter((r) => r.slots.includes(slot) && filter(r));
     const framework = rec.selection.framework ? index.optionsById.get(rec.selection.framework) : undefined;
-    const needLabels = index.catalog.needs.filter((n) => input.answers[n.id] === "yes").map((n) => n.label);
 
     const nodes: Node[] = [
       {
@@ -254,28 +249,26 @@ export function PlanCanvas({
         type: "app",
         position: { x: 0, y: 0 },
         data: {
-          appName: state.appName.trim() || "Your app",
+          appName: plan.appName.trim() || "Your app",
           frameworkName: framework?.name,
           frameworkLevel: worstLevel(touching("framework", (r) => r.slots.length === 1)),
-          needs: needLabels,
+          needs: index.catalog.needs.filter((n) => input.answers[n.id] === "yes").map((n) => n.label),
           drop: dropClass("framework"),
-          selected: state.selectedSlot === "framework",
-          preview: state.step !== "plan",
+          selected: selectedSlot === "framework",
+          preview: plan.step !== "plan",
         } satisfies AppData,
       },
     ];
     const edges: Edge[] = [];
 
-    for (const slot of OUTER) {
+    for (const slot of visible) {
       const optionId = rec.selection[slot];
       const option = optionId ? index.optionsById.get(optionId) : undefined;
       const def = index.slotsById.get(slot)!;
       const needed = rec.needed.includes(slot);
-      // The line from the app shows this slot's own checks (alone, or with the framework). The card
-      // shows everything touching the slot, including problems with other parts of the stack.
+      // The line from the app shows this part's own checks; the card shows everything touching it.
       const own = touching(slot, (r) => r.slots.length === 1 || r.slots.includes("framework"));
       const level: Verdict = option ? worstLevel(own) : needed ? "missing" : "works";
-      const cardLevel: Verdict = option ? worstLevel(touching(slot, () => true)) : level;
 
       nodes.push({
         id: `slot-${slot}`,
@@ -286,13 +279,13 @@ export function PlanCanvas({
           label: def.label,
           hint: def.empty_hint,
           optionName: option?.name,
-          level: cardLevel,
+          level: option ? worstLevel(touching(slot, () => true)) : level,
           cost: option ? costLine(index, option, slot, input).headline : undefined,
           auto: rec.autoPicked.includes(slot),
           needed,
-          cleared: state.pinned[slot] === "",
+          cleared: plan.pinned[slot] === "",
           drop: dropClass(slot),
-          selected: state.selectedSlot === slot,
+          selected: selectedSlot === slot,
         } satisfies SlotData,
       });
 
@@ -303,7 +296,7 @@ export function PlanCanvas({
           target: `slot-${slot}`,
           sourceHandle: `src-${SIDE[slot].app}`,
           targetHandle: `tgt-${SIDE[slot].slot}`,
-          label: option ? def.verb : `needs ${def.label.toLowerCase()}`,
+          label: option ? def.verb : `needs ${inSentence(def.label)}`,
           className: cx("ws-edge", `ws-edge--${level}`, !option && "is-dashed"),
           labelBgPadding: [6, 3],
           labelBgBorderRadius: 3,
@@ -311,16 +304,16 @@ export function PlanCanvas({
       }
     }
 
-    // Verdicts between two parts of the stack get their own line, drawn only when there is a problem.
+    // Problems between two parts of the stack get their own line.
     const pairs = new Map<string, CheckResult[]>();
     for (const r of rec.results) {
       if (r.slots.length !== 2 || r.slots.includes("framework") || r.level === "info") continue;
+      if (!r.slots.every((s) => rec.selection[s])) continue; // a check about an empty slot belongs to the one card
       const key = r.slots.join("|");
       pairs.set(key, [...(pairs.get(key) ?? []), r]);
     }
     for (const [key, results] of pairs) {
       const [a, b] = key.split("|") as [OuterSlot, OuterSlot];
-      const level = worstLevel(results);
       const sides = sideToward(POSITION[a], POSITION[b]);
       edges.push({
         id: `pair-${key}`,
@@ -329,21 +322,21 @@ export function PlanCanvas({
         sourceHandle: `src-${sides.source}`,
         targetHandle: `tgt-${sides.target}`,
         label: truncate(results.length > 1 ? `${results[0].title} (+${results.length - 1})` : results[0].title),
-        className: cx("ws-edge", `ws-edge--${level}`, "is-pair"),
+        className: cx("ws-edge", `ws-edge--${worstLevel(results)}`, "is-pair"),
         labelBgPadding: [6, 3],
         labelBgBorderRadius: 3,
       });
     }
 
     return { nodes, edges };
-    // dropClass reads `over` and the dragged option, which are listed below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rec, index, input, state.appName, state.selectedSlot, state.pinned, state.step, over, draggedOption]);
+  }, [rec, index, input, plan.appName, plan.pinned, plan.step, selectedSlot, over, draggedOption, visible]);
 
   const slotAt = (event: DragEvent): SlotId | null => {
     const el = (event.target as HTMLElement).closest("[data-slot]");
     return (el?.getAttribute("data-slot") as SlotId | null) ?? null;
   };
+
+  const hiddenCount = OUTER.length - visible.length;
 
   return (
     <ActionsContext.Provider value={actions}>
@@ -365,15 +358,18 @@ export function PlanCanvas({
           setOver(null);
           onDropped();
           if (!optionId) return;
-          const error = plan.place(optionId, slotAt(e) ?? undefined);
+          const error = model.place(optionId, slotAt(e) ?? undefined, selectedSlot);
           if (error) onToast(error);
         }}
       >
-        {state.step !== "plan" && (
+        {plan.step !== "plan" && (
           <div className="ws-canvas__banner">
-            {state.step === "describe" ? "Describe your app to fill this in." : "Preview from your answers so far. Confirm them to lock in the plan."}
+            {plan.step === "describe" ? "Describe your app to fill this in." : "Preview from your answers so far. Confirm them to lock in the plan."}
           </div>
         )}
+        <button type="button" className="ws-canvas__toggle mk-btn mk-btn--secondary mk-sm" onClick={onToggleShowAll}>
+          {showAll ? "Hide optional parts" : hiddenCount > 0 ? `Show all parts (+${hiddenCount})` : "Show all parts"}
+        </button>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -381,19 +377,16 @@ export function PlanCanvas({
           nodeOrigin={[0.5, 0.5]}
           fitView
           fitViewOptions={{ padding: 0.08 }}
-          minZoom={0.3}
+          minZoom={0.25}
           maxZoom={1.6}
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable={false}
-          onEdgeClick={(_, edge) => {
-            const target = edge.target.replace("slot-", "") as SlotId;
-            onSelect(target);
-          }}
+          onEdgeClick={(_, edge) => onSelect(edge.target.replace("slot-", "") as SlotId)}
         >
           <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="var(--mk-line-strong)" />
           <Controls showInteractive={false} position="bottom-right" />
-          <AutoFit shape={`${state.step}|${rec.needed.join(",")}`} />
+          <AutoFit shape={`${plan.step}|${visible.join(",")}`} />
         </ReactFlow>
       </div>
     </ActionsContext.Provider>

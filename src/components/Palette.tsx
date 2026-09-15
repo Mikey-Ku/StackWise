@@ -2,45 +2,54 @@
 
 import { useMemo, useState } from "react";
 import { evaluatePlan, worstLevel, type Option, type SlotId } from "@/engine";
-import type { PlanModel } from "./usePlan";
+import type { PlanModel } from "./usePlans";
 import { VERDICT_UI, VerdictDot, cx, type Verdict } from "./ui";
 
 export function Palette({
-  plan,
+  model,
+  selectedSlot,
   onDragStart,
   onDragEnd,
   onToast,
 }: {
-  plan: PlanModel;
+  model: PlanModel;
+  selectedSlot: SlotId | null;
   onDragStart: (optionId: string) => void;
   onDragEnd: () => void;
   onToast: (message: string) => void;
 }) {
-  const { catalog, index, rec, input } = plan;
+  const { catalog, index, rec, input } = model;
   const [query, setQuery] = useState("");
+  const [onlyNeeded, setOnlyNeeded] = useState(false);
 
-  // What would happen if each option were dropped into its slot right now.
+  // What would happen if each option were dropped into each slot it fits, right now.
   const previews = useMemo(() => {
     const map = new Map<string, Verdict>();
     for (const option of catalog.options) {
-      const slot = option.slots[0];
-      const swapped = { ...rec.selection, [slot]: option.id };
-      const touching = evaluatePlan(index, swapped, input).filter((r) => r.slots.includes(slot) && r.source !== "missing");
-      map.set(option.id, worstLevel(touching));
+      for (const slot of option.slots) {
+        const swapped = { ...rec.selection, [slot]: option.id };
+        const touching = evaluatePlan(index, swapped, input).filter((r) => r.slots.includes(slot) && r.source !== "missing");
+        map.set(`${slot}:${option.id}`, worstLevel(touching));
+      }
     }
     return map;
   }, [catalog.options, index, input, rec.selection]);
 
   const q = query.trim().toLowerCase();
   const matches = (o: Option) => !q || `${o.name} ${o.summary} ${o.provider}`.toLowerCase().includes(q);
+  const slots = catalog.slots.filter((s) => !onlyNeeded || rec.needed.includes(s.id) || rec.selection[s.id]);
 
   return (
     <div className="ws-palette">
       <div className="ws-palette__top">
         <input className="mk-input mk-sm" type="search" placeholder={`Search ${catalog.options.length} options`} value={query} onChange={(e) => setQuery(e.target.value)} />
+        <label className="mk-check">
+          <input type="checkbox" checked={onlyNeeded} onChange={(e) => setOnlyNeeded(e.target.checked)} />
+          Only parts my plan uses
+        </label>
         <p className="mk-hint">Drag onto the canvas, or press Use. The dot shows what would happen with the rest of your plan.</p>
       </div>
-      {catalog.slots.map((slot) => {
+      {slots.map((slot) => {
         const options = catalog.options
           .filter((o) => o.slots.includes(slot.id) && matches(o))
           .sort((a, b) => Number(a.coverage === "partial") - Number(b.coverage === "partial") || a.name.localeCompare(b.name));
@@ -52,8 +61,8 @@ export function Palette({
               <span className="mk-faint mk-num">{options.length}</span>
             </div>
             {options.map((option) => {
-              const inPlan = rec.selection[slot.id as SlotId] === option.id;
-              const preview = previews.get(option.id) ?? "works";
+              const inPlan = rec.selection[slot.id] === option.id;
+              const preview = previews.get(`${slot.id}:${option.id}`) ?? "works";
               return (
                 <div
                   key={`${slot.id}-${option.id}`}
@@ -80,7 +89,7 @@ export function Palette({
                     className="mk-btn mk-btn--secondary mk-sm"
                     disabled={inPlan}
                     onClick={() => {
-                      const error = plan.place(option.id, slot.id as SlotId);
+                      const error = model.place(option.id, slot.id, selectedSlot);
                       if (error) onToast(error);
                     }}
                   >

@@ -1,43 +1,94 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import type { Catalog, SlotId } from "@/engine";
+import { decodeSharedPlan, staleFacts, todayIso, type Catalog, type SlotId } from "@/engine";
+import { ChecklistPanel } from "./ChecklistPanel";
+import { CompareDialog, type CompareRequest } from "./CompareDialog";
 import { Inspector } from "./Inspector";
+import { LearnPanel } from "./LearnPanel";
 import { Palette } from "./Palette";
 import { PlanCanvas } from "./PlanCanvas";
-import { Planner } from "./Planner";
+import { PlanMenu } from "./PlanMenu";
+import { Planner, type AiStatus } from "./Planner";
 import { SpecDialog } from "./SpecDialog";
-import { usePlan } from "./usePlan";
+import { newId, usePlans } from "./usePlans";
 import { cx } from "./ui";
 
+type Tab = "options" | "details" | "learn" | "checklist";
+const TABS: { id: Tab; label: string }[] = [
+  { id: "options", label: "Options" },
+  { id: "details", label: "Details" },
+  { id: "learn", label: "Learn" },
+  { id: "checklist", label: "Checklist" },
+];
+
 export default function Workspace({ catalog, problems }: { catalog: Catalog; problems: string[] }) {
-  const plan = usePlan(catalog);
-  const { state, dispatch } = plan;
-  const [tab, setTab] = useState<"options" | "details">("options");
+  const model = usePlans(catalog);
+  const { plan, dispatch, history } = model;
+  const [tab, setTab] = useState<Tab>("options");
+  const [selectedSlot, setSelectedSlot] = useState<SlotId | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [specDate, setSpecDate] = useState<string | null>(null);
+  const [compare, setCompare] = useState<CompareRequest | null>(null);
+  const [ai, setAi] = useState<AiStatus | null>(null);
   const leftRef = useRef<HTMLElement>(null);
+  const today = useMemo(() => todayIso(), []);
+  const stale = useMemo(() => staleFacts(catalog, today).length, [catalog, today]);
 
-  // A new step starts at the top of the planner.
   useEffect(() => {
     leftRef.current?.scrollTo({ top: 0 });
-  }, [state.step]);
+  }, [plan.step, plan.id]);
 
   useEffect(() => {
     if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 3200);
+    const timer = window.setTimeout(() => setToast(null), 3600);
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const select = useCallback(
-    (slot: SlotId) => {
-      dispatch({ type: "select", slot });
-      setTab("details");
-    },
-    [dispatch],
-  );
+  useEffect(() => {
+    fetch("/api/status")
+      .then((r) => r.json())
+      .then((status: AiStatus) => setAi(status))
+      .catch(() => setAi({ ai: false, model: "" }));
+  }, []);
+
+  // Opening a share link imports the plan exactly once. The link is cleared from the address bar
+  // before decoding, and the token is remembered, because development mode runs effects twice.
+  const importedToken = useRef<string | null>(null);
+  useEffect(() => {
+    const match = window.location.hash.match(/^#plan=([A-Za-z0-9_-]+)$/);
+    if (!match || importedToken.current === match[1]) return;
+    importedToken.current = match[1];
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    void decodeSharedPlan(match[1]).then((shared) => {
+      if (!shared) {
+        setToast("That share link is broken or incomplete.");
+        return;
+      }
+      dispatch({ type: "importPlan", id: newId(), now: new Date().toISOString(), plan: shared });
+      setToast(`Opened "${shared.appName || "a shared plan"}". It's saved as a new plan in this browser.`);
+    });
+  }, [dispatch]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("input, textarea, select, [contenteditable]")) return;
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z") return;
+      e.preventDefault();
+      dispatch({ type: e.shiftKey ? "redo" : "undo" });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dispatch]);
+
+  const select = useCallback((slot: SlotId) => {
+    setSelectedSlot(slot);
+    setTab("details");
+  }, []);
 
   const researched = catalog.options.filter((o) => o.coverage === "full").length;
   const factCount = catalog.options.reduce((n, o) => n + Object.keys(o.facts).length, 0);
@@ -46,25 +97,27 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   return (
     <div className="ws">
       <header className="ws-top">
-        <div className="mk-row mk-gap-3">
+        <div className="mk-row mk-gap-3 ws-top__left">
           <span className="ws-mark">WhyStack</span>
           <span className="ws-top__sep" aria-hidden />
-          <span className="mk-muted ws-top__app">{state.appName.trim() || "Untitled app"}</span>
-        </div>
-        <div className="mk-row mk-gap-3">
-          <span className="mk-badge ws-badge--unknown" title="Facts come from official sources and are drafts until a person reviews them.">
-            {verified}/{factCount} facts reviewed · {researched} of {catalog.options.length} options researched
+          <PlanMenu model={model} onToast={setToast} />
+          <span className="mk-row mk-gap-1">
+            <button type="button" className="mk-btn mk-btn--ghost mk-sm" disabled={history.past.length === 0} title="Undo (Cmd or Ctrl+Z)" onClick={() => dispatch({ type: "undo" })}>
+              Undo
+            </button>
+            <button type="button" className="mk-btn mk-btn--ghost mk-sm" disabled={history.future.length === 0} title="Redo (Shift+Cmd or Ctrl+Z)" onClick={() => dispatch({ type: "redo" })}>
+              Redo
+            </button>
           </span>
-          <button
-            type="button"
-            className="mk-btn mk-btn--ghost mk-sm"
-            onClick={() => {
-              if (window.confirm("Start over? This clears your description, answers and choices.")) dispatch({ type: "reset" });
-            }}
-          >
-            Start over
-          </button>
-          <button type="button" className="mk-btn mk-btn--primary mk-sm" disabled={state.step !== "plan"} onClick={() => setSpecDate(new Date().toISOString().slice(0, 10))}>
+        </div>
+        <div className="mk-row mk-gap-3 ws-top__right">
+          <span className={cx("mk-badge", ai?.ai ? "mk-badge--accent" : "ws-badge--unknown")} title={ai?.ai ? `Model: ${ai.model}` : "Set ANTHROPIC_API_KEY in .env.local to turn on AI reading and explanations."}>
+            {ai === null ? "AI ..." : ai.ai ? "AI on" : "AI off"}
+          </span>
+          <span className="mk-badge ws-badge--unknown ws-top__facts" title="Facts come from official sources and are drafts until a person reviews them.">
+            {verified}/{factCount} facts reviewed · {researched}/{catalog.options.length} options researched{stale ? ` · ${stale} may be out of date` : ""}
+          </span>
+          <button type="button" className="mk-btn mk-btn--primary mk-sm" disabled={plan.step !== "plan"} onClick={() => setSpecDate(todayIso())}>
             Export spec pack
           </button>
         </div>
@@ -80,30 +133,39 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
 
       <div className="ws-body">
         <aside className="ws-left" ref={leftRef}>
-          <Planner plan={plan} />
+          <Planner model={model} ai={ai} onSelect={select} onOpenChecklist={() => setTab("checklist")} />
         </aside>
 
         <main className="ws-center">
           <ReactFlowProvider>
-            <PlanCanvas plan={plan} dragging={dragging} onDropped={() => setDragging(null)} onSelect={select} onToast={setToast} />
+            <PlanCanvas
+              model={model}
+              selectedSlot={selectedSlot}
+              dragging={dragging}
+              showAll={showAll}
+              onToggleShowAll={() => setShowAll((v) => !v)}
+              onDropped={() => setDragging(null)}
+              onSelect={select}
+              onToast={setToast}
+            />
           </ReactFlowProvider>
         </main>
 
         <aside className="ws-right">
           <div className="mk-tabs ws-right__tabs" role="tablist">
-            <button type="button" role="tab" aria-selected={tab === "options"} className={cx("mk-tab", tab === "options" && "ws-tab-on")} onClick={() => setTab("options")}>
-              Options
-            </button>
-            <button type="button" role="tab" aria-selected={tab === "details"} className={cx("mk-tab", tab === "details" && "ws-tab-on")} onClick={() => setTab("details")}>
-              Details
-            </button>
+            {TABS.map((t) => (
+              <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={cx("mk-tab", tab === t.id && "ws-tab-on")} onClick={() => setTab(t.id)}>
+                {t.label}
+              </button>
+            ))}
           </div>
           <div className="ws-right__body">
-            {tab === "options" ? (
-              <Palette plan={plan} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onToast={setToast} />
-            ) : (
-              <Inspector plan={plan} onToast={setToast} />
+            {tab === "options" && <Palette model={model} selectedSlot={selectedSlot} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onToast={setToast} />}
+            {tab === "details" && (
+              <Inspector model={model} slot={selectedSlot} today={today} onToast={setToast} onCompare={(slot, optionIds) => setCompare({ slot, optionIds })} onLearn={() => setTab("learn")} />
             )}
+            {tab === "learn" && <LearnPanel catalog={catalog} focus={selectedSlot} />}
+            {tab === "checklist" && <ChecklistPanel model={model} onToast={setToast} />}
           </div>
         </aside>
       </div>
@@ -114,7 +176,8 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         </div>
       )}
 
-      <SpecDialog plan={plan} generatedOn={specDate} onClose={() => setSpecDate(null)} />
+      <SpecDialog model={model} generatedOn={specDate} onClose={() => setSpecDate(null)} />
+      <CompareDialog model={model} request={compare} today={today} onClose={() => setCompare(null)} onToast={setToast} />
     </div>
   );
 }

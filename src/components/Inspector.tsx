@@ -1,55 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
-import {
-  alternativesFor,
-  costLine,
-  CRITERIA,
-  CRITERION_LABELS,
-  weightsFor,
-  type CheckResult,
-  type FactDef,
-  type FactValue,
-  type SlotId,
-} from "@/engine";
-import type { PlanModel } from "./usePlan";
-import { VerdictBadge, cx } from "./ui";
-
-const VALUE_LABELS: Record<string, string> = {
-  none: "None",
-  just_me: "Just you",
-  up_to_100: "Up to 100 people",
-  up_to_1000: "Up to 1,000 people",
-  more: "More than 1,000 people",
-  high: "Easy",
-  medium: "Some work",
-  low: "Hard",
-  serverless: "Serverless functions",
-  server: "Always-on server",
-  edge: "Edge functions",
-  static: "Static files only",
-  paid_addon: "Paid add-on",
-  included: "Included",
-  hosted: "Hosted for you",
-  local_file: "A file on your server",
-  relational: "Tables (relational)",
-  document: "Documents",
-  key_value: "Keys and values",
-  full: "full",
-  partial: "partial",
-};
-
-function formatValue(plan: PlanModel, def: FactDef | undefined, value: FactValue): string {
-  if (value === null) return def?.type === "number_or_null" ? "No monthly plan" : "Not verified";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (typeof value === "number") return def?.type === "number_or_null" ? `$${value}/month` : String(value);
-  if (typeof value === "object") {
-    return Object.entries(value)
-      .map(([id, level]) => `${plan.index.optionsById.get(id)?.name ?? id}: ${VALUE_LABELS[level] ?? level}`)
-      .join(", ");
-  }
-  return VALUE_LABELS[value] ?? value;
-}
+import { useMemo, useState } from "react";
+import { alternativesFor, costLine, CRITERIA, CRITERION_LABELS, inSentence, isStale, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
+import type { PlanModel } from "./usePlans";
+import { VerdictBadge, copyText, cx, formatFactValue } from "./ui";
 
 function ResultCard({ result }: { result: CheckResult }) {
   return (
@@ -60,6 +14,16 @@ function ResultCard({ result }: { result: CheckResult }) {
       </div>
       <p>{result.explanation}</p>
       {result.fix && <p className="mk-muted">Fix: {result.fix}</p>}
+      {result.sources && (
+        <p className="mk-hint">
+          Sources:{" "}
+          {result.sources.map((url, i) => (
+            <a key={url} href={url} target="_blank" rel="noreferrer">
+              {i ? `, ${new URL(url).hostname}` : new URL(url).hostname}
+            </a>
+          ))}
+        </p>
+      )}
       <p className="mk-hint">
         {result.source === "product" ? "Product rule" : result.source === "capability" ? "Capability rule" : "Plan check"}: {result.ruleId}
       </p>
@@ -67,10 +31,23 @@ function ResultCard({ result }: { result: CheckResult }) {
   );
 }
 
-export function Inspector({ plan, onToast }: { plan: PlanModel; onToast: (message: string) => void }) {
-  const { state, index, rec, input, catalog } = plan;
-  const slot: SlotId | null = state.selectedSlot;
-
+export function Inspector({
+  model,
+  slot,
+  today,
+  onToast,
+  onCompare,
+  onLearn,
+}: {
+  model: PlanModel;
+  slot: SlotId | null;
+  today: string;
+  onToast: (message: string) => void;
+  onCompare: (slot: SlotId, optionIds: string[]) => void;
+  onLearn: () => void;
+}) {
+  const { index, rec, input, catalog } = model;
+  const [picked, setPicked] = useState<string[]>([]);
   const alternatives = useMemo(() => (slot ? alternativesFor(index, input, rec.selection, slot) : []), [index, input, rec.selection, slot]);
 
   if (!slot) {
@@ -82,6 +59,7 @@ export function Inspector({ plan, onToast }: { plan: PlanModel; onToast: (messag
   }
 
   const def = index.slotsById.get(slot)!;
+  const learn = catalog.learn.slots[slot];
   const optionId = rec.selection[slot];
   const option = optionId ? index.optionsById.get(optionId) : undefined;
   const results = rec.results.filter((r) => r.slots.includes(slot));
@@ -89,6 +67,9 @@ export function Inspector({ plan, onToast }: { plan: PlanModel; onToast: (messag
   const priority = catalog.planning.priorities.find((p) => p.id === input.priority);
   const scores = rec.score.perSlot[slot]?.scores;
   const cost = option ? costLine(index, option, slot, input) : undefined;
+  const pickedHere = picked.filter((id) => alternatives.some((a) => a.option.id === id));
+
+  const togglePick = (id: string) => setPicked((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current.filter((x) => alternatives.some((a) => a.option.id === x)), id].slice(-3)));
 
   return (
     <div className="ws-inspector">
@@ -98,16 +79,39 @@ export function Inspector({ plan, onToast }: { plan: PlanModel; onToast: (messag
         {option && (
           <div className="mk-row mk-gap-2 mk-wrap">
             <span className="mk-badge">{rec.autoPicked.includes(slot) ? "Picked for you" : "Your choice"}</span>
-            <span className={cx("mk-badge", option.coverage === "full" ? "" : "ws-badge--unknown")}>
-              {option.coverage === "full" ? "Researched, draft facts" : "Not verified yet"}
-            </span>
+            <span className={cx("mk-badge", option.coverage === "full" ? "" : "ws-badge--unknown")}>{option.coverage === "full" ? "Researched, draft facts" : "Not verified yet"}</span>
             <a className="ws-small-link" href={option.website} target="_blank" rel="noreferrer">
               Website
             </a>
           </div>
         )}
         <p className="mk-muted">{option ? option.summary : def.empty_hint}</p>
+        {option && (
+          <button
+            type="button"
+            className="mk-btn mk-btn--ghost mk-sm ws-self-start"
+            onClick={async () => {
+              const text = slotReasoning(index, input, rec.selection, slot);
+              onToast(text && (await copyText(text)) ? "Reasoning copied. Paste it into a doc or pull request." : "Couldn't copy to the clipboard.");
+            }}
+          >
+            Copy the reasoning
+          </button>
+        )}
       </div>
+
+      {learn && (
+        <details className="ws-details ws-learn-inline">
+          <summary>What is {inSentence(def.label)}?</summary>
+          <div className="mk-stack mk-gap-2">
+            <p>{learn.what}</p>
+            <p className="mk-muted">{learn.why}</p>
+            <button type="button" className="ws-link ws-self-start" onClick={onLearn}>
+              More in Learn
+            </button>
+          </div>
+        </details>
+      )}
 
       <section className="mk-stack mk-gap-3">
         <span className="mk-eyebrow">Checks</span>
@@ -153,16 +157,21 @@ export function Inspector({ plan, onToast }: { plan: PlanModel; onToast: (messag
               </div>
             </div>
           ))}
-          {rec.score.accountsSaved > 0 && <p className="mk-hint">Your plan also shares {rec.score.accountsSaved} account{rec.score.accountsSaved === 1 ? "" : "s"} across parts, which counts for {priority?.label.toLowerCase()}.</p>}
+          {rec.score.accountsSaved > 0 && (
+            <p className="mk-hint">
+              Your plan also shares {rec.score.accountsSaved} account{rec.score.accountsSaved === 1 ? "" : "s"} across parts, which counts for {priority?.label.toLowerCase()}.
+            </p>
+          )}
         </section>
       )}
 
       <section className="mk-stack mk-gap-3">
-        <span className="mk-eyebrow">Compare {def.label.toLowerCase()} options</span>
+        <span className="mk-eyebrow">Compare {inSentence(def.label)} options</span>
         <div className="mk-table-wrap">
           <table className="mk-table ws-compare">
             <thead>
               <tr>
+                <th aria-label="Pick to compare" />
                 <th>Option</th>
                 <th>With your plan</th>
                 <th className="mk-table__num">Score</th>
@@ -174,6 +183,9 @@ export function Inspector({ plan, onToast }: { plan: PlanModel; onToast: (messag
                 const current = alt.option.id === optionId;
                 return (
                   <tr key={alt.option.id} className={cx(current && "is-current")}>
+                    <td>
+                      <input type="checkbox" aria-label={`Compare ${alt.option.name}`} checked={pickedHere.includes(alt.option.id)} onChange={() => togglePick(alt.option.id)} />
+                    </td>
                     <td>
                       {alt.option.name}
                       {alt.option.coverage === "partial" && <div className="mk-hint">not verified</div>}
@@ -188,7 +200,7 @@ export function Inspector({ plan, onToast }: { plan: PlanModel; onToast: (messag
                           type="button"
                           className="ws-link"
                           onClick={() => {
-                            const error = plan.place(alt.option.id, slot);
+                            const error = model.place(alt.option.id, slot);
                             if (error) onToast(error);
                           }}
                         >
@@ -201,6 +213,11 @@ export function Inspector({ plan, onToast }: { plan: PlanModel; onToast: (messag
               })}
             </tbody>
           </table>
+        </div>
+        <div className="mk-row mk-gap-3 mk-wrap">
+          <button type="button" className="mk-btn mk-btn--secondary mk-sm" disabled={pickedHere.length < 2} onClick={() => onCompare(slot, pickedHere)}>
+            {pickedHere.length < 2 ? "Tick 2 or 3 to compare side by side" : `Compare ${pickedHere.length} side by side`}
+          </button>
         </div>
         <p className="mk-hint">Score is the change to your whole plan&apos;s total if you swapped just this part.</p>
       </section>
@@ -218,13 +235,14 @@ export function Inspector({ plan, onToast }: { plan: PlanModel; onToast: (messag
                   <div key={key} className="ws-fact">
                     <dt>{factDef?.label ?? key}</dt>
                     <dd>
-                      <strong>{formatValue(plan, factDef, fact.value)}</strong>
+                      <strong>{formatFactValue(index, factDef, fact.value)}</strong>
                       <span className="mk-muted">{fact.note}</span>
                       <span className="mk-hint">
                         <a href={fact.source} target="_blank" rel="noreferrer">
                           Source
                         </a>
                         , {fact.retrieved}, {fact.status}
+                        {isStale(fact, today) && <span className="mk-badge mk-badge--warn ws-stale">may be out of date</span>}
                       </span>
                     </dd>
                   </div>
