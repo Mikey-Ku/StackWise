@@ -10,9 +10,10 @@ export function LearnPanel({ catalog, focus }: { catalog: Catalog; focus: SlotId
   const terms = Object.entries(catalog.learn.terms)
     .filter(([id, t]) => !q || `${id} ${t.term} ${t.plain} ${t.matters}`.toLowerCase().includes(q))
     .sort((a, b) => a[1].term.localeCompare(b[1].term));
-  const slots = catalog.slots.filter((s) => {
-    const entry = catalog.learn.slots[s.id];
-    return entry && (!q || `${s.label} ${entry.what} ${entry.why} ${entry.choosing.join(" ")} ${entry.watch_for.join(" ")}`.toLowerCase().includes(q));
+  const parts = catalog.slots.flatMap((slot) => {
+    const entry = catalog.learn.slots[slot.id];
+    const matches = entry && (!q || `${slot.label} ${entry.what} ${entry.why} ${entry.choosing.join(" ")} ${entry.watch_for.join(" ")}`.toLowerCase().includes(q));
+    return matches ? [{ slot, entry }] : [];
   });
 
   const jump = (id: string) => {
@@ -29,8 +30,7 @@ export function LearnPanel({ catalog, focus }: { catalog: Catalog; focus: SlotId
 
       <section className="mk-stack mk-gap-3">
         <span className="mk-eyebrow">Parts of an app</span>
-        {slots.map((slot) => {
-          const entry = catalog.learn.slots[slot.id];
+        {parts.map(({ slot, entry }) => {
           return (
             <details key={slot.id} className="ws-learn-part" open={focus === slot.id || Boolean(q)}>
               <summary>{slot.label}</summary>
@@ -63,7 +63,7 @@ export function LearnPanel({ catalog, focus }: { catalog: Catalog; focus: SlotId
             <p className="mk-muted">{t.matters}</p>
           </div>
         ))}
-        {terms.length === 0 && slots.length === 0 && <p className="mk-muted">Nothing matches &ldquo;{query}&rdquo;.</p>}
+        {terms.length === 0 && parts.length === 0 && <p className="mk-muted">Nothing matches &ldquo;{query}&rdquo;.</p>}
       </section>
     </div>
   );

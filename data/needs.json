@@ -142,8 +142,6 @@
       "long-running",
       "batch",
       "generate video*",
-      "scrap*",
-      "crawl*",
       "convert video"
     ],
     "adds_slots": [],
@@ -189,6 +187,24 @@
     "not_sure_note": "Receipts, invites and password resets all count. Most apps with accounts send some email."
   },
   {
+    "id": "own_domain",
+    "label": "Has its own web address",
+    "question": "Do you want your own web address, like yourapp.com?",
+    "why": "Every host gives you a free address like yourapp.vercel.app. Your own domain costs a yearly fee, and you need one to send email from your app's name.",
+    "keywords": [
+      "domain*",
+      ".com",
+      "web address",
+      "own url",
+      "custom url",
+      "own website address"
+    ],
+    "adds_slots": [
+      "domain"
+    ],
+    "not_sure_note": "You can launch on your host's free address and buy a domain later. Sending email from your app's name needs one."
+  },
+  {
     "id": "ai_features",
     "label": "AI features",
     "question": "Will the app use AI, like a chatbot or generating text or images?",
@@ -214,6 +230,28 @@
     "not_sure_note": "AI can be added later without changing the rest of the stack, as long as you have server code."
   },
   {
+    "id": "scrapes_sites",
+    "label": "Pulls data from other websites",
+    "question": "Will the app pull information from other websites, like prices, listings or articles?",
+    "why": "Reading other websites needs a scraper or that site's official API, and each site's terms decide what you're allowed to collect.",
+    "keywords": [
+      "scrap*",
+      "crawl*",
+      "from other websites",
+      "from other sites",
+      "price tracker*",
+      "track prices",
+      "price alert*",
+      "aggregat*",
+      "web data",
+      "extract data"
+    ],
+    "adds_slots": [
+      "scraping"
+    ],
+    "not_sure_note": "If what you show comes from websites you don't run, plan for a scraper or that site's official API."
+  },
+  {
     "id": "might_go_mobile",
     "label": "Phone app later",
     "question": "Might you want a phone app in the App Store later?",
@@ -229,5 +267,43 @@
     ],
     "adds_slots": [],
     "not_sure_note": "If a phone app is possible, prefer services with mobile SDKs. It costs nothing now."
+  },
+  {
+    "id": "tracks_usage",
+    "label": "Tracks how people use it",
+    "question": "Do you want to see how many people visit and what they use?",
+    "why": "Counting visitors and actions needs an analytics tool, and the tool you pick decides whether you need a cookie banner.",
+    "keywords": [
+      "analytics",
+      "metrics",
+      "visitor count*",
+      "how many people visit",
+      "track usage",
+      "conversion rate*",
+      "funnel*"
+    ],
+    "adds_slots": [
+      "analytics"
+    ],
+    "not_sure_note": "Most launched apps add analytics to see what people actually use. It's quick to add later."
+  },
+  {
+    "id": "error_alerts",
+    "label": "Alerts when something breaks",
+    "question": "Do you want an alert when the app breaks for someone?",
+    "why": "Errors in a live app happen on other people's devices, where you can't see them. A monitoring tool records them and tells you.",
+    "keywords": [
+      "error alert*",
+      "crash*",
+      "bug report*",
+      "uptime",
+      "downtime",
+      "error monitoring",
+      "error tracking"
+    ],
+    "adds_slots": [
+      "monitoring"
+    ],
+    "not_sure_note": "Before real people use the app, error alerts mean you hear about problems before someone complains."
   }
 ]

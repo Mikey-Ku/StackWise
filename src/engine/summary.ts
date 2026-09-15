@@ -3,7 +3,7 @@ import { needIsOn, optionIn, type CatalogIndex } from "./evaluate";
 import { BUILD_ORDER } from "./checklist";
 import { closeCalls, type Recommendation } from "./score";
 import type { PlanInput } from "./schema";
-import { inSentence } from "./text";
+import { SIZE_PHRASE, inSentence } from "./text";
 
 /**
  * Everything an explanation of the plan is allowed to say, as plain data. The AI explanation is
@@ -30,7 +30,6 @@ const STATUS: Record<string, string> = {
 
 export function planBrief(index: CatalogIndex, input: PlanInput, rec: Recommendation, appName: string, description: string): PlanBrief {
   const { catalog } = index;
-  const sizeLabel = (id: string) => catalog.planning.sizes.find((s) => s.id === id)?.label.toLowerCase() ?? id;
   const outlook = costOutlook(index, rec.selection, input);
 
   const stack = BUILD_ORDER.flatMap((slot) => {
@@ -51,8 +50,8 @@ export function planBrief(index: CatalogIndex, input: PlanInput, rec: Recommenda
       .map((r) => ({ title: r.title, explanation: r.explanation, fix: r.fix })),
     notes: rec.results.filter((r) => r.level === "info").map((r) => r.title),
     cost: {
-      now: `At ${sizeLabel(outlook.now.size)} people: ${describeTotal(outlook.now)}`,
-      next: outlook.next ? `At ${sizeLabel(outlook.next.size)} people: ${describeTotal(outlook.next)}` : undefined,
+      now: `For ${SIZE_PHRASE[outlook.now.size]}: ${describeTotal(outlook.now)}`,
+      next: outlook.next ? `For ${SIZE_PHRASE[outlook.next.size]}: ${describeTotal(outlook.next)}` : undefined,
     },
     closeCalls: closeCalls(index, input, rec).map((c) => `${c.chosen.name} was a close call against ${c.runnerUp.name} for ${inSentence(index.slotsById.get(c.slot)?.label ?? c.slot)}`),
   };

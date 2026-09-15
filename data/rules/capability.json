@@ -620,5 +620,193 @@
       "https://developer.apple.com/programs/enroll/",
       "https://support.google.com/googleplay/android-developer/answer/6112435?hl=en"
     ]
+  },
+  {
+    "id": "browser-only-app-with-scraping",
+    "severity": "warning",
+    "needs": [
+      "scrapes_sites"
+    ],
+    "when": [
+      {
+        "slot": "framework",
+        "fact": "has_server_code",
+        "is": false
+      }
+    ],
+    "title": "Scraping needs server code",
+    "explanation": "{framework} apps run only in the browser. Browsers won't let a page read other websites, and a scraping service's key placed there can be copied by anyone who opens your app.",
+    "fix": "Pick a framework with server code, like Next.js or SvelteKit, and fetch pages from there.",
+    "builder": "Fetch other websites only from server code or a background job, never from the browser."
+  },
+  {
+    "id": "static-host-cant-scrape",
+    "severity": "blocked",
+    "needs": [],
+    "when": [
+      {
+        "slot": "scraping",
+        "filled": true
+      },
+      {
+        "slot": "hosting",
+        "fact": "runtime_model",
+        "is": "static"
+      }
+    ],
+    "title": "{hosting} can't run scraping code",
+    "explanation": "{hosting} only serves files and runs no server code, so there's nowhere to call {scraping} from or keep its key secret.",
+    "fix": "Pick a host that runs server code."
+  },
+  {
+    "id": "self-run-scraper-on-serverless",
+    "severity": "warning",
+    "needs": [],
+    "when": [
+      {
+        "slot": "scraping",
+        "fact": "scraper_runs",
+        "is": "your_server"
+      },
+      {
+        "slot": "hosting",
+        "fact": "runtime_model",
+        "in": [
+          "serverless",
+          "edge"
+        ]
+      }
+    ],
+    "title": "{scraping} fits badly in {hosting}'s functions",
+    "explanation": "{scraping} runs a real browser inside your own code. {hosting} runs short-lived functions with limits on size and run time that headless browsers often hit, so scrapes fail or time out.",
+    "fix": "Run {scraping} on an always-on server host, or use a hosted scraper or hosted browser instead.",
+    "builder": "Don't launch a headless browser inside a serverless or edge function."
+  },
+  {
+    "id": "scraper-javascript-costs-extra",
+    "severity": "info",
+    "needs": [
+      "scrapes_sites"
+    ],
+    "when": [
+      {
+        "slot": "scraping",
+        "fact": "js_rendering",
+        "is": "costs_extra"
+      }
+    ],
+    "title": "Pages built with JavaScript cost more",
+    "explanation": "{scraping} charges more to run a page's JavaScript, and many modern sites need it. Budget with the higher rate if your target sites fill in their content after loading."
+  },
+  {
+    "id": "scraper-cant-run-javascript",
+    "severity": "warning",
+    "needs": [
+      "scrapes_sites"
+    ],
+    "when": [
+      {
+        "slot": "scraping",
+        "fact": "js_rendering",
+        "is": "not_supported"
+      }
+    ],
+    "title": "{scraping} can't read pages built with JavaScript",
+    "explanation": "Many sites fill in their pages with JavaScript after loading. {scraping} only sees the first HTML, so those pages come back empty.",
+    "fix": "Check your target sites with JavaScript turned off, or pick a scraper that runs it."
+  },
+  {
+    "id": "email-needs-own-domain",
+    "severity": "warning",
+    "needs": [
+      "sends_email"
+    ],
+    "when": [
+      {
+        "slot": "email",
+        "filled": true
+      },
+      {
+        "slot": "domain",
+        "filled": false
+      }
+    ],
+    "title": "Email needs a domain you own",
+    "explanation": "Inbox providers check that email really comes from the domain it claims. Until you verify a domain of your own in {email}, messages to other people land in spam or can't be sent at all.",
+    "fix": "Add a domain name, then add the DNS records {email} gives you to verify it.",
+    "builder": "Send email only from an address on the app's own verified domain.",
+    "sources": [
+      "https://support.google.com/a/answer/81126",
+      "https://resend.com/docs/knowledge-base/403-error-resend-dev-domain",
+      "https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html"
+    ]
+  },
+  {
+    "id": "own-domain-needs-paid-host",
+    "severity": "warning",
+    "needs": [],
+    "when": [
+      {
+        "slot": "domain",
+        "filled": true
+      },
+      {
+        "slot": "hosting",
+        "fact": "custom_domain_free",
+        "is": false
+      }
+    ],
+    "title": "{hosting} charges to use your own domain",
+    "explanation": "Connecting {domain}'s domain to {hosting} needs a paid plan, even if the rest of your app fits the free one.",
+    "fix": "Budget for {hosting}'s paid plan, or pick a host that includes custom domains for free."
+  },
+  {
+    "id": "free-host-sleeps",
+    "severity": "info",
+    "needs": [],
+    "when": [
+      {
+        "slot": "hosting",
+        "fact": "free_plan_sleeps",
+        "is": true
+      }
+    ],
+    "title": "Free {hosting} apps fall asleep",
+    "explanation": "On the free plan, {hosting} pauses your app after a while without visitors, and the next visitor waits while it starts again. Fine for testing; paid plans stay awake."
+  },
+  {
+    "id": "analytics-cookies-need-consent",
+    "severity": "info",
+    "needs": [
+      "tracks_usage"
+    ],
+    "when": [
+      {
+        "slot": "analytics",
+        "fact": "cookies",
+        "is": "required"
+      }
+    ],
+    "title": "{analytics} sets cookies",
+    "explanation": "In places with strict privacy laws, like the EU and UK, cookies used for analytics need visitors' consent first, so plan for a consent banner.",
+    "builder": "Load analytics scripts that set cookies only after the visitor agrees.",
+    "sources": [
+      "https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/cookies-and-similar-technologies/"
+    ]
+  },
+  {
+    "id": "session-replay-privacy",
+    "severity": "info",
+    "needs": [],
+    "when": [
+      {
+        "slot": "monitoring",
+        "fact": "session_replay",
+        "is": true
+      }
+    ],
+    "title": "Session replays can capture what people type",
+    "explanation": "{monitoring} can record sessions to replay them. Mask form fields and personal details before turning replays on.",
+    "builder": "Mask all form inputs and personal data in session replays."
   }
 ]

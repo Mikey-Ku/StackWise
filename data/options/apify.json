@@ -1,0 +1,71 @@
+{
+  "id": "apify",
+  "name": "Apify",
+  "provider": "apify",
+  "slots": ["scraping"],
+  "summary": "Apify is a cloud platform of ready-made scrapers called Actors that you call over an API, plus tools to build your own.",
+  "website": "https://apify.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free plan includes $5 of usage credit every month (it renews monthly but does not roll over), and the official Website Content Crawler actor costs about $0.20 to $5 per 1,000 pages, so that is roughly 1,000 to 25,000 pages depending on settings.",
+      "source": "https://apify.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 19,
+      "note": "Starter plan is $19/month billed monthly (or $17/month billed yearly) for $19 of usage credit.",
+      "source": "https://apify.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Actors run inside Apify's own platform with its own storage and input format, so moving away means rebuilding around another host, even though many actors are themselves built on the open source Crawlee library.",
+      "source": "https://apify.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scraper_runs": {
+      "value": "hosted_api",
+      "note": "You call an Actor through the Apify API or client SDK with a URL or other input, Apify runs it on their servers, and you read the results back from a dataset.",
+      "source": "https://docs.apify.com/api/client/js/docs/quick-start",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "js_rendering": {
+      "value": "costs_extra",
+      "note": "The official Website Content Crawler actor charges about $0.20 per 1,000 pages with a raw HTTP crawler versus about $0.50 to $5.00 per 1,000 pages when it uses a headless browser for JavaScript-heavy pages.",
+      "source": "https://apify.com/apify/website-content-crawler",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "ai_ready_output": {
+      "value": true,
+      "note": "The Website Content Crawler actor is built to output clean Markdown or plain text meant for feeding directly into AI models and RAG pipelines.",
+      "source": "https://apify.com/apify/website-content-crawler",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "price_per_1k_pages": {
+      "value": "About $0.20 per 1,000 pages with a raw HTTP crawler, or roughly $0.50 to $5.00 per 1,000 pages with a headless browser for JavaScript-heavy pages, using the official Website Content Crawler actor on the $19/month Starter plan's included usage credit.",
+      "note": "Numbers come from the Website Content Crawler actor's own published per-1,000-page cost, which varies with how hard the target site is to render.",
+      "source": "https://apify.com/apify/website-content-crawler",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Apify account and find your API token in Apify Console under Settings, Integrations.", "env": [], "source": "https://docs.apify.com/platform/actors/development/programming-interface/environment-variables" },
+    { "step": "Install the client with npm install apify-client.", "env": [], "source": "https://docs.apify.com/api/client/js/docs/quick-start" },
+    { "step": "Add your token as APIFY_TOKEN in your environment file.", "env": ["APIFY_TOKEN"], "source": "https://docs.apify.com/platform/actors/development/programming-interface/environment-variables" },
+    { "step": "In a server route, create an ApifyClient with your token, call client.actor('apify/website-content-crawler').call({ startUrls: [...] }), then read results with client.dataset(run.defaultDatasetId).listItems().", "env": [], "source": "https://docs.apify.com/api/client/js/docs/quick-start" }
+  ],
+  "builder_notes": [
+    "Keep APIFY_TOKEN server-side and call the Apify client from a route handler or server action, not from client code.",
+    "Save the results from a run instead of re-running the same actor on the same URLs, since every run spends usage credit.",
+    "Respect each target site's robots.txt and terms of service; picking an actor doesn't automatically make scraping that site allowed."
+  ]
+}

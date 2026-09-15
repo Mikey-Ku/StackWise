@@ -48,6 +48,20 @@
       "source": "https://www.lemonsqueezy.com/pricing",
       "retrieved": "2026-09-15",
       "status": "draft"
+    },
+    "card_fee_percent": {
+      "value": 5,
+      "note": "Lemon Squeezy keeps 5% of each US card payment, as listed on its pricing page.",
+      "source": "https://www.lemonsqueezy.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "card_fee_fixed_usd": {
+      "value": 0.5,
+      "note": "On top of the percent, Lemon Squeezy keeps $0.50 from each US card payment.",
+      "source": "https://www.lemonsqueezy.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
     }
   },
   "setup": [

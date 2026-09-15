@@ -1,0 +1,70 @@
+{
+  "id": "vercel-domains",
+  "name": "Vercel Domains",
+  "provider": "vercel",
+  "slots": ["domain"],
+  "summary": "Vercel Domains lets you search for and buy a domain at cost from the same dashboard used to host your project on Vercel.",
+  "website": "https://vercel.com/domains",
+  "coverage": "partial",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Vercel Domains has no free plan; every domain is a paid purchase billed once a year.",
+      "source": "https://vercel.com/domains",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "There's no monthly plan; domains are billed once a year, not monthly.",
+      "source": "https://vercel.com/domains",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Vercel's own supported-domains list marks .com as transfer-supported, and the usual ICANN rule still applies that a domain must be registered 60 days before it can transfer.",
+      "source": "https://vercel.com/docs/domains/supported-domains",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "com_first_year_usd": {
+      "value": null,
+      "note": "Vercel shows each domain's live at-cost price only in its search tool at checkout rather than publishing a fixed rate, and that live search blocked automated checking as suspected bot traffic, so this number isn't confirmed.",
+      "source": "https://vercel.com/domains",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "com_renewal_usd": {
+      "value": null,
+      "note": "Renewal pricing is shown live per domain in the Vercel dashboard rather than published as a fixed rate, and that couldn't be confirmed by automated checking.",
+      "source": "https://vercel.com/docs/domains/working-with-domains/renew-a-domain",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "whois_privacy_free": {
+      "value": true,
+      "note": "WHOIS privacy is turned on by default at no extra cost for any TLD that supports it, and Vercel's own table lists .com as supported.",
+      "source": "https://vercel.com/docs/domains/working-with-domains",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "dns_included": {
+      "value": true,
+      "note": "Buying through Vercel sets up its nameservers automatically, so DNS records are managed free in the same dashboard.",
+      "source": "https://vercel.com/docs/domains/working-with-domains",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Search for and buy the domain at vercel.com/domains.", "env": [], "source": "https://vercel.com/domains" },
+    { "step": "If the project is hosted on Vercel, nameservers are configured automatically; otherwise add the A and CNAME records your host gives you in the project's Domains settings.", "env": [], "source": "https://vercel.com/docs/domains/working-with-domains" },
+    { "step": "Add any SPF, DKIM or DMARC records your email service gives you as DNS records in the same Domains dashboard.", "env": [], "source": "https://vercel.com/docs/domains/managing-dns-records" }
+  ],
+  "builder_notes": [
+    "Buying the domain through Vercel auto-configures Vercel's nameservers, so no manual DNS setup is needed if the project is also hosted on Vercel.",
+    "Add the email service's SPF, DKIM and DMARC records in the Domains dashboard before assuming outgoing email works; Vercel does not provide email sending itself.",
+    "If a script manages domains through the Vercel Domains REST API, keep the access token server-side and out of git."
+  ]
+}

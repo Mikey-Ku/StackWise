@@ -29,9 +29,28 @@
       "background_workers",
       "scheduled_jobs",
       "free_plan_commercial_use",
-      "framework_support"
+      "framework_support",
+      "custom_domain_free",
+      "free_plan_sleeps",
+      "bandwidth_included"
     ],
     "build_task": "Deploy to {option} and add every environment variable from the setup checklist."
+  },
+  {
+    "id": "domain",
+    "label": "Domain name",
+    "verb": "registers its domain with",
+    "empty_hint": "Your own web address, like yourapp.com",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "com_first_year_usd",
+      "com_renewal_usd",
+      "whois_privacy_free",
+      "dns_included"
+    ],
+    "build_task": "Buy the domain with {option}, point it at your host, and add the DNS records your email service asks for."
   },
   {
     "id": "database",
@@ -90,7 +109,9 @@
       "portability",
       "merchant_of_record",
       "subscriptions",
-      "fee_summary"
+      "fee_summary",
+      "card_fee_percent",
+      "card_fee_fixed_usd"
     ],
     "build_task": "Add checkout with {option} and handle its webhooks so paid access updates automatically."
   },
@@ -108,6 +129,22 @@
       "cheap_model_price"
     ],
     "build_task": "Add the AI features with {option}, calling it from server code with a spending limit set."
+  },
+  {
+    "id": "scraping",
+    "label": "Web scraping",
+    "verb": "reads other sites with",
+    "empty_hint": "Pulling pages and data from other websites",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "scraper_runs",
+      "js_rendering",
+      "ai_ready_output",
+      "price_per_1k_pages"
+    ],
+    "build_task": "Fetch pages with {option} from server code or a background job, save what you fetch instead of fetching it again, and follow each site's terms."
   },
   {
     "id": "jobs",
@@ -136,6 +173,34 @@
       "sdk_typescript"
     ],
     "build_task": "Send transactional email with {option} from a verified domain, from server code only."
+  },
+  {
+    "id": "analytics",
+    "label": "Analytics",
+    "verb": "counts visitors with",
+    "empty_hint": "How many people visit and what they use",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "cookies",
+      "product_events"
+    ],
+    "build_task": "Add {option} to count page views and the few actions that matter, and keep personal details out of what you track."
+  },
+  {
+    "id": "monitoring",
+    "label": "Error monitoring",
+    "verb": "catches errors with",
+    "empty_hint": "Alerts when the app breaks for someone",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "uptime_checks",
+      "session_replay"
+    ],
+    "build_task": "Install {option} in both browser and server code, upload source maps so errors point at your code, and send alerts to your email."
   },
   {
     "id": "mobile",

@@ -80,6 +80,27 @@
       "source": "https://docs.netlify.com/frameworks/next-js/overview/",
       "retrieved": "2026-09-15",
       "status": "draft"
+    },
+    "custom_domain_free": {
+      "value": true,
+      "note": "Netlify's free plan includes custom domains with free managed SSL at no extra cost.",
+      "source": "https://www.netlify.com/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_sleeps": {
+      "value": false,
+      "note": "Netlify serves sites from a CDN and runs functions per request rather than an always-on server, so a free site never needs to wake up after inactivity.",
+      "source": "https://docs.netlify.com/functions/background-functions/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "bandwidth_included": {
+      "value": "Free: about 15 GB a month (300 credits at 20 credits per GB). Personal ($9/month): about 50 GB (1,000 credits), plus optional extra credits.",
+      "note": "Netlify bills bandwidth in credits rather than GB directly, and once a free site's monthly credits run out Netlify pauses it until the next cycle.",
+      "source": "https://docs.netlify.com/manage/accounts-and-billing/billing/billing-for-credit-based-plans/how-credits-work/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
     }
   },
   "setup": [

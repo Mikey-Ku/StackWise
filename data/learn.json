@@ -30,6 +30,22 @@
       ],
       "terms": ["serverless", "server", "edge", "cold-start", "persistent-disk", "websocket", "connection-pooling", "portability"]
     },
+    "domain": {
+      "what": "A domain is your app's own web address, like yourapp.com, instead of the free address your host gives you, like yourapp.vercel.app.",
+      "why": "A domain makes your app easier to find, share and trust, and most email services require you to verify one before they'll send messages that look like they come from your app instead of a generic provider.",
+      "choosing": [
+        "What the domain costs to renew every year after the first, since the first year is often discounted",
+        "Whether WHOIS privacy is free, so your name and home address aren't left in a public directory",
+        "Whether you can manage DNS records for the domain in the same account for free, since you'll need that to point it at your host and email service",
+        "How easy the domain would be to move to a different registrar later, and any lock period right after you buy it"
+      ],
+      "watch_for": [
+        "Buying a domain but never adding the DNS records a host or email service asks for, so the site or outgoing email never actually starts working",
+        "Budgeting for a discounted first-year price and being surprised by a much higher renewal price the year after",
+        "Assuming the domain itself lets an app send email from its own name; most email services still require verifying that exact domain separately"
+      ],
+      "terms": ["registrar", "dns", "whois-privacy", "domain-verification"]
+    },
     "database": {
       "what": "The database is where anything your app needs to remember lives: posts, profiles, bookings, whatever people create or you store about them.",
       "why": "Without a database, an app forgets everything the moment the page refreshes. Anything that should still be there tomorrow needs a database to hold it.",
@@ -105,6 +121,22 @@
       ],
       "terms": ["free-tier", "model", "token", "rate-limit", "api-key", "secret-key", "sdk"]
     },
+    "scraping": {
+      "what": "This is the tool your app uses to pull content or data from other websites, like fetching a product page's price or turning an article into text your app can use.",
+      "why": "Websites are built for people to read in a browser, not for programs to read directly. A scraping tool fetches the page and, often, renders any JavaScript on it, so your app can work with the content instead of a browser window.",
+      "choosing": [
+        "Whether it renders JavaScript, since many modern sites show little or nothing until JavaScript runs",
+        "Whether it hands back clean text or Markdown ready for an AI model, instead of raw HTML you'd have to clean up yourself",
+        "Whether you're paying for a hosted service, or running the scraping yourself and only paying for your own server",
+        "How it prices JavaScript-heavy pages, since those often cost more than a plain page"
+      ],
+      "watch_for": [
+        "Scraping a site that blocks it in robots.txt or forbids it in its terms of service; check both before you build on top of a site",
+        "Pulling in personal data (names, emails, profile photos) without a real reason and a plan for storing it safely",
+        "Hammering a site with requests fast enough to look like an attack; slow down and handle rate limits instead of retrying instantly"
+      ],
+      "terms": ["headless-browser", "robots-txt", "rate-limit", "api-key"]
+    },
     "jobs": {
       "what": "Background jobs are pieces of work your app runs outside of answering someone's request directly, like resizing an uploaded image, sending a batch of emails, or cleaning up old data overnight.",
       "why": "Some work is too slow to make a person wait for while a page loads, and some work needs to happen on a timer with nobody around to click a button. Background jobs handle both.",
@@ -134,6 +166,37 @@
         "Using a personal inbox or its everyday account to send app email instead of a dedicated sending service"
       ],
       "terms": ["transactional-email", "smtp", "domain-verification"]
+    },
+    "analytics": {
+      "what": "Analytics is how your app counts visitors and sees what they do once they arrive, like which pages they view, how they got there, and which buttons or features they actually use.",
+      "why": "You can't improve what you can't see. Analytics turns guesses about your app into real numbers, so you know whether people are finding it, where they give up, and whether a new feature gets used at all.",
+      "choosing": [
+        "Whether it needs cookies, which decides whether your site needs a cookie consent banner",
+        "Whether it can track events like sign-ups and button clicks, not just which pages get viewed",
+        "How generous the free plan really is, since some tools give a real free tier and others only a trial before billing starts",
+        "How easily you could take your data with you if you switched tools later"
+      ],
+      "watch_for": [
+        "Turning on a cookie-based analytics tool without asking visitors first, which privacy rules in places like the EU and UK require",
+        "Sending personal details like names or emails as event properties instead of sticking to page views and simple actions",
+        "Assuming a free trial is a permanent free plan, then getting billed once it ends"
+      ],
+      "terms": ["page-view", "event", "cookie-consent", "portability"]
+    },
+    "monitoring": {
+      "what": "Error monitoring catches the moments your app breaks for a real person, somewhere you can't see, and tells you: what broke, the exact code line, and often what that person was doing right before it happened.",
+      "why": "Once an app is out of your own hands, most bugs happen on someone else's device, in a browser tab you'll never open. Without a monitoring tool, you only hear about a bug if that person emails you, and most people just leave instead.",
+      "choosing": [
+        "Whether the free plan's error allowance realistically covers your app's size, and what happens once you go over it",
+        "Whether it can show you what a person actually did right before the error, not just the stack trace",
+        "Whether it also checks that your app is reachable at all, separate from catching errors inside it",
+        "How much of the setup an AI coding tool can do for you versus needing your own account and keys"
+      ],
+      "watch_for": [
+        "Only installing it in the browser and missing errors that happen in your server code, which a person never sees but your app still fails on",
+        "Turning on session replay without masking personal data first, so private details end up stored in a third party's recordings"
+      ],
+      "terms": ["source-map", "session-replay", "uptime", "environment-variable"]
     },
     "mobile": {
       "what": "This is whether, and how, your app could become a phone app in an app store later, in addition to or instead of a website.",
@@ -346,6 +409,61 @@
       "term": "Vendor lock-in",
       "plain": "Vendor lock-in is how stuck you'd be with one provider, where switching away would mean rewriting a real chunk of your app instead of just changing a setting. It comes from leaning heavily on features only that one provider offers.",
       "matters": "Some lock-in is a fair trade for building faster. It's worth knowing where you have it, so a price change or outage elsewhere doesn't blindside you."
+    },
+    "registrar": {
+      "term": "Registrar",
+      "plain": "A registrar is the company you buy a domain name from and that keeps your registration up to date each year, similar to renewing a lease. ICANN accredits registrars and sets rules they all have to follow, like handing over an auth code if you want to leave.",
+      "matters": "Which registrar you use decides what a domain costs to renew, whether WHOIS privacy and DNS management are free, and how easy it is to leave later."
+    },
+    "dns": {
+      "term": "DNS",
+      "plain": "DNS is the address book that turns a domain name like yourapp.com into the technical details that point it at your host, your email service, or anything else. You manage it by adding records, like an A or CNAME record, in your registrar's dashboard or wherever the domain's nameservers point.",
+      "matters": "Buying a domain doesn't connect it to anything by itself. You still have to add the DNS records your host and your email service ask for before the site or outgoing email actually works."
+    },
+    "whois-privacy": {
+      "term": "WHOIS privacy",
+      "plain": "WHOIS is the public directory of who owns each domain. WHOIS privacy, sometimes called domain privacy, swaps your real name, address, phone and email in that directory for the registrar's own placeholder details.",
+      "matters": "Without it, your home address and phone number can become public information the moment you register a domain. Most registrars now include this for free, but it's worth checking."
+    },
+    "headless-browser": {
+      "term": "Headless browser",
+      "plain": "A headless browser is a real web browser, like Chrome, running without a visible window, so a program can control it and read what it renders. It's how a scraping tool sees pages that only fill in after JavaScript runs.",
+      "matters": "It's slower and more expensive than a plain page fetch, since it has to actually load and run the page like a browser would, not just download text."
+    },
+    "robots-txt": {
+      "term": "robots.txt",
+      "plain": "robots.txt is a small text file a website publishes to say which pages automated tools are and aren't welcome to visit. It's a request, not a lock, so software can technically ignore it, but a well-behaved scraper checks it first.",
+      "matters": "Ignoring it can get your app's traffic blocked, and going against a site's stated wishes can cause real problems if that site's terms of service also forbid scraping."
+    },
+    "page-view": {
+      "term": "Page view",
+      "plain": "A page view is one visit to one page of your website, counted each time someone loads it. It's the most basic unit analytics tools count, like a single tally mark for each page someone opens.",
+      "matters": "Page views tell you how much traffic a page gets, but not what someone did there, so most tools pair them with events for the fuller picture."
+    },
+    "event": {
+      "term": "Event",
+      "plain": "An event is a specific action someone takes in your app, like clicking a button, finishing a signup form, or completing a purchase, tracked separately from which page they were on.",
+      "matters": "Page views tell you people showed up; events tell you what they actually did, which is what you need to know whether a feature works."
+    },
+    "cookie-consent": {
+      "term": "Cookie consent",
+      "plain": "Cookie consent is a website visitor's clear yes to letting a site store a cookie in their browser, usually given by clicking something like Accept on a banner before any non-essential cookie is set.",
+      "matters": "In the EU and UK, cookies that aren't strictly necessary for the site to work, including most analytics cookies, need this consent before they're set, not after."
+    },
+    "source-map": {
+      "term": "Source map",
+      "plain": "A source map is a file that maps the compressed, hard-to-read code your app actually runs in production back to the real code you wrote. Without one, an error monitoring tool can only show you a wall of minified code instead of your own file names and line numbers.",
+      "matters": "If source maps aren't uploaded, every error report points at meaningless compressed code, and finding the actual bug takes far longer."
+    },
+    "session-replay": {
+      "term": "Session replay",
+      "plain": "Session replay records what a person clicked, typed and saw in your app, and plays it back like a video so you can watch what led up to an error instead of only reading a stack trace.",
+      "matters": "It turns a confusing bug report into something you can watch happen, but it also means a recording tool is capturing real user activity, so masking personal data before it's recorded matters."
+    },
+    "uptime": {
+      "term": "Uptime checks",
+      "plain": "An uptime check is a request a monitoring service sends to your app from the outside, on a timer, just to see if it answers at all. It's different from error monitoring, which only catches problems your app already knows it hit.",
+      "matters": "If your whole app goes down, like a crashed server or an expired certificate, there's no error for your app to report since it can't run at all. Only an outside check catches that."
     }
   }
 }

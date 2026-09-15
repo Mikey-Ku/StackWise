@@ -1,0 +1,57 @@
+{
+  "id": "better-stack",
+  "name": "Better Stack",
+  "provider": "better-stack",
+  "slots": ["monitoring"],
+  "summary": "Better Stack is an observability platform that catches app errors, records session replays, and checks your site's uptime, all from one dashboard.",
+  "website": "https://betterstack.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "The free plan includes 100,000 exceptions, 5,000 session replays and 10 uptime monitors a month on one account, each with 90-day retention.",
+      "source": "https://betterstack.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "There's no single paid plan; past the free limits, each product bills separately, for example $25/month per 50 extra uptime monitors plus a small per-exception and per-replay rate.",
+      "source": "https://betterstack.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Error tracking works by pointing the standard @sentry/nextjs SDK at a Better Stack DSN instead of Sentry's, so switching error tools later can mean changing a URL instead of rewriting how errors are captured.",
+      "source": "https://betterstack.com/docs/errors/collecting-errors/sentry-sdk/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "uptime_checks": {
+      "value": true,
+      "note": "Uptime monitoring checks a URL from outside on a schedule and alerts you when it's down; the free plan includes 10 monitors and heartbeats.",
+      "source": "https://betterstack.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "session_replay": {
+      "value": true,
+      "note": "Session Replay records what a person did before an error; the free plan includes 5,000 replays a month, and elements can be masked by CSS selector.",
+      "source": "https://betterstack.com/docs/rum/using-the-product/session-replays/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Better Stack account, then create an Errors application for your Next.js app to get an application token and ingesting host.", "env": [], "source": "https://betterstack.com/docs/errors/collecting-errors/sentry-sdk/" },
+    { "step": "Install the SDK with npm install @sentry/nextjs, the same package Sentry itself uses.", "env": [], "source": "https://betterstack.com/docs/errors/collecting-errors/sentry-sdk/" },
+    { "step": "Build a DSN from the Ingest tab in the form https://APPLICATION_TOKEN@INGESTING_HOST/APPLICATION_ID and set it as the dsn in sentry.client.config.js, sentry.server.config.js and sentry.edge.config.js.", "env": ["SENTRY_DSN"], "source": "https://betterstack.com/docs/errors/collecting-errors/sentry-sdk/" },
+    { "step": "Add your Telemetry API token so source maps upload on every build, using the org, project and endpoint from the application's Advanced settings tab.", "env": ["SENTRY_AUTH_TOKEN", "SENTRY_ORG", "SENTRY_PROJECT", "SENTRY_URL"], "source": "https://betterstack.com/docs/errors/collecting-errors/upload-source-maps/" }
+  ],
+  "builder_notes": [
+    "Keep SENTRY_AUTH_TOKEN (also called your Telemetry API token) out of client code and version control; it grants access to your whole Telemetry account, not just source map uploads.",
+    "The DSN itself is safe to ship to the browser, the same as with Sentry, since it only identifies where events go.",
+    "Mask HTML elements by CSS selector for session replay before recording any page that shows personal data."
+  ]
+}

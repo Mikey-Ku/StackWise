@@ -41,6 +41,20 @@ export const CRITERION_LABELS: Record<Criterion | "accounts", string> = {
   accounts: "fewer accounts to manage",
 };
 
+/**
+ * Domains are never free, so their cost criteria compare the first year and the renewal instead.
+ * Payment services have no monthly plan, so their price criterion compares the fee on a sale.
+ */
+export function criterionLabel(criterion: Criterion | "accounts", slot?: SlotId): string {
+  if (slot === "domain" && criterion === "cost") return "cheaper for the first year";
+  if (slot === "domain" && criterion === "price") return "cheaper to renew";
+  if (slot === "payments" && criterion === "price") return "cheaper per sale";
+  return CRITERION_LABELS[criterion];
+}
+
+/** The sale used to compare payment fees: a percent matters more on big sales, a fixed fee on small ones. */
+export const TYPICAL_SALE_USD = 20;
+
 const SIZE_RANK: Record<string, number> = { none: 0, just_me: 1, up_to_100: 2, up_to_1000: 3, more: 4 };
 const UNKNOWN_SCORE = 0.25;
 const BLOCKED_PENALTY = 1000;
@@ -65,17 +79,30 @@ export function freePlanFits(index: CatalogIndex, option: Option, slot: SlotId, 
 }
 
 export function criterionScores(index: CatalogIndex, option: Option, slot: SlotId, input: PlanInput): Record<Criterion, number> {
+  const clamp = (n: number) => Math.max(0, Math.min(1, n));
   let cost = UNKNOWN_SCORE;
-  const covers = readFact(index, option, "free_plan_covers");
-  const fits = freePlanFits(index, option, slot, input);
-  if (fits === true) cost = 1;
-  else if (fits === false && covers.known && typeof covers.value === "string") {
-    cost = SIZE_RANK[covers.value] === SIZE_RANK[input.size] - 1 ? 0.5 : 0;
-  }
-
   let price = UNKNOWN_SCORE;
-  const paid = readFact(index, option, "first_paid_usd_month");
-  if (paid.known) price = paid.value === null ? 1 : Math.max(0, Math.min(1, 1 - Number(paid.value) / 50));
+  if (slot === "domain") {
+    const first = readFact(index, option, "com_first_year_usd");
+    const renewal = readFact(index, option, "com_renewal_usd");
+    if (first.known) cost = clamp(1 - Number(first.value) / 30);
+    if (renewal.known) price = clamp(1 - Number(renewal.value) / 40);
+  } else {
+    const covers = readFact(index, option, "free_plan_covers");
+    const fits = freePlanFits(index, option, slot, input);
+    if (fits === true) cost = 1;
+    else if (fits === false && covers.known && typeof covers.value === "string") {
+      cost = SIZE_RANK[covers.value] === SIZE_RANK[input.size] - 1 ? 0.5 : 0;
+    }
+    const paid = readFact(index, option, "first_paid_usd_month");
+    if (paid.known) price = paid.value === null ? 1 : clamp(1 - Number(paid.value) / 50);
+  }
+  if (slot === "payments") {
+    const percent = readFact(index, option, "card_fee_percent");
+    const fixed = readFact(index, option, "card_fee_fixed_usd");
+    // The share of a typical sale the service keeps: 0% scores 1, 10% or more scores 0.
+    price = percent.known && fixed.known ? clamp(1 - (Number(percent.value) / 100 + Number(fixed.value) / TYPICAL_SALE_USD) / 0.1) : UNKNOWN_SCORE;
+  }
 
   const setup = option.coverage === "partial" && option.setup.length === 0 ? UNKNOWN_SCORE : 1 - Math.min(option.setup.length, 6) / 6;
 
@@ -229,6 +256,17 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
     }
   }
 
+  // A shared account is counted when the second part from the same provider is placed, so the
+  // running total is exact at every step. A slot can only add that bonus if one of its candidates
+  // shares a provider with a candidate in an earlier slot.
+  const noAccount = new Set(index.catalog.planning.no_account_providers);
+  const accountOf = (slot: SlotId, option: Option) => (slot === "framework" || noAccount.has(option.provider) ? null : option.provider);
+  const accountGain = Math.max(0, weights.accounts);
+  const canShare = order.map((slot, i) => {
+    const earlier = new Set(order.slice(0, i).flatMap((s) => candidates.get(s)!.map((o) => accountOf(s, o))));
+    return candidates.get(slot)!.some((o) => accountOf(slot, o) !== null && earlier.has(accountOf(slot, o)));
+  });
+
   // Optimistic bound for everything not yet chosen.
   const remainingBound: number[] = new Array(order.length + 1).fill(0);
   for (let depth = order.length - 1; depth >= 0; depth--) {
@@ -236,31 +274,34 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
     const bestUnary = Math.max(...candidates.get(slot)!.map((o) => unary.get(`${slot}:${o.id}`)!));
     let pairs = 0;
     for (let k = 0; k < depth; k++) pairs += pairMax.get(`${order[k]}|${slot}`)!;
-    remainingBound[depth] = remainingBound[depth + 1] + bestUnary + pairs + Math.max(0, weights.accounts);
+    remainingBound[depth] = remainingBound[depth + 1] + bestUnary + pairs + (canShare[depth] ? accountGain : 0);
   }
 
-  let best: { total: number; key: string; choice: Option[] } = { total: -Infinity, key: "", choice: [] };
+  // Candidates are tried best first, so among plans that tie exactly, the first one found wins.
+  let best: { total: number; choice: Option[] } = { total: -Infinity, choice: [] };
   const choice: Option[] = [];
+  const accounts = new Map<string, number>();
 
   const search = (depth: number, partial: number) => {
     if (depth === order.length) {
-      const selection = Object.fromEntries(order.map((s, i) => [s, choice[i].id])) as Selection;
-      const total = partial + accountsSaved(index, selection) * weights.accounts;
-      const key = choice.map((o) => o.id).join("|");
-      if (total > best.total + 1e-9 || (Math.abs(total - best.total) <= 1e-9 && key < best.key)) {
-        best = { total, key, choice: [...choice] };
-      }
+      if (partial > best.total + 1e-9) best = { total: partial, choice: [...choice] };
       return;
     }
-    // Accounts saved among slots already chosen are only counted at the leaf, so allow for them here.
-    if (partial + remainingBound[depth] + Math.max(0, weights.accounts) * depth < best.total - 1e-9) return;
+    if (partial + remainingBound[depth] <= best.total + 1e-9) return;
     const slot = order[depth];
     for (const option of candidates.get(slot)!) {
       let add = unary.get(`${slot}:${option.id}`)!;
       for (let k = 0; k < depth; k++) add += pairValue.get(`${order[k]}:${choice[k].id}|${slot}:${option.id}`)!;
+      const account = accountOf(slot, option);
+      if (account !== null) {
+        const seen = accounts.get(account) ?? 0;
+        if (seen > 0) add += weights.accounts;
+        accounts.set(account, seen + 1);
+      }
       choice.push(option);
       search(depth + 1, partial + add);
       choice.pop();
+      if (account !== null) accounts.set(account, accounts.get(account)! - 1);
     }
   };
   search(0, 0);

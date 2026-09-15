@@ -80,6 +80,27 @@
       "source": "https://fly.io/docs/js/frameworks/svelte/",
       "retrieved": "2026-09-15",
       "status": "draft"
+    },
+    "custom_domain_free": {
+      "value": true,
+      "note": "Fly.io has no free plan, but adding a custom domain itself carries no extra fee on any app; you only pay the usual compute and bandwidth costs.",
+      "source": "https://fly.io/docs/networking/custom-domain/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_sleeps": {
+      "value": false,
+      "note": "There is no free plan; Fly.io does offer an opt-in auto stop and start feature (on by default for new apps) that stops an idle Machine and restarts it in well under a second to a few seconds when a request arrives.",
+      "source": "https://fly.io/docs/launch/autostop-autostart/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "bandwidth_included": {
+      "value": "No free plan. Pay-as-you-go: outbound data transfer is $0.02 per GB in North America and Europe (more in other regions); inbound traffic and same-region transfers are free.",
+      "note": "Fly.io has no monthly bandwidth allowance since there is no free plan, so every GB sent to visitors outside your own region costs a few cents.",
+      "source": "https://fly.io/docs/about/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
     }
   },
   "setup": [

@@ -1,6 +1,6 @@
 import { evaluatePlan, optionIn, worstLevel, type CatalogIndex, type CheckResult } from "./evaluate";
 import { BUILD_ORDER } from "./checklist";
-import { alternativesFor, CRITERIA, CRITERION_LABELS, criterionScores, scorePlan, weightsFor } from "./score";
+import { alternativesFor, CRITERIA, criterionLabel, criterionScores, scorePlan, weightsFor } from "./score";
 import type { PlanInput, Selection, SlotId } from "./schema";
 
 /**
@@ -34,7 +34,7 @@ export function slotReasoning(index: CatalogIndex, input: PlanInput, selection: 
   const scores = criterionScores(index, option, slot, input);
   const strengths = CRITERIA.filter((c) => scores[c] >= 0.6 && weights[c] > 0)
     .sort((a, b) => scores[b] * weights[b] - scores[a] * weights[a])
-    .map((c) => CRITERION_LABELS[c]);
+    .map((c) => criterionLabel(c, slot));
 
   const alternatives = alternativesFor(index, input, selection, slot).filter((a) => a.option.id !== option.id);
   const considered = alternatives.filter((a) => a.option.coverage === "full").slice(0, 4);

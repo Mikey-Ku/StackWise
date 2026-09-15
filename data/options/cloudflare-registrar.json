@@ -1,0 +1,70 @@
+{
+  "id": "cloudflare-registrar",
+  "name": "Cloudflare Registrar",
+  "provider": "cloudflare",
+  "slots": ["domain"],
+  "summary": "Cloudflare Registrar is where you buy your own web address at the same wholesale price Cloudflare pays, with no markup.",
+  "website": "https://www.cloudflare.com/products/registrar/",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Cloudflare Registrar has no free plan; every domain is a paid purchase billed once a year.",
+      "source": "https://www.cloudflare.com/products/registrar/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "There's no monthly plan; domains are billed once a year at renewal, not monthly.",
+      "source": "https://developers.cloudflare.com/registrar/faq/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Transferring out uses a normal auth code with no Cloudflare fee, but ICANN rules still lock a domain for the usual 60 days after registration or after a registrant change.",
+      "source": "https://developers.cloudflare.com/registrar/faq/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "com_first_year_usd": {
+      "value": 10.46,
+      "note": "A new .com costs $10.46 for the first year, the live at-cost price Cloudflare shows in its own domain search, the same as what it pays the registry and ICANN.",
+      "source": "https://www.cloudflare.com/products/registrar/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "com_renewal_usd": {
+      "value": 10.46,
+      "note": "Renewal is the same $10.46 a year, since Cloudflare never marks up the price above what it pays.",
+      "source": "https://www.cloudflare.com/products/registrar/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "whois_privacy_free": {
+      "value": true,
+      "note": "WHOIS redaction that hides your name and address from public records is on by default at no extra cost.",
+      "source": "https://developers.cloudflare.com/registrar/get-started/register-domain/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "dns_included": {
+      "value": true,
+      "note": "DNS management is free, but every domain registered here must use Cloudflare's own nameservers, so you can't point it at another DNS provider without transferring the domain away first.",
+      "source": "https://developers.cloudflare.com/registrar/faq/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Sign in to Cloudflare, search for the domain, and register it from the dashboard.", "env": [], "source": "https://developers.cloudflare.com/registrar/get-started/register-domain/" },
+    { "step": "The domain becomes a Cloudflare DNS zone automatically; add an A or CNAME record pointing it at your host.", "env": [], "source": "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/" },
+    { "step": "Add any SPF, DKIM or DMARC records your email service gives you in the same DNS app.", "env": [], "source": "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/" }
+  ],
+  "builder_notes": [
+    "This domain must stay on Cloudflare's own nameservers while it's registered here, so manage its DNS records in the Cloudflare dashboard or API, not at another DNS host.",
+    "Add the host's DNS records and the email service's SPF, DKIM and DMARC records before assuming the site or outgoing email works.",
+    "If a script manages DNS through the Cloudflare API, keep the API token server-side and out of git."
+  ]
+}

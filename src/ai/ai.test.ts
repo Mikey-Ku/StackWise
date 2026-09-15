@@ -80,7 +80,7 @@ describe("plan explanation", () => {
   it("builds a brief from the computed plan only", () => {
     expect(brief.stack.find((s) => s.part === "Database")).toEqual({ part: "Database", choice: "db-file", status: "doesn't work" });
     expect(brief.problems[0].title).toBe("Your data would disappear");
-    expect(brief.cost.now).toContain("At up to 100 people");
+    expect(brief.cost.now).toContain("For up to 100 people");
   });
 
   it("has a template summary for when AI is off", () => {

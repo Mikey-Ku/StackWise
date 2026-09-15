@@ -37,6 +37,32 @@ describe("cost", () => {
     expect(costLine(index, opt("ai-paid"), "ai", input()).headline).toBe("Pay per use from the first request");
   });
 
+  it("bills domains by the year and counts store fees apart from the monthly total", () => {
+    expect(costLine(index, opt("domain-promo"), "domain", input())).toMatchObject({
+      kind: "yearly",
+      monthlyUsd: 0,
+      yearlyUsd: 5,
+      headline: "About $5 for a .com's first year, then $20/year",
+    });
+    expect(costLine(index, opt("domain-cheap"), "domain", input()).headline).toBe("About $10/year for a .com");
+
+    const outlook = costOutlook(index, { domain: "domain-cheap", mobile: "mobile-other" }, input());
+    expect(outlook.now).toMatchObject({ monthlyUsd: 0, yearlyUsd: 109, oneTimeUsd: 25 });
+    expect(outlook.now.fees.map((f) => f.id)).toEqual(["apple-developer-program", "google-play-registration"]);
+    expect(describeTotal(outlook.now)).toBe("about $0/month, plus $109 a year, plus $25 once");
+  });
+
+  it("counts one subscription once when it covers several parts", () => {
+    const base = fixtureIndex().catalog.planning;
+    const shared = fixtureIndex({ planning: { ...base, shared_plans: [{ provider: "acme", note: "One Acme plan covers everything.", source: "https://example.com/pricing" }] } });
+    const selection = { database: "db-hosted", files: "files-direct" };
+    const big = input({}, { size: "more" });
+    expect(costOutlook(index, selection, big).now.monthlyUsd).toBe(50);
+    const now = costOutlook(shared, selection, big).now;
+    expect(now.monthlyUsd).toBe(25);
+    expect(now.lines.find((l) => l.slot === "files")).toMatchObject({ monthlyUsd: 0, headline: "Included in the plan counted for database", detail: "One Acme plan covers everything." });
+  });
+
   it("looks one size ahead", () => {
     const outlook = costOutlook(index, { hosting: "host-server", database: "db-hosted" }, input({}, { size: "just_me" }));
     expect(outlook.now.monthlyUsd).toBe(0);

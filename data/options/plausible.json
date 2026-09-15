@@ -1,0 +1,56 @@
+{
+  "id": "plausible",
+  "name": "Plausible Analytics",
+  "provider": "plausible",
+  "slots": ["analytics"],
+  "summary": "Plausible is a simple, privacy-first website analytics tool that counts visitors and page views without using cookies.",
+  "website": "https://plausible.io",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Plausible has no permanent free plan, only a 30-day free trial with no credit card required.",
+      "source": "https://plausible.io/#pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 9,
+      "note": "The Starter plan costs $9 a month billed monthly and covers up to 10,000 monthly pageviews.",
+      "source": "https://plausible.io/#pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Plausible's self-hosted Community Edition is open source under AGPLv3, and both cloud and self-hosted data can be exported as CSV or through the Stats API.",
+      "source": "https://plausible.io/self-hosted-web-analytics",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "cookies": {
+      "value": "none",
+      "note": "Plausible never sets cookies or stores persistent identifiers, so it needs no cookie consent banner.",
+      "source": "https://plausible.io/data-policy",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "product_events": {
+      "value": true,
+      "note": "Custom events can track button clicks, signups or any other action, either by adding a CSS class or calling the plausible() function.",
+      "source": "https://plausible.io/docs/custom-event-goals",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Sign up for Plausible and add your site to start the 30-day free trial.", "env": [], "source": "https://plausible.io/docs/nextjs-integration" },
+    { "step": "Install next-plausible with npm install next-plausible.", "env": [], "source": "https://plausible.io/docs/nextjs-integration" },
+    { "step": "Wrap your app in PlausibleProvider, pointing it at the script src shown on your site's Plausible dashboard.", "env": [], "source": "https://plausible.io/docs/nextjs-integration" },
+    { "step": "Use the usePlausible hook to send custom events beyond the automatic page view tracking.", "env": [], "source": "https://plausible.io/docs/nextjs-integration" }
+  ],
+  "builder_notes": [
+    "Plausible never sets cookies, so do not add a cookie consent banner just for this tool.",
+    "Custom events count toward the monthly billable pageview quota, so only track actions that matter, not every render."
+  ]
+}

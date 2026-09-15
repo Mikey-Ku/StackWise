@@ -7,8 +7,95 @@
   ],
   "summary": "A payments platform for developers that acts as the merchant of record.",
   "website": "https://polar.sh",
-  "coverage": "partial",
-  "facts": {},
-  "setup": [],
-  "builder_notes": []
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "No monthly fee or size limit on the free Starter plan; you pay 5% plus 50 cents per transaction instead.",
+      "source": "https://polar.sh/resources/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "There is no required monthly plan; the free Starter plan has no cap, though optional paid plans (Pro at $20/month, Growth at $100/month, Scale at $400/month) lower the per-transaction fee at higher sales volume.",
+      "source": "https://polar.sh/resources/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "low",
+      "note": "Polar is a proprietary merchant-of-record checkout like Lemon Squeezy, so switching away later means rebuilding checkout, subscriptions and tax setup somewhere else.",
+      "source": "https://polar.sh/docs/merchant-of-record/fees",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "merchant_of_record": {
+      "value": true,
+      "note": "Polar is the merchant of record on every sale, handling sales tax and VAT for you.",
+      "source": "https://polar.sh/docs/merchant-of-record/fees",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "subscriptions": {
+      "value": true,
+      "note": "Recurring subscription billing is a core Polar feature, with no separate subscription fee on the current Starter, Pro, Growth or Scale plans.",
+      "source": "https://polar.sh/docs/merchant-of-record/fees",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "fee_summary": {
+      "value": "5% + 50 cents per transaction on the free Starter plan",
+      "note": "Paid monthly plans lower this rate, down to 3.4% plus 30 cents per transaction on the $400/month Scale plan, and international cards add 1.5%.",
+      "source": "https://polar.sh/resources/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "card_fee_percent": {
+      "value": 5,
+      "note": "Polar keeps 5% of each US card payment, as listed on its pricing page.",
+      "source": "https://polar.sh/resources/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "card_fee_fixed_usd": {
+      "value": 0.5,
+      "note": "On top of the percent, Polar keeps $0.50 from each US card payment.",
+      "source": "https://polar.sh/resources/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a Polar account and a test organization in the sandbox at sandbox.polar.sh, which is fully separate from production data, and add a product to sell.",
+      "env": [],
+      "source": "https://polar.sh/docs/integrate/sandbox"
+    },
+    {
+      "step": "Generate an Organization Access Token from Settings > Developers and set it as an environment variable.",
+      "env": ["POLAR_ACCESS_TOKEN"],
+      "source": "https://polar.sh/docs/integrate/sdk/adapters/nextjs"
+    },
+    {
+      "step": "Install the SDK with npm install zod @polar-sh/nextjs.",
+      "env": [],
+      "source": "https://polar.sh/docs/integrate/sdk/adapters/nextjs"
+    },
+    {
+      "step": "Create a checkout route handler using Checkout from @polar-sh/nextjs with server set to sandbox, and a webhook route handler using Webhooks verified against a signing secret.",
+      "env": ["POLAR_WEBHOOK_SECRET"],
+      "source": "https://polar.sh/docs/integrate/sdk/adapters/nextjs"
+    },
+    {
+      "step": "Visit your checkout route and complete a test payment with a Stripe test card number inside the sandbox.",
+      "env": [],
+      "source": "https://polar.sh/docs/integrate/sandbox"
+    }
+  ],
+  "builder_notes": [
+    "Keep POLAR_ACCESS_TOKEN and POLAR_WEBHOOK_SECRET server-only and never prefix them with NEXT_PUBLIC_.",
+    "Build and test against server: \"sandbox\" and the sandbox.polar.sh dashboard, and only point at production once you are ready to take real payments.",
+    "Verify the POLAR_WEBHOOK_SECRET signature inside the webhook handler before granting access, instead of trusting the client-side checkout redirect alone."
+  ]
 }

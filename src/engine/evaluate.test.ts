@@ -102,6 +102,28 @@ describe("rules that check whether a slot is filled", () => {
     expect(find(evaluatePlan(index, { login: "login-acme" }, input({ login: "yes" })), "login-emails-need-a-sender")).toBeUndefined();
   });
 
+  it("asks for a domain once the app sends email", () => {
+    const sends = input({ sends_email: "yes" });
+    expect(find(evaluatePlan(index, { email: "email-send" }, sends), "email-needs-own-domain")?.level).toBe("warning");
+    expect(find(evaluatePlan(index, { email: "email-send", domain: "domain-cheap" }, sends), "email-needs-own-domain")).toBeUndefined();
+    expect(find(evaluatePlan(index, { email: "email-send" }, input()), "email-needs-own-domain")).toBeUndefined();
+  });
+
+  it("keeps a self-run scraper out of serverless functions", () => {
+    const serverless = evaluatePlan(index, { hosting: "host-serverless", scraping: "scrape-lib" }, input());
+    expect(find(serverless, "self-run-scraper-on-serverless")?.level).toBe("warning");
+    expect(find(evaluatePlan(index, { hosting: "host-server", scraping: "scrape-lib" }, input()), "self-run-scraper-on-serverless")).toBeUndefined();
+    expect(find(evaluatePlan(index, { hosting: "host-serverless", scraping: "scrape-api" }, input()), "self-run-scraper-on-serverless")).toBeUndefined();
+    expect(find(evaluatePlan(index, { scraping: "scrape-api" }, input({ scrapes_sites: "yes" })), "scraper-javascript-costs-extra")?.level).toBe("info");
+  });
+
+  it("notes free hosts that sleep and hosts that charge for your own domain", () => {
+    const results = evaluatePlan(index, { hosting: "host-server", domain: "domain-cheap" }, input());
+    expect(find(results, "free-host-sleeps")?.level).toBe("info");
+    expect(find(results, "own-domain-needs-paid-host")?.level).toBe("warning");
+    expect(find(evaluatePlan(index, { hosting: "host-serverless", domain: "domain-cheap" }, input()), "own-domain-needs-paid-host")).toBeUndefined();
+  });
+
   it("checks the phone app against login, database and the framework", () => {
     const results = evaluatePlan(index, { framework: "fw-server", login: "login-lib", database: "db-file", mobile: "mobile-other" }, input());
     expect(find(results, "mobile-app-login")?.level).toBe("warning");

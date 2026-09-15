@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { evaluatePlan, neededSlots } from "./evaluate";
 import { SLOT_IDS, type PlanInput, type Selection, type SlotId } from "./schema";
-import { alternativesFor, closeCalls, recommend, scorePlan } from "./score";
+import { alternativesFor, closeCalls, criterionLabel, criterionScores, recommend, scorePlan } from "./score";
 import { fixtureIndex, input } from "./test-fixtures";
 
 const index = fixtureIndex();
@@ -24,6 +24,26 @@ function bruteForceBest(plan: PlanInput, pinned: Selection = {}): number {
   walk(0, Object.fromEntries(SLOT_IDS.filter((s) => pinned[s] === "").map((s) => [s, ""])));
   return best;
 }
+
+describe("criteria", () => {
+  it("compares domains by first-year and renewal price, since none are free", () => {
+    const cheap = criterionScores(index, index.optionsById.get("domain-cheap")!, "domain", input());
+    const promo = criterionScores(index, index.optionsById.get("domain-promo")!, "domain", input());
+    expect(promo.cost).toBeGreaterThan(cheap.cost);
+    expect(cheap.price).toBeGreaterThan(promo.price);
+    expect([criterionLabel("cost", "domain"), criterionLabel("price", "domain"), criterionLabel("cost", "hosting")]).toEqual(["cheaper for the first year", "cheaper to renew", "free at your size"]);
+  });
+
+  it("compares payment services by the fee on a typical sale", () => {
+    const card = criterionScores(index, index.optionsById.get("pay-card")!, "payments", input());
+    const merchant = criterionScores(index, index.optionsById.get("pay-merchant")!, "payments", input());
+    // 2.9% + $0.30 keeps 4.4% of a $20 sale; 5% + $0.50 keeps 7.5%.
+    expect(card.price).toBeCloseTo(0.56, 5);
+    expect(merchant.price).toBeCloseTo(0.25, 5);
+    expect(recommend(index, input({ users_pay: "yes" })).selection.payments).toBe("pay-card");
+    expect(criterionLabel("price", "payments")).toBe("cheaper per sale");
+  });
+});
 
 describe("recommend", () => {
   it("never picks a blocked combination when a working one exists", () => {

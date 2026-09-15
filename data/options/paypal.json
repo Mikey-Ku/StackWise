@@ -5,10 +5,97 @@
   "slots": [
     "payments"
   ],
-  "summary": "Accept PayPal and card payments with a PayPal business account.",
-  "website": "https://developer.paypal.com",
-  "coverage": "partial",
-  "facts": {},
-  "setup": [],
-  "builder_notes": []
+  "summary": "PayPal is a widely recognized payment processor that lets your app accept PayPal balance, debit and credit card payments.",
+  "website": "https://www.paypal.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "No monthly fee or user cap; you pay per transaction instead, about 3.49% plus 49 cents per US charge.",
+      "source": "https://www.paypal.com/us/webapps/mpp/merchant-fees",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "There is no monthly plan for standard PayPal Checkout; it is pay-per-transaction with no setup or monthly fees.",
+      "source": "https://www.paypal.com/us/webapps/mpp/merchant-fees",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "PayPal's checkout and Orders API are proprietary like other processors, but its transaction history exports and huge adoption make it easier to migrate away from than a full merchant-of-record platform.",
+      "source": "https://developer.paypal.com/docs/checkout/standard/integrate/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "merchant_of_record": {
+      "value": false,
+      "note": "PayPal is a payment processor, not a merchant of record; its own Payment Services Agreement says you are responsible for determining, collecting and remitting any sales tax yourself.",
+      "source": "https://www.paypal.com/us/legalhub/braintree/payment-services-agreement",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "subscriptions": {
+      "value": true,
+      "note": "PayPal supports recurring billing through its Subscriptions API, including fixed plans or amounts that scale with the number of users.",
+      "source": "https://developer.paypal.com/docs/subscriptions/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "fee_summary": {
+      "value": "3.49% + $0.49 per successful US card or PayPal checkout charge",
+      "note": "That is the standard US domestic rate; PayPal adds 1.50% for international transactions and up to 4.00% when it has to convert currency.",
+      "source": "https://www.paypal.com/us/webapps/mpp/merchant-fees",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "card_fee_percent": {
+      "value": 3.49,
+      "note": "PayPal keeps 3.49% of each US card payment, as listed on its pricing page.",
+      "source": "https://www.paypal.com/us/webapps/mpp/merchant-fees",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "card_fee_fixed_usd": {
+      "value": 0.49,
+      "note": "On top of the percent, PayPal keeps $0.49 from each US card payment.",
+      "source": "https://www.paypal.com/us/webapps/mpp/merchant-fees",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a PayPal business account, then open the PayPal Developer Dashboard and create an app under Apps & Credentials to get a sandbox Client ID and Secret.",
+      "env": [],
+      "source": "https://developer.paypal.com/docs/checkout/standard/integrate/"
+    },
+    {
+      "step": "Set the sandbox Client ID and Secret as environment variables.",
+      "env": ["PAYPAL_CLIENT_ID", "PAYPAL_CLIENT_SECRET"],
+      "source": "https://developer.paypal.com/docs/checkout/standard/integrate/"
+    },
+    {
+      "step": "Install the PayPal JS SDK, then create an order from a server route by calling the Orders API (POST /v2/checkout/orders) with an access token generated from your Client ID and Secret.",
+      "env": [],
+      "source": "https://developer.paypal.com/docs/checkout/standard/integrate/"
+    },
+    {
+      "step": "Render the PayPal buttons on the client and capture the payment (POST /v2/checkout/orders/{orderID}/capture) once the buyer approves it.",
+      "env": [],
+      "source": "https://developer.paypal.com/docs/checkout/standard/integrate/"
+    },
+    {
+      "step": "Log in with a PayPal sandbox test buyer account to approve and complete a test payment, then swap in your live credentials when you are ready to launch.",
+      "env": [],
+      "source": "https://developer.paypal.com/docs/checkout/standard/integrate/"
+    }
+  ],
+  "builder_notes": [
+    "Keep PAYPAL_CLIENT_SECRET on the server only; the client ID is meant to be public and safe to expose in the browser SDK script.",
+    "Use sandbox credentials and a sandbox buyer account while testing, and only switch to live credentials when you are ready to accept real payments.",
+    "Confirm payment by checking the order's capture status from the server, rather than trusting the client redirect alone, before marking anything as paid."
+  ]
 }

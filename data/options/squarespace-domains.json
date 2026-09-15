@@ -1,0 +1,70 @@
+{
+  "id": "squarespace-domains",
+  "name": "Squarespace Domains",
+  "provider": "squarespace",
+  "slots": ["domain"],
+  "summary": "Squarespace Domains (the former Google Domains) is a domain registrar with free WHOIS privacy and DNS management in the same dashboard.",
+  "website": "https://domains.squarespace.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Squarespace Domains has no free plan; every domain is a paid purchase billed once a year.",
+      "source": "https://domains.squarespace.com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "There's no monthly plan; domains are billed once a year, not monthly.",
+      "source": "https://domains.squarespace.com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "You have to manually unlock the domain and request an emailed auth code, and Squarespace says the full transfer can take up to 15 days, on top of the usual 60-day ICANN lock after registration.",
+      "source": "https://support.squarespace.com/hc/en-us/articles/205812338-Transferring-a-domain-away-from-Squarespace",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "com_first_year_usd": {
+      "value": 10,
+      "note": "A new .com is a promotional $10 for the first year, shown crossed out against the $20 list price in Squarespace's own domain search.",
+      "source": "https://domains.squarespace.com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "com_renewal_usd": {
+      "value": 20,
+      "note": "Renewal is $20 a year, the standard rate for .com and .org once the first-year promotion ends.",
+      "source": "https://support.squarespace.com/hc/en-us/articles/205812208-Squarespace-domains-FAQ",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "whois_privacy_free": {
+      "value": true,
+      "note": "Free WHOIS privacy protection is included on every eligible Squarespace domain, including .com.",
+      "source": "https://support.squarespace.com/hc/en-us/articles/205812198-Squarespace-domains-overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "dns_included": {
+      "value": true,
+      "note": "Full DNS control is included free in the same dashboard used to manage the domain and its renewal.",
+      "source": "https://support.squarespace.com/hc/en-us/articles/205812198-Squarespace-domains-overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Search for and buy the domain at domains.squarespace.com.", "env": [], "source": "https://domains.squarespace.com" },
+    { "step": "Point the domain at your host: connect it to a Squarespace site directly, or add the A and CNAME records your host gives you in DNS Settings.", "env": [], "source": "https://support.squarespace.com/hc/en-us/articles/215744668-Pointing-a-Squarespace-domain" },
+    { "step": "Add the email service's records (Squarespace calls this an email preset for common providers) the same way.", "env": [], "source": "https://support.squarespace.com/hc/en-us/articles/205812348-Connecting-a-Squarespace-managed-domain" }
+  ],
+  "builder_notes": [
+    "Add the host's DNS records and the email service's SPF, DKIM and DMARC records in DNS Settings before assuming the site or outgoing email works.",
+    "The domain is locked by default; it must be manually unlocked in the dashboard before it can be transferred to another registrar.",
+    "Budget for the $20/year renewal price, not the discounted first-year price shown at signup."
+  ]
+}

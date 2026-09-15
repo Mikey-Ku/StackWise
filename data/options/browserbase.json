@@ -1,0 +1,71 @@
+{
+  "id": "browserbase",
+  "name": "Browserbase",
+  "provider": "browserbase",
+  "slots": ["scraping"],
+  "summary": "Browserbase runs real Chrome browsers in the cloud that your own Playwright or Puppeteer code connects to and controls remotely.",
+  "website": "https://www.browserbase.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "just_me",
+      "note": "Free plan includes 1 browser hour a month and 3 concurrent browsers, enough for a developer's own testing, not real user traffic.",
+      "source": "https://www.browserbase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 20,
+      "note": "Developer plan is $20/month for 100 browser hours, then $0.12 for each extra browser hour.",
+      "source": "https://www.browserbase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Your scraping code is standard Playwright or Puppeteer connecting over CDP, so pointing it at a different browser provider, or your own server, is mostly a matter of changing the connection URL.",
+      "source": "https://docs.browserbase.com/welcome/quickstarts/playwright",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scraper_runs": {
+      "value": "hosted_browser",
+      "note": "You write Playwright or Puppeteer code that connects to a real Chrome browser Browserbase runs for you, instead of sending a URL and getting a finished page back.",
+      "source": "https://docs.browserbase.com/welcome/quickstarts/playwright",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "js_rendering": {
+      "value": "included",
+      "note": "Sessions are full browsers, so JavaScript-rendered pages just work, billed at the same per-browser-hour rate as any other page.",
+      "source": "https://www.browserbase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "ai_ready_output": {
+      "value": true,
+      "note": "Its separate Fetch API can return a page as clean Markdown by passing format: 'markdown', billed apart from browser-hour sessions.",
+      "source": "https://docs.browserbase.com/platform/fetch/overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "price_per_1k_pages": {
+      "value": "About $4 per 1,000 pages in browser time (roughly 33 browser-hours at the Developer plan's $0.12/hour overage rate), assuming about 2 minutes of browser time per page, which is Browserbase's own estimate that 100 browser hours covers about 3,000 page-level tasks. That pace fits inside the 100 hours already included in the $20/month Developer plan.",
+      "note": "Estimate built from Browserbase's own stated ratio of browser hours to page-level tasks, applied to the Developer plan's overage rate.",
+      "source": "https://www.browserbase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Sign up for a free Browserbase account and copy your API key from the dashboard.", "env": [], "source": "https://docs.browserbase.com/welcome/quickstarts/playwright" },
+    { "step": "Install the packages with npm install playwright-core @browserbasehq/sdk.", "env": [], "source": "https://docs.browserbase.com/welcome/quickstarts/playwright" },
+    { "step": "Add your key as BROWSERBASE_API_KEY in your environment file.", "env": ["BROWSERBASE_API_KEY"], "source": "https://docs.browserbase.com/welcome/quickstarts/playwright" },
+    { "step": "In a server route, create a Browserbase session, connect Playwright with chromium.connectOverCDP(session.connectUrl), then drive the page as you normally would.", "env": [], "source": "https://docs.browserbase.com/welcome/quickstarts/playwright" }
+  ],
+  "builder_notes": [
+    "Keep BROWSERBASE_API_KEY server-side; drive sessions from a route handler, server action, or background job, never from client code.",
+    "Always close the browser and session when you're done with it, since an open session keeps burning browser-hour billing.",
+    "Respect each target site's robots.txt and terms of service before automating it."
+  ]
+}

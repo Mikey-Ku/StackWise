@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { recommend } from "./score";
-import { cardStats, money, optionStats, planStats } from "./stats";
+import { money } from "./cost";
+import { cardStats, optionStats, planStats } from "./stats";
 import { fixtureIndex, input } from "./test-fixtures";
 
 const index = fixtureIndex();
@@ -10,7 +11,7 @@ const byId = (stats: ReturnType<typeof optionStats>) => Object.fromEntries(stats
 describe("option stats", () => {
   it("leads with cost, then the paid plan, the free plan, a key trait and switching cost", () => {
     const stats = optionStats(index, opt("host-server"), "hosting", input({}, { size: "up_to_1000" }));
-    expect(stats.map((s) => s.id)).toEqual(["now", "paidFrom", "freePlan", "runtime_model", "switching"]);
+    expect(stats.map((s) => s.id)).toEqual(["now", "paidFrom", "freePlan", "runtime_model", "free_plan_sleeps", "custom_domain_free", "bandwidth_included", "switching"]);
     const s = byId(stats);
     expect(s.now).toMatchObject({ value: "$7/mo", short: "$7/mo now", tone: "warn" });
     expect(s.paidFrom).toMatchObject({ value: "$7/mo", short: "Paid from $7/mo" });
@@ -18,7 +19,8 @@ describe("option stats", () => {
     expect(s.runtime_model).toMatchObject({ label: "Runs as", value: "Always-on server" });
     expect(s.switching).toMatchObject({ value: "Easy", short: "Easy to switch", tone: "good" });
     expect(s.now.note).toBe("The free plan covers just you. fixture");
-    expect(stats.map((x) => x.fact)).toEqual([undefined, "first_paid_usd_month", "free_plan_covers", "runtime_model", "portability"]);
+    expect(stats.map((x) => x.fact)).toEqual([undefined, "first_paid_usd_month", "free_plan_covers", "runtime_model", "free_plan_sleeps", "custom_domain_free", "bandwidth_included", "portability"]);
+    expect(s.free_plan_sleeps).toMatchObject({ short: "Free apps sleep", tone: "warn" });
   });
 
   it("marks a free fit as good, and warns when a free plan doesn't allow charging customers", () => {
@@ -58,6 +60,19 @@ describe("option stats", () => {
     expect(byId(optionStats(index, opt("db-hosted"), "database", input())).data_model.value).toBe("Tables (SQL), live updates");
     expect(byId(optionStats(index, opt("files-direct"), "files", input())).egress_fees).toMatchObject({ short: "Download fees", tone: "warn" });
     expect(byId(optionStats(index, opt("mobile-other"), "mobile", input())).needs_mac_for_ios).toMatchObject({ value: "Need a Mac", tone: "warn" });
+  });
+
+  it("shows domains by the year and flags a renewal that jumps", () => {
+    const promo = optionStats(index, opt("domain-promo"), "domain", input());
+    expect(promo.map((s) => `${s.label}: ${s.value}`)).toEqual(["First year: $5 for a .com", "Renews at: $20 a year", "Privacy: Costs extra", "DNS: Included", "Switching later: Easy"]);
+    expect(byId(promo).com_renewal_usd.tone).toBe("warn");
+    expect(byId(optionStats(index, opt("domain-cheap"), "domain", input())).com_renewal_usd.tone).toBe("neutral");
+  });
+
+  it("describes scrapers by where they run and what JavaScript pages cost", () => {
+    const shorts = cardStats(optionStats(index, opt("scrape-api"), "scraping", input())).map((s) => s.short);
+    expect(shorts).toEqual(["$16/mo now", "Hosted API", "JavaScript pages cost extra"]);
+    expect(byId(optionStats(index, opt("scrape-lib"), "scraping", input())).scraper_runs.value).toBe("On your own server");
   });
 
   it("puts the first known stats on cards, skipping a paid plan the cost already implies", () => {

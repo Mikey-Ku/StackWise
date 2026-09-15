@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CRITERION_LABELS, describeTotal, inSentence, optionStats, SIZE_IDS, SIZE_PHRASE, type CloseCall, type Need, type PriorityId, type SizeId, type SlotId } from "@/engine";
+import { criterionLabel, describeTotal, inSentence, money, optionStats, SIZE_IDS, SIZE_PHRASE, type CloseCall, type Need, type PriorityId, type SizeId, type SlotId } from "@/engine";
 import { EXAMPLES } from "./examples";
 import type { PlanModel } from "./usePlans";
 import { Logo, Seg, VerdictBadge, cx } from "./ui";
@@ -192,7 +192,7 @@ function closeCallText(model: PlanModel, call: CloseCall): string {
             ? `${lead} because it pairs well with the rest of your plan: ${call.perk?.toLowerCase()}.`
             : call.decidedBy === "checks"
               ? `${lead} because of how it fits with the rest of your plan.`
-              : `${lead}: it's ${CRITERION_LABELS[call.decidedBy]}.`;
+              : `${lead}: it's ${criterionLabel(call.decidedBy, call.slot)}.`;
   const flip = call.flipsUnder ? model.catalog.planning.priorities.find((p) => p.id === call.flipsUnder)?.label : undefined;
   return flip ? `${base} If "${flip}" mattered most, ${call.runnerUp.name} would win.` : base;
 }
@@ -323,6 +323,19 @@ function PlanStep({ model, onSelect, onOpenChecklist }: { model: PlanModel; onSe
               </li>
             );
           })}
+          {cost.now.fees.map((fee) => (
+            <li key={fee.id}>
+              <a className="ws-costlines__row" href={fee.source} target="_blank" rel="noreferrer">
+                <span className="ws-costlines__name">
+                  <span>{fee.label}</span>
+                  <span className="mk-hint">Comes with {inSentence(index.slotsById.get(fee.slot)?.label ?? fee.slot)}, whichever you pick</span>
+                </span>
+                <span className="ws-costlines__value">
+                  {money(fee.usd)} {fee.per === "year" ? "a year" : "once"}
+                </span>
+              </a>
+            </li>
+          ))}
         </ul>
         <details className="ws-details ws-details--flush">
           <summary>Cost at every size</summary>
@@ -339,7 +352,7 @@ function PlanStep({ model, onSelect, onOpenChecklist }: { model: PlanModel; onSe
                   <tr key={s.size} className={cx(s.size === plan.size && "is-current")}>
                     <td>{sizeLabel(s.size)}</td>
                     <td className="mk-table__num">
-                      ${s.monthlyUsd}
+                      {money(s.monthlyUsd)}
                       {s.hasUsage ? " + usage" : ""}
                       {s.hasUnknown ? " + unverified" : ""}
                     </td>
@@ -348,7 +361,10 @@ function PlanStep({ model, onSelect, onOpenChecklist }: { model: PlanModel; onSe
               </tbody>
             </table>
           </div>
-          <p className="mk-hint">Each part is free until its free plan runs out, then its first paid plan. Pay-per-use parts show as &ldquo;+ usage&rdquo;.</p>
+          <p className="mk-hint">
+            Each part is free until its free plan runs out, then its first paid plan. Pay-per-use parts show as &ldquo;+ usage&rdquo;.
+            {cost.now.yearlyUsd > 0 || cost.now.oneTimeUsd > 0 ? ` Not included above: ${[cost.now.yearlyUsd > 0 && `${money(cost.now.yearlyUsd)} a year`, cost.now.oneTimeUsd > 0 && `${money(cost.now.oneTimeUsd)} once`].filter(Boolean).join(" and ")}.` : ""}
+          </p>
         </details>
       </section>
 

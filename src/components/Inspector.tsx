@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { alternativesFor, costLine, CRITERIA, CRITERION_LABELS, inSentence, isStale, optionStats, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
+import { alternativesFor, costLine, CRITERIA, criterionLabel, inSentence, isStale, optionStats, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
 import type { PlanModel } from "./usePlans";
 import { Logo, StatGrid, VerdictBadge, copyText, cx, formatFactValue } from "./ui";
 
@@ -154,7 +154,7 @@ export function Inspector({
           {CRITERIA.map((c) => (
             <div key={c} className="ws-score">
               <div className="mk-row mk-gap-2">
-                <span className="mk-grow">{CRITERION_LABELS[c]}</span>
+                <span className="mk-grow">{criterionLabel(c, slot)}</span>
                 <span className="mk-num mk-faint">weight {weights[c]}</span>
               </div>
               <div className="mk-meter">

@@ -1,0 +1,56 @@
+{
+  "id": "google-analytics",
+  "name": "Google Analytics 4",
+  "provider": "google-analytics",
+  "slots": ["analytics"],
+  "summary": "Google Analytics 4 is Google's free website and app analytics tool that tracks page views and custom events.",
+  "website": "https://marketingplatform.google.com/about/analytics/",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Standard GA4 properties are free with no published monthly cap on total events, only a limit of 100,000 events per user per day, far beyond what a small app would see.",
+      "source": "https://support.google.com/analytics/answer/9267744",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "Standard GA4 has no paid tier or monthly fee; the enterprise Google Analytics 360 upgrade has no published monthly price and is arranged directly with Google.",
+      "source": "https://support.google.com/analytics/answer/11202874",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "You can export raw event data for free with BigQuery Export, up to 1 million events a day on standard properties, but GA4 itself is closed source with no self-hosting option.",
+      "source": "https://support.google.com/analytics/answer/9358801",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "cookies": {
+      "value": "required",
+      "note": "GA4's standard setup sets first-party cookies like _ga to tell visitors apart and remember sessions across visits.",
+      "source": "https://support.google.com/analytics/answer/11397207",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "product_events": {
+      "value": true,
+      "note": "GA4 is built around events; besides automatic page views you can log recommended or fully custom events like sign_up or purchase.",
+      "source": "https://developers.google.com/analytics/devguides/collection/ga4/events",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a Google Analytics 4 property and a web data stream, then copy its Measurement ID, which starts with G-.", "env": [], "source": "https://support.google.com/analytics/answer/9304153" },
+    { "step": "Install the official integration with npm install @next/third-parties@latest next@latest.", "env": [], "source": "https://nextjs.org/docs/app/guides/third-party-libraries" },
+    { "step": "Add the GoogleAnalytics component with your measurement ID to the root layout (app/layout.tsx).", "env": [], "source": "https://nextjs.org/docs/app/guides/third-party-libraries" },
+    { "step": "Turn on Enhanced Measurement for the data stream so client-side route changes in Next.js count as page views.", "env": [], "source": "https://nextjs.org/docs/app/guides/third-party-libraries" }
+  ],
+  "builder_notes": [
+    "Never send personal data such as names, emails or exact addresses as event parameters; Google Analytics' terms prohibit sending personally identifiable information.",
+    "GA4 sets cookies by default to identify visitors, so load it only after someone has consented to analytics cookies, or configure Google's Consent Mode."
+  ]
+}

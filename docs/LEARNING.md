@@ -30,7 +30,7 @@ Say the description is: *"A booking app for my barber shop. Customers log in, pi
 
 1. **Pre-fill.** The planner posts the description to `/api/prefill`. With an API key, Claude answers each question and must quote the words behind every yes or no; `acceptAnswers` throws out any quote that isn't really in the description. Without a key, `prefillFromKeywords` matches keywords instead: "booking" for *saves data*, "log in" for *login*, "pay" for *users pay*, "upload" for *uploads*, "email" for *sends email*, "reminder" for *scheduled tasks*, "chat" for *live updates*.
 2. **Confirm.** Guesses show as answers but stay marked, with their evidence. "Looks right, build my plan" confirms them all. Until then the canvas says it's a preview.
-3. **Needed slots.** `neededSlots` turns yes answers into parts: login adds Login and Database, paying adds Payments, uploads add File storage, email adds Email. Framework and Hosting are always needed. Background jobs and a phone app are optional parts you add yourself.
+3. **Needed slots.** `neededSlots` turns yes answers into parts: login adds Login and Database, paying adds Payments, uploads add File storage, email adds Email, your own address adds Domain name, pulling data from other websites adds Web scraping, and wanting usage numbers or error alerts adds Analytics or Error monitoring. Framework and Hosting are always needed. Background jobs and a phone app are optional parts you add yourself.
 4. **Search.** `recommend` tries combinations of fully researched options for those parts and keeps the best total. A blocked pair costs 1000 points, so it loses unless nothing else works.
 5. **Verdicts.** For the winning plan, `evaluatePlan` runs every rule. If the host can't run scheduled jobs and there's no jobs service, "No built-in way to run things on a schedule" appears; drag a jobs service onto the canvas and it clears.
 6. **Canvas.** Each card shows the worst verdict touching that part. The line from the app shows that part's own checks. Problems between two parts get their own dashed line.
@@ -44,7 +44,9 @@ Say the description is: *"A booking app for my barber shop. Customers log in, pi
 
 **Some rules check for an empty part.** A condition like `{ "slot": "jobs", "filled": false }` reads no facts; it's true while nothing is in Background jobs. That's how adding a service resolves a warning. During plan search, a part outside the search is always empty, so a rule touching it is treated as a one-part rule. The test "stays exact when rules check slots outside the search" proves the search still finds the true best plan.
 
-**Branch and bound.** Trying every combination is tens of thousands of plans. `recommend` scores options one part at a time and keeps a running total. Before going deeper it adds the best possible score for the parts still left; if even that can't beat the best plan so far, it skips the whole branch. `score.test.ts` checks the result against a brute-force search.
+**Branch and bound.** With every question answered yes, trying every combination is tens of millions of plans. `recommend` scores options one part at a time and keeps a running total. Before going deeper it adds the best possible score for the parts still left; if even that can't beat the best plan so far, it skips the whole branch. `score.test.ts` checks the result against a brute-force search.
+
+**A loose bound is a slow search.** Shared accounts used to be counted only once a plan was complete, so the bound had to assume every remaining part might share an account. Adding four parts took the all-yes plan from milliseconds to 25 seconds. Now a shared account is counted the moment the second part from that provider is placed, and a part only gets that allowance if one of its options could share a provider with an earlier part, so the bound is tight and the same plan takes a few milliseconds. Among plans that tie exactly, the first one found wins, which is still the same every time.
 
 **Only real pairings are perks.** A product rule's note (Supabase Auth and the Supabase database share a project) adds a small bonus. A capability rule's note is neutral, because notes like "downloads cost money" aren't good news. The test "doesn't let a cost note count as a perk" covers the bug that taught this.
 
@@ -69,3 +71,5 @@ Say the description is: *"A booking app for my barber shop. Customers log in, pi
 - How would you show the AI pre-fill is better than keywords, and what number would convince you?
 - Why is a missing quote treated as "unclear" instead of trusting the model?
 - Why is the canvas slots now and a free-form graph later?
+- Why did adding four parts make the search 1,000 times slower, and what made it fast again?
+- Why are domains and payment services ranked on different price facts than everything else?

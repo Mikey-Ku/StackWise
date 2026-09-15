@@ -14,6 +14,7 @@ export function valueMatches(def: FactDef, value: FactValue, frameworkIds: strin
       return typeof value === "string" && (def.values ?? []).includes(value);
     case "boolean":
       return typeof value === "boolean";
+    case "number":
     case "number_or_null":
       return typeof value === "number" && value >= 0;
     case "string":
