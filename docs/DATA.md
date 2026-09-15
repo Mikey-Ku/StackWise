@@ -1,6 +1,6 @@
 # The data
 
-Everything WhyStack knows is in `data/`. Changes go through pull requests, and `pnpm check:data` must pass. As of 2026-09-15: 10 parts, 58 options (38 fully researched), 258 facts, 33 capability rules, 6 product rules, 11 questions, and 39 glossary terms.
+Everything WhyStack knows is in `data/`. Changes go through pull requests, and `pnpm check:data` must pass. As of 2026-09-15: 14 parts, 79 options (59 fully researched), 427 facts, 43 capability rules, 6 product rules, 15 questions, and 50 glossary terms.
 
 ## Options: `data/options/<id>.json`
 
@@ -29,7 +29,7 @@ Everything WhyStack knows is in `data/`. Changes go through pull requests, and `
 
 - **Facts** must use a key from `data/facts.json` and a value of the type it defines.
 - **Coverage.** `full` promises every fact listed in the slot's `required_facts` (in `data/slots.json`). `partial` options still appear in the palette, marked "not verified yet", and are never auto-picked.
-- **Null.** For `first_paid_usd_month`, null means "no monthly plan" on a `full` option. Everywhere else, null means unverified.
+- **Null.** For `first_paid_usd_month`, null means "no monthly plan" on a `full` option. Everywhere else, null means unverified. Facts of type `number` (a domain's prices, a payment service's card fee) can't be null on a `full` option.
 - **Provider** groups options that share an account (Supabase database, auth and storage all use `supabase`). Providers listed in `planning.json` under `no_account_providers` don't count as accounts.
 
 ## Rules
@@ -77,6 +77,13 @@ Every option needs a logo. Each entry says where it comes from, and `pnpm build:
 - To add or fix one, write the entry with only `from` and `slug` or `url`, then run `pnpm build:logos -- --only <id>` and look at it in the palette. `draft:option` fetches the site icon for a new service on its own.
 - The files are committed, so the app never loads a logo from another site. Logos are trademarks of their owners and are shown only to identify each service.
 
+## Costs beyond the monthly plan
+
+- **Domains** are billed yearly from `com_first_year_usd` and `com_renewal_usd`. They're ranked on those two prices, since no domain is free.
+- **Payment services** are ranked on the fee they keep from a typical $20 sale (`card_fee_percent` and `card_fee_fixed_usd`), since none has a monthly plan.
+- **`planning.json` `fees`** are costs that come with a part whatever fills it, like the Apple Developer Program for a phone app. Each has a price, `year` or `once`, and a source.
+- **`planning.json` `shared_plans`** lists providers whose one paid plan covers every part they fill (Supabase's database, login and storage), so the plan is counted once. The same option in two parts (PostHog for analytics and error monitoring) is always counted once.
+
 ## Stats
 
 The numbers on cards, canvas parts, Details and Compare come from `src/engine/stats.ts`, read from the facts above. Nothing new is stored. An unverified fact shows as "Not verified" and never as a guess, and cards skip a stat the cost already implies.
@@ -89,6 +96,7 @@ The numbers on cards, canvas parts, Details and Compare come from `src/engine/st
 
 - `pnpm check:sources` rereads the page behind each fact and reports what's still supported, what changed and what's unclear. `--apply` edits the data: confirmed facts get today's date, contradicted facts get the corrected value only when it has the right type, and go back to `draft`. `--option <id>` and `--limit <pages>` narrow it. The weekly workflow in `.github/workflows/source-check.yml` does this and opens a pull request; it needs the `ANTHROPIC_API_KEY` secret and "Allow GitHub Actions to create and approve pull requests" in the repo settings.
 - `pnpm draft:option -- --id <id> --name "<Name>" --slot <slot> --website <url>` researches a service with web search and writes a draft file. Anything it couldn't confirm stays null and marks the file `partial`.
+- `pnpm check:options -- --id <id>[,<id>]` checks just the files you're writing (schema, fact types, full coverage, em dashes) without the cross-file checks, so several people can write options at once.
 
 Neither one marks a fact `verified`. Only a person does.
 
@@ -100,7 +108,7 @@ Neither one marks a fact `verified`. Only a person does.
 
 ## Review these first
 
-All 258 facts are drafts. Research agents wrote the service files on 2026-09-15 and flagged these:
+All 427 facts are drafts. Research agents wrote the service files on 2026-09-15 and flagged these:
 
 - **Render and Railway `free_plan_commercial_use: false`** was inferred ("not for production", "we recommend Pro"), not taken from an explicit ban.
 - **Render `first_paid_usd_month` ($7)** came from third-party trackers because the pricing page wouldn't load for the agent.
@@ -116,6 +124,21 @@ All 258 facts are drafts. Research agents wrote the service files on 2026-09-15 
 - **Expo's free plan** caps builds per month and blocks further builds instead of charging.
 - **App store fees in `mobile-app-store-fees`**: $99 a year for the Apple Developer Program and a one-time $25 for Google Play, with sources in the rule.
 
+Flagged in the second research round (scraping, domains, analytics, error monitoring, hosting costs, PayPal and Polar):
+
+- **Render's free plan changed.** Render's 2026 pricing update cut the free workspace's bandwidth from 100 GB to 5 GB a month, so `free_plan_covers` moved from `up_to_1000` to `up_to_100`. Starter compute is still $7/month; more bandwidth needs the $25 Pro workspace.
+- **Railway `custom_domain_free: false`**: the pricing page says the Free plan gets 0 custom domains, while a forum moderator said 1.
+- **Vercel, Netlify and Cloudflare `free_plan_sleeps: false`**: request-based functions have cold starts but the app itself never pauses; Fly.io and Cloudflare `custom_domain_free` were inferred from the absence of any domain fee.
+- **Polar `first_paid_usd_month: null`**: its paid tiers only lower the fee and are optional. Polar, Lemon Squeezy and Paddle all list 5% + 50 cents.
+- **Scraping free plans** are credits, mapped to audience sizes by judgment: Firecrawl (1,000 credits a month), Apify ($5 of monthly credit, 1,000 to 25,000 pages), ScrapingBee (a one-time 1,000-credit trial, not stated as one-time on the page).
+- **Browserbase `ai_ready_output: true`** comes from its separate Fetch API, not the hosted browser itself, and its price per 1,000 pages uses Browserbase's own "100 hours is roughly 3,000 page tasks".
+- **Jina Reader is `partial`**: its Reader price is behind a login.
+- **Vercel Domains is `partial`**: its prices only show in a live search that blocked automated use.
+- **Namecheap's $11.28 first year** is a standing sale (list $14.98); Cloudflare's community docs mention a wholesale price increase on 2026-11-01.
+- **Monitoring free plans**: Sentry, Rollbar and Honeybadger allow 5,000 errors a month; LogRocket's pricing page now shows only a 14-day trial; Sentry's $29 monthly price was corroborated by trackers because the page only rendered the yearly price; Rollbar's $9 came from its official pricing-for-agents page.
+- **Google Analytics `cookies: required`** reflects the standard gtag.js setup; Google's docs say the libraries can run without cookies.
+- **Honeybadger `NEXT_PUBLIC_HONEYBADGER_API_KEY`** is public by design (a write-only project key), as Honeybadger's Next.js guide names it.
+
 The framework files (`nextjs`, `react-vite`, `sveltekit`) and `sqlite-file` were written by Claude from each project's docs; their links were checked and all resolve, but the facts are still drafts.
 
 ## What the checks enforce
@@ -126,6 +149,7 @@ The framework files (`nextjs`, `react-vite`, `sveltekit`) and `sqlite-file` were
 - every fact key and value is valid, and full options have every required fact
 - every rule's needs and facts exist, and product rules point at real options in the right slots
 - every option has a logo entry, and its file exists in `public/logos/`
+- a plan with every question answered yes is found in well under 1.5 seconds
 - no em dashes anywhere in the data
 - every pair of fully researched options gets a real verdict under every rule, with all needs on
 - every slot has at least one fully researched option

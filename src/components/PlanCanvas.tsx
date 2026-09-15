@@ -27,7 +27,8 @@ import { Logo, StatChips, VerdictBadge, VerdictDot, cx, type Verdict } from "./u
  */
 
 type OuterSlot = Exclude<SlotId, "framework">;
-const OUTER: OuterSlot[] = ["hosting", "database", "login", "email", "files", "payments", "ai", "jobs", "mobile"];
+/** Clockwise from the top. Parts that often get a line between them (hosting and database, login and email, email and domain) sit side by side. */
+const OUTER: OuterSlot[] = ["hosting", "database", "login", "email", "domain", "files", "payments", "ai", "mobile", "jobs", "analytics", "monitoring", "scraping"];
 
 function sideToward(from: { x: number; y: number }, to: { x: number; y: number }): { source: Position; target: Position } {
   const dx = to.x - from.x;
@@ -36,11 +37,11 @@ function sideToward(from: { x: number; y: number }, to: { x: number; y: number }
   return dy >= 0 ? { source: Position.Bottom, target: Position.Top } : { source: Position.Top, target: Position.Bottom };
 }
 
-/** Parts sit on an ellipse around the app, clockwise from hosting at the top. */
+/** Parts sit on an ellipse around the app, clockwise from hosting at the top, spaced evenly. */
 const POSITION = Object.fromEntries(
   OUTER.map((slot, i) => {
-    const angle = ((-90 + i * 40) * Math.PI) / 180;
-    return [slot, { x: Math.round(400 * Math.cos(angle)), y: Math.round(300 * Math.sin(angle)) }];
+    const angle = ((-90 + (i * 360) / OUTER.length) * Math.PI) / 180;
+    return [slot, { x: Math.round(560 * Math.cos(angle)), y: Math.round(400 * Math.sin(angle)) }];
   }),
 ) as Record<OuterSlot, { x: number; y: number }>;
 
@@ -206,7 +207,7 @@ const nodeTypes = { app: AppNode, slot: SlotNode };
 /** The whole plan in five numbers above the canvas: what it costs, when that changes, and how much setup it takes. */
 function PlanStatsBar({ model }: { model: PlanModel }) {
   const { stats } = model;
-  const nowNotes = [`for ${SIZE_PHRASE[stats.now.size]}`, stats.now.hasUsage && "plus usage", stats.now.hasUnknown && "some prices not verified"].filter(Boolean).join(", ");
+  const extraCosts = [stats.now.yearlyUsd > 0 && `+ ${money(stats.now.yearlyUsd)}/yr`, stats.now.oneTimeUsd > 0 && `+ ${money(stats.now.oneTimeUsd)} once`].filter(Boolean).join(", ");
   const jump = stats.firstIncrease;
   const checksLevel: Verdict = stats.problems === 0 ? "works" : stats.worst;
   return (
@@ -218,7 +219,12 @@ function PlanStatsBar({ model }: { model: PlanModel }) {
             {money(stats.now.monthlyUsd)}
             <small>/mo</small>
           </strong>
-          <span>{nowNotes}</span>
+          <span>
+            for {SIZE_PHRASE[stats.now.size]}
+            {stats.now.hasUsage ? " + usage" : ""}
+          </span>
+          {extraCosts && <span title="Domain and app store fees, billed apart from the monthly total">{extraCosts}</span>}
+          {stats.now.hasUnknown && <span>some prices not verified</span>}
         </dd>
       </div>
       <div className="ws-planstats__item">

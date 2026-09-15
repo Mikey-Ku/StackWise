@@ -1,5 +1,5 @@
 import { buildChecklist } from "./checklist";
-import { costBySize, costLine } from "./cost";
+import { costBySize, costLine, money } from "./cost";
 import { needIsOn, optionIn, readFact, worstLevel, type CatalogIndex, type Level } from "./evaluate";
 import type { Recommendation } from "./score";
 import { SLOT_IDS, type FactValue, type Option, type PlanInput, type SizeId, type SlotId } from "./schema";
@@ -44,18 +44,6 @@ const SWITCHING: Record<string, [value: string, tone: StatTone]> = {
 const RUNS_AS: Record<string, string> = { serverless: "Serverless functions", server: "Always-on server", edge: "Edge functions", static: "Static files only" };
 const DATA_MODEL: Record<string, string> = { relational: "Tables (SQL)", document: "Documents", key_value: "Keys and values" };
 
-/** An audience size as it reads mid-sentence: "free for just you", "$20/mo at up to 1,000 people". */
-export const SIZE_PHRASE: Record<SizeId, string> = {
-  just_me: "just you",
-  up_to_100: "up to 100 people",
-  up_to_1000: "up to 1,000 people",
-  more: "more than 1,000 people",
-};
-
-export function money(usd: number): string {
-  return `$${Number.isInteger(usd) ? usd : usd.toFixed(2)}`;
-}
-
 export function optionStats(index: CatalogIndex, option: Option, slot: SlotId, input: PlanInput): Stat[] {
   const known = (key: string): { value: FactValue; note?: string } | null => {
     const read = readFact(index, option, key);
@@ -83,6 +71,11 @@ export function optionStats(index: CatalogIndex, option: Option, slot: SlotId, i
     const value = words[fact.value] ?? fact.value;
     return stat(id, label, value, value, "neutral", fact.note, key);
   };
+  const choice = (key: string, label: string, words: Record<string, [value: string, short: string, tone: StatTone]>): Stat | null => {
+    const fact = known(key);
+    const picked = fact && typeof fact.value === "string" ? words[fact.value] : undefined;
+    return picked ? stat(key, label, picked[0], picked[1], picked[2], fact!.note, key) : null;
+  };
 
   const now = (): Stat => {
     const label = "Cost at your size";
@@ -91,7 +84,11 @@ export function optionStats(index: CatalogIndex, option: Option, slot: SlotId, i
       return fee ? stat("now", "Fee per sale", String(fee.value), String(fee.value), "neutral", fee.note, "fee_summary") : notVerified("now", "Fee per sale");
     }
     const line = costLine(index, option, slot, input);
-    if (line.kind === "unknown") return notVerified("now", label);
+    if (line.kind === "unknown") return notVerified("now", slot === "domain" ? "First year" : label);
+    if (line.kind === "yearly") {
+      const price = money(line.yearlyUsd);
+      return stat("now", "First year", `${price} for a .com`, `${price} first year`, "neutral", option.facts.com_first_year_usd?.note, "com_first_year_usd");
+    }
     if (line.kind === "free") return stat("now", label, "Free", "Free now", "good", line.detail);
     if (line.kind === "paid") return stat("now", label, `${money(line.monthlyUsd)}/mo`, `${money(line.monthlyUsd)}/mo now`, "warn", line.detail);
     if (slot === "ai") {
@@ -125,6 +122,16 @@ export function optionStats(index: CatalogIndex, option: Option, slot: SlotId, i
     return stat("freePlan", label, value, short, tone, covers.note, "free_plan_covers");
   };
 
+  const renewal = (): Stat | null => {
+    const first = known("com_first_year_usd");
+    const renews = known("com_renewal_usd");
+    if (!renews || typeof renews.value !== "number") return null;
+    // A cheap first year that renews much higher is the classic domain surprise.
+    const jump = first && typeof first.value === "number" && renews.value > first.value + 3;
+    const price = money(renews.value);
+    return stat("com_renewal_usd", "Renews at", `${price} a year`, `Renews at ${price}/yr`, jump ? "warn" : "neutral", renews.note, "com_renewal_usd");
+  };
+
   const switching = (): Stat => {
     const label = "Switching later";
     const portability = known("portability");
@@ -133,43 +140,92 @@ export function optionStats(index: CatalogIndex, option: Option, slot: SlotId, i
     return stat("switching", label, words[0], `${words[0]} to switch`, words[1], portability.note, "portability");
   };
 
-  const traits: (Stat | null)[] = (() => {
+  const layout = (): (Stat | null)[] => {
     switch (slot) {
       case "framework":
-        return [text("language", "Language"), flag("has_server_code", "Server code", ["Built in", "Has server code", "neutral"], ["Browser only", "Browser only", "neutral"])];
+        return [now(), text("language", "Language"), flag("has_server_code", "Server code", ["Built in", "Has server code", "neutral"], ["Browser only", "Browser only", "neutral"]), switching()];
       case "hosting":
-        return [text("runtime_model", "Runs as", RUNS_AS)];
+        return [
+          now(),
+          paidFrom(),
+          freePlan(),
+          text("runtime_model", "Runs as", RUNS_AS),
+          flag("free_plan_sleeps", "Free apps sleep", ["Yes, when idle", "Free apps sleep", "warn"], ["No", "Stays awake", "good"]),
+          flag("custom_domain_free", "Own domain on the free plan", ["Included", "Free custom domain", "good"], ["Paid plans only", "Domain needs a paid plan", "warn"]),
+          text("bandwidth_included", "Traffic included"),
+          switching(),
+        ];
+      case "domain":
+        return [
+          now(),
+          renewal(),
+          flag("whois_privacy_free", "Privacy", ["Included", "Free privacy", "good"], ["Costs extra", "Privacy costs extra", "warn"]),
+          flag("dns_included", "DNS", ["Included", "DNS included", "good"], ["Separate", "No DNS included", "warn"]),
+          switching(),
+        ];
       case "database": {
         const model = text("data_model", "Data", DATA_MODEL);
         const live = known("realtime_built_in")?.value === true;
-        return [model && live ? { ...model, value: `${model.value}, live updates`, short: `${model.short}, live` } : model];
+        return [now(), paidFrom(), freePlan(), model && live ? { ...model, value: `${model.value}, live updates`, short: `${model.short}, live` } : model, switching()];
       }
       case "login":
-        return [flag("prebuilt_ui", "Sign-in screens", ["Ready-made", "Ready-made sign-in", "good"], ["Build your own", "Build your own sign-in", "neutral"])];
+        return [now(), paidFrom(), freePlan(), flag("prebuilt_ui", "Sign-in screens", ["Ready-made", "Ready-made sign-in", "good"], ["Build your own", "Build your own sign-in", "neutral"]), switching()];
       case "files":
-        return [flag("egress_fees", "Download fees", ["Yes", "Download fees", "warn"], ["None", "No download fees", "good"])];
+        return [now(), paidFrom(), freePlan(), flag("egress_fees", "Download fees", ["Yes", "Download fees", "warn"], ["None", "No download fees", "good"]), switching()];
       case "payments":
-        return [flag("merchant_of_record", "Sales tax", ["Handled for you", "Handles sales tax", "good"], ["Your job", "You handle sales tax", "neutral"])];
+        return [now(), flag("merchant_of_record", "Sales tax", ["Handled for you", "Handles sales tax", "good"], ["Your job", "You handle sales tax", "neutral"]), paidFrom(), switching()];
       case "ai":
-        return [text("cheap_model_price", "Cheapest model")];
+        return [now(), text("cheap_model_price", "Cheapest model"), paidFrom(), switching()];
+      case "scraping":
+        return [
+          now(),
+          paidFrom(),
+          text("scraper_runs", "Runs as", { hosted_api: "Hosted API", hosted_browser: "Hosted browser", your_server: "On your own server" }),
+          choice("js_rendering", "Pages built with JavaScript", {
+            included: ["Included", "Reads JavaScript pages", "good"],
+            costs_extra: ["Cost extra", "JavaScript pages cost extra", "warn"],
+            not_supported: ["Not supported", "No JavaScript pages", "warn"],
+          }),
+          freePlan(),
+          flag("ai_ready_output", "Clean text for AI", ["Yes", "AI-ready text", "good"], ["No, raw pages", "Raw pages", "neutral"]),
+          text("price_per_1k_pages", "Per 1,000 pages"),
+          switching(),
+        ];
       case "jobs":
-        return [flag("long_running", "Long-running jobs", ["Supported", "Long jobs OK", "good"], ["Short jobs only", "Short jobs only", "neutral"])];
+        return [now(), paidFrom(), freePlan(), flag("long_running", "Long-running jobs", ["Supported", "Long jobs OK", "good"], ["Short jobs only", "Short jobs only", "neutral"]), switching()];
       case "email":
-        return [];
+        return [now(), paidFrom(), freePlan(), switching()];
+      case "analytics":
+        return [
+          now(),
+          paidFrom(),
+          choice("cookies", "Cookies", { none: ["None", "No cookies", "good"], optional: ["Optional", "Can skip cookies", "good"], required: ["Required", "Uses cookies", "warn"] }),
+          freePlan(),
+          flag("product_events", "Tracks actions", ["Page views and actions", "Tracks actions", "good"], ["Page views only", "Page views only", "neutral"]),
+          switching(),
+        ];
+      case "monitoring":
+        return [
+          now(),
+          paidFrom(),
+          freePlan(),
+          flag("uptime_checks", "Uptime alerts", ["Yes", "Uptime alerts", "good"], ["No", "No uptime checks", "neutral"]),
+          flag("session_replay", "Session replay", ["Yes", "Session replay", "good"], ["No", "No replay", "neutral"]),
+          switching(),
+        ];
       case "mobile":
-        return [flag("needs_mac_for_ios", "iPhone builds", ["Need a Mac", "iPhone needs a Mac", "warn"], ["No Mac needed", "No Mac for iPhone", "good"]), text("language", "Language")];
+        return [
+          now(),
+          paidFrom(),
+          freePlan(),
+          flag("needs_mac_for_ios", "iPhone builds", ["Need a Mac", "iPhone needs a Mac", "warn"], ["No Mac needed", "No Mac for iPhone", "good"]),
+          text("language", "Language"),
+          switching(),
+        ];
     }
-  })();
+  };
 
-  const ordered: (Stat | null)[] =
-    slot === "framework"
-      ? [now(), ...traits, switching()]
-      : slot === "payments"
-        ? [now(), ...traits, paidFrom(), switching()]
-        : slot === "ai"
-          ? [now(), ...traits, paidFrom(), switching()]
-          : [now(), paidFrom(), freePlan(), ...traits, switching()];
-  return ordered.filter((s): s is Stat => s !== null);
+  return layout().filter((s): s is Stat => s !== null);
 }
 
 /**
@@ -189,10 +245,10 @@ export interface PlanStats {
   setupSteps: number;
   problems: number;
   worst: Level | "works";
-  now: { size: SizeId; monthlyUsd: number; hasUsage: boolean; hasUnknown: boolean };
+  now: { size: SizeId; monthlyUsd: number; yearlyUsd: number; oneTimeUsd: number; hasUsage: boolean; hasUnknown: boolean };
   /** The smallest audience size where the plan costs more than it does now. */
   firstIncrease: { size: SizeId; monthlyUsd: number } | null;
-  atLargest: { size: SizeId; monthlyUsd: number; hasUsage: boolean; hasUnknown: boolean };
+  atLargest: PlanStats["now"];
 }
 
 export function planStats(index: CatalogIndex, input: PlanInput, rec: Recommendation): PlanStats {
@@ -216,8 +272,8 @@ export function planStats(index: CatalogIndex, input: PlanInput, rec: Recommenda
     setupSteps: buildChecklist(index, rec.selection).setup.length,
     problems: rec.results.filter((r) => r.level !== "info").length,
     worst: worstLevel(rec.results),
-    now: { size: now.size, monthlyUsd: now.monthlyUsd, hasUsage: now.hasUsage, hasUnknown: now.hasUnknown },
+    now: { size: now.size, monthlyUsd: now.monthlyUsd, yearlyUsd: now.yearlyUsd, oneTimeUsd: now.oneTimeUsd, hasUsage: now.hasUsage, hasUnknown: now.hasUnknown },
     firstIncrease: firstIncrease ? { size: firstIncrease.size, monthlyUsd: firstIncrease.monthlyUsd } : null,
-    atLargest: { size: largest.size, monthlyUsd: largest.monthlyUsd, hasUsage: largest.hasUsage, hasUnknown: largest.hasUnknown },
+    atLargest: { size: largest.size, monthlyUsd: largest.monthlyUsd, yearlyUsd: largest.yearlyUsd, oneTimeUsd: largest.oneTimeUsd, hasUsage: largest.hasUsage, hasUnknown: largest.hasUnknown },
   };
 }

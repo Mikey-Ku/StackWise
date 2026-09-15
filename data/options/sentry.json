@@ -1,0 +1,57 @@
+{
+  "id": "sentry",
+  "name": "Sentry",
+  "provider": "sentry",
+  "slots": ["monitoring"],
+  "summary": "Sentry is an error monitoring service that catches crashes and bugs in your app and alerts you, with session replay and uptime checks built in.",
+  "website": "https://sentry.io",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "The free Developer plan includes 5,000 errors, 50 session replays and 1 uptime monitor a month, for 1 user.",
+      "source": "https://sentry.io/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 29,
+      "note": "The Team plan costs $29/month billed monthly (or $26/month billed yearly) for 50,000 errors a month and unlimited team members.",
+      "source": "https://sentry.io/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Sentry's SDK is proprietary, but Sentry can also ingest OpenTelemetry traces and logs directly over OTLP, so existing OpenTelemetry instrumentation doesn't have to be replaced.",
+      "source": "https://docs.sentry.io/concepts/otlp/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "uptime_checks": {
+      "value": true,
+      "note": "Uptime Monitoring pings a URL you add on a schedule as often as every minute and alerts you when it fails; the free plan includes 1 monitor.",
+      "source": "https://sentry.io/product/uptime-monitoring/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "session_replay": {
+      "value": true,
+      "note": "Session Replay records what a person did before an error, and masks all text, form inputs and images by default so personal data never leaves the browser.",
+      "source": "https://docs.sentry.io/platforms/javascript/guides/nextjs/session-replay/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Sentry account and a new project for your Next.js app.", "env": [], "source": "https://docs.sentry.io/platforms/javascript/guides/nextjs/" },
+    { "step": "Run the install wizard with npx @sentry/wizard@latest -i nextjs, and choose Error Monitoring, Tracing and Session Replay when it asks.", "env": [], "source": "https://docs.sentry.io/platforms/javascript/guides/nextjs/" },
+    { "step": "The wizard writes SENTRY_AUTH_TOKEN to .env.sentry-build-plugin (already gitignored) for uploading source maps, and sets your DSN for the client to report to.", "env": ["SENTRY_AUTH_TOKEN", "NEXT_PUBLIC_SENTRY_DSN"], "source": "https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/" },
+    { "step": "Start your dev server and open /sentry-example-page to trigger a test error, then confirm it shows up in Sentry.", "env": [], "source": "https://docs.sentry.io/platforms/javascript/guides/nextjs/" }
+  ],
+  "builder_notes": [
+    "Keep SENTRY_AUTH_TOKEN out of client code and version control; it only belongs in the build environment for uploading source maps, unlike the DSN which is safe to ship to the browser.",
+    "Leave the wizard's withSentryConfig wrapper on next.config.ts so source maps upload automatically on every build, or stack traces will show minified code instead of your own.",
+    "Session replay masks all text, inputs and media by default; only turn that off for parts of the app you're sure never show personal data."
+  ]
+}

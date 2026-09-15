@@ -1,0 +1,71 @@
+{
+  "id": "firecrawl",
+  "name": "Firecrawl",
+  "provider": "firecrawl",
+  "slots": ["scraping"],
+  "summary": "Firecrawl is a hosted API that turns any web page into clean Markdown or structured data ready for an AI model, handling JavaScript rendering for you.",
+  "website": "https://www.firecrawl.dev",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free plan gives 1,000 scraping credits a month, refreshed monthly with no credit card required, and a basic page scrape costs 1 credit.",
+      "source": "https://www.firecrawl.dev/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 19,
+      "note": "Hobby plan is $19/month billed monthly (or $16/month billed yearly) for 5,000 credits a month and 5 concurrent requests.",
+      "source": "https://www.firecrawl.dev/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "The API and SDKs are specific to Firecrawl, though the Markdown or HTML it hands back is a standard format, so only the fetching code needs rewriting if you switch providers.",
+      "source": "https://docs.firecrawl.dev/features/scrape",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scraper_runs": {
+      "value": "hosted_api",
+      "note": "You call the Scrape endpoint with a URL and Firecrawl's own servers fetch and render the page and hand back the content.",
+      "source": "https://docs.firecrawl.dev/features/scrape",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "js_rendering": {
+      "value": "included",
+      "note": "Every scrape runs in a real browser on Firecrawl's side by default, so a JavaScript-heavy page still costs the same 1 credit as a static page.",
+      "source": "https://docs.firecrawl.dev/features/scrape",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "ai_ready_output": {
+      "value": true,
+      "note": "The Scrape endpoint returns the page as clean Markdown (or structured JSON) meant to be fed straight to an AI model.",
+      "source": "https://docs.firecrawl.dev/features/scrape",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "price_per_1k_pages": {
+      "value": "About $3.80 per 1,000 pages on Hobby ($19/month for 5,000 credits, 1 credit per basic page, JavaScript rendering included at no extra cost). Turning on structured JSON extraction costs 5 credits a page instead of 1, about $19 per 1,000 pages.",
+      "note": "Math from the Hobby plan price and credit allowance; 1 credit covers one rendered page, and JSON-format extraction adds 4 more credits per page.",
+      "source": "https://docs.firecrawl.dev/features/scrape",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Firecrawl account and copy your API key from the dashboard at firecrawl.dev/app/api-keys.", "env": [], "source": "https://docs.firecrawl.dev/introduction" },
+    { "step": "Install the SDK with npm install firecrawl.", "env": [], "source": "https://docs.firecrawl.dev/introduction" },
+    { "step": "Add your key as FIRECRAWL_API_KEY in your environment file.", "env": ["FIRECRAWL_API_KEY"], "source": "https://docs.firecrawl.dev/introduction" },
+    { "step": "In a server route (for example app/api/scrape/route.ts), create a Firecrawl client and call firecrawl.scrape(url, { formats: ['markdown'] }) to get the page back as Markdown.", "env": [], "source": "https://docs.firecrawl.dev/introduction" }
+  ],
+  "builder_notes": [
+    "Keep FIRECRAWL_API_KEY server-side and call the SDK from a route handler or server action, never from client code.",
+    "Store the Markdown you get back instead of re-scraping the same URL, since every scrape spends a credit.",
+    "Check the target site's robots.txt and terms before scraping it; Firecrawl fetches the page but does not decide whether you're allowed to use it."
+  ]
+}

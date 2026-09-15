@@ -18,14 +18,20 @@ export const LOGOS_MANIFEST = path.join(ROOT, "data", "logos.json");
 
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36";
 
-const EXTENSIONS: Record<string, string> = {
-  "image/svg+xml": "svg",
-  "image/png": "png",
-  "image/x-icon": "ico",
-  "image/vnd.microsoft.icon": "ico",
-  "image/webp": "webp",
-  "image/jpeg": "jpg",
-};
+/**
+ * The file type from its first bytes. Servers can't be trusted here: some answer a missing
+ * /apple-touch-icon.png with an HTML page and a 200.
+ */
+export function sniffImage(bytes: Uint8Array): "png" | "ico" | "jpg" | "webp" | "svg" | null {
+  const starts = (...sig: number[]) => sig.every((b, i) => bytes[i] === b);
+  if (starts(0x89, 0x50, 0x4e, 0x47)) return "png";
+  if (starts(0x00, 0x00, 0x01, 0x00)) return "ico";
+  if (starts(0xff, 0xd8, 0xff)) return "jpg";
+  if (starts(0x52, 0x49, 0x46, 0x46) && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP") return "webp";
+  const head = new TextDecoder().decode(bytes.slice(0, 512)).trimStart().toLowerCase();
+  if ((head.startsWith("<svg") || head.startsWith("<?xml")) && head.includes("<svg")) return "svg";
+  return null;
+}
 
 /** Very light brand colors would vanish on white paper; draw those in ink instead. */
 export function readableHex(hex: string): string {
@@ -66,9 +72,8 @@ async function download(url: string): Promise<{ bytes: Buffer; ext: string } | n
   try {
     const response = await fetch(url, { headers: { "user-agent": UA }, redirect: "follow" });
     if (!response.ok) return null;
-    const type = (response.headers.get("content-type") ?? "").split(";")[0].trim();
-    const ext = EXTENSIONS[type] ?? (url.match(/\.(svg|png|ico|webp|jpg)(\?|$)/)?.[1] ?? null);
     const bytes = Buffer.from(await response.arrayBuffer());
+    const ext = sniffImage(bytes);
     if (!ext || bytes.length < 100) return null;
     return { bytes, ext };
   } catch {

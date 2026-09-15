@@ -41,5 +41,12 @@
   ],
   "penalties": { "warning": 1.5, "unknown": 1, "info_bonus": 0.5 },
   "close_call_margin": 0.75,
-  "no_account_providers": ["open-source", "better-auth"]
+  "no_account_providers": ["open-source", "better-auth"],
+  "fees": [
+    { "id": "apple-developer-program", "slot": "mobile", "label": "Apple Developer Program, to publish on the App Store", "usd": 99, "per": "year", "source": "https://developer.apple.com/programs/enroll/" },
+    { "id": "google-play-registration", "slot": "mobile", "label": "Google Play developer account, to publish on Google Play", "usd": 25, "per": "once", "source": "https://support.google.com/googleplay/android-developer/answer/6112435?hl=en" }
+  ],
+  "shared_plans": [
+    { "provider": "supabase", "note": "One Supabase Pro plan covers a project's database, login and storage together.", "source": "https://supabase.com/pricing" }
+  ]
 }

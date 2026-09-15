@@ -1,0 +1,58 @@
+{
+  "id": "honeybadger",
+  "name": "Honeybadger",
+  "provider": "honeybadger",
+  "slots": ["monitoring"],
+  "summary": "Honeybadger is an error and uptime monitoring service that catches crashes in your app and also tells you when the app itself goes down.",
+  "website": "https://www.honeybadger.io",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "The free Developer plan includes 5,000 errors a month, 1 uptime monitor and 1 user, free forever.",
+      "source": "https://www.honeybadger.io/plans/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 26,
+      "note": "The Team plan is $26/month (or $286/year) for 50,000 errors a month, 5 uptime monitors and unlimited team members.",
+      "source": "https://www.honeybadger.io/plans/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Honeybadger's exception SDK is proprietary, but it also accepts OpenTelemetry data over the standard OTLP protocol, so existing OpenTelemetry tracing can be pointed at Honeybadger directly.",
+      "source": "https://docs.honeybadger.io/guides/insights/integrations/opentelemetry/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "uptime_checks": {
+      "value": true,
+      "note": "Uptime Monitoring checks your app from outside on a schedule from multiple locations and alerts you when it goes down; the free plan includes 1 monitor.",
+      "source": "https://www.honeybadger.io/plans/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "session_replay": {
+      "value": false,
+      "note": "Honeybadger has no session replay; it covers error tracking, uptime and cron monitoring, logging and status pages instead.",
+      "source": "https://www.honeybadger.io/tour/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Honeybadger account and a new project to get its API key.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/integration/nextjs/" },
+    { "step": "Install the SDK with npm add @honeybadger-io/react @honeybadger-io/nextjs.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/integration/nextjs/" },
+    { "step": "Run npx honeybadger-copy-config-files to generate honeybadger.server.config.js, honeybadger.client.config.js and honeybadger.edge.config.js.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/integration/nextjs/" },
+    { "step": "Add your API key, deploy revision and assets URL to your environment file.", "env": ["NEXT_PUBLIC_HONEYBADGER_API_KEY", "NEXT_PUBLIC_HONEYBADGER_REVISION", "NEXT_PUBLIC_HONEYBADGER_ASSETS_URL"], "source": "https://docs.honeybadger.io/lib/javascript/integration/nextjs/" },
+    { "step": "Wrap next.config.js with setupHoneybadger so source maps upload on build, and wrap your root component in HoneybadgerErrorBoundary.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/integration/nextjs/" }
+  ],
+  "builder_notes": [
+    "The Honeybadger API key is write-only and meant to be public in browser code, unlike a typical secret key; it can only send error reports in, not read data out.",
+    "Let setupHoneybadger wrap next.config.js so it uploads source maps and sets the revision on every build, or stack traces won't map cleanly back to your source.",
+    "There's no session replay, so pair Honeybadger with a separate tool if you need to see what a user did before an error, not just the stack trace."
+  ]
+}

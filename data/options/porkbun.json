@@ -1,0 +1,70 @@
+{
+  "id": "porkbun",
+  "name": "Porkbun",
+  "provider": "porkbun",
+  "slots": ["domain"],
+  "summary": "Porkbun is a domain registrar known for low, honest pricing and for including WHOIS privacy and DNS management free.",
+  "website": "https://porkbun.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Porkbun has no free plan; every domain is a paid purchase billed once a year.",
+      "source": "https://porkbun.com/tld/com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "There's no monthly plan; domains are billed once a year, not monthly.",
+      "source": "https://porkbun.com/tld/com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "You unlock the domain and copy its auth code yourself in the dashboard, with no Porkbun fee to leave, though ICANN still requires the domain to be registered at least 60 days before it can transfer.",
+      "source": "https://kb.porkbun.com/article/27-how-to-transfer-domain-from-porkbun-to-another-registrar",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "com_first_year_usd": {
+      "value": 11.08,
+      "note": "A new .com is $11.08, the same everyday price Porkbun charges with no inflated first-year rate.",
+      "source": "https://porkbun.com/tld/com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "com_renewal_usd": {
+      "value": 11.08,
+      "note": "Renewal is the same $11.08 a year; Porkbun says the price you see is the price you keep paying.",
+      "source": "https://porkbun.com/tld/com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "whois_privacy_free": {
+      "value": true,
+      "note": "WHOIS privacy is free on .com and most other domains, replacing your contact details with Porkbun's privacy service in public records.",
+      "source": "https://porkbun.com/products/whois_privacy",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "dns_included": {
+      "value": true,
+      "note": "DNS management is included free, run on Cloudflare's DNS network in the same account.",
+      "source": "https://porkbun.com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Search for and register the domain at porkbun.com.", "env": [], "source": "https://porkbun.com/tld/com" },
+    { "step": "In the Porkbun dashboard, edit the domain's DNS records to add an A or CNAME record pointing it at your host.", "env": [], "source": "https://kb.porkbun.com/article/54-pointing-your-domain-to-hosting-with-a-records" },
+    { "step": "Add any SPF, DKIM or DMARC records your email service gives you the same way.", "env": [], "source": "https://kb.porkbun.com/article/68-how-to-edit-dns-records" }
+  ],
+  "builder_notes": [
+    "Add the host's DNS records and the email service's SPF, DKIM and DMARC records in the Porkbun DNS panel before assuming the site or outgoing email works.",
+    "Porkbun charges the same price on renewal as the first year, so there's no renewal price jump to budget for like at some other registrars.",
+    "If a script manages DNS through Porkbun's API, keep the API key and secret server-side and out of git."
+  ]
+}

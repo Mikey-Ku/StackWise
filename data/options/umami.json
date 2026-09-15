@@ -1,0 +1,56 @@
+{
+  "id": "umami",
+  "name": "Umami Cloud",
+  "provider": "umami",
+  "slots": ["analytics"],
+  "summary": "Umami is an open-source, privacy-friendly analytics tool that counts visitors and custom events without cookies.",
+  "website": "https://umami.is",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "The free Hobby plan on Umami Cloud includes 100,000 events a month for one website, enough for well over 1,000 monthly visitors.",
+      "source": "https://umami.is/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 20,
+      "note": "The Pro plan costs $20 a month billed monthly, includes 1,000,000 events, and then charges $0.00003 for each additional event.",
+      "source": "https://umami.is/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Umami is open source and free to self-host, and every plan, including the free one, can export its data, so there is no vendor lock-in.",
+      "source": "https://umami.is/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "cookies": {
+      "value": "none",
+      "note": "Umami does not use cookies or collect personal data, so it needs no cookie consent banner.",
+      "source": "https://umami.is/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "product_events": {
+      "value": true,
+      "note": "Umami can track custom events, like a signup button click, either by adding a data-umami-event attribute or by calling umami.track() in code.",
+      "source": "https://docs.umami.is/docs/track-events",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Umami Cloud account and add your website to get its tracking code.", "env": [], "source": "https://docs.umami.is/docs/add-a-website" },
+    { "step": "Open the website's Tracking code section and copy the script tag shown there.", "env": [], "source": "https://docs.umami.is/docs/collect-data" },
+    { "step": "Insert it with the next/script component, instead of a plain script tag, in your root layout so it loads on every route.", "env": [], "source": "https://docs.umami.is/docs/collect-data" },
+    { "step": "Visit your site; Umami tracks page views immediately, including client-side navigations, with no extra configuration.", "env": [], "source": "https://docs.umami.is/docs/collect-data" }
+  ],
+  "builder_notes": [
+    "Umami never sets cookies or collects personal data, so it needs no cookie consent banner.",
+    "Load the tracking script once in the root layout, not on every page, so client-side navigations are not double-counted."
+  ]
+}

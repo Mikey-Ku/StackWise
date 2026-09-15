@@ -80,6 +80,27 @@
       "source": "https://developers.cloudflare.com/workers/frameworks/framework-guides/nextjs/",
       "retrieved": "2026-09-15",
       "status": "draft"
+    },
+    "custom_domain_free": {
+      "value": true,
+      "note": "Custom domains work on the Workers Free plan too, as long as the domain itself is added to Cloudflare, even on Cloudflare's free zone plan.",
+      "source": "https://developers.cloudflare.com/workers/configuration/routing/custom-domains/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_sleeps": {
+      "value": false,
+      "note": "Workers run at Cloudflare's edge and start fresh on each incoming request instead of an always-on process, so there is no inactivity pause or wake-up wait.",
+      "source": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "bandwidth_included": {
+      "value": "Free and Paid ($5/month) plans: no charge for data transfer to visitors on either plan; you are billed by request count and CPU time instead.",
+      "note": "Cloudflare does not meter bandwidth for Workers at all, so the real limits to watch are the 100,000 free requests a day and 10ms of CPU time per request.",
+      "source": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
     }
   },
   "setup": [

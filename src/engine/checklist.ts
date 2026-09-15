@@ -5,7 +5,7 @@ import type { Selection, SlotId } from "./schema";
  * The order things get set up and built in: the app first, the pieces it depends on next, and
  * hosting last, once every environment variable exists.
  */
-export const BUILD_ORDER: SlotId[] = ["framework", "database", "login", "email", "files", "payments", "ai", "jobs", "mobile", "hosting"];
+export const BUILD_ORDER: SlotId[] = ["framework", "domain", "database", "login", "email", "files", "payments", "ai", "scraping", "jobs", "analytics", "monitoring", "mobile", "hosting"];
 
 /**
  * Quickstarts name browser-visible variables the Next.js way. Each framework has its own prefix

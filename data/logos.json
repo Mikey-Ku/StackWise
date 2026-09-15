@@ -346,5 +346,131 @@
     "url": "https://workos.com",
     "file": "workos-authkit.png",
     "source": "https://cdn.prod.website-files.com/621f54116cab10f6e9215d8b/621f549024eb2947f6f2f7f7_Favicon%20256x256.png"
+  },
+  "firecrawl": {
+    "from": "site",
+    "url": "https://www.firecrawl.dev",
+    "file": "firecrawl.ico",
+    "source": "https://www.firecrawl.dev/favicon.ico"
+  },
+  "apify": {
+    "from": "site",
+    "url": "https://apify.com",
+    "file": "apify.png",
+    "source": "https://apify.com/apple-icon.png?apple-icon.1qabm0kj8blk6.png?dpl=c88a3cb590"
+  },
+  "browserbase": {
+    "from": "site",
+    "url": "https://www.browserbase.com",
+    "file": "browserbase.svg",
+    "source": "https://www.browserbase.com/favicon.svg"
+  },
+  "scrapingbee": {
+    "from": "site",
+    "url": "https://www.scrapingbee.com",
+    "file": "scrapingbee.png",
+    "source": "https://www.google.com/s2/favicons?domain=www.scrapingbee.com&sz=128"
+  },
+  "crawlee": {
+    "from": "site",
+    "url": "https://crawlee.dev",
+    "file": "crawlee.png",
+    "source": "https://www.google.com/s2/favicons?domain=crawlee.dev&sz=128"
+  },
+  "jina-reader": {
+    "from": "site",
+    "url": "https://jina.ai",
+    "file": "jina-reader.png",
+    "source": "https://jina.ai/icons/favicon-128x128.png"
+  },
+  "cloudflare-registrar": {
+    "from": "simple-icons",
+    "slug": "cloudflare",
+    "file": "cloudflare-registrar.svg",
+    "source": "https://simpleicons.org/?q=cloudflare"
+  },
+  "porkbun": {
+    "from": "simple-icons",
+    "slug": "porkbun",
+    "file": "porkbun.svg",
+    "source": "https://simpleicons.org/?q=porkbun"
+  },
+  "namecheap": {
+    "from": "simple-icons",
+    "slug": "namecheap",
+    "file": "namecheap.svg",
+    "source": "https://simpleicons.org/?q=namecheap"
+  },
+  "squarespace-domains": {
+    "from": "simple-icons",
+    "slug": "squarespace",
+    "file": "squarespace-domains.svg",
+    "source": "https://simpleicons.org/?q=squarespace"
+  },
+  "vercel-domains": {
+    "from": "simple-icons",
+    "slug": "vercel",
+    "file": "vercel-domains.svg",
+    "source": "https://simpleicons.org/?q=vercel"
+  },
+  "posthog": {
+    "from": "simple-icons",
+    "slug": "posthog",
+    "file": "posthog.svg",
+    "source": "https://simpleicons.org/?q=posthog"
+  },
+  "plausible": {
+    "from": "simple-icons",
+    "slug": "plausibleanalytics",
+    "file": "plausible.svg",
+    "source": "https://simpleicons.org/?q=plausibleanalytics"
+  },
+  "google-analytics": {
+    "from": "simple-icons",
+    "slug": "googleanalytics",
+    "file": "google-analytics.svg",
+    "source": "https://simpleicons.org/?q=googleanalytics"
+  },
+  "umami": {
+    "from": "simple-icons",
+    "slug": "umami",
+    "file": "umami.svg",
+    "source": "https://simpleicons.org/?q=umami"
+  },
+  "fathom": {
+    "from": "simple-icons",
+    "slug": "fathom",
+    "file": "fathom.svg",
+    "source": "https://simpleicons.org/?q=fathom"
+  },
+  "sentry": {
+    "from": "simple-icons",
+    "slug": "sentry",
+    "file": "sentry.svg",
+    "source": "https://simpleicons.org/?q=sentry"
+  },
+  "better-stack": {
+    "from": "simple-icons",
+    "slug": "betterstack",
+    "file": "better-stack.svg",
+    "source": "https://simpleicons.org/?q=betterstack"
+  },
+  "rollbar": {
+    "from": "simple-icons",
+    "slug": "rollbar",
+    "file": "rollbar.svg",
+    "source": "https://simpleicons.org/?q=rollbar"
+  },
+  "honeybadger": {
+    "from": "simple-icons",
+    "slug": "honeybadger",
+    "file": "honeybadger.svg",
+    "source": "https://simpleicons.org/?q=honeybadger"
+  },
+  "logrocket": {
+    "from": "site",
+    "url": "https://logrocket.com",
+    "file": "logrocket.png",
+    "source": "https://logrocket.com/favicon/apple-touch-icon.png"
   }
 }

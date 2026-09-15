@@ -1,0 +1,70 @@
+{
+  "id": "crawlee",
+  "name": "Crawlee",
+  "provider": "open-source",
+  "slots": ["scraping"],
+  "summary": "Crawlee is a free, open source library you run on your own server to crawl and scrape sites with plain HTTP requests or a real headless browser.",
+  "website": "https://crawlee.dev",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free and open source with no usage cap; you can run as many crawls as your own server can handle.",
+      "source": "https://crawlee.dev/js/docs/quick-start",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No paid plan; it's a free library, so your only real costs are your own server (or serverless compute) and any proxies you choose to use.",
+      "source": "https://crawlee.dev/js/docs/quick-start",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "It's plain Node.js code (Playwright, Puppeteer, or Cheerio underneath) that runs on any server, container, or job runner you choose.",
+      "source": "https://crawlee.dev/js/docs/quick-start",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scraper_runs": {
+      "value": "your_server",
+      "note": "Crawlee is a library you install and run inside your own server code or background job, not a hosted service.",
+      "source": "https://crawlee.dev/js/docs/quick-start",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "js_rendering": {
+      "value": "included",
+      "note": "PlaywrightCrawler and PuppeteerCrawler drive a real browser for JavaScript-heavy pages at no extra cost beyond installing Playwright or Puppeteer alongside Crawlee.",
+      "source": "https://crawlee.dev/js/docs/quick-start",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "ai_ready_output": {
+      "value": false,
+      "note": "Crawlee hands you parsed HTML through Cheerio or a live browser page; turning that into clean Markdown or structured data for an AI model is code you write yourself.",
+      "source": "https://crawlee.dev/js/docs/introduction/first-crawler",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "price_per_1k_pages": {
+      "value": "Free software, so there's no per-page charge. You pay only for the server (or serverless compute) it runs on and for any proxies you choose to use.",
+      "note": "Matches its open source, self-hosted model; cost depends entirely on your own hosting and proxy choices, not on Crawlee itself.",
+      "source": "https://crawlee.dev/js/docs/quick-start",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "No account needed; install it into your project with npm install crawlee playwright.", "env": [], "source": "https://crawlee.dev/js/docs/quick-start" },
+    { "step": "Create a PlaywrightCrawler with a requestHandler that reads the page (for example page.title()) and saves it with Dataset.pushData().", "env": [], "source": "https://crawlee.dev/js/docs/quick-start" },
+    { "step": "Call crawler.run([...startUrls]) from a server script or background job; results land in ./storage/datasets by default, so forward or copy them to durable storage before the job ends.", "env": [], "source": "https://crawlee.dev/js/docs/quick-start" }
+  ],
+  "builder_notes": [
+    "Run crawls from a background job or server script, not from a request a user is waiting on; a crawl can take much longer than a normal page load.",
+    "Crawlee's default dataset storage is local files, which don't survive most serverless or container redeploys, so save results somewhere durable if you need to keep them.",
+    "Respect each target site's robots.txt and terms of service; Crawlee will crawl whatever you point it at, it doesn't check for you."
+  ]
+}

@@ -1,9 +1,10 @@
 import { BUILD_ORDER, adaptEnvName } from "./checklist";
-import { costBySize, costOutlook, describeTotal } from "./cost";
+import { costBySize, costOutlook, describeTotal, money } from "./cost";
 import { buildDecisionRecord } from "./decisions";
 import { evaluatePlan, needIsOn, optionIn, type CatalogIndex, type CheckResult } from "./evaluate";
-import { CRITERIA, CRITERION_LABELS, criterionScores } from "./score";
+import { CRITERIA, criterionLabel, criterionScores } from "./score";
 import type { Answer, PlanInput, Selection } from "./schema";
+import { SIZE_PHRASE } from "./text";
 
 /**
  * The spec pack: what the beginner walks away with. SPEC.md explains the plan, SETUP.md is the
@@ -57,11 +58,12 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
   const stackRows = filled.map(({ slot, option, def }) => {
     const scores = criterionScores(index, option, slot, input);
     // Payments and AI are paid per use, so "free at your size" and plan prices don't describe them.
+    // A payment service's price score compares its fee per sale, so that one stays.
     const perUse = slot === "payments" || slot === "ai";
     const noMonthlyFee = option.facts.first_paid_usd_month?.value === null && option.coverage === "full";
     const strengths = CRITERIA.filter((c) => scores[c] >= 0.75)
-      .filter((c) => !(perUse && (c === "cost" || c === "price")))
-      .map((c) => (c === "price" && noMonthlyFee ? "no monthly fee" : CRITERION_LABELS[c]));
+      .filter((c) => !(perUse && (c === "cost" || (c === "price" && slot === "ai"))))
+      .map((c) => (c === "price" && noMonthlyFee && slot !== "domain" ? "no monthly fee" : criterionLabel(c, slot)));
     if (perUse && noMonthlyFee) strengths.unshift("no monthly fee, pay per use");
     const perks = results.filter((r) => r.source === "product" && r.level === "info" && r.slots.includes(slot)).map((r) => r.title.toLowerCase());
     const why = unique([...strengths, ...perks]).join("; ") || option.summary;
@@ -89,11 +91,13 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
   const tasks = filled.map(({ def, option }, i) => `${i + 1}. ${def.build_task.replace("{option}", option.name)}`);
 
   const outlook = costOutlook(index, selection, input);
-  const sizeLabel = (id: string) => catalog.planning.sizes.find((s) => s.id === id)?.label.toLowerCase() ?? id;
-  const costLines = outlook.now.lines.map((l) => {
-    const label = index.slotsById.get(l.slot)?.label ?? l.slot;
-    return `- **${label}, ${l.option.name}:** ${l.headline}.${l.detail ? ` ${l.detail}` : ""}`;
-  });
+  const costLines = [
+    ...outlook.now.lines.map((l) => {
+      const label = index.slotsById.get(l.slot)?.label ?? l.slot;
+      return `- **${label}, ${l.option.name}:** ${l.headline}.${l.detail ? ` ${l.detail}` : ""}`;
+    }),
+    ...outlook.now.fees.map((f) => `- **${f.label}:** $${f.usd} ${f.per === "year" ? "a year" : "one time"}. Source: ${f.source}`),
+  ];
 
   const envNames = unique(filled.flatMap(({ option }) => option.setup.flatMap((s) => s.env.map((e) => adaptEnvName(e, selection.framework)))));
   const stackList = filled.map(({ def, option }) => `- ${def.label}: ${option.name}`);
@@ -137,12 +141,15 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "",
     ...costLines,
     "",
-    `At ${sizeLabel(outlook.now.size)} people: ${describeTotal(outlook.now)}.`,
-    ...(outlook.next ? ["", `At ${sizeLabel(outlook.next.size)} people: ${describeTotal(outlook.next)}.`] : []),
+    `For ${SIZE_PHRASE[outlook.now.size]}: ${describeTotal(outlook.now)}.`,
+    ...(outlook.next ? ["", `For ${SIZE_PHRASE[outlook.next.size]}: ${describeTotal(outlook.next)}.`] : []),
     "",
     "| Monthly users | Estimated monthly cost |",
     "|---|---|",
-    ...costBySize(index, selection, input).map((s) => `| ${catalog.planning.sizes.find((z) => z.id === s.size)?.label ?? s.size} | ${describeTotal(s)} |`),
+    ...costBySize(index, selection, input).map((s) => `| ${catalog.planning.sizes.find((z) => z.id === s.size)?.label ?? s.size} | ${describeTotal(s, { monthlyOnly: true })} |`),
+    ...(outlook.now.yearlyUsd > 0 || outlook.now.oneTimeUsd > 0
+      ? ["", `At every size, also ${[outlook.now.yearlyUsd > 0 && `${money(outlook.now.yearlyUsd)} a year`, outlook.now.oneTimeUsd > 0 && `${money(outlook.now.oneTimeUsd)} once`].filter(Boolean).join(" and ")}.`]
+      : []),
     "",
     "## Build order",
     "",

@@ -1,0 +1,56 @@
+{
+  "id": "fathom",
+  "name": "Fathom Analytics",
+  "provider": "fathom",
+  "slots": ["analytics"],
+  "summary": "Fathom Analytics is a privacy-first, paid website analytics tool that counts visitors and events without using cookies.",
+  "website": "https://usefathom.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Fathom has no permanent free plan, only a 7-day free trial before billing starts.",
+      "source": "https://usefathom.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 15,
+      "note": "The cheapest plan costs $15 a month billed monthly and covers up to 100,000 monthly page views, with custom events counted toward that limit.",
+      "source": "https://usefathom.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Fathom lets you export unlimited CSV data and pull data through its API, but the hosted product is closed source with no practical self-hosting option today.",
+      "source": "https://usefathom.com/docs/features/exporting",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "cookies": {
+      "value": "none",
+      "note": "Fathom does not use cookies or similar technology, so it needs no cookie consent banner.",
+      "source": "https://usefathom.com/docs/troubleshooting/cookies",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "product_events": {
+      "value": true,
+      "note": "Fathom can track custom events, like a purchase or button click, with the trackEvent() function, optionally attaching a value.",
+      "source": "https://usefathom.com/docs/features/events",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Start a free trial at Fathom and create a site to get your Site ID.", "env": [], "source": "https://usefathom.com/docs/integrations/next" },
+    { "step": "Install the client with npm install fathom-client.", "env": [], "source": "https://usefathom.com/docs/integrations/next" },
+    { "step": "Create a client component that calls load('YOUR-SITE-ID', { auto: false }) once and trackPageview() on every path change, using usePathname and useSearchParams.", "env": [], "source": "https://usefathom.com/docs/integrations/next" },
+    { "step": "Render that component in the root layout (app/layout.tsx) so it loads on every route.", "env": [], "source": "https://usefathom.com/docs/integrations/next" }
+  ],
+  "builder_notes": [
+    "Fathom never sets cookies, so it needs no cookie consent banner.",
+    "Custom events count toward the plan's monthly page view limit, so only track actions that matter."
+  ]
+}

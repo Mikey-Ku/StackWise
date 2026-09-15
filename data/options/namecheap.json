@@ -1,0 +1,69 @@
+{
+  "id": "namecheap",
+  "name": "Namecheap",
+  "provider": "namecheap",
+  "slots": ["domain"],
+  "summary": "Namecheap is a large, well-known domain registrar with free lifetime WHOIS privacy and a wide range of add-on services.",
+  "website": "https://www.namecheap.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Namecheap has no free plan; every domain is a paid purchase billed once a year.",
+      "source": "https://www.namecheap.com/domains/registration/gtld/com/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "There's no monthly plan; domains are billed once a year, not monthly.",
+      "source": "https://www.namecheap.com/domains/registration/gtld/com/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "You unlock the domain and get its auth code from your account yourself, and Namecheap has 5 days to release it once a transfer starts, though ICANN still requires the domain to be registered at least 60 days first.",
+      "source": "https://www.namecheap.com/support/knowledgebase/article.aspx/258/84/what-should-i-do-to-transfer-a-domain-from-namecheap/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "com_first_year_usd": {
+      "value": 11.28,
+      "note": "A new .com is on sale for $11.28 for the first year, 25% off the $14.98 list price shown on the same page.",
+      "source": "https://www.namecheap.com/domains/registration/gtld/com/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "com_renewal_usd": {
+      "value": 18.48,
+      "note": "Renewal is $18.48 a year, well above the first-year sale price.",
+      "source": "https://www.namecheap.com/domains/registration/gtld/com/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "whois_privacy_free": {
+      "value": true,
+      "note": "Namecheap includes free-for-life domain privacy protection on every eligible domain, including .com.",
+      "source": "https://www.namecheap.com/domains/registration/gtld/com/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "dns_included": {
+      "value": true,
+      "note": "Free BasicDNS management (plus DNSSEC) is included when the domain uses Namecheap's own nameservers.",
+      "source": "https://www.namecheap.com/domains/registration/gtld/com/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Search for and register the domain at namecheap.com.", "env": [], "source": "https://www.namecheap.com/domains/registration/gtld/com/" },
+    { "step": "In Domain List, open the domain's Advanced DNS tab and add the host records your host gives you.", "env": [], "source": "https://www.namecheap.com/support/knowledgebase/article.aspx/434/2237/how-do-i-set-up-host-records-for-a-domain/" },
+    { "step": "Add any TXT, SPF, DKIM or DMARC records your email service gives you the same way.", "env": [], "source": "https://www.namecheap.com/support/knowledgebase/article.aspx/317/2237/how-do-i-add-txtspfdkimdmarc-records-for-my-domain/" }
+  ],
+  "builder_notes": [
+    "Add the host's records and the email service's SPF, DKIM and DMARC records in Advanced DNS before assuming the site or outgoing email works.",
+    "Budget for the $18.48/year renewal price, not the discounted first-year sale price shown at signup."
+  ]
+}

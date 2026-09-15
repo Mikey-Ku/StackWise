@@ -1,0 +1,57 @@
+{
+  "id": "rollbar",
+  "name": "Rollbar",
+  "provider": "rollbar",
+  "slots": ["monitoring"],
+  "summary": "Rollbar is an error monitoring service that catches crashes and bugs in your app, groups them together, and alerts you, with session replay to see what the user did.",
+  "website": "https://rollbar.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "The free plan includes 5,000 error occurrences and 1,000 session replays a month, with unlimited users and 30-day data retention.",
+      "source": "https://rollbar.com/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 9,
+      "note": "The Essentials plan starts at $9/month for 10,000 occurrences a month with 90-day retention, and costs more as occurrences increase.",
+      "source": "https://rollbar.com/pricing-for-agents",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "low",
+      "note": "Rollbar uses its own proprietary SDK and API with no native OpenTelemetry support, so switching to another error tracker means re-instrumenting error handling from scratch.",
+      "source": "https://docs.rollbar.com/docs/javascript",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "uptime_checks": {
+      "value": false,
+      "note": "Rollbar doesn't check whether your site is reachable from outside; it only reports errors your app has already caught, so pair it with a separate uptime tool if you need that.",
+      "source": "https://rollbar.com/product/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "session_replay": {
+      "value": true,
+      "note": "Session Replay shows what a user did before an error, with built-in PII scrubbing plus block, ignore and mask selectors for sensitive elements.",
+      "source": "https://docs.rollbar.com/docs/session-replay",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Rollbar account and a new project to get its client and server access tokens.", "env": [], "source": "https://docs.rollbar.com/docs/nextjs" },
+    { "step": "Install the SDK with npm install rollbar @rollbar/react.", "env": [], "source": "https://docs.rollbar.com/docs/nextjs" },
+    { "step": "Add both tokens to your environment file; only the client token is meant to be public.", "env": ["NEXT_PUBLIC_ROLLBAR_CLIENT_TOKEN", "ROLLBAR_SERVER_TOKEN"], "source": "https://docs.rollbar.com/docs/nextjs" },
+    { "step": "Create a shared Rollbar config, wrap the App Router root layout in RollbarProvider (or wrap _app with a Provider and ErrorBoundary in the Pages Router), and add error.tsx and global-error.tsx handlers that use the useRollbar() hook.", "env": [], "source": "https://docs.rollbar.com/docs/nextjs" }
+  ],
+  "builder_notes": [
+    "Keep ROLLBAR_SERVER_TOKEN out of client code; only the client token, prefixed NEXT_PUBLIC_, is meant for the browser.",
+    "Upload source maps after each build, with a matching code_version, using the CLI or a bundler plugin such as rollbar-sourcemap-webpack-plugin, or stack traces stay minified.",
+    "Turn on scrubTelemetryInputs and set maskTextSelector and blockSelector for session replay before recording any page with personal data."
+  ]
+}

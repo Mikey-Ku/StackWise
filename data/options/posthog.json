@@ -1,0 +1,70 @@
+{
+  "id": "posthog",
+  "name": "PostHog",
+  "provider": "posthog",
+  "slots": ["analytics", "monitoring"],
+  "summary": "PostHog is an all-in-one product analytics tool that tracks page views and custom events, with session replay and error tracking built in.",
+  "website": "https://posthog.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "The free plan includes 1,000,000 analytics events a month, plus 100,000 error tracking exceptions and 5,000 session recordings, enough for far more than 1,000 monthly visitors.",
+      "source": "https://posthog.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "PostHog has no fixed-price monthly plan; past the free monthly allowance it charges pay-as-you-go per event with no cap, so cost depends on usage.",
+      "source": "https://posthog.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "PostHog's core product is open source under the MIT license and free to self-host with Docker Compose, so you are not locked into their cloud.",
+      "source": "https://posthog.com/docs/self-host",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "cookies": {
+      "value": "optional",
+      "note": "PostHog sets a cookie by default to recognize visitors, but it can be switched to cookieless_mode so it never sets one.",
+      "source": "https://posthog.com/tutorials/cookieless-tracking",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "product_events": {
+      "value": true,
+      "note": "PostHog is built around custom event capture like posthog.capture(), not just automatic page views.",
+      "source": "https://posthog.com/docs/libraries/next-js",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "uptime_checks": {
+      "value": false,
+      "note": "PostHog's product lineup covers analytics, session replay and error tracking, but it does not check your site from outside or alert you when it goes down.",
+      "source": "https://posthog.com/products",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "session_replay": {
+      "value": true,
+      "note": "PostHog can record what a visitor did on the page and play it back like a video, synced with console logs and network requests.",
+      "source": "https://posthog.com/docs/session-replay",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a PostHog account, either PostHog Cloud or self-hosted.", "env": [], "source": "https://posthog.com/docs/libraries/next-js" },
+    { "step": "Install the client SDK with npm install --save posthog-js.", "env": [], "source": "https://posthog.com/docs/libraries/next-js" },
+    { "step": "Add your project token and host to .env.local and your hosting provider; find the token in your project settings.", "env": ["NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN", "NEXT_PUBLIC_POSTHOG_HOST"], "source": "https://posthog.com/docs/libraries/next-js" },
+    { "step": "Create instrumentation-client.js at your app root and call posthog.init() with those values; PostHog then captures page views automatically.", "env": [], "source": "https://posthog.com/docs/libraries/next-js" }
+  ],
+  "builder_notes": [
+    "Keep personal details like emails and names out of event properties; identify logged-in users with a stable id such as their user id, and skip identify() entirely for anonymous visitors.",
+    "PostHog sets a cookie by default; if the app must run without cookies, initialize it with cookieless_mode instead of the default config."
+  ]
+}

@@ -8,9 +8,9 @@
   "coverage": "full",
   "facts": {
     "free_plan_covers": {
-      "value": "up_to_1000",
-      "note": "Free web services get 750 hours and 100GB bandwidth a month, enough for roughly 1,000 typical users, but they sleep after 15 minutes idle.",
-      "source": "https://render.com/docs/free",
+      "value": "up_to_100",
+      "note": "Free web services get 750 instance hours a month but sleep after 15 minutes idle, and the free Hobby workspace now includes only 5 GB of bandwidth a month, enough for roughly 100 typical users.",
+      "source": "https://render.com/pricing",
       "retrieved": "2026-09-15",
       "status": "draft"
     },
@@ -78,6 +78,27 @@
       },
       "note": "Next.js deploys as a full Node web service with SSR and API routes; static Vite apps and SvelteKit (Node adapter) both have official Render guides.",
       "source": "https://render.com/docs/deploy-nextjs-app",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "custom_domain_free": {
+      "value": true,
+      "note": "Render's free Hobby workspace plan includes 2 custom domains at no extra cost, and additional ones cost $0.25 per domain each month.",
+      "source": "https://render.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_sleeps": {
+      "value": true,
+      "note": "Render spins a free web service down after 15 minutes with no incoming traffic, and the next visitor waits about a minute while it wakes back up.",
+      "source": "https://render.com/docs/free",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "bandwidth_included": {
+      "value": "Hobby workspace (free): 5 GB a month, then $0.15 per GB. Starter ($7/month compute): still on the 5 GB Hobby workspace pool unless you also upgrade to the $25/month Pro workspace, which includes 25 GB.",
+      "note": "Bandwidth is billed per workspace rather than per service, so the $7/month Starter compute plan alone does not raise your bandwidth allowance.",
+      "source": "https://render.com/pricing",
       "retrieved": "2026-09-15",
       "status": "draft"
     }

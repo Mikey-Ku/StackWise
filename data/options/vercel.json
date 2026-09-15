@@ -80,6 +80,27 @@
       "source": "https://vercel.com/docs/frameworks/full-stack/sveltekit",
       "retrieved": "2026-09-15",
       "status": "draft"
+    },
+    "custom_domain_free": {
+      "value": true,
+      "note": "Vercel's free Hobby plan lets you connect up to 50 custom domains per project at no extra platform cost beyond buying the domain itself.",
+      "source": "https://vercel.com/docs/plans/hobby",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_sleeps": {
+      "value": false,
+      "note": "Vercel runs your backend as per-request Functions instead of an always-on server, so a Hobby app never pauses or has to wake up after a quiet period.",
+      "source": "https://vercel.com/blog/scale-to-one-how-fluid-solves-cold-starts",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "bandwidth_included": {
+      "value": "Hobby: 100 GB a month free. Pro ($20/month): 1 TB included, then $0.15 per GB.",
+      "note": "Vercel calls this Fast Data Transfer; Hobby includes 100 GB a month and Pro raises that to 1 TB before per-GB overage charges apply.",
+      "source": "https://vercel.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
     }
   },
   "setup": [

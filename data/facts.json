@@ -195,5 +195,105 @@
     "label": "Needs a Mac for iPhone builds",
     "help": "Whether building the iPhone version requires owning a Mac.",
     "type": "boolean"
+  },
+  "custom_domain_free": {
+    "label": "Own domain on the free plan",
+    "help": "Whether you can connect your own domain without paying for a plan.",
+    "type": "boolean"
+  },
+  "free_plan_sleeps": {
+    "label": "Free apps fall asleep",
+    "help": "Whether a free app pauses after a while without visitors, so the next visitor waits while it starts again.",
+    "type": "boolean"
+  },
+  "bandwidth_included": {
+    "label": "Traffic included",
+    "help": "How much data transfer to visitors the free and first paid plans include, and what more costs.",
+    "type": "string"
+  },
+  "com_first_year_usd": {
+    "label": ".com, first year",
+    "help": "The price of a new .com domain for its first year, in US dollars.",
+    "type": "number"
+  },
+  "com_renewal_usd": {
+    "label": ".com, each year after",
+    "help": "What the same .com costs to renew every year after the first, in US dollars.",
+    "type": "number"
+  },
+  "whois_privacy_free": {
+    "label": "Privacy included",
+    "help": "Whether your name and address are hidden from public domain records at no extra cost.",
+    "type": "boolean"
+  },
+  "dns_included": {
+    "label": "DNS included",
+    "help": "Whether you can point the domain at your host and email service from the same account at no extra cost.",
+    "type": "boolean"
+  },
+  "scraper_runs": {
+    "label": "Runs where",
+    "help": "Whether a service fetches pages for you (hosted API), your code drives a browser it runs for you (hosted browser), or you run the scraper on your own server.",
+    "type": "enum",
+    "values": [
+      "hosted_api",
+      "hosted_browser",
+      "your_server"
+    ]
+  },
+  "js_rendering": {
+    "label": "Pages built with JavaScript",
+    "help": "Many sites fill in their pages with JavaScript after loading. Whether it can read those pages, and whether they cost more.",
+    "type": "enum",
+    "values": [
+      "included",
+      "costs_extra",
+      "not_supported"
+    ]
+  },
+  "ai_ready_output": {
+    "label": "Clean text for AI",
+    "help": "Whether it can hand back a page as clean Markdown or structured data an AI model can read directly.",
+    "type": "boolean"
+  },
+  "price_per_1k_pages": {
+    "label": "Cost per 1,000 pages",
+    "help": "Roughly what 1,000 ordinary pages cost on the first paid plan, with the math in the note.",
+    "type": "string"
+  },
+  "cookies": {
+    "label": "Cookies",
+    "help": "Whether it sets cookies in visitors' browsers, which affects whether you need a cookie consent banner.",
+    "type": "enum",
+    "values": [
+      "none",
+      "optional",
+      "required"
+    ]
+  },
+  "product_events": {
+    "label": "Tracks actions in the app",
+    "help": "Whether it can track what people do inside the app, like sign-ups and button clicks, not just which pages they visit.",
+    "type": "boolean"
+  },
+  "uptime_checks": {
+    "label": "Uptime alerts",
+    "help": "Whether it checks your site from the outside and alerts you when it goes down.",
+    "type": "boolean"
+  },
+  "session_replay": {
+    "label": "Session replay",
+    "help": "Whether it can record what a person did before an error, to play it back like a video.",
+    "type": "boolean"
+  },
+  "card_fee_percent": {
+    "label": "Card fee, percent",
+    "help": "The percent of each US card payment the service keeps.",
+    "type": "number"
+  },
+  "card_fee_fixed_usd": {
+    "label": "Card fee, fixed",
+    "help": "The fixed amount the service keeps from each US card payment, in US dollars.",
+    "type": "number"
   }
 }

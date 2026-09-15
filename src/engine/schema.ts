@@ -5,7 +5,7 @@ import { z } from "zod";
  * files: the app refuses to start on a file that breaks them, and the data tests run them in CI.
  */
 
-export const SLOT_IDS = ["framework", "hosting", "database", "login", "files", "payments", "ai", "jobs", "email", "mobile"] as const;
+export const SLOT_IDS = ["framework", "hosting", "domain", "database", "login", "files", "payments", "ai", "scraping", "jobs", "email", "analytics", "monitoring", "mobile"] as const;
 export const slotIdSchema = z.enum(SLOT_IDS);
 export type SlotId = z.infer<typeof slotIdSchema>;
 
@@ -55,7 +55,7 @@ export type Option = z.infer<typeof optionSchema>;
 export const factDefSchema = z.object({
   label: z.string(),
   help: z.string(),
-  type: z.enum(["enum", "boolean", "number_or_null", "string", "framework_map"]),
+  type: z.enum(["enum", "boolean", "number", "number_or_null", "string", "framework_map"]),
   values: z.array(z.string()).optional(),
 });
 export type FactDef = z.infer<typeof factDefSchema>;
@@ -158,11 +158,19 @@ export const planningSchema = z.object({
   penalties: z.object({ warning: z.number(), unknown: z.number(), info_bonus: z.number() }),
   close_call_margin: z.number(),
   no_account_providers: z.array(z.string()),
+  /** Costs that come with a part no matter which option fills it, like app store developer accounts. */
+  fees: z
+    .array(z.object({ id: z.string(), slot: slotIdSchema, label: z.string(), usd: z.number().min(0), per: z.enum(["year", "once"]), source: httpUrl }))
+    .default([]),
+  /** Providers whose one paid plan covers every part they fill, so the plan is counted once. */
+  shared_plans: z.array(z.object({ provider: z.string(), note: z.string(), source: httpUrl })).default([]),
 });
 export type Planning = z.infer<typeof planningSchema>;
+export type Fee = Planning["fees"][number];
 
 export const learnSchema = z.object({
-  slots: z.record(
+  // Partial so a new part can be added before its teaching content; the data checks report the gap.
+  slots: z.partialRecord(
     slotIdSchema,
     z.object({
       what: z.string(),

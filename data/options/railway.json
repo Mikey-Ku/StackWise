@@ -80,6 +80,27 @@
       "source": "https://docs.railway.com/guides/nextjs",
       "retrieved": "2026-09-15",
       "status": "draft"
+    },
+    "custom_domain_free": {
+      "value": false,
+      "note": "Railway's ongoing Free plan includes 0 custom domains, just the auto-generated up.railway.app subdomain, while the paid $5/month Hobby plan raises that to 2.",
+      "source": "https://railway.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_sleeps": {
+      "value": false,
+      "note": "Railway does not pause services automatically; sleeping is an opt-in Serverless setting you turn on per service, which sleeps after 5 to 10 minutes idle and wakes on the next request with a brief cold start.",
+      "source": "https://docs.railway.com/reference/app-sleeping",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "bandwidth_included": {
+      "value": "Free ($1/month credit): no bandwidth is bundled separately, egress is billed at $0.05 per GB straight out of that credit. Hobby ($5/month credit): the same $0.05 per GB rate with a bigger credit to draw from.",
+      "note": "Railway does not carve out a free bandwidth amount; every GB sent out costs $0.05 and is deducted from your plan's monthly usage credit.",
+      "source": "https://docs.railway.com/reference/pricing/plans",
+      "retrieved": "2026-09-15",
+      "status": "draft"
     }
   },
   "setup": [

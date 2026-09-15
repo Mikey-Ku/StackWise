@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fixtureCatalog } from "@/engine/test-fixtures";
 import { formatComparison, scoreMethod, type EvalCase } from "./eval-core";
 import { htmlToText } from "./lib";
-import { iconCandidates, readableHex } from "./logos";
+import { iconCandidates, readableHex, sniffImage } from "./logos";
 import { applyChecks, changesMarkdown, checkPrompt, claimsBySource } from "./source-check-core";
 
 describe("pre-fill eval scoring", () => {
@@ -92,6 +92,14 @@ describe("logos", () => {
 
   it("falls back to /favicon.ico once when a page declares nothing", () => {
     expect(iconCandidates("<link rel=\"icon\" href=\"/favicon.ico\">", "https://example.com")).toEqual(["https://example.com/favicon.ico"]);
+  });
+
+  it("trusts a file's first bytes over its name, so an HTML error page never becomes a logo", () => {
+    const bytes = (...b: number[]) => new Uint8Array([...b, ...new Array(20).fill(0)]);
+    expect(sniffImage(bytes(0x89, 0x50, 0x4e, 0x47))).toBe("png");
+    expect(sniffImage(bytes(0x00, 0x00, 0x01, 0x00))).toBe("ico");
+    expect(sniffImage(new TextEncoder().encode('<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"></svg>'))).toBe("svg");
+    expect(sniffImage(new TextEncoder().encode("<!DOCTYPE html><html><head></head></html>"))).toBeNull();
   });
 
   it("draws near-white brand colors in ink so they show on white cards", () => {

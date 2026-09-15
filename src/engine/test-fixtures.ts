@@ -49,6 +49,9 @@ export const fixtureOptions: Option[] = [
     scheduled_jobs: false,
     free_plan_commercial_use: false,
     framework_support: { "fw-server": "full", "fw-browser": "full" },
+    custom_domain_free: true,
+    free_plan_sleeps: false,
+    bandwidth_included: "100 GB a month",
   }),
   option("host-server", "boxco", ["hosting"], {
     ...base("just_me", 7, "high"),
@@ -59,6 +62,9 @@ export const fixtureOptions: Option[] = [
     scheduled_jobs: true,
     free_plan_commercial_use: true,
     framework_support: { "fw-server": "full", "fw-browser": "partial" },
+    custom_domain_free: false,
+    free_plan_sleeps: true,
+    bandwidth_included: "100 GB a month",
   }),
   option("host-partial", "mystery", ["hosting"], {}, { coverage: "partial", setup: [], builder_notes: [] }),
   option("db-file", "open-source", ["database"], {
@@ -92,8 +98,34 @@ export const fixtureOptions: Option[] = [
     merchant_of_record: false,
     subscriptions: true,
     fee_summary: "2.9% + 30c",
+    card_fee_percent: 2.9,
+    card_fee_fixed_usd: 0.3,
+  }),
+  option("pay-merchant", "sellerco", ["payments"], {
+    ...base("more", null, "low"),
+    merchant_of_record: true,
+    subscriptions: true,
+    fee_summary: "5% + 50c",
+    card_fee_percent: 5,
+    card_fee_fixed_usd: 0.5,
   }),
   option("ai-paid", "brainco", ["ai"], { ...base("none", null), free_tier: false, sdk_typescript: true, cheap_model_price: "$1 in / $2 out" }),
+  option("domain-cheap", "boxco", ["domain"], { ...base("none", null), com_first_year_usd: 10, com_renewal_usd: 10, whois_privacy_free: true, dns_included: true }),
+  option("domain-promo", "promoreg", ["domain"], { ...base("none", null), com_first_year_usd: 5, com_renewal_usd: 20, whois_privacy_free: false, dns_included: true }),
+  option("scrape-api", "scrapeco", ["scraping"], {
+    ...base("just_me", 16, "medium"),
+    scraper_runs: "hosted_api",
+    js_rendering: "costs_extra",
+    ai_ready_output: true,
+    price_per_1k_pages: "About $5 per 1,000 pages",
+  }),
+  option("scrape-lib", "open-source", ["scraping"], {
+    ...base("more", null),
+    scraper_runs: "your_server",
+    js_rendering: "included",
+    ai_ready_output: false,
+    price_per_1k_pages: "Free software; you pay for the server",
+  }),
 ];
 
 export const fixtureProductRules: ProductRule[] = [

@@ -42,11 +42,16 @@ export function StatChips({ stats, className }: { stats: Stat[]; className?: str
   );
 }
 
+/** Two columns of stats. Long values, like a price breakdown, go last at full width, and so does a short stat left alone on its row. */
 export function StatGrid({ stats }: { stats: Stat[] }) {
+  const long = (s: Stat) => s.value.length > 36;
+  const short = stats.filter((s) => !long(s));
+  const items = [...short, ...stats.filter(long)];
+  const wide = (s: Stat) => long(s) || (short.length % 2 === 1 && s === short[short.length - 1]);
   return (
     <dl className="ws-statgrid">
-      {stats.map((s) => (
-        <div key={s.id} className={`ws-statgrid__item ws-statgrid__item--${s.tone}`} title={s.note}>
+      {items.map((s) => (
+        <div key={s.id} className={cx("ws-statgrid__item", `ws-statgrid__item--${s.tone}`, wide(s) && "ws-statgrid__item--wide")} title={s.note}>
           <dt>{s.label}</dt>
           <dd>{s.value}</dd>
         </div>

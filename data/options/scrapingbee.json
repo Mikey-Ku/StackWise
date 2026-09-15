@@ -1,0 +1,71 @@
+{
+  "id": "scrapingbee",
+  "name": "ScrapingBee",
+  "provider": "scrapingbee",
+  "slots": ["scraping"],
+  "summary": "ScrapingBee is a hosted API you call with a URL, and it returns the page's HTML or extracted data, handling proxies and JavaScript rendering for you.",
+  "website": "https://www.scrapingbee.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "just_me",
+      "note": "New accounts get 1,000 free API credits as a one-time trial with no credit card required, not an ongoing monthly free plan; the pricing page's own plans all start at $19/month.",
+      "source": "https://www.scrapingbee.com/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 19,
+      "note": "Hobby plan is $19/month for 75,000 API credits.",
+      "source": "https://www.scrapingbee.com/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "It's a proprietary REST API with its own credit system, though sending a URL and getting back HTML is a common enough shape that switching providers mainly means changing the request code.",
+      "source": "https://www.scrapingbee.com/documentation/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scraper_runs": {
+      "value": "hosted_api",
+      "note": "You call their API with a target URL and parameters, and ScrapingBee's servers fetch the page and return it.",
+      "source": "https://www.scrapingbee.com/documentation/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "js_rendering": {
+      "value": "costs_extra",
+      "note": "A plain request costs 1 credit, turning on JavaScript rendering (the default) costs 5 credits, and adding a premium or stealth proxy on top can cost up to 75 credits.",
+      "source": "https://www.scrapingbee.com/documentation/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "ai_ready_output": {
+      "value": true,
+      "note": "Its ai_query and ai_extract_rules parameters use AI to return structured data straight from a page instead of raw HTML you'd have to parse yourself.",
+      "source": "https://www.scrapingbee.com/documentation/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "price_per_1k_pages": {
+      "value": "About $0.25 per 1,000 pages without JavaScript rendering, or about $1.27 per 1,000 pages with it turned on, on Hobby ($19/month for 75,000 credits: 1 credit per plain page, 5 credits per JS-rendered page).",
+      "note": "Math from the Hobby plan's price and credit allowance, applied to ScrapingBee's published per-request credit costs.",
+      "source": "https://www.scrapingbee.com/documentation/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free ScrapingBee account and copy your API key from the dashboard.", "env": [], "source": "https://www.scrapingbee.com/documentation/" },
+    { "step": "Install the SDK with npm install scrapingbee.", "env": [], "source": "https://www.scrapingbee.com/documentation/" },
+    { "step": "Add your key as SCRAPINGBEE_API_KEY in your environment file.", "env": ["SCRAPINGBEE_API_KEY"], "source": "https://www.scrapingbee.com/documentation/" },
+    { "step": "In a server route, create a ScrapingBeeClient with your key and call client.get({ url, params }) to fetch a page.", "env": [], "source": "https://www.scrapingbee.com/documentation/" }
+  ],
+  "builder_notes": [
+    "Keep SCRAPINGBEE_API_KEY server-side and call the API from a route handler or server action, never from client code.",
+    "Only turn on JavaScript rendering or premium/stealth proxies when a page actually needs them, since each one multiplies the credit cost.",
+    "Respect each target site's robots.txt and terms of service before scraping it."
+  ]
+}
