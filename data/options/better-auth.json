@@ -41,6 +41,13 @@
       "source": "https://better-auth.com/docs/reference/resources",
       "retrieved": "2026-09-15",
       "status": "draft"
+    },
+    "builtin_email_production_ready": {
+      "value": false,
+      "note": "Better Auth sends no email itself; you must implement sendVerificationEmail and sendResetPassword using your own email provider.",
+      "source": "https://better-auth.com/docs/concepts/email",
+      "retrieved": "2026-09-15",
+      "status": "draft"
     }
   },
   "setup": [

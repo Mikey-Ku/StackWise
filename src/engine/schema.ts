@@ -5,7 +5,7 @@ import { z } from "zod";
  * files: the app refuses to start on a file that breaks them, and the data tests run them in CI.
  */
 
-export const SLOT_IDS = ["framework", "hosting", "database", "login", "files", "payments", "ai"] as const;
+export const SLOT_IDS = ["framework", "hosting", "database", "login", "files", "payments", "ai", "jobs", "email", "mobile"] as const;
 export const slotIdSchema = z.enum(SLOT_IDS);
 export type SlotId = z.infer<typeof slotIdSchema>;
 
@@ -88,16 +88,23 @@ type Scalar = z.infer<typeof scalarSchema>;
 export const conditionSchema = z
   .object({
     slot: slotIdSchema,
-    fact: z.string(),
+    /** The fact to read. Left out when the condition only asks whether the slot is filled. */
+    fact: z.string().optional(),
     /** Read the fact as a map and look up the id of the option in this other slot. */
     key_from_slot: slotIdSchema.optional(),
     is: scalarSchema.optional(),
     in: z.array(scalarSchema).optional(),
     not: scalarSchema.optional(),
+    /** true: something is in the slot. false: the slot is empty. Reads no facts. */
+    filled: z.boolean().optional(),
   })
-  .refine((c) => [c.is, c.in, c.not].filter((v) => v !== undefined).length === 1, {
-    message: "a condition uses exactly one of is, in, not",
-  });
+  .refine(
+    (c) =>
+      c.filled !== undefined
+        ? c.fact === undefined && c.is === undefined && c.in === undefined && c.not === undefined && c.key_from_slot === undefined
+        : c.fact !== undefined && [c.is, c.in, c.not].filter((v) => v !== undefined).length === 1,
+    { message: "a condition is either { slot, filled } or { slot, fact } with exactly one of is, in, not" },
+  );
 export type Condition = z.infer<typeof conditionSchema> & { is?: Scalar; in?: Scalar[]; not?: Scalar };
 
 const ruleText = {
@@ -105,6 +112,8 @@ const ruleText = {
   explanation: z.string(),
   fix: z.string().optional(),
   builder: z.string().optional(),
+  /** Sources for numbers or claims written into the rule text itself. */
+  sources: z.array(httpUrl).optional(),
 };
 
 export const capabilityRuleSchema = z.object({
@@ -152,6 +161,21 @@ export const planningSchema = z.object({
 });
 export type Planning = z.infer<typeof planningSchema>;
 
+export const learnSchema = z.object({
+  slots: z.record(
+    slotIdSchema,
+    z.object({
+      what: z.string(),
+      why: z.string(),
+      choosing: z.array(z.string()),
+      watch_for: z.array(z.string()),
+      terms: z.array(z.string()),
+    }),
+  ),
+  terms: z.record(z.string(), z.object({ term: z.string(), plain: z.string(), matters: z.string() })),
+});
+export type Learn = z.infer<typeof learnSchema>;
+
 export interface Catalog {
   slots: SlotDef[];
   facts: Record<string, FactDef>;
@@ -160,6 +184,7 @@ export interface Catalog {
   capabilityRules: CapabilityRule[];
   productRules: ProductRule[];
   planning: Planning;
+  learn: Learn;
 }
 
 export type Answer = "yes" | "no" | "not_sure";

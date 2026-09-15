@@ -2,7 +2,9 @@
   "id": "react-vite",
   "name": "React + Vite",
   "provider": "open-source",
-  "slots": ["framework"],
+  "slots": [
+    "framework"
+  ],
   "summary": "A React app that runs entirely in the browser, built with the Vite tool.",
   "website": "https://vite.dev",
   "coverage": "full",
@@ -39,6 +41,13 @@
       "value": false,
       "note": "Everything is bundled and sent to the browser. There is no private server code unless you add a separate backend.",
       "source": "https://vite.dev/guide/static-deploy",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "uses_react": {
+      "value": true,
+      "note": "The Vite React template builds a React app.",
+      "source": "https://vite.dev/guide/",
       "retrieved": "2026-09-15",
       "status": "draft"
     }

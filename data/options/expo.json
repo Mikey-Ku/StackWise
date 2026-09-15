@@ -1,0 +1,80 @@
+{
+  "id": "expo",
+  "name": "Expo (React Native)",
+  "provider": "expo",
+  "slots": ["mobile"],
+  "summary": "A toolkit for building an iPhone and Android app with React, sharing one JavaScript codebase between both.",
+  "website": "https://expo.dev",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free plan includes 15 iOS and 15 Android cloud builds a month, plus over-the-air updates for up to 1,000 monthly active users.",
+      "source": "https://expo.dev/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 19,
+      "note": "Starter plan is $19 a month, with $45 of build credit and updates for up to 3,000 monthly active users.",
+      "source": "https://expo.dev/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Prebuild regenerates the native ios and android folders any time, so you can leave Expo's managed workflow for plain React Native.",
+      "source": "https://docs.expo.dev/workflow/prebuild/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "language": {
+      "value": "TypeScript or JavaScript",
+      "note": "Expo apps are React Native apps, written in TypeScript or JavaScript.",
+      "source": "https://docs.expo.dev/get-started/introduction/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "shares_react_skills": {
+      "value": true,
+      "note": "Expo is a React Native framework, so components, hooks and JSX carry over from a React web app.",
+      "source": "https://docs.expo.dev/get-started/introduction/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "needs_mac_for_ios": {
+      "value": false,
+      "note": "EAS Build compiles iOS apps on a cloud macOS VM, so you can build and submit to the App Store without owning a Mac.",
+      "source": "https://docs.expo.dev/build-reference/ios-builds/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create the app with npx create-expo-app@latest.",
+      "env": [],
+      "source": "https://docs.expo.dev/get-started/create-a-project/"
+    },
+    {
+      "step": "Run npx expo start and scan the QR code with the Expo Go app on your phone to preview it live.",
+      "env": [],
+      "source": "https://docs.expo.dev/get-started/start-developing/"
+    },
+    {
+      "step": "Install EAS CLI, run eas login and eas build:configure, then eas build to create a real installable app in the cloud.",
+      "env": [],
+      "source": "https://docs.expo.dev/build/setup/"
+    },
+    {
+      "step": "Submit the build to the App Store or Google Play with eas submit.",
+      "env": [],
+      "source": "https://docs.expo.dev/submit/introduction/"
+    }
+  ],
+  "builder_notes": [
+    "Never put secret keys in EXPO_PUBLIC_ environment variables. They compile into the app in plain text and are readable by anyone who inspects the build.",
+    "Call anything that needs a private key from your own backend, not directly from the Expo app.",
+    "Use EAS Secrets for build-time credentials like signing keys, but treat anything bundled into the JavaScript as public."
+  ]
+}

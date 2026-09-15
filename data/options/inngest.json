@@ -1,0 +1,64 @@
+{
+  "id": "inngest",
+  "name": "Inngest",
+  "provider": "inngest",
+  "slots": ["jobs"],
+  "summary": "Inngest is a background job platform that runs your code as reliable, multi-step workflows and retries automatically when a step fails.",
+  "website": "https://www.inngest.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free Hobby plan includes 50,000 function executions and 500,000 events ingested per month, plenty for a small app.",
+      "source": "https://www.inngest.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 99,
+      "note": "Pro plan starts at $99/month for 1 million executions included, then pay-as-you-go up to 20 million.",
+      "source": "https://www.inngest.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "The engine is open source and self-hostable, but functions are written with Inngest's own step.run() and createFunction() SDK.",
+      "source": "https://www.inngest.com/docs/self-hosting",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "The main SDK (npm install inngest) is TypeScript-first; separate official SDKs also cover Python and Go.",
+      "source": "https://www.inngest.com/docs/getting-started/nextjs-quick-start",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "long_running": {
+      "value": true,
+      "note": "Steps checkpoint and resume, so a function can run well past 10 minutes; step.sleep() can pause up to 1 year (7 days on the free plan).",
+      "source": "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/sleeps",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "schedules": {
+      "value": true,
+      "note": "Cron-triggered functions are built in, defined with a cron expression and optional timezone in createFunction().",
+      "source": "https://www.inngest.com/docs/guides/scheduled-functions",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Inngest account at inngest.com.", "env": [], "source": "https://www.inngest.com/docs/getting-started/nextjs-quick-start" },
+    { "step": "Install the SDK with npm install inngest and add an API route handler that calls serve().", "env": [], "source": "https://www.inngest.com/docs/getting-started/nextjs-quick-start" },
+    { "step": "Run the local Inngest Dev Server alongside next dev to test functions before deploying.", "env": ["INNGEST_DEV"], "source": "https://www.inngest.com/docs/getting-started/nextjs-quick-start" },
+    { "step": "Before going live, create a production Event Key and Signing Key in the dashboard and add them to your environment file.", "env": ["INNGEST_EVENT_KEY", "INNGEST_SIGNING_KEY"], "source": "https://www.inngest.com/docs/sdk/environment-variables" }
+  ],
+  "builder_notes": [
+    "Wrap external calls (API requests, database writes) in step.run() so Inngest can retry just that step instead of the whole function.",
+    "Use step.sleep() or step.sleepUntil() instead of setTimeout for delays; it survives redeploys and serverless restarts.",
+    "Never set INNGEST_DEV=1 in production; it points the SDK at a local dev server and events will be silently dropped."
+  ]
+}

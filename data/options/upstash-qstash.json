@@ -1,0 +1,64 @@
+{
+  "id": "upstash-qstash",
+  "name": "Upstash QStash",
+  "provider": "upstash",
+  "slots": ["jobs"],
+  "summary": "Upstash QStash is a message queue that calls your own API on a schedule or in the background, retrying automatically if the call fails.",
+  "website": "https://upstash.com/docs/qstash",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free plan allows 1,000 messages per day, about 30,000 a month, with 50GB of monthly bandwidth included.",
+      "source": "https://upstash.com/pricing/qstash",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan is required after free; pay-as-you-go is $1 per 100,000 messages with no base fee. Fixed plans start at $180/month.",
+      "source": "https://upstash.com/pricing/qstash",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "QStash just calls your own HTTP endpoint with retries and delivery guarantees, so your handler is normal server code, no workflow syntax to rewrite.",
+      "source": "https://upstash.com/docs/qstash/overall/getstarted",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "The @upstash/qstash package is an official TypeScript/JavaScript SDK, alongside a separate Python client.",
+      "source": "https://upstash.com/docs/qstash/overall/getstarted",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "long_running": {
+      "value": false,
+      "note": "QStash calls your own endpoint over HTTP, so your host's own request timeout still applies to each delivery.",
+      "source": "https://upstash.com/docs/qstash/overall/getstarted",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "schedules": {
+      "value": true,
+      "note": "Cron schedules are built in: add an Upstash-Cron header, or use the schedules API, with a standard cron expression.",
+      "source": "https://upstash.com/docs/qstash/features/schedules",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Upstash account and open the QStash tab to get your credentials.", "env": [], "source": "https://upstash.com/docs/qstash/quickstarts/vercel-nextjs" },
+    { "step": "Install the SDK with npm install @upstash/qstash.", "env": [], "source": "https://upstash.com/docs/qstash/quickstarts/vercel-nextjs" },
+    { "step": "Copy the token and both signing keys from the QStash dashboard into your environment file.", "env": ["QSTASH_TOKEN", "QSTASH_CURRENT_SIGNING_KEY", "QSTASH_NEXT_SIGNING_KEY"], "source": "https://upstash.com/docs/qstash/quickstarts/vercel-nextjs" },
+    { "step": "Publish a message to your own API route with the QStash client, and verify each incoming request with verifySignatureAppRouter.", "env": [], "source": "https://upstash.com/docs/qstash/quickstarts/vercel-nextjs" }
+  ],
+  "builder_notes": [
+    "Verify the QStash signature on every incoming request with verifySignatureAppRouter before trusting the payload.",
+    "QStash calls your endpoint over plain HTTP, so keep handlers inside your host's own request timeout, or split long work into multiple scheduled steps.",
+    "Use the Upstash-Cron header, or the schedules API, to repeat a job instead of building your own cron runner."
+  ]
+}

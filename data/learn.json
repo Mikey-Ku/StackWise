@@ -1,0 +1,351 @@
+{
+  "slots": {
+    "framework": {
+      "what": "The framework is the toolkit your app's code is written in and organized with. It gives your pages, and any server-side code, a shared structure, so you're not wiring up basics like page routing from scratch.",
+      "why": "Every app needs a foundation that turns your idea into screens someone can use, and connects those screens to the rest of your stack. The framework is that foundation, and it shapes what choices the rest of your stack has to support.",
+      "choosing": [
+        "Whether it has a place for server-only code, so secrets like API keys never sit in the browser",
+        "The language it's written in, and whether that's one you know or want to learn",
+        "How fully your hosting choice supports it, since some frameworks need extra setup on some hosts",
+        "How portable the app would be if you ever wanted to move to a different host"
+      ],
+      "watch_for": [
+        "Picking a framework with no server code, then trying to add payments or a private AI key to it anyway",
+        "Choosing a framework for its popularity without checking that your hosting choice fully supports it"
+      ],
+      "terms": ["server", "environment-variable", "portability", "vendor-lock-in"]
+    },
+    "hosting": {
+      "what": "Hosting is the computer, or network of computers, that runs your app around the clock and gives it an address on the internet so anyone can open it.",
+      "why": "Code sitting on your own laptop only works while your laptop is on. Hosting keeps your app running and reachable all the time, for everyone, not just you.",
+      "choosing": [
+        "How your code runs there: serverless, on a server that stays on, or at the edge, since that affects speed, cost and which features work",
+        "Whether it offers a persistent disk, background workers or scheduled jobs, if your app needs them",
+        "Whether it fully supports the framework you picked",
+        "Whether its free plan allows a commercial app, if you plan to charge people"
+      ],
+      "watch_for": [
+        "Assuming background work, like sending a batch of emails, keeps running after the request that started it ends, especially on serverless hosting",
+        "Building a live, chat-like feature without checking whether the host can hold connections open for it"
+      ],
+      "terms": ["serverless", "server", "edge", "cold-start", "persistent-disk", "websocket", "connection-pooling", "portability"]
+    },
+    "database": {
+      "what": "The database is where anything your app needs to remember lives: posts, profiles, bookings, whatever people create or you store about them.",
+      "why": "Without a database, an app forgets everything the moment the page refreshes. Anything that should still be there tomorrow needs a database to hold it.",
+      "choosing": [
+        "Whether it's relational, document-based, or simple key-value, since that shapes how you model your data",
+        "Whether it works well from serverless code, or needs connection pooling to avoid running out of connections",
+        "Whether it can push live updates to the browser on its own, if your app needs things to update instantly",
+        "Whether it has a mobile SDK, if a phone app might read from it directly later"
+      ],
+      "watch_for": [
+        "Storing data in a plain file when your host has no persistent disk, so it disappears on the next deploy",
+        "Skipping the serverless-friendly check, then hitting dropped connections once real traffic shows up"
+      ],
+      "terms": ["relational-database", "document-database", "connection-pooling", "realtime", "persistent-disk", "sdk", "row-level-security", "portability"]
+    },
+    "login": {
+      "what": "Login is how people prove who they are in your app: creating an account, signing in, and staying signed in across visits.",
+      "why": "As soon as an app shows someone their own data, like their own orders or their own profile, it needs a reliable way to know who's asking.",
+      "choosing": [
+        "Whether it comes with ready-made sign-in screens, or you'll be building your own",
+        "Whether it supports sign-in with another account through OAuth, or passwordless sign-in with a magic link",
+        "Whether it has a mobile SDK, if a phone app is possible later",
+        "How cleanly it connects to your database, since data rules usually need to check who's logged in"
+      ],
+      "watch_for": [
+        "Building login before picking a database, then finding the two don't share who's logged in cleanly",
+        "Skipping the mobile SDK check, then having to rebuild login for a future phone app"
+      ],
+      "terms": ["oauth", "magic-link", "row-level-security", "sdk", "portability"]
+    },
+    "files": {
+      "what": "File storage is where uploaded photos, videos, PDFs and other files are kept. It's separate from the database, which is built for structured data, not large files.",
+      "why": "Anything a person uploads, from a profile picture to a resume, needs somewhere durable to live, and a way to be served back out to whoever is allowed to see it.",
+      "choosing": [
+        "Whether browsers can upload straight to storage with a signed URL, or files have to pass through your own server first",
+        "Whether it charges for egress, meaning people downloading files, not just storing them",
+        "Whether files are served through a CDN, which matters for how fast they load for people far from the storage location",
+        "How you'll control who can see each file, especially anything private"
+      ],
+      "watch_for": [
+        "Routing large uploads, like videos, through your own server, where size and time limits can cut them off",
+        "Making every uploaded file public by default because private access felt like extra work"
+      ],
+      "terms": ["signed-url", "egress", "cdn", "portability"]
+    },
+    "payments": {
+      "what": "Payments is how your app charges people and keeps track of what they've paid for, whether that's a one-time purchase or a recurring subscription.",
+      "why": "Handling card numbers yourself is both hard and risky. A payment provider takes on the security-sensitive part, and tells your app when a payment succeeds so it can unlock whatever was paid for.",
+      "choosing": [
+        "Whether it's a merchant of record, which changes who's responsible for sales tax and VAT",
+        "Whether it supports subscriptions, if you plan to bill people on a recurring basis",
+        "What it charges per payment, since that eats into every sale",
+        "How much rework switching providers later would take"
+      ],
+      "watch_for": [
+        "Putting a secret key in browser code instead of keeping it in server-only environment variables",
+        "Forgetting to handle the provider's webhooks, so a successful payment never actually unlocks access"
+      ],
+      "terms": ["merchant-of-record", "sales-tax", "subscription", "secret-key", "publishable-key", "webhook", "environment-variable", "portability"]
+    },
+    "ai": {
+      "what": "This is the AI model provider your app calls to do things like answer questions, summarize text, or generate images, instead of a feature you'd have to build entirely yourself.",
+      "why": "Training your own AI model is out of reach for almost anyone building an app. Calling a provider's model over an API gets you AI features without needing to be an AI researcher.",
+      "choosing": [
+        "Whether it has a free tier for building and testing before you commit to paying",
+        "Whether it offers a range of models, so simple tasks can use a cheaper, faster one instead of the most expensive",
+        "Whether it has an SDK for the language your server code is written in",
+        "What happens when you hit a rate limit, and how easy that is to handle"
+      ],
+      "watch_for": [
+        "Calling the AI provider directly from browser code, which exposes your API key to anyone who looks",
+        "Defaulting to the most capable model for every request instead of matching the model to the task"
+      ],
+      "terms": ["free-tier", "model", "token", "rate-limit", "api-key", "secret-key", "sdk"]
+    },
+    "jobs": {
+      "what": "Background jobs are pieces of work your app runs outside of answering someone's request directly, like resizing an uploaded image, sending a batch of emails, or cleaning up old data overnight.",
+      "why": "Some work is too slow to make a person wait for while a page loads, and some work needs to happen on a timer with nobody around to click a button. Background jobs handle both.",
+      "choosing": [
+        "Whether jobs can be scheduled with cron, for things that should run automatically on a timer",
+        "Whether failed jobs land in a queue that can retry them, instead of silently disappearing",
+        "Whether your hosting can run background workers at all, since not every host can",
+        "How you'll see whether a job succeeded or failed, since nobody's watching it happen live"
+      ],
+      "watch_for": [
+        "Running slow work directly inside a web request, where a host's time limit can cut it off halfway through",
+        "Assuming a job ran successfully with no way to check, then discovering later that it silently failed"
+      ],
+      "terms": ["background-job", "cron", "queue"]
+    },
+    "email": {
+      "what": "Email is how your app sends messages to people automatically: a welcome email, a password reset, a receipt, a daily digest.",
+      "why": "Some things only work by reaching someone outside your app, in their inbox, like confirming an address or recovering a lost password. A personal email account isn't built to send these reliably or in volume.",
+      "choosing": [
+        "Whether it's built for transactional email, sent because of something one person did, rather than bulk marketing sends",
+        "Whether it supports SMTP, an API, or both, depending on how your server code is set up to send mail",
+        "Whether it requires domain verification, and how much setup that takes before your first email can send",
+        "How you'll find out if an email bounced or landed in spam"
+      ],
+      "watch_for": [
+        "Sending from an unverified domain, so messages land in spam or get rejected outright",
+        "Using a personal inbox or its everyday account to send app email instead of a dedicated sending service"
+      ],
+      "terms": ["transactional-email", "smtp", "domain-verification"]
+    },
+    "mobile": {
+      "what": "This is whether, and how, your app could become a phone app in an app store later, in addition to or instead of a website.",
+      "why": "A website and a phone app aren't built the same way. Deciding this early affects which login, database and other services make sense, since not all of them work the same way from a phone app.",
+      "choosing": [
+        "Whether the services in your stack, like login and database, have an SDK for phone apps, or only for the web",
+        "Whether you'd build with something like React Native, which shares patterns with web code, or a separate native app",
+        "How app store review works for the kind of app you're building, especially if it takes payments",
+        "Whether sign-in with another account through OAuth works the same way inside a phone app as it does on the web"
+      ],
+      "watch_for": [
+        "Picking a login or database with no mobile SDK, then having to rebuild that piece for the phone app",
+        "Assuming a phone app is just the website in a wrapper, when app store rules can require real changes, especially around payments"
+      ],
+      "terms": ["sdk", "react-native", "app-store", "oauth"]
+    }
+  },
+  "terms": {
+    "serverless": {
+      "term": "Serverless",
+      "plain": "Serverless means your code only runs when it's needed, instead of sitting on a computer that runs all the time. The hosting provider starts a fresh copy of your code for each request and shuts it down when it's done, like a pop-up stand that opens only when a customer walks up.",
+      "matters": "It usually costs little when nobody is using your app, but each request possibly starting from scratch can make things like holding a database connection open harder."
+    },
+    "server": {
+      "term": "Server",
+      "plain": "A server is a computer that stays on and runs your app's private code, the part that talks to databases, checks passwords and calls paid APIs. That's different from the browser, which only runs code the user can see and inspect.",
+      "matters": "Anything secret, like a database password or a payment API key, has to run on a server. Put it in browser code instead, and anyone can read it."
+    },
+    "cold-start": {
+      "term": "Cold start",
+      "plain": "A cold start is the short delay before serverless code runs for the first time in a while, because the host has to start up a fresh copy before it can handle the request. Once that copy is warm it usually answers quickly, until it's been idle long enough to shut down again.",
+      "matters": "It can make the first request after a quiet stretch feel slow, which matters most for anything people expect to feel instant, like loading a page."
+    },
+    "edge": {
+      "term": "Edge",
+      "plain": "Edge means your code runs on servers spread around the world, close to wherever the person using your app happens to be, instead of in one central location. It's like having a small shop in every neighborhood instead of one big warehouse across town.",
+      "matters": "It can make responses feel faster for a spread-out audience, but edge runtimes usually support fewer features than a full server does."
+    },
+    "persistent-disk": {
+      "term": "Persistent disk",
+      "plain": "A persistent disk is storage space attached to a server that keeps its files even after the app restarts or a new version is deployed. Without one, anything your app writes to disk while running can vanish the next time it restarts.",
+      "matters": "If any part of your stack keeps its data in a file instead of a hosted database, it needs a persistent disk, or that data disappears."
+    },
+    "environment-variable": {
+      "term": "Environment variable",
+      "plain": "An environment variable is a setting you give your app from outside its code, like a password slipped under the door instead of written on the door itself. You can set different values for each place your app runs, without changing the code.",
+      "matters": "Keys and passwords belong in environment variables, not typed into the code you write, so they don't end up visible to anyone who can see that code."
+    },
+    "api-key": {
+      "term": "API key",
+      "plain": "An API key is a password-like string that identifies your app to another company's service, so it knows who's making each request and who to bill for it. Whoever holds the key can use it to act as your app.",
+      "matters": "If an API key ends up somewhere a stranger can read it, like browser code, they can use it and run up your bill."
+    },
+    "secret-key": {
+      "term": "Secret key",
+      "plain": "A secret key is an API key meant to stay on your server only, and never get sent to a browser. It's often paired with a separate publishable key that's safe to expose.",
+      "matters": "A secret key with real power, like moving money, should only ever be read by server code, kept in an environment variable."
+    },
+    "publishable-key": {
+      "term": "Publishable key",
+      "plain": "A publishable key is the public-facing half of an API key pair, safe to put in browser code because it can only do limited things, like starting a checkout, not completing one on its own.",
+      "matters": "Knowing which key is publishable and which is secret keeps you from accidentally exposing the wrong one."
+    },
+    "webhook": {
+      "term": "Webhook",
+      "plain": "A webhook is a message another service sends to your server automatically when something happens on its side, like a payment succeeding or a delivery failing. Instead of your app repeatedly asking whether it happened yet, the other service tells you the moment it does.",
+      "matters": "Features like unlocking access right after a payment usually depend on your server correctly receiving and handling a webhook."
+    },
+    "relational-database": {
+      "term": "Relational database",
+      "plain": "A relational database stores information in tables of rows and columns, like a set of connected spreadsheets, and lets you define exactly how those tables relate, such as which orders belong to which customer.",
+      "matters": "It's a good fit when your data has clear relationships and you want the database itself to enforce rules, like every order needing a real customer."
+    },
+    "document-database": {
+      "term": "Document database",
+      "plain": "A document database stores each record as a flexible, self-contained document, closer to a JSON file than a spreadsheet row. Different documents in the same collection don't all have to share the same fields.",
+      "matters": "It's forgiving when your data's shape keeps changing early on, since you don't have to plan every field in advance."
+    },
+    "row-level-security": {
+      "term": "Row-level security",
+      "plain": "Row-level security lets a database enforce, for every row of data, who is allowed to read or change it, based on who's logged in. It's a check built into the database itself, not just your app's code.",
+      "matters": "It keeps protecting your data even if there's a bug in your app's own permission checks, because the database refuses the request either way."
+    },
+    "connection-pooling": {
+      "term": "Connection pooling",
+      "plain": "Connection pooling shares a small set of open database connections across many requests, instead of every request opening a brand new one. It's like a stand of shared taxis waiting to be reused, instead of everyone buying their own car.",
+      "matters": "Serverless hosting can start many copies of your code at once, and without pooling, each one opening its own connection can hit the database's connection limit."
+    },
+    "realtime": {
+      "term": "Realtime",
+      "plain": "Realtime means a service can push changes out to everyone watching the moment they happen, instead of waiting for someone to refresh or ask again. A chat where new messages just appear without reloading is realtime.",
+      "matters": "Without realtime built into your database or host, showing instant updates takes extra work, like running a separate service just to push changes out."
+    },
+    "websocket": {
+      "term": "WebSocket",
+      "plain": "A WebSocket is a connection between a browser and a server that both sides keep open, so either one can send a message at any moment, instead of the browser always asking first. A regular web request is closer to sending a letter and waiting for a reply.",
+      "matters": "Live features like chat or multiplayer usually need something that can hold WebSocket connections open, and not every host can do that."
+    },
+    "egress": {
+      "term": "Egress",
+      "plain": "Egress is data leaving a service, most often files or data being downloaded by users. Some storage and hosting providers charge for it separately from the cost of just storing the data.",
+      "matters": "A file that's cheap to store can still get expensive if a lot of people download it, because of egress."
+    },
+    "cdn": {
+      "term": "CDN",
+      "plain": "A CDN, short for content delivery network, is a network of servers around the world that keep copies of your files, so people can download them from somewhere nearby instead of one far-away server.",
+      "matters": "Serving images and files through a CDN usually makes an app feel faster for people far from your main server or database."
+    },
+    "merchant-of-record": {
+      "term": "Merchant of record",
+      "plain": "A merchant of record is the company that's legally the seller in a transaction, even though someone bought it through your app. It takes on calculating, collecting and sending off sales tax and VAT for wherever the customer is.",
+      "matters": "Without a merchant of record, figuring out sales tax across different regions is your job, not your payment provider's."
+    },
+    "sales-tax": {
+      "term": "Sales tax",
+      "plain": "Sales tax, or VAT outside the US, is a percentage a government adds to a sale, and the right amount depends on where the buyer is, not where you are. Someone has to calculate it, collect it, and send it to the correct government.",
+      "matters": "If your payment provider isn't a merchant of record, handling sales tax correctly as you sell to different places is on you."
+    },
+    "subscription": {
+      "term": "Subscription",
+      "plain": "A subscription is a payment that repeats automatically on a schedule, like every month or year, until it's cancelled, instead of a single one-time charge.",
+      "matters": "Recurring billing needs a payment provider that supports subscriptions specifically, including retrying failed renewal charges and handling cancellations."
+    },
+    "free-tier": {
+      "term": "Free tier",
+      "plain": "A free tier is a version of a paid service you can use at no cost, usually with limits on how much you can use before you have to start paying.",
+      "matters": "A free tier lets you build and test before you know whether the app is worth paying to run, though it's worth checking what changes once you outgrow it."
+    },
+    "rate-limit": {
+      "term": "Rate limit",
+      "plain": "A rate limit caps how many requests you're allowed to make to a service in a given stretch of time. Go over it, and the extra requests get rejected until the limit resets.",
+      "matters": "A busy moment in your app, like a lot of people using an AI feature at once, can hit a rate limit, so your app needs to handle that failure instead of just breaking."
+    },
+    "token": {
+      "term": "Token",
+      "plain": "A token is a small chunk of text an AI model reads or writes, roughly a word or part of a word. AI providers usually measure both usage and price in tokens rather than in whole requests.",
+      "matters": "Both what you send a model and what it sends back cost tokens, so longer conversations and documents cost more to run."
+    },
+    "model": {
+      "term": "Model",
+      "plain": "A model is the specific AI system your request goes to. Providers usually offer several, trading off speed, cost and capability against each other.",
+      "matters": "Picking a model more powerful, and more expensive, than a task actually needs is one of the easiest ways to overspend on AI features."
+    },
+    "cron": {
+      "term": "Cron",
+      "plain": "Cron is a way of telling a computer to run a piece of code automatically on a schedule, like every night at midnight, with no person or button click starting it. The name comes from an old Unix tool that did exactly this.",
+      "matters": "Anything that should happen on its own on a timer, like a daily digest email, needs something that can run cron-style scheduled code."
+    },
+    "background-job": {
+      "term": "Background job",
+      "plain": "A background job is work your app does outside of answering a person's request directly, like resizing an image or sending a batch of emails after someone clicks a button. The person doesn't have to sit and wait for it to finish.",
+      "matters": "Anything slow shouldn't run while someone is staring at a loading page. It should be handed off as a background job instead."
+    },
+    "queue": {
+      "term": "Queue",
+      "plain": "A queue is a waiting line for work that still needs to be done: jobs get added at one end and are handled one at a time from the other, in order. A well-built queue can retry a job automatically if it fails, instead of losing it.",
+      "matters": "Queues make background work reliable, since a job that fails partway is still sitting in the queue to try again, rather than gone for good."
+    },
+    "transactional-email": {
+      "term": "Transactional email",
+      "plain": "Transactional email is a message your app sends automatically because of something one specific person did, like resetting a password or confirming an order. It's different from a newsletter sent to everyone at once.",
+      "matters": "Transactional email needs to arrive quickly and reliably, since people are often actively waiting on it, like a sign-up code."
+    },
+    "smtp": {
+      "term": "SMTP",
+      "plain": "SMTP is the standard protocol computers have used for decades to hand mail off between servers so it reaches an inbox, the way the postal system uses one standard process that works no matter who mailed the letter. Most email-sending services let you send through SMTP, through their own API, or both.",
+      "matters": "You don't need to understand SMTP deeply, but it's the older, universal option, useful as a fallback if a nicer method doesn't fit your setup."
+    },
+    "domain-verification": {
+      "term": "Domain verification",
+      "plain": "Domain verification is proving to an email service that you really control the domain name you want to send from, usually by adding a specific record to that domain's DNS settings. It stops anyone from sending email pretending to be from a domain they don't own.",
+      "matters": "Without it, email you send is more likely to land in spam, or the service may not let you send from your own domain at all."
+    },
+    "sdk": {
+      "term": "SDK",
+      "plain": "An SDK, short for software development kit, is a ready-made package of code a provider gives you so you can use their service from your app without building that connection yourself from scratch.",
+      "matters": "A service with an SDK for the platform you're building on, like a phone app, saves you from writing and maintaining that connection code yourself."
+    },
+    "react-native": {
+      "term": "React Native",
+      "plain": "React Native is a framework for building phone apps using patterns from web development, so some of the same skills and logic can carry over from a website to an iPhone or Android app.",
+      "matters": "If a phone app is a possibility later, tools that share ground with React Native, or services with a React Native SDK, can save you from starting over."
+    },
+    "app-store": {
+      "term": "App store",
+      "plain": "An app store, like Apple's App Store or Google Play, is where people find and download phone apps, and both review every app before letting it in. That review can include checking how you handle payments and personal data.",
+      "matters": "Publishing a phone app means planning for app store review and rules, not just finishing the code."
+    },
+    "oauth": {
+      "term": "OAuth",
+      "plain": "OAuth is a way to log in to your app using an account from somewhere else, like an email or social account, without ever giving your app that other service's password. Your app is simply told that it's really them, once the person approves it there.",
+      "matters": "It's usually faster for people to sign up with a button than a form, since there's no new password to create or remember."
+    },
+    "magic-link": {
+      "term": "Magic link",
+      "plain": "A magic link is a one-time sign-in link sent to someone's email that logs them in when they click it, instead of them typing a password. It works because only the real owner of that inbox can click it.",
+      "matters": "It removes passwords entirely for the people who use it, which also removes the risk of someone reusing a weak or stolen one."
+    },
+    "signed-url": {
+      "term": "Signed URL",
+      "plain": "A signed URL is a link to a private file that works temporarily because it carries a code proving it was approved, rather than the file being made public to anyone with the link forever. It usually stops working after a set stretch of time.",
+      "matters": "Signed URLs let a browser upload or download a private file directly, without every byte having to pass through your own server first."
+    },
+    "portability": {
+      "term": "Portability",
+      "plain": "Portability is how easily you could swap one part of your stack for another later, if you needed to. A highly portable choice uses common, standard patterns, while a less portable one ties your app closely to that one provider's own way of doing things.",
+      "matters": "Portability rarely matters most when you're just trying to ship. It starts to matter if a provider changes its pricing, or your app outgrows what they offer."
+    },
+    "vendor-lock-in": {
+      "term": "Vendor lock-in",
+      "plain": "Vendor lock-in is how stuck you'd be with one provider, where switching away would mean rewriting a real chunk of your app instead of just changing a setting. It comes from leaning heavily on features only that one provider offers.",
+      "matters": "Some lock-in is a fair trade for building faster. It's worth knowing where you have it, so a price change or outage elsewhere doesn't blindside you."
+    }
+  }
+}

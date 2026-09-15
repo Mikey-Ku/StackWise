@@ -5,3 +5,7 @@ export * from "./followups";
 export * from "./prefill";
 export * from "./cost";
 export * from "./spec";
+export * from "./checklist";
+export * from "./decisions";
+export * from "./share";
+export * from "./staleness";

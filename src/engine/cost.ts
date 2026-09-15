@@ -1,6 +1,6 @@
 import { needIsOn, optionIn, readFact, type CatalogIndex } from "./evaluate";
 import { freePlanFits, nextSize } from "./score";
-import { SLOT_IDS, type Option, type PlanInput, type Selection, type SizeId, type SlotId } from "./schema";
+import { SIZE_IDS, SLOT_IDS, type Option, type PlanInput, type Selection, type SizeId, type SlotId } from "./schema";
 
 /**
  * Cost at the level a beginner needs: is it free at my size, and what is the first bill when it
@@ -126,6 +126,11 @@ export function costOutlook(index: CatalogIndex, selection: Selection, input: Pl
     now: costSummary(index, selection, input),
     next: next ? costSummary(index, selection, { ...input, size: next }) : null,
   };
+}
+
+/** The plan's cost at every audience size, to show where each free plan runs out. */
+export function costBySize(index: CatalogIndex, selection: Selection, input: PlanInput): CostSummary[] {
+  return SIZE_IDS.map((size) => costSummary(index, selection, { ...input, size }));
 }
 
 export function describeTotal(summary: CostSummary): string {

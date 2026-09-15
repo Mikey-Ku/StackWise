@@ -15,10 +15,21 @@ describe("spec pack", () => {
   const plan = input({ saves_data: "yes", users_pay: "yes" });
   const selection = { framework: "fw-server", hosting: "host-server", database: "db-file", payments: "pay-card" };
 
-  it("writes the spec, the setup checklist and a file for the chosen builder", () => {
-    expect(buildSpecPack(index, plan, selection, details).map((f) => f.name)).toEqual(["SPEC.md", "SETUP.md", "CLAUDE.md"]);
-    expect(buildSpecPack(index, plan, selection, { ...details, builderId: "lovable" }).map((f) => f.name)).toEqual(["SPEC.md", "SETUP.md", "PROMPT.txt"]);
+  it("writes the spec, the setup checklist, a file for the chosen builder and the decision record", () => {
+    expect(buildSpecPack(index, plan, selection, details).map((f) => f.name)).toEqual(["SPEC.md", "SETUP.md", "CLAUDE.md", "DECISIONS.md"]);
+    expect(buildSpecPack(index, plan, selection, { ...details, builderId: "lovable" }).map((f) => f.name)).toEqual([
+      "SPEC.md",
+      "SETUP.md",
+      "PROMPT.txt",
+      "DECISIONS.md",
+    ]);
     expect(buildSpecPack(index, plan, selection, { ...details, builderId: "cursor" })[2].name).toBe("AGENTS.md");
+  });
+
+  it("includes the cost at every audience size", () => {
+    const [spec] = buildSpecPack(index, plan, selection, details);
+    expect(spec.content).toContain("| Monthly users | Estimated monthly cost |");
+    expect(spec.content).toContain("| More |");
   });
 
   it("turns warnings into rules the builder must follow", () => {

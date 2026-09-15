@@ -1,0 +1,51 @@
+{
+  "id": "sendgrid",
+  "name": "Twilio SendGrid",
+  "provider": "twilio",
+  "slots": ["email"],
+  "summary": "Twilio SendGrid is a widely used email sending service for transactional and marketing email, now part of Twilio.",
+  "website": "https://sendgrid.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "The old permanent free plan is gone. New accounts get a 60-day trial capped at 100 emails a day, then sending stops.",
+      "source": "https://www.twilio.com/en-us/products/email-api/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 19.95,
+      "note": "Essentials plan starts at $19.95/month for up to 50,000 emails.",
+      "source": "https://www.twilio.com/en-us/products/email-api/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "SendGrid supports standard SMTP relay as well as its API, so switching providers mainly means changing SMTP credentials.",
+      "source": "https://www.twilio.com/docs/sendgrid/for-developers/sending-email/getting-started-smtp",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "The official @sendgrid/mail npm package is SendGrid's documented Node.js client and includes TypeScript types.",
+      "source": "https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-nodejs",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a SendGrid account and complete Domain Authentication for the domain you will send from.", "env": [], "source": "https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-nodejs" },
+    { "step": "Create an API key scoped to Mail Send in the dashboard.", "env": [], "source": "https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-nodejs" },
+    { "step": "Install the SDK with npm install @sendgrid/mail.", "env": [], "source": "https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-nodejs" },
+    { "step": "Add the key to your environment file.", "env": ["SENDGRID_API_KEY"], "source": "https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-nodejs" },
+    { "step": "Import @sendgrid/mail in a server route, set the API key, and call sgMail.send().", "env": [], "source": "https://www.twilio.com/docs/sendgrid/for-developers/sending-email/quickstart-nodejs" }
+  ],
+  "builder_notes": [
+    "Complete Domain Authentication before sending; unauthenticated sending hurts deliverability and can get blocked.",
+    "Keep SENDGRID_API_KEY server-side, and scope it to Mail Send only rather than Full Access unless you need other SendGrid features.",
+    "The free trial lasts only 60 days; plan to move to a paid plan before it ends or sending stops."
+  ]
+}

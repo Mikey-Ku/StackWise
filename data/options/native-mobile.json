@@ -1,0 +1,84 @@
+{
+  "id": "native-mobile",
+  "name": "Native (Swift and Kotlin)",
+  "provider": "open-source",
+  "slots": ["mobile"],
+  "summary": "Two separate native apps: Swift and Xcode build the iPhone version, Kotlin and Android Studio build the Android version.",
+  "website": "https://developer.apple.com/swift/",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Xcode and Android Studio are both free downloads with no required paid service to build, run or ship an app.",
+      "source": "https://apps.apple.com/us/app/xcode/id497799835?mt=12",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No paid plan. Both IDEs are free. Store fees apply separately and are not counted here.",
+      "source": "https://apps.apple.com/us/app/xcode/id497799835?mt=12",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "low",
+      "note": "Swift and Kotlin code share nothing with each other or with a cross-platform tool, so switching later means rewriting both apps.",
+      "source": "https://developer.apple.com/swift/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "language": {
+      "value": "Swift (iOS) and Kotlin (Android)",
+      "note": "Two separate codebases: Swift for iOS, and Kotlin, Google's recommended language, for Android.",
+      "source": "https://developer.android.com/kotlin/first",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "shares_react_skills": {
+      "value": false,
+      "note": "Neither platform uses React. Screens are built with SwiftUI or UIKit on iOS, and Jetpack Compose or Views on Android.",
+      "source": "https://developer.apple.com/swift/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "needs_mac_for_ios": {
+      "value": true,
+      "note": "Xcode, the only tool that builds and signs iOS apps, requires macOS on a Mac with an Apple M1 chip or newer.",
+      "source": "https://apps.apple.com/us/app/xcode/id497799835?mt=12",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Install Xcode from the Mac App Store and create a new iOS App project in Swift.",
+      "env": [],
+      "source": "https://developer.apple.com/documentation/xcode/creating-an-xcode-project-for-an-app"
+    },
+    {
+      "step": "Run it on the iOS Simulator or a connected iPhone to preview.",
+      "env": [],
+      "source": "https://developer.apple.com/documentation/xcode/running-your-app-in-simulator-or-on-a-device"
+    },
+    {
+      "step": "Install Android Studio and create a new Android project in Kotlin.",
+      "env": [],
+      "source": "https://developer.android.com/studio/intro"
+    },
+    {
+      "step": "Run it on the Android Emulator or a connected phone to preview.",
+      "env": [],
+      "source": "https://developer.android.com/studio/run"
+    },
+    {
+      "step": "Archive and sign each app separately: Xcode's Organizer for the App Store, Android Studio's release build for Google Play.",
+      "env": [],
+      "source": "https://developer.android.com/studio/publish"
+    }
+  ],
+  "builder_notes": [
+    "Never hardcode API keys in Info.plist, xcconfig files, BuildConfig or strings.xml. An IPA or APK can be unzipped, so anything embedded at build time is readable.",
+    "Call anything that needs a private key from your own backend. Use Keychain on iOS and the Keystore system on Android only for secrets issued to a signed-in user, not build-time API keys."
+  ]
+}

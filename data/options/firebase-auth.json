@@ -41,6 +41,13 @@
       "source": "https://github.com/firebase/firebaseui-web",
       "retrieved": "2026-09-15",
       "status": "draft"
+    },
+    "builtin_email_production_ready": {
+      "value": true,
+      "note": "Free Spark plan allows 1,000 verification and 150 password-reset emails per day; email-link sign-in is capped much lower, at 5 per day.",
+      "source": "https://firebase.google.com/docs/auth/limits",
+      "retrieved": "2026-09-15",
+      "status": "draft"
     }
   },
   "setup": [

@@ -1,5 +1,5 @@
-import { evaluateCapabilityRule, indexCatalog, ruleSlots } from "./evaluate";
-import type { Catalog, FactDef, FactValue, PlanInput, Selection } from "./schema";
+import { evaluateCapabilityRule, factSlots, indexCatalog, ruleSlots } from "./evaluate";
+import type { Catalog, FactDef, FactValue, Learn, PlanInput, Selection, SlotId } from "./schema";
 
 /**
  * Cross-file checks the schemas alone can't express. The data tests fail on any problem listed
@@ -7,7 +7,7 @@ import type { Catalog, FactDef, FactValue, PlanInput, Selection } from "./schema
  * fact its slots need, and every pair of fully covered options must get a real verdict.
  */
 
-function valueMatches(def: FactDef, value: FactValue, frameworkIds: string[]): boolean {
+export function valueMatches(def: FactDef, value: FactValue, frameworkIds: string[]): boolean {
   if (value === null) return true; // null is "unverified"; coverage rules decide whether that's allowed
   switch (def.type) {
     case "enum":
@@ -85,7 +85,11 @@ export function checkCatalog(catalog: Catalog): string[] {
     const slots = ruleSlots(rule);
     if (slots.length > 2) problems.push(`rule ${rule.id}: reads ${slots.length} slots; rules may read at most two`);
     for (const need of rule.needs) if (!needIds.has(need)) problems.push(`rule ${rule.id}: unknown need "${need}"`);
+    if (factSlots(rule).length === 0 && rule.when.every((c) => c.filled === false)) {
+      problems.push(`rule ${rule.id}: only checks for empty slots, so it would fire on almost every plan`);
+    }
     for (const c of rule.when) {
+      if (c.filled !== undefined || !c.fact) continue; // emptiness checks read no facts
       const def = catalog.facts[c.fact];
       if (!def) {
         problems.push(`rule ${rule.id}: unknown fact "${c.fact}"`);
@@ -117,8 +121,20 @@ export function checkCatalog(catalog: Catalog): string[] {
     if (need.only_if && !needIds.has(need.only_if)) problems.push(`need ${need.id}: only_if refers to unknown need "${need.only_if}"`);
   }
 
-  for (const text of strings([catalog.needs, catalog.capabilityRules, catalog.productRules, catalog.slots, catalog.facts])) {
-    if (text.includes("—")) problems.push(`rules or questions contain an em dash: "${text.slice(0, 60)}"`);
+  const learnSlots = catalog.learn.slots as Partial<Learn["slots"]>;
+  for (const slot of catalog.slots) {
+    const entry = learnSlots[slot.id as SlotId];
+    if (!entry) {
+      problems.push(`learn.json has no explainer for the ${slot.id} slot`);
+      continue;
+    }
+    for (const term of entry.terms) {
+      if (!catalog.learn.terms[term]) problems.push(`learn.json: the ${slot.id} explainer uses unknown term "${term}"`);
+    }
+  }
+
+  for (const text of strings([catalog.needs, catalog.capabilityRules, catalog.productRules, catalog.slots, catalog.facts, catalog.learn])) {
+    if (text.includes("—")) problems.push(`rules, questions or teaching text contain an em dash: "${text.slice(0, 60)}"`);
   }
 
   return problems;
@@ -140,16 +156,22 @@ export function unverifiedPairs(catalog: Catalog): string[] {
 
   for (const rule of catalog.capabilityRules) {
     const slots = ruleSlots(rule);
-    const [a, b] = slots;
-    const listA = full.filter((o) => o.slots.includes(a));
-    const listB = b ? full.filter((o) => o.slots.includes(b)) : [undefined];
-    for (const oa of listA) {
-      for (const ob of listB) {
-        const selection: Selection = { [a]: oa.id, ...(b && ob ? { [b]: ob.id } : {}) };
+    const readsFacts = new Set(factSlots(rule));
+    // A slot the rule reads facts from takes every fully researched option. A slot it only checks
+    // for emptiness is also tried empty.
+    const choices = slots.map((slot) => {
+      const ids = full.filter((o) => o.slots.includes(slot)).map((o) => o.id);
+      return readsFacts.has(slot) ? ids : ["", ...ids];
+    });
+    const walk = (i: number, selection: Selection) => {
+      if (i === slots.length) {
         const result = evaluateCapabilityRule(index, selection, input, rule);
-        if (result?.level === "unknown") gaps.push(`${rule.id}: ${[oa.id, ob?.id].filter(Boolean).join(" + ")}`);
+        if (result?.level === "unknown") gaps.push(`${rule.id}: ${Object.values(selection).filter(Boolean).join(" + ")}`);
+        return;
       }
-    }
+      for (const id of choices[i]) walk(i + 1, id ? { ...selection, [slots[i]]: id } : selection);
+    };
+    walk(0, {});
   }
   return gaps;
 }

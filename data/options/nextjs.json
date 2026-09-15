@@ -2,7 +2,9 @@
   "id": "nextjs",
   "name": "Next.js",
   "provider": "open-source",
-  "slots": ["framework"],
+  "slots": [
+    "framework"
+  ],
   "summary": "A React framework for full web apps, with pages and private server code in one project.",
   "website": "https://nextjs.org",
   "coverage": "full",
@@ -38,6 +40,13 @@
     "has_server_code": {
       "value": true,
       "note": "Route handlers, server components and server actions run only on the server, so secrets stay private.",
+      "source": "https://nextjs.org/docs",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "uses_react": {
+      "value": true,
+      "note": "Next.js is a framework for React; pages and components are React components.",
       "source": "https://nextjs.org/docs",
       "retrieved": "2026-09-15",
       "status": "draft"

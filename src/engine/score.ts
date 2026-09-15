@@ -12,7 +12,17 @@ import {
   type CheckResult,
   type Level,
 } from "./evaluate";
-import { SIZE_IDS, SLOT_IDS, type Option, type PlanInput, type PriorityId, type Selection, type SlotId, type Weights } from "./schema";
+import {
+  SIZE_IDS,
+  SLOT_IDS,
+  type CapabilityRule,
+  type Option,
+  type PlanInput,
+  type PriorityId,
+  type Selection,
+  type SlotId,
+  type Weights,
+} from "./schema";
 
 /**
  * Ranking. The rules say what works; scoring picks among what works. Every number comes from a
@@ -164,8 +174,12 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
     candidates.set(slot, list);
   }
 
-  const unaryRules = index.catalog.capabilityRules.filter((r) => ruleSlots(r).length === 1);
-  const pairRules = index.catalog.capabilityRules.filter((r) => ruleSlots(r).length === 2);
+  // Classify each rule by the slots it reads that are part of this search. A slot outside the
+  // search is empty in every candidate plan, so a rule that also checks that slot is still a
+  // one-slot (or two-slot) rule here, and a rule touching no searched slot is the same for all.
+  const searched = (rule: CapabilityRule) => ruleSlots(rule).filter((s) => order.includes(s));
+  const unaryRules = index.catalog.capabilityRules.filter((r) => searched(r).length === 1);
+  const pairRules = index.catalog.capabilityRules.filter((r) => searched(r).length === 2);
 
   const unary = new Map<string, number>();
   for (const slot of order) {
@@ -173,7 +187,7 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
       const selection: Selection = { [slot]: option.id };
       let value = weighted(criterionScores(index, option, slot, input), weights);
       for (const rule of unaryRules) {
-        if (ruleSlots(rule)[0] !== slot) continue;
+        if (searched(rule)[0] !== slot) continue;
         const result = evaluateCapabilityRule(index, selection, input, rule);
         if (result) value += resultAdjustment(index, result.level);
       }
@@ -193,7 +207,7 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
           const selection: Selection = { [a]: oa.id, [b]: ob.id };
           let value = 0;
           for (const rule of pairRules) {
-            const slots = ruleSlots(rule);
+            const slots = searched(rule);
             if (slots[0] !== a || slots[1] !== b) continue;
             const result = evaluateCapabilityRule(index, selection, input, rule);
             if (result) value += resultAdjustment(index, result.level);

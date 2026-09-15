@@ -2,7 +2,9 @@
   "id": "sveltekit",
   "name": "SvelteKit",
   "provider": "open-source",
-  "slots": ["framework"],
+  "slots": [
+    "framework"
+  ],
   "summary": "A framework for full web apps using Svelte, with pages and private server code in one project.",
   "website": "https://svelte.dev",
   "coverage": "full",
@@ -38,6 +40,13 @@
     "has_server_code": {
       "value": true,
       "note": "Server load functions, form actions and API routes run only on the server, so secrets stay private.",
+      "source": "https://svelte.dev/docs/kit/introduction",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "uses_react": {
+      "value": false,
+      "note": "SvelteKit uses Svelte components, not React.",
       "source": "https://svelte.dev/docs/kit/introduction",
       "retrieved": "2026-09-15",
       "status": "draft"

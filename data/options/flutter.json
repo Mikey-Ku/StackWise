@@ -1,0 +1,79 @@
+{
+  "id": "flutter",
+  "name": "Flutter",
+  "provider": "open-source",
+  "slots": ["mobile"],
+  "summary": "A free toolkit from Google for building an iPhone and Android app from one Dart codebase.",
+  "website": "https://flutter.dev",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Flutter is free and open source under the BSD-3-Clause license, with no required hosted service to build or ship an app.",
+      "source": "https://github.com/flutter/flutter",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No paid plan. The SDK is free. Optional extras like paid CI minutes cost money only if you choose them.",
+      "source": "https://github.com/flutter/flutter",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "low",
+      "note": "Flutter draws every widget itself in Dart instead of using native UI components, so switching to Native or Expo means rewriting the whole app.",
+      "source": "https://docs.flutter.dev/resources/architectural-overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "language": {
+      "value": "Dart",
+      "note": "The entire app, UI and logic, is written in Dart and compiled to native ARM code.",
+      "source": "https://docs.flutter.dev/resources/architectural-overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "shares_react_skills": {
+      "value": false,
+      "note": "Screens are built with Flutter's own Dart widgets, not React, so React patterns do not carry over.",
+      "source": "https://docs.flutter.dev/resources/architectural-overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "needs_mac_for_ios": {
+      "value": true,
+      "note": "Xcode is required to build and release the iOS app, and the official guide says you must use a device running macOS.",
+      "source": "https://docs.flutter.dev/deployment/ios",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Install the Flutter SDK, plus Xcode on a Mac for iOS or Android Studio for Android.",
+      "env": [],
+      "source": "https://docs.flutter.dev/install/quick"
+    },
+    {
+      "step": "Create a new app with flutter create my_app.",
+      "env": [],
+      "source": "https://docs.flutter.dev/get-started/test-drive"
+    },
+    {
+      "step": "Run flutter run to launch it on a simulator, emulator or connected phone with hot reload.",
+      "env": [],
+      "source": "https://docs.flutter.dev/get-started/test-drive"
+    },
+    {
+      "step": "Build a release with flutter build ipa for iOS or flutter build appbundle for Android.",
+      "env": [],
+      "source": "https://docs.flutter.dev/deployment/android"
+    }
+  ],
+  "builder_notes": [
+    "Never hardcode API keys as string literals or pass them with --dart-define. Both end up as readable plain text in the compiled app.",
+    "Code obfuscation only renames symbols. It does not encrypt strings or protect secrets. Call anything that needs a private key from your own backend."
+  ]
+}

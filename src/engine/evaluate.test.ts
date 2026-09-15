@@ -77,6 +77,43 @@ describe("capability rules", () => {
   });
 });
 
+describe("rules that check whether a slot is filled", () => {
+  it("drops the long-jobs warning once a jobs service is in the plan", () => {
+    const answers = { long_jobs: "yes" } as const;
+    expect(find(evaluatePlan(index, { hosting: "host-serverless" }, input(answers)), "long-jobs-need-workers")?.level).toBe("warning");
+    const withJobs = evaluatePlan(index, { hosting: "host-serverless", jobs: "jobs-durable" }, input(answers));
+    expect(find(withJobs, "long-jobs-need-workers")).toBeUndefined();
+    expect(find(withJobs, "long-jobs-in-service")?.level).toBe("info");
+  });
+
+  it("still warns when the jobs service only calls back into the app", () => {
+    const results = evaluatePlan(index, { hosting: "host-serverless", jobs: "jobs-caller" }, input({ long_jobs: "yes", scheduled_tasks: "yes" }));
+    expect(find(results, "long-jobs-service-too-short")?.level).toBe("warning");
+    expect(find(results, "schedule-service-without-cron")?.level).toBe("warning");
+    expect(find(results, "schedule-needs-cron")).toBeUndefined();
+  });
+
+  it("asks for an email service when login can't send its own emails", () => {
+    const plan = { login: "login-lib" };
+    expect(find(evaluatePlan(index, plan, input({ login: "yes" })), "login-emails-need-a-sender")?.level).toBe("warning");
+    const withEmail = evaluatePlan(index, { ...plan, email: "email-send" }, input({ login: "yes" }));
+    expect(find(withEmail, "login-emails-need-a-sender")).toBeUndefined();
+    expect(find(withEmail, "login-emails-through-service")?.builder).toContain("email-send");
+    expect(find(evaluatePlan(index, { login: "login-acme" }, input({ login: "yes" })), "login-emails-need-a-sender")).toBeUndefined();
+  });
+
+  it("checks the phone app against login, database and the framework", () => {
+    const results = evaluatePlan(index, { framework: "fw-server", login: "login-lib", database: "db-file", mobile: "mobile-other" }, input());
+    expect(find(results, "mobile-app-login")?.level).toBe("warning");
+    expect(find(results, "mobile-app-database")?.level).toBe("info");
+    expect(find(results, "mobile-react-split")?.level).toBe("info");
+    expect(find(results, "ios-builds-need-a-mac")?.level).toBe("info");
+    const shared = evaluatePlan(index, { framework: "fw-server", mobile: "mobile-react" }, input());
+    expect(find(shared, "mobile-react-shared")?.level).toBe("info");
+    expect(find(shared, "ios-builds-need-a-mac")).toBeUndefined();
+  });
+});
+
 describe("product rules", () => {
   it("adds perks for an exact pair", () => {
     const results = evaluatePlan(index, { login: "login-acme", database: "db-hosted" }, input());

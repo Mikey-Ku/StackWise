@@ -26,16 +26,15 @@ import { VerdictBadge, VerdictDot, cx, type Verdict } from "./ui";
  */
 
 type OuterSlot = Exclude<SlotId, "framework">;
-const OUTER: OuterSlot[] = ["hosting", "database", "login", "files", "payments", "ai"];
+const OUTER: OuterSlot[] = ["hosting", "database", "login", "email", "files", "payments", "ai", "jobs", "mobile"];
 
-const POSITION: Record<OuterSlot, { x: number; y: number }> = {
-  hosting: { x: 0, y: -240 },
-  database: { x: 305, y: -100 },
-  login: { x: 305, y: 140 },
-  files: { x: 0, y: 280 },
-  payments: { x: -305, y: 140 },
-  ai: { x: -305, y: -100 },
-};
+/** Parts sit on an ellipse around the app, clockwise from hosting at the top. */
+const POSITION = Object.fromEntries(
+  OUTER.map((slot, i) => {
+    const angle = ((-90 + i * 40) * Math.PI) / 180;
+    return [slot, { x: Math.round(400 * Math.cos(angle)), y: Math.round(300 * Math.sin(angle)) }];
+  }),
+) as Record<OuterSlot, { x: number; y: number }>;
 
 /** Keep the whole plan in view when the panel resizes or the plan's shape changes. */
 function AutoFit({ shape }: { shape: string }) {
@@ -55,14 +54,12 @@ function AutoFit({ shape }: { shape: string }) {
   return null;
 }
 
-const SIDE: Record<OuterSlot, { app: Position; slot: Position }> = {
-  hosting: { app: Position.Top, slot: Position.Bottom },
-  database: { app: Position.Right, slot: Position.Left },
-  login: { app: Position.Right, slot: Position.Left },
-  files: { app: Position.Bottom, slot: Position.Top },
-  payments: { app: Position.Left, slot: Position.Right },
-  ai: { app: Position.Left, slot: Position.Right },
-};
+const SIDE = Object.fromEntries(
+  OUTER.map((slot) => {
+    const { source, target } = sideToward({ x: 0, y: 0 }, POSITION[slot]);
+    return [slot, { app: source, slot: target }];
+  }),
+) as Record<OuterSlot, { app: Position; slot: Position }>;
 
 interface CanvasActions {
   select: (slot: SlotId) => void;

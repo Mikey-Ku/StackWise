@@ -1,0 +1,50 @@
+{
+  "id": "amazon-ses",
+  "name": "Amazon SES",
+  "provider": "aws",
+  "slots": ["email"],
+  "summary": "Amazon SES is Amazon's low-cost email sending service that you connect directly through your own AWS account.",
+  "website": "https://aws.amazon.com/ses/",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "No ongoing free plan. New accounts get 3,000 emails a month free for the first 12 months only, then every email is billed.",
+      "source": "https://aws.amazon.com/ses/faqs/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "Pricing is pay-as-you-go from about $0.10 per 1,000 emails, with no monthly plan or minimum on the standard tier.",
+      "source": "https://aws.amazon.com/ses/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "SES sends over standard SMTP as well as its API, so switching providers mainly means changing SMTP credentials.",
+      "source": "https://docs.aws.amazon.com/ses/latest/dg/send-email-smtp.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "The official @aws-sdk/client-sesv2 package, part of the AWS SDK for JavaScript v3, has TypeScript types built in.",
+      "source": "https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/ses-examples.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create an AWS account, then verify at least one email address or domain to send from in the SES console.", "env": [], "source": "https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html" },
+    { "step": "Request production access to move out of the sandbox; until approved you can only send to your own verified addresses.", "env": [], "source": "https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html" },
+    { "step": "Install the SDK with npm install @aws-sdk/client-sesv2.", "env": [], "source": "https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/ses-examples.html" },
+    { "step": "Create an IAM user scoped to SES sending and add its access key, secret key, and region to your environment file.", "env": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"], "source": "https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/ses-examples.html" },
+    { "step": "Send email from a server route using SESv2Client and SendEmailCommand.", "env": [], "source": "https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/ses-examples.html" }
+  ],
+  "builder_notes": [
+    "New accounts start in the SES sandbox and can only send to verified addresses until you request production access, which can take up to 24 hours.",
+    "Keep AWS_SECRET_ACCESS_KEY out of client code; call SES only from server-side routes using an IAM user scoped to ses:SendEmail."
+  ]
+}

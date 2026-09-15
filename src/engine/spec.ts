@@ -1,7 +1,9 @@
-import { costOutlook, describeTotal } from "./cost";
+import { BUILD_ORDER } from "./checklist";
+import { costBySize, costOutlook, describeTotal } from "./cost";
+import { buildDecisionRecord } from "./decisions";
 import { evaluatePlan, needIsOn, optionIn, type CatalogIndex, type CheckResult } from "./evaluate";
 import { CRITERIA, CRITERION_LABELS, criterionScores } from "./score";
-import type { Answer, PlanInput, Selection, SlotId } from "./schema";
+import type { Answer, PlanInput, Selection } from "./schema";
 
 /**
  * The spec pack: what the beginner walks away with. SPEC.md explains the plan, SETUP.md is the
@@ -22,7 +24,6 @@ export interface SpecFile {
   content: string;
 }
 
-const BUILD_ORDER: SlotId[] = ["framework", "database", "login", "files", "payments", "ai", "hosting"];
 const PROBLEM_LEVELS = new Set(["blocked", "missing", "warning", "unknown"]);
 
 function unique(items: string[]): string[] {
@@ -37,7 +38,8 @@ function answerLabel(answer: Answer | undefined): string {
 }
 
 function resultLine(r: CheckResult): string {
-  return `- **${r.title}.** ${r.explanation}${r.fix ? ` Fix: ${r.fix}` : ""}`;
+  const sources = r.sources?.length ? ` Sources: ${r.sources.join(", ")}` : "";
+  return `- **${r.title}.** ${r.explanation}${r.fix ? ` Fix: ${r.fix}` : ""}${sources}`;
 }
 
 export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: Selection, details: SpecDetails): SpecFile[] {
@@ -138,6 +140,10 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     `At ${sizeLabel(outlook.now.size)} people: ${describeTotal(outlook.now)}.`,
     ...(outlook.next ? ["", `At ${sizeLabel(outlook.next.size)} people: ${describeTotal(outlook.next)}.`] : []),
     "",
+    "| Monthly users | Estimated monthly cost |",
+    "|---|---|",
+    ...costBySize(index, selection, input).map((s) => `| ${catalog.planning.sizes.find((z) => z.id === s.size)?.label ?? s.size} | ${describeTotal(s)} |`),
+    "",
     "## Build order",
     "",
     ...tasks,
@@ -221,5 +227,12 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
         ? { name: "AGENTS.md", content: agentGuide }
         : { name: "PROMPT.txt", content: prompt };
 
-  return [{ name: "SPEC.md", content: spec }, { name: "SETUP.md", content: setup }, builderFile];
+  const decisions = buildDecisionRecord(index, input, selection, { appName: name, generatedOn: details.generatedOn });
+
+  return [
+    { name: "SPEC.md", content: spec },
+    { name: "SETUP.md", content: setup },
+    builderFile,
+    { name: "DECISIONS.md", content: decisions },
+  ];
 }
