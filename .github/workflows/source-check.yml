@@ -1,0 +1,46 @@
+name: Source check
+
+# Weekly: reread the page behind every fact, update what changed, and open a pull request so a
+# person reviews every change before it counts. Needs the ANTHROPIC_API_KEY repository secret and
+# "Allow GitHub Actions to create and approve pull requests" turned on in the repo settings.
+
+on:
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Skip without an API key
+        if: ${{ env.ANTHROPIC_API_KEY == '' }}
+        run: echo "ANTHROPIC_API_KEY isn't set for this repository, so there is nothing to check."
+
+      - name: Check sources
+        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        run: pnpm check:sources --apply --limit 25
+
+      - name: Open a pull request
+        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: data/source-check
+          title: "data: weekly source check"
+          commit-message: "data: weekly source check"
+          body-path: reports/source-check-latest.md
+          add-paths: data/options/*.json
