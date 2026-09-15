@@ -1,6 +1,6 @@
 # The data
 
-Everything WhyStack knows is in `data/`. Changes go through pull requests, and `pnpm check:data` must pass. As of 2026-09-15: 48 options (28 fully researched), 199 facts, 19 capability rules, 6 product rules, 10 questions.
+Everything WhyStack knows is in `data/`. Changes go through pull requests, and `pnpm check:data` must pass. As of 2026-09-15: 10 parts, 58 options (38 fully researched), 258 facts, 33 capability rules, 6 product rules, 11 questions, and 39 glossary terms.
 
 ## Options: `data/options/<id>.json`
 
@@ -53,11 +53,24 @@ Everything WhyStack knows is in `data/`. Changes go through pull requests, and `
 ```
 
 - Conditions use exactly one of `is`, `in` or `not`. `key_from_slot` reads a map fact by the id of the option in another slot (framework support).
+- A condition can instead be `{ "slot": "jobs", "filled": false }`: true while that part is empty. It reads no facts. A rule built only from `filled: false` conditions is rejected, because it would fire on almost every plan.
 - A rule reads at most two slots, and only facts in those slots' `required_facts`.
+- `sources` lists links for any number written into the rule text itself (like app store fees).
 - `needs` switch a rule on only when the beginner confirmed "yes".
 - `{slot}` placeholders become option names.
 
-**Product rules** (`data/rules/product.json`) name an exact pair. Their severity can be `blocked`, `warning` or `info`, never "works", so they can't overrule a capability rule.
+**Product rules** (`data/rules/product.json`) name an exact pair. Their severity can be `blocked`, `warning` or `info`, never "works", so they can't overrule a capability rule. A product rule's `info` note is a perk and adds a small bonus to a plan's score; a capability rule's `info` note is neutral.
+
+## Teaching content: `data/learn.json`
+
+`slots` has one entry per part (`what`, `why`, `choosing`, `watch_for`, `terms`), and `terms` is the glossary (`term`, `plain`, `matters`). Every term a part mentions must exist. It is written to stay true: no prices, limits or dates.
+
+## Adding or refreshing facts with Claude
+
+- `pnpm check:sources` rereads the page behind each fact and reports what's still supported, what changed and what's unclear. `--apply` edits the data: confirmed facts get today's date, contradicted facts get the corrected value only when it has the right type, and go back to `draft`. `--option <id>` and `--limit <pages>` narrow it. The weekly workflow in `.github/workflows/source-check.yml` does this and opens a pull request; it needs the `ANTHROPIC_API_KEY` secret and "Allow GitHub Actions to create and approve pull requests" in the repo settings.
+- `pnpm draft:option -- --id <id> --name "<Name>" --slot <slot> --website <url>` researches a service with web search and writes a draft file. Anything it couldn't confirm stays null and marks the file `partial`.
+
+Neither one marks a fact `verified`. Only a person does.
 
 ## Reviewing a fact
 
@@ -67,7 +80,7 @@ Everything WhyStack knows is in `data/`. Changes go through pull requests, and `
 
 ## Review these first
 
-All 199 facts are drafts. Research agents wrote the service files on 2026-09-15 and flagged these:
+All 258 facts are drafts. Research agents wrote the service files on 2026-09-15 and flagged these:
 
 - **Render and Railway `free_plan_commercial_use: false`** was inferred ("not for production", "we recommend Pro"), not taken from an explicit ban.
 - **Render `first_paid_usd_month` ($7)** came from third-party trackers because the pricing page wouldn't load for the agent.
@@ -76,6 +89,12 @@ All 199 facts are drafts. Research agents wrote the service files on 2026-09-15 
 - **Fly.io** has no free plan and no monthly plan since 2024; the null price is intentional.
 - **Supabase key names**: current quickstarts use `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The storage file was corrected to match.
 - **MongoDB Atlas `mobile_sdk: false`**: Atlas Device SDK reached end of life on 2025-09-30.
+- **Supabase Auth `builtin_email_production_ready: false`**: its built-in email is capped at a few messages an hour and marked not for production.
+- **Amazon SES and SendGrid `free_plan_covers: "none"`**: SES's free tier is now time-limited for new accounts, and SendGrid's permanent free plan was replaced by a trial. SES also starts in a sandbox that can only email verified addresses.
+- **Postmark's free plan** is 100 emails a month, meant for testing.
+- **Upstash QStash `long_running: false`**: it calls your own endpoint, so your host's request time limit still applies, unlike Inngest and Trigger.dev.
+- **Expo's free plan** caps builds per month and blocks further builds instead of charging.
+- **App store fees in `mobile-app-store-fees`**: $99 a year for the Apple Developer Program and a one-time $25 for Google Play, with sources in the rule.
 
 The framework files (`nextjs`, `react-vite`, `sveltekit`) and `sqlite-file` were written by Claude from each project's docs; their links were checked and all resolve, but the facts are still drafts.
 

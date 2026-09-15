@@ -102,7 +102,61 @@ Why, briefly: beginners don't live in terminals, so the desktop app and embedded
 
 ## 15. What the first build includes
 
-**Claude, accepted:** the deterministic core first. Rules, scoring, follow-ups, cost, spec pack and the full canvas UI are built and tested. The question pre-fill uses keywords, which becomes the baseline the AI pre-fill is measured against. The AI pre-fill, the AI fact checker and accounts come next.
+**Claude, accepted:** the deterministic core first. Rules, scoring, follow-ups, cost, spec pack and the full canvas UI were built and tested first. The keyword pre-fill stays as the baseline the AI pre-fill is measured against.
+
+---
+
+## Round two: "make this full" (2026-09-15)
+
+Michael asked for a repo and "as many features that I discussed" as possible. What follows was built from that request. The feature list traces back to his answers above; the design calls inside each feature were Claude's, so each still needs his own reasoning.
+
+## 16. Three more parts: background jobs, email, phone app
+
+**Claude, from Michael's answers 1 and 4** ("understand all the different components", "workflow automation", "setting up for mobile is good too"). The existing warnings told people to "add a job service" with nowhere to add one. Email covers receipts and password resets, and a phone app can now be added to a web plan so the mobile rules have something to check.
+
+**In your words:**
+
+## 17. Rules that check whether a part is filled
+
+**Claude.** A condition can now ask whether a slot is empty instead of reading a fact. That's what lets adding a background jobs service clear "long jobs can get cut off", and adding an email service clear "login emails need an email service". Rules still read at most two slots, and plan search is still exact (tested against trying every combination).
+
+**In your words:**
+
+## 18. AI pre-fill has to quote its evidence
+
+**Claude, building on Michael's answer 3.** For every yes or no, Claude must copy the exact words from the description. If those words aren't really there, the answer is thrown out and the question stays unanswered. A confident guess with invented evidence becomes "unclear" instead of a wrong answer. Without an API key, or on any error, keywords are used.
+
+**In your words:**
+
+## 19. Explanations only from the computed plan
+
+**Claude, from answer 8** (scoring decides, AI explains). "Explain my plan" sends Claude a brief built from the verdicts, scores and costs, never the raw catalog, and tells it not to add anything. Without a key, a template writes the same brief in fixed sentences.
+
+**In your words:**
+
+## 20. Only real pairings count as perks
+
+**Claude, fixing a bug found while testing.** Notes from capability rules used to add a small bonus. One note says "downloads cost money past the free amount", so storage that charges for downloads outscored storage that doesn't. Now only product-rule notes (two services built to work together) add a bonus, and every other note is neutral.
+
+**In your words:**
+
+## 21. Share links instead of accounts, for now
+
+**Claude, toward answer 12.** Accounts need a login provider and a database of your own, which is a choice for you to make. Until then, the whole plan is compressed into the link itself, so sharing needs no server and no sign-up. Several plans are saved in the browser, and plan files move them between machines.
+
+**In your words:**
+
+## 22. Evals are built, the cases are yours
+
+**Claude, following hard rule 1.** `eval:prefill` grades AI pre-fill against the keyword baseline (accuracy, yes precision and recall, opposite answers). `eval:plain-llm` counts how often a plain LLM picks a stack that breaks a rule, compared with WhyStack's plan. The grader is tested; `evals/prefill-cases.json` is empty until you write the cases.
+
+## 23. The source checker opens pull requests
+
+**Claude, from answer 9.** `check:sources` reads each fact's page and asks Claude whether it still says the same thing. Confirmed facts get a new date. Contradicted facts change only when the corrected value has the right type, and go back to draft. The weekly workflow opens a pull request, so a person reviews every change.
+
+## 24. Model and cost settings
+
+**Claude.** `claude-opus-5` at low effort, with server-side refusal fallbacks, 30 AI calls per visitor per hour by default. All four settings can be changed in `.env.local`.
 
 ---
 
@@ -116,6 +170,8 @@ Why, briefly: beginners don't live in terminals, so the desktop app and embedded
   4. A second eval: how often a plain LLM recommends a stack that breaks a rule, compared with the rule-grounded plan.
   5. Public repo, CI green, data checks passing.
 - **The eval set.** App descriptions with known right answers. Michael writes every case.
+- **Accounts.** Which login provider and database WhyStack itself should use, if plans should sync across devices.
+- **Public or private repo.** The repo was created private.
 - **Timing.** The Wheelhouse friends beta was planned for 2026-09-17.
 
 ## What changed from the brainstorm design
@@ -124,8 +180,9 @@ Why, briefly: beginners don't live in terminals, so the desktop app and embedded
 |---|---|
 | Solo founders and startup teams | Beginners first, experienced users second |
 | Desktop app with an embedded terminal | Web app, no terminal |
-| Electron, node-pty, SQLite | Next.js, JSON in git, localStorage for now |
-| Free-form architecture graph | Slots now, typed free-form graph later |
+| Electron, node-pty, SQLite | Next.js, JSON in git, localStorage and share links for now |
+| Free-form architecture graph | Slots now (ten parts), typed free-form graph later |
 | MCP server, change center, plan-vs-code checks, Figma | Later expert mode, or dropped for now |
-| 14-input cost simulator | Free-tier limits and first price jump |
+| 14-input cost simulator | Free-tier limits and first price jump, at every audience size |
 | Claude Code integration at the center | Agent-neutral spec pack for any builder |
+| AI as the planning assistant | AI reads and explains; rules decide; people review facts |

@@ -1,37 +1,46 @@
 # WhyStack: orientation for Claude sessions
 
-Planning tool for beginners building web apps with AI builders. A deterministic rules engine checks every connection in a stack against sourced facts, ranks what works, and exports a spec pack. Next.js 16 + React 19 + React Flow 12, TypeScript, Zod 4, Vitest 4, pnpm 12. Styles come from Michael's mk-ui (`src/styles/mk-ui.css`, copied from `Projects/mk-ui`).
+Planning tool for beginners building web apps with AI builders. A deterministic rules engine checks every connection in a stack against sourced facts, ranks what works, and exports a spec pack. Optional Claude features read descriptions, explain plans and keep facts fresh. Next.js 16 + React 19 + React Flow 12, TypeScript, Zod 4, Vitest 4, Anthropic SDK 0.125, pnpm 12. Styles come from Michael's mk-ui (`src/styles/mk-ui.css`, copied from `Projects/mk-ui`).
 
 ## Commands
 
 - `pnpm dev` runs on port 4310 (hub launch config name: `whystack`)
 - `pnpm test`, `pnpm check:data`, `pnpm typecheck`, `pnpm lint`, `pnpm build`
+- `pnpm eval:prefill`, `pnpm eval:plain-llm`, `pnpm check:sources [--apply]`, `pnpm draft:option -- ...` (these call Claude; they read `.env.local`)
 
 ## Map
 
-- `data/` is the product's knowledge. `src/engine/load.ts` parses it with the schemas in `src/engine/schema.ts`; `src/engine/integrity.ts` holds the cross-file checks the data tests enforce.
-- `src/engine/evaluate.ts` produces verdicts. `score.ts` ranks and searches (branch and bound, tested against brute force). `followups.ts` decides which questions matter. `cost.ts`, `spec.ts`, `prefill.ts` are what their names say.
-- `src/components/usePlan.ts` is all UI state (reducer + localStorage) and derived engine results. `Workspace.tsx` lays out Planner, PlanCanvas, Palette and Inspector.
+- `data/` is the product's knowledge. `src/engine/load.ts` parses it with `schema.ts`; `integrity.ts` holds the cross-file checks `data.test.ts` enforces.
+- `src/engine/evaluate.ts` produces verdicts. `score.ts` ranks and searches (branch and bound, tested against brute force). `followups.ts` picks questions. `cost.ts`, `spec.ts`, `checklist.ts`, `decisions.ts`, `share.ts`, `staleness.ts`, `summary.ts`, `prefill.ts` do what their names say.
+- `src/ai/` is server-only: `config.ts` (model, client, errors), `prefill.ts`, `explain.ts`, `rate-limit.ts`. Routes in `src/app/api/` always fall back to keywords or a template.
+- `src/components/store.ts` is all plan state as a pure reducer (plans, undo/redo, import, migration from v1); `usePlans.ts` wires it to the engine. `Workspace.tsx` lays out Planner, PlanCanvas, Palette, Inspector, LearnPanel, ChecklistPanel and the dialogs.
+- `scripts/` hold the evals, source checker and option drafter; their pure parts (`eval-core.ts`, `source-check-core.ts`) are tested.
 
 ## Invariants, do not break
 
-1. **The AI never decides compatibility.** Verdicts come from rules over facts. AI may pre-fill answers, explain, or draft facts for review.
-2. **Unknown is never "works".** A missing fact makes a check "unknown". A null price counts as "no monthly plan" only on an option with `coverage: "full"`.
-3. **Product rules can only tighten.** Their schema has no "works" severity. If a capability rule wrongly blocks a pair, fix the facts.
-4. **Rules read at most two slots**, and only facts listed in that slot's `required_facts`, so full coverage guarantees every check can run.
-5. **Every fact has a source URL, a retrieved date and a status.** New facts are `draft` until a person reviews them.
-6. **No em dashes** anywhere: data, UI copy, generated specs, docs. The data tests and spec tests check for them.
-7. **Engine tests use fixtures** (`test-fixtures.ts`), so provider price changes never break logic tests. Only `data.test.ts` reads real data.
+1. **The AI never decides compatibility.** Verdicts come from rules over facts. AI pre-fills answers (with quoted evidence that must exist in the description), explains a precomputed brief, or drafts facts for review.
+2. **Unknown is never "works".** A missing fact makes a check "unknown". A null price means "no monthly plan" only on a `coverage: "full"` option.
+3. **Product rules can only tighten.** Their schema has no "works" severity.
+4. **Rules read at most two slots**, and only facts in that slot's `required_facts`. A `{ slot, filled }` condition checks emptiness without reading facts.
+5. **Only product-rule notes are perks.** Capability-rule notes are neutral in scoring (`resultAdjustment`); a cost note once tipped storage toward the option with download fees.
+6. **Every fact has a source URL, a date and a status.** New facts are `draft` until a person reviews them.
+7. **No em dashes** in data, UI copy, generated files or docs. Code uses the `\u2014` escape when it has to mention one. The data, spec and AI tests check.
+8. **Engine tests use fixtures** (`test-fixtures.ts`); only `data.test.ts` reads real data. AI tests use a fake client; nothing in the test suite calls the API.
+9. **Default model is `claude-opus-5`** at low effort with `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`). Don't swap models for cost without Michael asking.
 
 ## Working with Michael
 
-- He owns decisions, the eval set (he writes every eval case), and first drafts of decision reasoning. See `docs/DECISIONS.md`; don't fill in his "reasoning in your words" lines.
-- Commits are authored by him with no Claude co-author trailer, and he pushes. Leave changes uncommitted unless he asks.
+- He owns decisions, the eval cases (he writes every one; never generate them), and first drafts of decision reasoning. Don't fill in the "In your words" lines in `docs/DECISIONS.md`.
+- Commits are authored by him (`Michael Ku <mikeyku24@gmail.com>`, set in this repo's git config) with no Claude co-author trailer. He asked for the repo to be created; ask before pushing further unless he says so.
 - Explain as you build; he wants to be able to defend every part of this in an interview.
+- Never put his API keys anywhere; he adds them to `.env.local` and to GitHub secrets himself.
 
 ## Gotchas
 
 - mk-ui's reset sets `svg { max-width: 100% }`, which shrinks React Flow's edge SVGs to 0px so edges vanish. `globals.css` overrides it inside the canvas.
 - The workspace renders client-only (`ClientRoot.tsx`, `ssr: false`) because state loads from localStorage.
+- React Strict Mode runs effects twice in development. The share-link import clears the hash first and remembers its token, or it imports the plan twice.
 - `page.tsx` is `force-dynamic` so edits to `data/` show up on refresh.
-- Browser screenshots in the preview pane can lag a render; verify state with `javascript_tool` before trusting a stale image.
+- Browser screenshots in the preview pane can lag a render, and the console buffer keeps errors from earlier hot reloads. Verify state with `javascript_tool` after a reload.
+- In the preview browser, clipboard writes fail because the document isn't focused; the share action falls back to showing the link in the toast.
+- `pnpm` scripts that call Claude use `tsx --env-file-if-exists=.env.local`, which needs Node 22.9 or newer.
