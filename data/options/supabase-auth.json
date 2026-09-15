@@ -1,0 +1,58 @@
+{
+  "id": "supabase-auth",
+  "name": "Supabase Auth",
+  "provider": "supabase",
+  "slots": ["login"],
+  "summary": "Supabase Auth is a built-in login system that handles sign-up, sign-in, sessions, and social logins for a Supabase project.",
+  "website": "https://supabase.com/auth",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Auth alone allows 50,000 monthly active users on the free plan, more than a typical small app needs.",
+      "source": "https://supabase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 25,
+      "note": "Billed on the same Pro plan as the database, from $25/month, which raises the included limit to 100,000 monthly active users.",
+      "source": "https://supabase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "The underlying Auth server is open source and self-hostable, but user records and tokens are Supabase-specific to migrate.",
+      "source": "https://supabase.com/docs/guides/auth",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "mobile_sdk": {
+      "value": true,
+      "note": "Official SDKs cover Flutter, Swift (iOS), Kotlin (Android), and React Native through the same client libraries as the database.",
+      "source": "https://supabase.com/blog/client-libraries-v2",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "prebuilt_ui": {
+      "value": true,
+      "note": "The old Auth UI React package is unmaintained; Supabase now ships ready-made sign-in screens through its official UI Library instead.",
+      "source": "https://supabase.com/ui/docs/react/password-based-auth",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Supabase account and a new project at supabase.com.", "env": [], "source": "https://supabase.com/docs/guides/auth/quickstarts/nextjs" },
+    { "step": "Scaffold a Next.js app using the official Supabase starter template, which includes working sign-up and login pages.", "env": [], "source": "https://supabase.com/docs/guides/auth/quickstarts/nextjs" },
+    { "step": "Copy the Project URL and publishable key from the project's Connect panel in the dashboard.", "env": [], "source": "https://supabase.com/docs/guides/auth/quickstarts/nextjs" },
+    { "step": "Add the URL and key to your environment file.", "env": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"], "source": "https://supabase.com/docs/guides/auth/quickstarts/nextjs" },
+    { "step": "Optionally add polished sign-in and sign-up screens from the official Supabase UI Library.", "env": [], "source": "https://supabase.com/ui/docs/react/password-based-auth" }
+  ],
+  "builder_notes": [
+    "Never expose the secret key to the browser; only the publishable key belongs in client-side code.",
+    "Pair every protected table with a Row Level Security policy that checks auth.uid(); Auth alone does not restrict database rows.",
+    "Skip the old @supabase/auth-ui-react package since it is unmaintained; use the official Supabase UI Library for prebuilt screens instead."
+  ]
+}

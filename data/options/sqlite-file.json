@@ -1,0 +1,77 @@
+{
+  "id": "sqlite-file",
+  "name": "SQLite file",
+  "provider": "open-source",
+  "slots": ["database"],
+  "summary": "A database that lives in a single file on your server's disk, with no separate service to run.",
+  "website": "https://www.sqlite.org",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free and public domain. The only cost is the disk it lives on.",
+      "source": "https://www.sqlite.org/about.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No paid plan.",
+      "source": "https://www.sqlite.org/about.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Standard SQL in one file you can copy anywhere.",
+      "source": "https://www.sqlite.org/about.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "storage_model": {
+      "value": "local_file",
+      "note": "Reads and writes an ordinary file on the disk of the machine running your app.",
+      "source": "https://www.sqlite.org/about.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "data_model": {
+      "value": "relational",
+      "note": "Tables and SQL, like Postgres or MySQL.",
+      "source": "https://www.sqlite.org/about.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "realtime_built_in": {
+      "value": false,
+      "note": "No way to push changes to browsers; your own server would have to do it.",
+      "source": "https://www.sqlite.org/whentouse.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "serverless_friendly": {
+      "value": false,
+      "note": "Needs a disk shared by every request, which serverless functions do not have.",
+      "source": "https://www.sqlite.org/whentouse.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "mobile_sdk": {
+      "value": false,
+      "note": "A phone app cannot reach a file on your server; it would go through your own API.",
+      "source": "https://www.sqlite.org/whentouse.html",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Add a SQLite library to your server code and choose a file path on a permanent disk.",
+      "env": ["DATABASE_URL"],
+      "source": "https://www.sqlite.org/about.html"
+    }
+  ],
+  "builder_notes": [
+    "Keep the database file on a persistent disk and back it up; it is lost on hosts without one."
+  ]
+}

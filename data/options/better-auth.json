@@ -1,0 +1,58 @@
+{
+  "id": "better-auth",
+  "name": "Better Auth",
+  "provider": "better-auth",
+  "slots": ["login"],
+  "summary": "Better Auth is a free, open-source code library you install and run yourself to add login to your app, instead of using a hosted service.",
+  "website": "https://www.better-auth.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "The core library is free open source with no user limits; you self-host it and only pay for your own database and hosting.",
+      "source": "https://www.better-auth.com/docs/installation",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No plan is required to use the library. An optional managed Infrastructure add-on with a dashboard and audit logs costs $20/month.",
+      "source": "https://better-auth.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "It stores users and sessions as plain tables in your own database, using standard sessions instead of a vendor-hosted store.",
+      "source": "https://www.better-auth.com/docs/installation",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "mobile_sdk": {
+      "value": true,
+      "note": "An official Expo plugin handles secure token storage and deep-link sign-in for React Native apps.",
+      "source": "https://better-auth.com/docs/integrations/expo",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "prebuilt_ui": {
+      "value": false,
+      "note": "The library is headless by design and ships no screens; a separate community project offers optional UI components.",
+      "source": "https://better-auth.com/docs/reference/resources",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Install the better-auth package in your Next.js project.", "env": [], "source": "https://www.better-auth.com/docs/installation" },
+    { "step": "Create a server-side auth config file that connects Better Auth to your own database.", "env": [], "source": "https://www.better-auth.com/docs/installation" },
+    { "step": "Set a random secret and your app's URL in your environment file, alongside your own database connection variable.", "env": ["BETTER_AUTH_SECRET", "BETTER_AUTH_URL"], "source": "https://www.better-auth.com/docs/installation" },
+    { "step": "Run Better Auth's CLI to create the needed tables in your database.", "env": [], "source": "https://www.better-auth.com/docs/installation" },
+    { "step": "Add the Next.js route handler and create a client for use in your components.", "env": [], "source": "https://www.better-auth.com/docs/integrations/next" }
+  ],
+  "builder_notes": [
+    "BETTER_AUTH_SECRET is required; without a strong random value, authentication will not work correctly.",
+    "Requires a real database connection since Better Auth stores users and sessions in your own database, not a hosted one.",
+    "Run the CLI's generate or migrate command before first use, or the required auth tables will not exist yet."
+  ]
+}

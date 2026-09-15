@@ -1,0 +1,58 @@
+{
+  "id": "clerk",
+  "name": "Clerk",
+  "provider": "clerk",
+  "slots": ["login"],
+  "summary": "Clerk is a hosted service that handles login, sign-up, and user accounts for your app, including ready-made screens.",
+  "website": "https://clerk.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free plan allows 50,000 monthly retained users per app, far more than a typical small app needs.",
+      "source": "https://clerk.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 25,
+      "note": "Pro plan is $25/month ($20/month billed yearly), needed once you pass 50,000 monthly retained users.",
+      "source": "https://clerk.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "User accounts live in Clerk's hosted system, but Clerk officially supports exporting all users and password hashes to move elsewhere.",
+      "source": "https://clerk.com/docs/guides/development/migrating/overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "mobile_sdk": {
+      "value": true,
+      "note": "An official Expo SDK supports React Native apps with native sign-in UI for both iOS and Android.",
+      "source": "https://clerk.com/docs/reference/expo/overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "prebuilt_ui": {
+      "value": true,
+      "note": "Clerk ships ready-to-use sign-in, sign-up, and account management components that work out of the box.",
+      "source": "https://clerk.com/docs/nextjs/reference/components/overview",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create an application in the Clerk dashboard.", "env": [], "source": "https://clerk.com/docs/quickstarts/nextjs" },
+    { "step": "Run Clerk's setup command in your Next.js project to install @clerk/nextjs and configure environment variables automatically.", "env": [], "source": "https://clerk.com/docs/quickstarts/nextjs" },
+    { "step": "Confirm your environment file has the publishable and secret keys.", "env": ["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "CLERK_SECRET_KEY"], "source": "https://clerk.com/docs/quickstarts/nextjs" },
+    { "step": "Wrap your app's root layout in ClerkProvider.", "env": [], "source": "https://clerk.com/docs/quickstarts/nextjs" },
+    { "step": "Add clerkMiddleware to your project to protect routes.", "env": [], "source": "https://clerk.com/docs/quickstarts/nextjs" }
+  ],
+  "builder_notes": [
+    "CLERK_SECRET_KEY must stay server-side only; never commit it or expose it to client code.",
+    "The app must be wrapped in ClerkProvider or Clerk's components and hooks will not work.",
+    "clerkMiddleware() is required for route protection; on Next.js 16 and later the file is named proxy.ts instead of middleware.ts."
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "id": "cloudflare-r2",
+  "name": "Cloudflare R2",
+  "provider": "cloudflare",
+  "slots": ["files"],
+  "summary": "Cloudflare R2 is object storage for files like images and videos that never charges you for downloading data out of it.",
+  "website": "https://www.cloudflare.com/developer-platform/products/r2/",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free tier includes 10 GB storage, 1 million write requests and 10 million read requests a month, plus unlimited free egress.",
+      "source": "https://developers.cloudflare.com/r2/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan; R2 is pay-as-you-go at $0.015 per GB stored a month beyond the free 10 GB.",
+      "source": "https://developers.cloudflare.com/r2/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "R2 implements the S3 API, so existing S3 SDKs and tools work by pointing them at R2's endpoint URL.",
+      "source": "https://developers.cloudflare.com/r2/api/s3/api/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "direct_uploads": {
+      "value": true,
+      "note": "Browsers can upload directly to R2 using presigned URLs, generated with any S3-compatible SDK.",
+      "source": "https://developers.cloudflare.com/r2/api/s3/api/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "egress_fees": {
+      "value": false,
+      "note": "R2's main selling point: data transfer out to the internet is free on every plan, with no egress charge at all.",
+      "source": "https://developers.cloudflare.com/r2/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a Cloudflare account, enable R2 in the dashboard, and create a bucket.",
+      "env": [],
+      "source": "https://developers.cloudflare.com/r2/get-started/"
+    },
+    {
+      "step": "Create an R2 API token (Access Key ID and Secret Access Key) scoped to your bucket.",
+      "env": [],
+      "source": "https://developers.cloudflare.com/r2/get-started/s3/"
+    },
+    {
+      "step": "Install the AWS SDK for JavaScript with npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner, since R2 uses the S3-compatible API.",
+      "env": [],
+      "source": "https://developers.cloudflare.com/r2/get-started/s3/"
+    },
+    {
+      "step": "Configure the S3 client with region \"auto\" and your endpoint at https://<ACCOUNT_ID>.r2.cloudflarestorage.com.",
+      "env": [],
+      "source": "https://developers.cloudflare.com/r2/get-started/s3/"
+    },
+    {
+      "step": "Generate presigned URLs on the server so the browser can upload directly to the bucket.",
+      "env": [],
+      "source": "https://developers.cloudflare.com/r2/api/s3/api/"
+    }
+  ],
+  "builder_notes": [
+    "Use the S3-compatible SDK with region set to \"auto\" and the account-specific R2 endpoint, not an AWS region.",
+    "Generate presigned URLs on the server; never expose the R2 secret access key to the browser.",
+    "Because egress is free, R2 is a strong fit for apps that serve a lot of public downloads."
+  ]
+}

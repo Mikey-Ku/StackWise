@@ -1,0 +1,85 @@
+{
+  "id": "lemon-squeezy",
+  "name": "Lemon Squeezy",
+  "provider": "lemon-squeezy",
+  "slots": ["payments"],
+  "summary": "Lemon Squeezy is a payment platform for selling software online that acts as merchant of record, handling sales tax and VAT for you.",
+  "website": "https://www.lemonsqueezy.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "No monthly fee or user cap; you only pay per transaction (5% + 50 cents, tax handling included).",
+      "source": "https://www.lemonsqueezy.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan; pricing is pay-per-transaction, with no separate paid tier to unlock.",
+      "source": "https://www.lemonsqueezy.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "low",
+      "note": "Proprietary checkout and merchant-of-record relationship; moving away needs a rebuild of billing and tax setup.",
+      "source": "https://www.lemonsqueezy.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "merchant_of_record": {
+      "value": true,
+      "note": "Lemon Squeezy is merchant of record on every sale. Official pricing page blocked automated fetch; confirmed via secondary sources.",
+      "source": "https://www.lemonsqueezy.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "subscriptions": {
+      "value": true,
+      "note": "Recurring subscription billing is supported, with an extra 0.5% fee added to subscription charges.",
+      "source": "https://www.lemonsqueezy.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "fee_summary": {
+      "value": "5% + 50 cents per transaction",
+      "note": "Flat rate for every seller. Sourced from secondary sites since lemonsqueezy.com/pricing returned 403 to automated fetch.",
+      "source": "https://www.lemonsqueezy.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a Lemon Squeezy account and a store.",
+      "env": [],
+      "source": "https://docs.lemonsqueezy.com/guides/tutorials/webhooks-nextjs"
+    },
+    {
+      "step": "Create an API key from your account's API settings page.",
+      "env": [],
+      "source": "https://docs.lemonsqueezy.com/guides/tutorials/webhooks-nextjs"
+    },
+    {
+      "step": "Install the official SDK with npm install @lemonsqueezy/lemonsqueezy.js.",
+      "env": [],
+      "source": "https://docs.lemonsqueezy.com/guides/tutorials/webhooks-nextjs"
+    },
+    {
+      "step": "Set your API key and store ID as environment variables, without a NEXT_PUBLIC_ prefix.",
+      "env": ["LEMONSQUEEZY_API_KEY", "LEMONSQUEEZY_STORE_ID"],
+      "source": "https://docs.lemonsqueezy.com/guides/tutorials/webhooks-nextjs"
+    },
+    {
+      "step": "Create a webhook pointed at your app's /api/webhook route, set a signing secret, and verify the X-Signature header on incoming events.",
+      "env": ["LEMONSQUEEZY_WEBHOOK_SECRET"],
+      "source": "https://docs.lemonsqueezy.com/guides/tutorials/webhooks-nextjs"
+    }
+  ],
+  "builder_notes": [
+    "Keep LEMONSQUEEZY_API_KEY on the server only; never prefix it with NEXT_PUBLIC_.",
+    "Verify the X-Signature header on every webhook before trusting it.",
+    "Stripe acquired Lemon Squeezy and is steering users to Stripe Managed Payments; confirm it is still actively onboarding new stores before committing to it."
+  ]
+}

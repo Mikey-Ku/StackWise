@@ -1,0 +1,14 @@
+{
+  "id": "astro",
+  "name": "Astro",
+  "provider": "open-source",
+  "slots": [
+    "framework"
+  ],
+  "summary": "A framework for fast content sites that can add server code when you need it.",
+  "website": "https://astro.build",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

@@ -1,0 +1,79 @@
+{
+  "id": "mongodb-atlas",
+  "name": "MongoDB Atlas",
+  "provider": "mongodb",
+  "slots": ["database"],
+  "summary": "MongoDB Atlas is a fully hosted version of MongoDB, a database that stores data as flexible, JSON-like documents.",
+  "website": "https://www.mongodb.com/atlas",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free M0 cluster: 512 MB storage, 100 operations per second, and 10 GB data transfer in and out every 7 days.",
+      "source": "https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "The cheapest paid tier, Flex, is billed hourly by usage with no flat monthly fee; continuous use runs about $8 to $30/month.",
+      "source": "https://www.mongodb.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "MongoDB's document format is widely supported elsewhere, and the free MongoDB Community Edition can be self-hosted.",
+      "source": "https://www.mongodb.com/try/download/community",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "storage_model": {
+      "value": "hosted",
+      "note": "MongoDB runs and manages the database servers for you in the cloud.",
+      "source": "https://www.mongodb.com/atlas",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "data_model": {
+      "value": "document",
+      "note": "MongoDB stores data as JSON-like documents rather than rows in tables.",
+      "source": "https://www.mongodb.com/atlas",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "realtime_built_in": {
+      "value": false,
+      "note": "Change Streams let your server watch for changes, but you must build and host your own relay to push updates into a browser.",
+      "source": "https://www.mongodb.com/docs/manual/changeStreams/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "serverless_friendly": {
+      "value": true,
+      "note": "The official Node driver supports connection caching for serverless functions; a standalone HTTP Data API was retired in 2025.",
+      "source": "https://www.mongodb.com/docs/atlas/manage-connections-aws-lambda/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "mobile_sdk": {
+      "value": false,
+      "note": "The Atlas Device SDK (formerly Realm) for mobile apps was deprecated and reached end of life on September 30, 2025.",
+      "source": "https://www.mongodb.com/community/forums/t/atlas-device-sync-end-of-life-and-deprecation/296687",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free MongoDB Atlas account and an M0 cluster.", "env": [], "source": "https://www.mongodb.com/docs/drivers/node-frameworks/next-integration/" },
+    { "step": "Get the cluster's connection string from Atlas under Database, then Connect, then Drivers.", "env": [], "source": "https://www.mongodb.com/docs/drivers/node-frameworks/next-integration/" },
+    { "step": "Install the official MongoDB driver package in your Next.js app.", "env": [], "source": "https://www.mongodb.com/docs/drivers/node-frameworks/next-integration/" },
+    { "step": "Add the connection string to your environment file.", "env": ["MONGODB_URI"], "source": "https://www.mongodb.com/docs/drivers/node-frameworks/next-integration/" },
+    { "step": "Open one MongoClient connection at module scope and reuse it across requests instead of reconnecting each time.", "env": [], "source": "https://www.mongodb.com/docs/drivers/node-frameworks/next-integration/" }
+  ],
+  "builder_notes": [
+    "Never expose MONGODB_URI or use the driver directly in browser code; keep database access in server components, API routes, or route handlers.",
+    "Cache the MongoClient at module scope so serverless functions reuse one pooled connection instead of exhausting the connection limit.",
+    "Free clusters auto-pause after 30 days of no activity; data is kept but you must manually resume the cluster to use it again."
+  ]
+}

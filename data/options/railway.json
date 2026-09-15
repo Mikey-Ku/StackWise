@@ -1,0 +1,96 @@
+{
+  "id": "railway",
+  "name": "Railway",
+  "provider": "railway",
+  "slots": ["hosting"],
+  "summary": "Railway runs web apps, APIs, and background workers as always-on containers, deployed automatically from your Git repo.",
+  "website": "https://railway.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "just_me",
+      "note": "Ongoing Free plan gives only $1 of usage credit a month (after a one-time $5 trial credit), barely enough for light personal testing.",
+      "source": "https://docs.railway.com/reference/pricing/free-trial",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 5,
+      "note": "Hobby plan is $5/month and includes $5 of usage credit, covering up to 48 vCPU/48GB and a 5GB volume before extra usage bills.",
+      "source": "https://docs.railway.com/reference/pricing/plans",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Railway runs standard containers built with Nixpacks or your own Dockerfile, portable to any other container host.",
+      "source": "https://docs.railway.com/guides/nextjs",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "runtime_model": {
+      "value": "server",
+      "note": "Services run as always-on containers, not request-triggered functions.",
+      "source": "https://docs.railway.com/reference/pricing/plans",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "persistent_disk": {
+      "value": "included",
+      "note": "Volumes are a native feature available even on the Free/Trial tier (0.5GB), scaling to 5GB on Hobby and more on Pro.",
+      "source": "https://docs.railway.com/reference/volumes",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "long_lived_connections": {
+      "value": true,
+      "note": "Services are regular always-on containers, so WebSocket connections are supported natively.",
+      "source": "https://docs.railway.com/reference/pricing/plans",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "background_workers": {
+      "value": true,
+      "note": "Any service can run as a worker with no public port, staying always-on separately from a web service.",
+      "source": "https://docs.railway.com/guides/cron-workers-queues",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scheduled_jobs": {
+      "value": true,
+      "note": "A native Cron Schedule can be set per service; the shortest allowed interval is 5 minutes.",
+      "source": "https://docs.railway.com/reference/cron-jobs",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_commercial_use": {
+      "value": false,
+      "note": "Railway's pricing FAQ says commercial applications should upgrade to Pro; Free and Hobby are positioned for personal projects.",
+      "source": "https://docs.railway.com/reference/pricing/faqs",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "framework_support": {
+      "value": {
+        "nextjs": "full",
+        "react-vite": "full",
+        "sveltekit": "full"
+      },
+      "note": "Railway has official guides for deploying Next.js and SvelteKit (via adapter-node) as full Node servers; static Vite apps deploy the same way.",
+      "source": "https://docs.railway.com/guides/nextjs",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Sign up at railway.com and start a New Project.", "env": [], "source": "https://docs.railway.com/quick-start" },
+    { "step": "Choose Deploy from GitHub repo and select your repository.", "env": [], "source": "https://docs.railway.com/quick-start" },
+    { "step": "Railway builds automatically with Nixpacks; add environment variables in the Variables tab.", "env": [], "source": "https://docs.railway.com/quick-start" },
+    { "step": "Generate a public domain under Settings > Networking so the app is reachable on the web.", "env": [], "source": "https://docs.railway.com/quick-start" }
+  ],
+  "builder_notes": [
+    "The ongoing Free plan only grants $1 of usage credit a month, which covers little beyond brief testing; budget for the $5/month Hobby plan for a real small app.",
+    "Railway's own docs recommend the Pro plan once the app is commercial; Hobby and Free are positioned for personal projects.",
+    "Cron-scheduled services must exit on their own when done and cannot run more often than every 5 minutes."
+  ]
+}

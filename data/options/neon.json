@@ -1,0 +1,79 @@
+{
+  "id": "neon",
+  "name": "Neon",
+  "provider": "neon",
+  "slots": ["database"],
+  "summary": "Neon is a fully managed Postgres database that automatically pauses itself when nobody is using it, so you only pay for active use.",
+  "website": "https://neon.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free plan: 0.5 GB storage and 100 compute hours a month, with the database auto-suspending after 5 minutes idle.",
+      "source": "https://neon.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "Paid plans are pure pay-as-you-go, metered hourly for compute and storage, with no flat monthly base fee or minimum.",
+      "source": "https://neon.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "It is standard, wire-compatible Postgres, so you can dump and restore to any other Postgres host.",
+      "source": "https://neon.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "storage_model": {
+      "value": "hosted",
+      "note": "Neon runs and manages the Postgres server for you in the cloud; there is no local-file option.",
+      "source": "https://neon.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "data_model": {
+      "value": "relational",
+      "note": "Neon is Postgres, a standard SQL relational database.",
+      "source": "https://neon.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "realtime_built_in": {
+      "value": false,
+      "note": "Neon offers logical replication to external systems, but nothing that pushes changes directly to a browser without extra work.",
+      "source": "https://neon.com/docs/guides/logical-replication-guide",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "serverless_friendly": {
+      "value": true,
+      "note": "A built-in HTTP driver and a pooled connection string (via PgBouncer) support many concurrent serverless connections.",
+      "source": "https://neon.com/docs/connect/connection-pooling",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "mobile_sdk": {
+      "value": false,
+      "note": "There is only a JavaScript/TypeScript SDK and raw HTTP access; no official Swift, Kotlin, or Flutter SDK for native apps.",
+      "source": "https://neon.com/docs/reference/sdk",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Neon account and a new project in the Neon Console.", "env": [], "source": "https://neon.com/docs/guides/nextjs" },
+    { "step": "Install the Neon serverless driver package in your Next.js app.", "env": [], "source": "https://neon.com/docs/guides/nextjs" },
+    { "step": "On the project dashboard, click Connect and copy the pooled connection string.", "env": [], "source": "https://neon.com/docs/connect/connection-pooling" },
+    { "step": "Add the connection string to your environment file.", "env": ["DATABASE_URL"], "source": "https://neon.com/docs/guides/nextjs" },
+    { "step": "Import the driver, connect using the environment variable, and run queries.", "env": [], "source": "https://neon.com/docs/guides/nextjs" }
+  ],
+  "builder_notes": [
+    "Use the pooled connection string (the '-pooler' host) in serverless or edge functions; use the direct string only for migrations.",
+    "Never expose DATABASE_URL in client-side code or a NEXT_PUBLIC_ variable, since it contains the database password.",
+    "Use the @neondatabase/serverless package for edge-friendly HTTP queries, or a standard pg client in a long-running Node server."
+  ]
+}

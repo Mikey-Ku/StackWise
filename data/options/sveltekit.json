@@ -1,0 +1,56 @@
+{
+  "id": "sveltekit",
+  "name": "SvelteKit",
+  "provider": "open-source",
+  "slots": ["framework"],
+  "summary": "A framework for full web apps using Svelte, with pages and private server code in one project.",
+  "website": "https://svelte.dev",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free and open source under the MIT license. You pay only for hosting.",
+      "source": "https://svelte.dev/docs/kit/introduction",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No paid plan. The framework itself is free.",
+      "source": "https://svelte.dev/docs/kit/introduction",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Adapters let the same app deploy to Node servers, serverless hosts or static hosting.",
+      "source": "https://svelte.dev/docs/kit/adapters",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "language": {
+      "value": "TypeScript or JavaScript",
+      "note": "Written in TypeScript or JavaScript with Svelte components.",
+      "source": "https://svelte.dev/docs/kit/introduction",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "has_server_code": {
+      "value": true,
+      "note": "Server load functions, form actions and API routes run only on the server, so secrets stay private.",
+      "source": "https://svelte.dev/docs/kit/introduction",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create the app with npx sv create, pick the adapter for your host, and push it to a GitHub repository.",
+      "env": [],
+      "source": "https://svelte.dev/docs/kit/creating-a-project"
+    }
+  ],
+  "builder_notes": [
+    "Keep secrets in server-only files (+page.server.ts, +server.ts) and read them from $env/static/private."
+  ]
+}

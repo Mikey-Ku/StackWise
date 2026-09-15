@@ -1,0 +1,78 @@
+[
+  {
+    "id": "framework",
+    "label": "Framework",
+    "verb": "built with",
+    "empty_hint": "What your app is built with",
+    "required_facts": ["free_plan_covers", "first_paid_usd_month", "portability", "language", "has_server_code"],
+    "build_task": "Create the {option} app and push it to a GitHub repository."
+  },
+  {
+    "id": "hosting",
+    "label": "Hosting",
+    "verb": "runs on",
+    "empty_hint": "Where your app lives on the internet",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "runtime_model",
+      "persistent_disk",
+      "long_lived_connections",
+      "background_workers",
+      "scheduled_jobs",
+      "free_plan_commercial_use",
+      "framework_support"
+    ],
+    "build_task": "Deploy to {option} and add every environment variable from the setup checklist."
+  },
+  {
+    "id": "database",
+    "label": "Database",
+    "verb": "stores data in",
+    "empty_hint": "Where the things people create are saved",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "storage_model",
+      "data_model",
+      "realtime_built_in",
+      "serverless_friendly",
+      "mobile_sdk"
+    ],
+    "build_task": "Connect {option} and create the tables or collections for your data."
+  },
+  {
+    "id": "login",
+    "label": "Login",
+    "verb": "logs people in with",
+    "empty_hint": "How people sign up and sign in",
+    "required_facts": ["free_plan_covers", "first_paid_usd_month", "portability", "mobile_sdk", "prebuilt_ui"],
+    "build_task": "Add sign-up, sign-in and sign-out with {option}, and protect pages that need a logged-in user."
+  },
+  {
+    "id": "files",
+    "label": "File storage",
+    "verb": "keeps files in",
+    "empty_hint": "Where uploaded photos and files go",
+    "required_facts": ["free_plan_covers", "first_paid_usd_month", "portability", "direct_uploads", "egress_fees"],
+    "build_task": "Add uploads with {option}, including size limits and who is allowed to see each file."
+  },
+  {
+    "id": "payments",
+    "label": "Payments",
+    "verb": "takes payments with",
+    "empty_hint": "How people pay you",
+    "required_facts": ["free_plan_covers", "first_paid_usd_month", "portability", "merchant_of_record", "subscriptions", "fee_summary"],
+    "build_task": "Add checkout with {option} and handle its webhooks so paid access updates automatically."
+  },
+  {
+    "id": "ai",
+    "label": "AI",
+    "verb": "calls AI from",
+    "empty_hint": "Which AI model provider your features use",
+    "required_facts": ["free_plan_covers", "first_paid_usd_month", "portability", "free_tier", "sdk_typescript", "cheap_model_price"],
+    "build_task": "Add the AI features with {option}, calling it from server code with a spending limit set."
+  }
+]

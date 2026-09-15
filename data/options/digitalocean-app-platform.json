@@ -1,0 +1,14 @@
+{
+  "id": "digitalocean-app-platform",
+  "name": "DigitalOcean App Platform",
+  "provider": "digitalocean",
+  "slots": [
+    "hosting"
+  ],
+  "summary": "Managed hosting that runs your app from a Git repository or a container.",
+  "website": "https://www.digitalocean.com/products/app-platform",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

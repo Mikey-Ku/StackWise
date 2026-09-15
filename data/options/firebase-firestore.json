@@ -1,0 +1,79 @@
+{
+  "id": "firebase-firestore",
+  "name": "Firestore (Firebase)",
+  "provider": "firebase",
+  "slots": ["database"],
+  "summary": "Firestore is a hosted database from Google that stores app data as documents and keeps it instantly synced across users.",
+  "website": "https://firebase.google.com/products/firestore",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free Spark plan: 1 GiB storage, 50,000 reads, 20,000 writes, and 20,000 deletes per day.",
+      "source": "https://firebase.google.com/docs/firestore/quotas",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "The paid Blaze plan has no flat monthly fee; it only charges for usage beyond the free daily quotas.",
+      "source": "https://firebase.google.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "low",
+      "note": "Firestore uses Google's own document API and query model, so moving to another database needs real rework.",
+      "source": "https://firebase.google.com/docs/firestore/data-model",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "storage_model": {
+      "value": "hosted",
+      "note": "Google runs and manages Firestore for you in the cloud.",
+      "source": "https://firebase.google.com/products/firestore",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "data_model": {
+      "value": "document",
+      "note": "Firestore stores data as JSON-like documents grouped into collections.",
+      "source": "https://firebase.google.com/docs/firestore/data-model",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "realtime_built_in": {
+      "value": true,
+      "note": "Live listeners push document and query changes straight to connected apps; this is a core, documented feature.",
+      "source": "https://firebase.google.com/docs/firestore/query-data/listen",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "serverless_friendly": {
+      "value": true,
+      "note": "The SDK makes lightweight calls instead of holding fixed connections, avoiding connection-limit problems in serverless functions.",
+      "source": "https://firebase.google.com/docs/functions/networking",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "mobile_sdk": {
+      "value": true,
+      "note": "Official SDKs cover iOS, Android, and Flutter; React Native works through a widely used community package instead.",
+      "source": "https://firebase.google.com/products/firestore",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a Firebase project at the Firebase console.", "env": [], "source": "https://firebase.google.com/docs/web/setup" },
+    { "step": "Register a web app in the project to get your Firebase config values.", "env": [], "source": "https://firebase.google.com/docs/web/setup" },
+    { "step": "Install the Firebase SDK in your Next.js app.", "env": [], "source": "https://firebase.google.com/docs/firestore/quickstart" },
+    { "step": "In the console, create a Firestore database and choose a starting security mode.", "env": [], "source": "https://firebase.google.com/docs/firestore/quickstart" },
+    { "step": "Add the Firebase config values to your app. Firebase's docs do not require environment variables, but NEXT_PUBLIC_ names are a common Next.js convention.", "env": [], "source": "https://firebase.google.com/docs/firestore/quickstart" }
+  ],
+  "builder_notes": [
+    "New databases start open to everyone or closed to everyone; write real Firestore Security Rules before shipping.",
+    "The web config values (apiKey, etc.) are safe to ship in browser code; they are not secret. Real protection comes from Security Rules.",
+    "For server-side writes that must bypass rules, use the Admin SDK with a service account key kept only in server environment variables, never sent to the browser."
+  ]
+}

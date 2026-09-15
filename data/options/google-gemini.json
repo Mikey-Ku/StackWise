@@ -1,0 +1,85 @@
+{
+  "id": "google-gemini",
+  "name": "Google Gemini API",
+  "provider": "google-ai",
+  "slots": ["ai"],
+  "summary": "Google's Gemini API lets your app call Google's AI models to generate text, understand images, and power AI features.",
+  "website": "https://ai.google.dev",
+  "coverage": "partial",
+  "facts": {
+    "free_plan_covers": {
+      "value": null,
+      "note": "A free rate-limited tier exists, but Google's docs do not publish an exact requests-per-day number, only that it varies by model and usage tier.",
+      "source": "https://ai.google.dev/gemini-api/docs/rate-limits",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No flat monthly plan; once billing is enabled you pay per token, with rate limits rising by cumulative spend tier.",
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Gemini offers an official OpenAI-compatible endpoint, so code written for the OpenAI SDK can switch with just a base URL and key change.",
+      "source": "https://ai.google.dev/gemini-api/docs/openai",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_tier": {
+      "value": true,
+      "note": "Free, rate-limited tier confirmed by Google's own pricing page, usable without payment; Google may use free-tier input to improve products.",
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "Official TypeScript/JavaScript SDK is published as the \"@google/genai\" npm package.",
+      "source": "https://ai.google.dev/gemini-api/docs/quickstart",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "cheap_model_price": {
+      "value": "Gemini 2.5 Flash-Lite: $0.10 input / $0.40 output per million tokens",
+      "note": "Cheapest current general-purpose text model; the newer 3.5 Flash-Lite costs more, at $0.30 input / $2.50 output.",
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a free API key in Google AI Studio.",
+      "env": [],
+      "source": "https://ai.google.dev/gemini-api/docs/quickstart"
+    },
+    {
+      "step": "Install the SDK with npm install @google/genai.",
+      "env": [],
+      "source": "https://ai.google.dev/gemini-api/docs/quickstart"
+    },
+    {
+      "step": "Set the key as an environment variable.",
+      "env": ["GEMINI_API_KEY"],
+      "source": "https://ai.google.dev/gemini-api/docs/quickstart"
+    },
+    {
+      "step": "Call the client from a server-side route handler so the key is never exposed to the browser.",
+      "env": [],
+      "source": "https://ai.google.dev/gemini-api/docs/quickstart"
+    },
+    {
+      "step": "Link a Cloud Billing account once usage needs to exceed the free tier's rate limits.",
+      "env": [],
+      "source": "https://ai.google.dev/gemini-api/docs/pricing"
+    }
+  ],
+  "builder_notes": [
+    "Keep GEMINI_API_KEY on the server only.",
+    "On the free tier, avoid sending sensitive user data since Google may use those inputs to improve its products.",
+    "Gemini has an OpenAI-compatible endpoint, useful if you are porting existing OpenAI SDK code."
+  ]
+}

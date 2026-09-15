@@ -1,0 +1,58 @@
+{
+  "id": "firebase-auth",
+  "name": "Firebase Auth",
+  "provider": "firebase",
+  "slots": ["login"],
+  "summary": "Firebase Authentication is a ready-made login system from Google that handles sign-up, sign-in, and password resets for you.",
+  "website": "https://firebase.google.com/products/auth",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Email/password and social sign-in are free up to 50,000 monthly active users on the Spark plan, more than a small app needs.",
+      "source": "https://firebase.google.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No flat monthly fee; it is pay-as-you-go past the free user quota. Phone/SMS sign-in has no free quota and needs the paid plan.",
+      "source": "https://firebase.google.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Firebase can export users and password hashes for reimport elsewhere, but the hash format needs project-specific parameters.",
+      "source": "https://firebase.google.com/docs/auth/admin/import-users",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "mobile_sdk": {
+      "value": true,
+      "note": "Official SDKs cover iOS, Android, and Flutter; React Native works through a widely used community package instead.",
+      "source": "https://firebase.google.com/products/auth",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "prebuilt_ui": {
+      "value": true,
+      "note": "FirebaseUI provides official, actively maintained sign-in and sign-up screens for web, iOS, and Android.",
+      "source": "https://github.com/firebase/firebaseui-web",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a Firebase project at the Firebase console.", "env": [], "source": "https://firebase.google.com/docs/web/setup" },
+    { "step": "Register a web app in the project to get your Firebase config values.", "env": [], "source": "https://firebase.google.com/docs/web/setup" },
+    { "step": "Install the Firebase SDK in your Next.js app.", "env": [], "source": "https://firebase.google.com/docs/auth/web/start" },
+    { "step": "In the console, open Authentication and enable the sign-in methods you want; all are off by default.", "env": [], "source": "https://firebase.google.com/docs/auth/web/start" },
+    { "step": "Add the Firebase config values to your app. Firebase's docs do not require environment variables, but NEXT_PUBLIC_ names are a common Next.js convention.", "env": [], "source": "https://firebase.google.com/docs/auth/web/start" }
+  ],
+  "builder_notes": [
+    "Every sign-in provider is off by default and must be explicitly enabled in the Firebase console before users can use it.",
+    "The web config values (apiKey, etc.) are safe for browser code; they are not secret. Never send an Admin SDK service account key to the browser.",
+    "Firebase Auth only checks identity; pair it with Firestore Security Rules using request.auth.uid to actually restrict data access."
+  ]
+}

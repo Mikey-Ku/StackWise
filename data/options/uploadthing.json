@@ -1,0 +1,77 @@
+{
+  "id": "uploadthing",
+  "name": "UploadThing",
+  "provider": "uploadthing",
+  "slots": ["files"],
+  "summary": "UploadThing is a developer-friendly file upload service that handles storage, delivery, and upload widgets so you skip managing your own bucket.",
+  "website": "https://uploadthing.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_100",
+      "note": "Free plan gives 2 GB storage shared across your apps with unlimited uploads and downloads, no user cap stated.",
+      "source": "https://uploadthing.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 10,
+      "note": "Cheapest paid plan is $10/month for 100 GB of storage and 30 days of audit log retention.",
+      "source": "https://uploadthing.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Proprietary upload API, not S3-compatible, but file URLs stay stable and the UTApi lets you script an export.",
+      "source": "https://docs.uploadthing.com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "direct_uploads": {
+      "value": true,
+      "note": "The client SDK requests a presigned URL from your server, then uploads bytes straight to storage, skipping your server.",
+      "source": "https://docs.uploadthing.com/uploading-files",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "egress_fees": {
+      "value": false,
+      "note": "No bandwidth or egress fee on any plan; the free plan explicitly states unlimited uploads and downloads.",
+      "source": "https://uploadthing.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Sign up at uploadthing.com and create an app to get an API token.",
+      "env": [],
+      "source": "https://docs.uploadthing.com/getting-started/appdir"
+    },
+    {
+      "step": "Install the packages with npm install uploadthing @uploadthing/react.",
+      "env": [],
+      "source": "https://docs.uploadthing.com/getting-started/appdir"
+    },
+    {
+      "step": "Set your UploadThing token as an environment variable.",
+      "env": ["UPLOADTHING_TOKEN"],
+      "source": "https://docs.uploadthing.com/getting-started/appdir"
+    },
+    {
+      "step": "Define a FileRouter in app/api/uploadthing/core.ts with upload rules and auth middleware, then export the route handlers.",
+      "env": [],
+      "source": "https://docs.uploadthing.com/getting-started/appdir"
+    },
+    {
+      "step": "Add the generated UploadButton or UploadDropzone component to a page.",
+      "env": [],
+      "source": "https://docs.uploadthing.com/getting-started/appdir"
+    }
+  ],
+  "builder_notes": [
+    "Put file size, type limits, and auth checks in the server-side FileRouter middleware, not only in the client component.",
+    "Use the prebuilt UploadButton or UploadDropzone components instead of building a custom uploader from scratch."
+  ]
+}

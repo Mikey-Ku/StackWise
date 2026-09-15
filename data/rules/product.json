@@ -1,0 +1,75 @@
+[
+  {
+    "id": "supabase-login-and-data",
+    "severity": "info",
+    "needs": [],
+    "pair": [
+      { "slot": "login", "option": "supabase-auth" },
+      { "slot": "database", "option": "supabase-db" }
+    ],
+    "title": "Login and data share one project",
+    "explanation": "Supabase Auth and the Supabase database live in the same project, so your data security rules can check who is logged in directly.",
+    "builder": "Protect every table with row-level security policies that use auth.uid()."
+  },
+  {
+    "id": "supabase-login-and-files",
+    "severity": "info",
+    "needs": [],
+    "pair": [
+      { "slot": "login", "option": "supabase-auth" },
+      { "slot": "files", "option": "supabase-storage" }
+    ],
+    "title": "File access can use who is logged in",
+    "explanation": "Supabase Storage shares the project with Supabase Auth, so you can decide who sees each file based on the logged-in person.",
+    "builder": "Protect storage buckets with policies that check the logged-in user."
+  },
+  {
+    "id": "firebase-login-and-data",
+    "severity": "info",
+    "needs": [],
+    "pair": [
+      { "slot": "login", "option": "firebase-auth" },
+      { "slot": "database", "option": "firebase-firestore" }
+    ],
+    "title": "Login and data share one project",
+    "explanation": "Firestore security rules can check who is logged in with Firebase Auth directly, with no extra setup.",
+    "builder": "Protect all data with Firestore security rules that check request.auth."
+  },
+  {
+    "id": "clerk-with-supabase",
+    "severity": "warning",
+    "needs": [],
+    "pair": [
+      { "slot": "login", "option": "clerk" },
+      { "slot": "database", "option": "supabase-db" }
+    ],
+    "title": "Clerk needs a one-time connection to Supabase",
+    "explanation": "Supabase can accept Clerk logins, but you have to connect the two first. Until then, Supabase's data security rules can't tell who is logged in.",
+    "fix": "Follow Supabase's third-party auth guide for Clerk before writing data rules.",
+    "builder": "Configure Clerk as a third-party auth provider in Supabase before writing row-level security policies."
+  },
+  {
+    "id": "firebase-auth-with-supabase",
+    "severity": "warning",
+    "needs": [],
+    "pair": [
+      { "slot": "login", "option": "firebase-auth" },
+      { "slot": "database", "option": "supabase-db" }
+    ],
+    "title": "Firebase Auth needs a one-time connection to Supabase",
+    "explanation": "Supabase can accept Firebase logins, but you have to connect the two first so data security rules know who is logged in. That's also two consoles to manage.",
+    "fix": "Follow Supabase's third-party auth guide for Firebase Auth, or use Supabase Auth.",
+    "builder": "Configure Firebase Auth as a third-party auth provider in Supabase before writing row-level security policies."
+  },
+  {
+    "id": "nextjs-on-vercel",
+    "severity": "info",
+    "needs": [],
+    "pair": [
+      { "slot": "framework", "option": "nextjs" },
+      { "slot": "hosting", "option": "vercel" }
+    ],
+    "title": "Made by the same team",
+    "explanation": "Vercel builds Next.js, so new Next.js features usually work there first, with no extra setup."
+  }
+]

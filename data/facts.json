@@ -1,0 +1,139 @@
+{
+  "free_plan_covers": {
+    "label": "Free plan covers",
+    "help": "The biggest group of monthly users a small app can serve on the free plan.",
+    "type": "enum",
+    "values": ["none", "just_me", "up_to_100", "up_to_1000", "more"]
+  },
+  "first_paid_usd_month": {
+    "label": "First paid plan",
+    "help": "Monthly price of the cheapest paid plan, before usage. Empty means there is no monthly plan.",
+    "type": "number_or_null"
+  },
+  "portability": {
+    "label": "Easy to switch away",
+    "help": "How much rework it takes to move to something else later.",
+    "type": "enum",
+    "values": ["high", "medium", "low"]
+  },
+  "runtime_model": {
+    "label": "How server code runs",
+    "help": "Serverless code starts per request; a server stays running.",
+    "type": "enum",
+    "values": ["serverless", "server", "edge", "static"]
+  },
+  "persistent_disk": {
+    "label": "Permanent disk",
+    "help": "Whether files your app writes survive restarts and redeploys.",
+    "type": "enum",
+    "values": ["none", "paid_addon", "included"]
+  },
+  "long_lived_connections": {
+    "label": "Holds live connections",
+    "help": "Whether your app can keep WebSocket connections open for live features.",
+    "type": "boolean"
+  },
+  "background_workers": {
+    "label": "Background workers",
+    "help": "Whether an always-on process can run work outside web requests.",
+    "type": "boolean"
+  },
+  "scheduled_jobs": {
+    "label": "Scheduled jobs",
+    "help": "Whether code can run on a schedule, like every night.",
+    "type": "boolean"
+  },
+  "free_plan_commercial_use": {
+    "label": "Free plan allows charging customers",
+    "help": "Some free plans are for personal projects only.",
+    "type": "boolean"
+  },
+  "framework_support": {
+    "label": "Framework support",
+    "help": "How well each framework runs on this host.",
+    "type": "framework_map",
+    "values": ["full", "partial", "none"]
+  },
+  "storage_model": {
+    "label": "Where data is kept",
+    "help": "Hosted by the provider, or a file on your own server's disk.",
+    "type": "enum",
+    "values": ["hosted", "local_file"]
+  },
+  "data_model": {
+    "label": "Data model",
+    "help": "Tables with relations, JSON-like documents, or simple keys and values.",
+    "type": "enum",
+    "values": ["relational", "document", "key_value"]
+  },
+  "realtime_built_in": {
+    "label": "Live updates built in",
+    "help": "Whether it can push changes to browsers without another service.",
+    "type": "boolean"
+  },
+  "serverless_friendly": {
+    "label": "Works from serverless code",
+    "help": "Whether it handles many short-lived connections without running out.",
+    "type": "boolean"
+  },
+  "mobile_sdk": {
+    "label": "Mobile app SDK",
+    "help": "Whether a future phone app can use it directly.",
+    "type": "boolean"
+  },
+  "prebuilt_ui": {
+    "label": "Ready-made sign-in screens",
+    "help": "Whether sign-in and sign-up screens come built for you.",
+    "type": "boolean"
+  },
+  "direct_uploads": {
+    "label": "Uploads go straight to storage",
+    "help": "Whether browsers can upload without passing files through your server.",
+    "type": "boolean"
+  },
+  "egress_fees": {
+    "label": "Charges for downloads",
+    "help": "Whether serving files to people costs money past a free amount.",
+    "type": "boolean"
+  },
+  "merchant_of_record": {
+    "label": "Handles sales tax for you",
+    "help": "A merchant of record is the legal seller and deals with sales tax and VAT.",
+    "type": "boolean"
+  },
+  "subscriptions": {
+    "label": "Subscriptions",
+    "help": "Whether it can charge people every month or year.",
+    "type": "boolean"
+  },
+  "fee_summary": {
+    "label": "Fees",
+    "help": "What each payment costs.",
+    "type": "string"
+  },
+  "free_tier": {
+    "label": "Free tier",
+    "help": "Whether you can use the API without paying.",
+    "type": "boolean"
+  },
+  "sdk_typescript": {
+    "label": "TypeScript SDK",
+    "help": "Whether there is an official library for JavaScript and TypeScript.",
+    "type": "boolean"
+  },
+  "cheap_model_price": {
+    "label": "Cheapest model price",
+    "help": "The lowest-cost general text model and its token prices.",
+    "type": "string"
+  },
+  "language": {
+    "label": "Language",
+    "help": "The programming language you write the app in.",
+    "type": "string"
+  },
+  "has_server_code": {
+    "label": "Can run server code",
+    "help": "Whether the framework has a place for private, server-only code.",
+    "type": "boolean"
+  }
+}

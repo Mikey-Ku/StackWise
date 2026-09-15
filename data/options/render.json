@@ -1,0 +1,96 @@
+{
+  "id": "render",
+  "name": "Render",
+  "provider": "render",
+  "slots": ["hosting"],
+  "summary": "Render runs web apps, APIs, and background workers as always-on servers, deployed automatically from your Git repo.",
+  "website": "https://render.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "Free web services get 750 hours and 100GB bandwidth a month, enough for roughly 1,000 typical users, but they sleep after 15 minutes idle.",
+      "source": "https://render.com/docs/free",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 7,
+      "note": "Cheapest paid web service (Starter) is about $7/month for 512MB RAM and 0.5 CPU. Render's pricing page could not be read directly (script-rendered), so this is confirmed via third-party pricing trackers.",
+      "source": "https://render.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Render runs a standard Docker image or native runtime with no proprietary APIs, so the app moves to any container host easily.",
+      "source": "https://render.com/docs/web-services",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "runtime_model": {
+      "value": "server",
+      "note": "Web services run as always-on server processes (Docker or native runtime), not request-triggered functions.",
+      "source": "https://render.com/docs/web-services",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "persistent_disk": {
+      "value": "paid_addon",
+      "note": "Persistent disks attach only to paid web services, private services, or workers, never free ones, and cost extra per GB.",
+      "source": "https://render.com/docs/disks",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "long_lived_connections": {
+      "value": true,
+      "note": "Web services are regular always-on servers, so WebSocket connections work natively with no extra setup.",
+      "source": "https://render.com/docs/web-services",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "background_workers": {
+      "value": true,
+      "note": "Background Worker is a native service type that runs continuously without receiving web traffic, separate from the web service.",
+      "source": "https://render.com/docs/background-workers",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scheduled_jobs": {
+      "value": true,
+      "note": "Cron Job is a native Render service type for running code on a schedule.",
+      "source": "https://render.com/docs/free",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_commercial_use": {
+      "value": false,
+      "note": "Render's docs say free instances should not be used for production applications, which effectively rules out a real commercial app.",
+      "source": "https://render.com/docs/free",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "framework_support": {
+      "value": {
+        "nextjs": "full",
+        "react-vite": "full",
+        "sveltekit": "full"
+      },
+      "note": "Next.js deploys as a full Node web service with SSR and API routes; static Vite apps and SvelteKit (Node adapter) both have official Render guides.",
+      "source": "https://render.com/docs/deploy-nextjs-app",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Sign up at render.com and click New > Web Service.", "env": [], "source": "https://render.com/docs/web-services" },
+    { "step": "Connect your Git repository; Render auto-detects the runtime or you set a build and start command.", "env": [], "source": "https://render.com/docs/web-services" },
+    { "step": "Choose a plan (Free or Starter) and add environment variables under the Environment tab.", "env": [], "source": "https://render.com/docs/web-services" },
+    { "step": "Click Create Web Service. Render builds and deploys, then redeploys automatically on every push.", "env": [], "source": "https://render.com/docs/web-services" }
+  ],
+  "builder_notes": [
+    "Free web services sleep after 15 minutes of inactivity and take about a minute to wake up; do not use the free tier for anything users expect to load instantly.",
+    "The filesystem is ephemeral without a paid persistent disk ($0.25/GB/month); attach one for uploads or SQLite files that must survive redeploys.",
+    "Use the native Background Worker or Cron Job service types for anything that should not run inside the web service itself."
+  ]
+}

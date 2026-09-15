@@ -1,0 +1,5 @@
+# pnpm blocks dependency lifecycle scripts by default. These are the only ones we allow.
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true
+  sharp: false

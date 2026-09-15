@@ -1,0 +1,93 @@
+[
+  {
+    "id": "saves_data",
+    "label": "Saves what people create",
+    "question": "Will the app save things people create, like posts, bookings or profiles?",
+    "why": "Saving anything between visits needs a database.",
+    "keywords": ["save*", "store*", "post*", "booking*", "book*", "profile*", "track*", "history", "dashboard*", "inventory", "record*", "list*", "journal*", "notes"],
+    "adds_slots": ["database"],
+    "not_sure_note": "Most apps save something. If yours does, it needs a database."
+  },
+  {
+    "id": "login",
+    "label": "People log in",
+    "question": "Will people create accounts and log in?",
+    "why": "Accounts need a login service and a place to store each person's data.",
+    "keywords": ["log in", "login*", "sign up", "signup", "sign in", "account*", "member*", "user profile*"],
+    "adds_slots": ["login", "database"],
+    "not_sure_note": "If people ever see their own data, they need to log in."
+  },
+  {
+    "id": "users_pay",
+    "label": "People pay you",
+    "question": "Will people pay you inside the app?",
+    "why": "Taking money needs a payment provider and changes which free plans you can use.",
+    "keywords": ["pay*", "subscription*", "subscribe*", "checkout", "sell*", "purchase*", "premium", "pricing", "charge*", "deposit*", "tip*", "donat*"],
+    "adds_slots": ["payments"],
+    "not_sure_note": "Charging later is common. Some free hosting plans forbid commercial use, so it is worth knowing early."
+  },
+  {
+    "id": "uploads",
+    "label": "People upload files",
+    "question": "Will people upload photos, videos or files?",
+    "why": "Uploads need file storage, which is separate from the database.",
+    "keywords": ["upload*", "photo*", "image*", "picture*", "video*", "file*", "attachment*", "document*", "avatar*", "pdf*", "resume*"],
+    "adds_slots": ["files"],
+    "not_sure_note": "Profile pictures count. If people upload anything, you need file storage."
+  },
+  {
+    "id": "large_uploads",
+    "label": "Big uploads",
+    "question": "Will uploads include videos or files bigger than a few megabytes?",
+    "why": "Big files can break when they pass through a server with size and time limits.",
+    "keywords": ["video*", "large file*", "audio", "podcast*", "recording*", "4k", "raw file*"],
+    "adds_slots": [],
+    "only_if": "uploads",
+    "not_sure_note": "Phone videos are usually big. Plan for direct uploads if videos are possible."
+  },
+  {
+    "id": "live_updates",
+    "label": "Live updates",
+    "question": "Should people see changes instantly without refreshing, like chat or a live feed?",
+    "why": "Live updates need a host that holds connections open or a database that pushes changes.",
+    "keywords": ["chat*", "real-time", "realtime", "real time", "live", "instant*", "multiplayer", "collaborat*", "messag*"],
+    "adds_slots": [],
+    "not_sure_note": "Without live updates, people refresh to see changes. That is fine for most apps."
+  },
+  {
+    "id": "long_jobs",
+    "label": "Long-running jobs",
+    "question": "Will the app do anything that takes more than a minute, like processing video or a big AI task?",
+    "why": "Many hosts cut off requests after a time limit.",
+    "keywords": ["process video", "transcod*", "render video", "long-running", "batch", "generate video*", "scrap*", "crawl*", "convert video"],
+    "adds_slots": [],
+    "not_sure_note": "Most app actions finish in seconds. Video processing and big AI jobs are the usual exceptions."
+  },
+  {
+    "id": "scheduled_tasks",
+    "label": "Scheduled tasks",
+    "question": "Does anything need to happen on a schedule, like a daily email or a nightly cleanup?",
+    "why": "Scheduled work needs a host or service that can run code on a timer.",
+    "keywords": ["daily", "weekly", "every day", "every morning", "every night", "schedul*", "remind*", "digest*", "nightly", "cron"],
+    "adds_slots": [],
+    "not_sure_note": "Reminder emails and weekly summaries are scheduled tasks."
+  },
+  {
+    "id": "ai_features",
+    "label": "AI features",
+    "question": "Will the app use AI, like a chatbot or generating text or images?",
+    "why": "AI features need a model provider and a server to keep the API key private.",
+    "keywords": ["ai", "a.i.", "chatbot*", "gpt*", "claude", "gemini", "llm*", "summariz*", "summaris*", "assistant*", "artificial intelligence", "generate text", "generate image*"],
+    "adds_slots": ["ai"],
+    "not_sure_note": "AI can be added later without changing the rest of the stack, as long as you have server code."
+  },
+  {
+    "id": "might_go_mobile",
+    "label": "Phone app later",
+    "question": "Might you want a phone app in the App Store later?",
+    "why": "Some services work in phone apps and some do not, so choosing now avoids a rebuild.",
+    "keywords": ["mobile app*", "iphone", "android", "ios", "app store", "phone app*", "play store"],
+    "adds_slots": [],
+    "not_sure_note": "If a phone app is possible, prefer services with mobile SDKs. It costs nothing now."
+  }
+]

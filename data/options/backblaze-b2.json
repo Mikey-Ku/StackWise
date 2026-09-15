@@ -1,0 +1,14 @@
+{
+  "id": "backblaze-b2",
+  "name": "Backblaze B2",
+  "provider": "backblaze",
+  "slots": [
+    "files"
+  ],
+  "summary": "Low-cost cloud file storage with an S3-compatible API.",
+  "website": "https://www.backblaze.com/cloud-storage",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

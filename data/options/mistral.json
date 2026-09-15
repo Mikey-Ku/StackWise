@@ -1,0 +1,14 @@
+{
+  "id": "mistral",
+  "name": "Mistral AI",
+  "provider": "mistral",
+  "slots": [
+    "ai"
+  ],
+  "summary": "An AI model provider with an API for text and code models.",
+  "website": "https://mistral.ai",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

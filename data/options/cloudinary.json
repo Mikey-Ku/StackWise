@@ -1,0 +1,14 @@
+{
+  "id": "cloudinary",
+  "name": "Cloudinary",
+  "provider": "cloudinary",
+  "slots": [
+    "files"
+  ],
+  "summary": "Hosted storage for images and videos that can resize and optimize them for you.",
+  "website": "https://cloudinary.com",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

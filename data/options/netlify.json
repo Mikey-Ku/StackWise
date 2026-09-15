@@ -1,0 +1,96 @@
+{
+  "id": "netlify",
+  "name": "Netlify",
+  "provider": "netlify",
+  "slots": ["hosting"],
+  "summary": "Netlify hosts static sites and full-stack web apps with automatic deployments from Git and built-in serverless functions.",
+  "website": "https://www.netlify.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_100",
+      "note": "Free plan gives 300 credits a month; bandwidth costs 20 credits per GB, so about 15GB total, enough for roughly 100 typical users.",
+      "source": "https://docs.netlify.com/manage/accounts-and-billing/billing/billing-for-credit-based-plans/how-credits-work/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 9,
+      "note": "Personal plan is $9/month for one developer and includes 1,000 credits a month, versus 300 on the Free plan.",
+      "source": "https://www.netlify.com/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Site code is standard, but Netlify Functions, redirects, and Edge Functions use Netlify-specific config that needs rework to move.",
+      "source": "https://docs.netlify.com/frameworks/next-js/overview/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "runtime_model": {
+      "value": "serverless",
+      "note": "Server-side code runs as Netlify Functions (AWS Lambda-based serverless) and Edge Functions, not a persistent server.",
+      "source": "https://docs.netlify.com/functions/background-functions/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "persistent_disk": {
+      "value": "none",
+      "note": "Functions have no writable persistent filesystem between invocations; use Netlify Blobs or an external database instead.",
+      "source": "https://docs.netlify.com/functions/background-functions/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "long_lived_connections": {
+      "value": false,
+      "note": "Netlify Functions are short-lived and stateless, so they cannot keep a WebSocket connection open. Use a third-party realtime service.",
+      "source": "https://docs.netlify.com/functions/background-functions/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "background_workers": {
+      "value": false,
+      "note": "Background Functions run per invocation for up to 15 minutes; there is no always-on worker process separate from requests.",
+      "source": "https://docs.netlify.com/functions/background-functions/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scheduled_jobs": {
+      "value": true,
+      "note": "Scheduled Functions run on a cron expression natively, with no extra service needed.",
+      "source": "https://docs.netlify.com/functions/scheduled-functions/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_commercial_use": {
+      "value": true,
+      "note": "Netlify's policy allows charging your own customers on the Free plan; you just cannot resell Netlify's hosting itself.",
+      "source": "https://www.netlify.com/legal/acceptable-use-policy/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "framework_support": {
+      "value": {
+        "nextjs": "full",
+        "react-vite": "full",
+        "sveltekit": "full"
+      },
+      "note": "Next.js runs with full SSR, ISR, and image optimization via Netlify's OpenNext adapter; static Vite apps and SvelteKit (adapter-netlify) are both fully supported.",
+      "source": "https://docs.netlify.com/frameworks/next-js/overview/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Sign up at netlify.com and click Add new project > Import an existing project.", "env": [], "source": "https://docs.netlify.com/get-started/" },
+    { "step": "Connect your Git provider and choose the repository to deploy.", "env": [], "source": "https://docs.netlify.com/get-started/" },
+    { "step": "Confirm the build command and publish directory; Netlify auto-detects most frameworks.", "env": [], "source": "https://docs.netlify.com/get-started/" },
+    { "step": "Add environment variables under Site configuration > Environment variables, then deploy.", "env": [], "source": "https://docs.netlify.com/get-started/" }
+  ],
+  "builder_notes": [
+    "Free plan is capped at 300 credits a month, about 15GB of bandwidth; a single popular post can exhaust it and pause the whole site.",
+    "Functions cannot hold WebSocket connections open; use a third-party realtime service for chat or live updates.",
+    "Background Functions cap out at 15 minutes and are not an always-on worker; use an external queue or worker service for long jobs."
+  ]
+}

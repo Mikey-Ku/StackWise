@@ -1,0 +1,96 @@
+{
+  "id": "fly-io",
+  "name": "Fly.io",
+  "provider": "fly",
+  "slots": ["hosting"],
+  "summary": "Fly.io runs your app as full servers (Docker containers) in data centers close to your users, billed only for what you use.",
+  "website": "https://fly.io",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Fly.io discontinued all free allowances on October 7, 2024; new accounts get only a one-time trial credit, not an ongoing free plan.",
+      "source": "https://fly.io/docs/about/discontinued-plans/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No fixed monthly plan exists; billing is pure pay-as-you-go per second, so there is no single 'cheapest plan' price to report. Smallest always-on VM runs roughly $2 to $4/month plus storage and bandwidth.",
+      "source": "https://fly.io/docs/about/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Fly.io runs your own Docker image with no proprietary runtime, so the same container moves to any other Docker host.",
+      "source": "https://fly.io/docs/about/pricing/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "runtime_model": {
+      "value": "server",
+      "note": "Apps run as always-on Firecracker VMs (Machines) built from a Dockerfile, not request-triggered functions.",
+      "source": "https://fly.io/docs/machines/flyctl/fly-machine-run/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "persistent_disk": {
+      "value": "included",
+      "note": "Fly Volumes attach local persistent NVMe storage directly to a Machine, billed at $0.15/GB/month as part of normal usage.",
+      "source": "https://fly.io/docs/reference/volumes/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "long_lived_connections": {
+      "value": true,
+      "note": "Apps run as regular servers, so WebSocket connections are fully supported with no extra setup or third-party service.",
+      "source": "https://fly.io/blog/websockets-and-fly/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "background_workers": {
+      "value": true,
+      "note": "Any Machine can run a long-running process with no public port, separate from a web-facing app.",
+      "source": "https://fly.io/docs/machines/flyctl/fly-machine-run/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "scheduled_jobs": {
+      "value": true,
+      "note": "Machines support a built-in --schedule flag for hourly, daily, weekly, or monthly runs; it is coarse interval scheduling, not full cron syntax.",
+      "source": "https://fly.io/docs/machines/flyctl/fly-machine-run/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_plan_commercial_use": {
+      "value": false,
+      "note": "No free plan.",
+      "source": "https://fly.io/docs/about/discontinued-plans/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "framework_support": {
+      "value": {
+        "nextjs": "full",
+        "react-vite": "full",
+        "sveltekit": "full"
+      },
+      "note": "Fly.io publishes official guides and templates for Next.js and SvelteKit run as full Docker-based Node servers; static Vite apps deploy the same way.",
+      "source": "https://fly.io/docs/js/frameworks/svelte/",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Install flyctl and run fly auth signup or fly auth login.", "env": [], "source": "https://fly.io/docs/getting-started/" },
+    { "step": "Run fly launch in your project directory; it detects your framework and generates a Dockerfile and fly.toml.", "env": [], "source": "https://fly.io/docs/getting-started/" },
+    { "step": "Set environment variables with fly secrets set KEY=value.", "env": [], "source": "https://fly.io/docs/getting-started/" },
+    { "step": "Run fly volumes create for any data that must persist, then fly deploy to build and ship the app.", "env": [], "source": "https://fly.io/docs/reference/volumes/" }
+  ],
+  "builder_notes": [
+    "There is no free plan; every app is billed per second from the first deploy, so budget a few dollars a month minimum before building.",
+    "You write and own the Dockerfile (fly launch can generate a starting one); nothing is auto-detected the way Vercel or Render does it.",
+    "Attach a Fly Volume for any data that must survive redeploys; without one, writes to a Machine's disk are lost on the next deploy."
+  ]
+}

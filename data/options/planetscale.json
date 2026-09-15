@@ -1,0 +1,14 @@
+{
+  "id": "planetscale",
+  "name": "PlanetScale",
+  "provider": "planetscale",
+  "slots": [
+    "database"
+  ],
+  "summary": "A hosted database service for MySQL and Postgres, built for scale.",
+  "website": "https://planetscale.com",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}

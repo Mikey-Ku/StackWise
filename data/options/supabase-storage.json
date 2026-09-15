@@ -1,0 +1,78 @@
+{
+  "id": "supabase-storage",
+  "name": "Supabase Storage",
+  "provider": "supabase",
+  "slots": ["files"],
+  "summary": "Supabase Storage is a file storage system built into Supabase for storing and serving images, videos, and other files, with an S3-compatible API.",
+  "website": "https://supabase.com/storage",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_100",
+      "note": "Free plan includes 1 GB storage and 5 GB cached egress a month, with a 50 MB max file size per upload.",
+      "source": "https://supabase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 25,
+      "note": "Pro plan is $25/month and raises limits to 100 GB storage and 250 GB cached egress before overage charges.",
+      "source": "https://supabase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Storage exposes an S3-compatible API alongside Supabase's own SDK, so buckets work with standard S3 tools.",
+      "source": "https://supabase.com/docs/guides/storage",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "direct_uploads": {
+      "value": true,
+      "note": "Browsers can upload directly using signed upload URLs or the Supabase client SDK, without routing files through your server.",
+      "source": "https://supabase.com/docs/guides/storage",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "egress_fees": {
+      "value": true,
+      "note": "Cached egress beyond the free 5 GB/month costs $0.03 per GB; the Pro plan includes 250 GB before overage.",
+      "source": "https://supabase.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a free Supabase account and a new project to get your project URL and API keys.",
+      "env": [],
+      "source": "https://supabase.com/docs/guides/storage/quickstart"
+    },
+    {
+      "step": "Install the Supabase JavaScript client library in your Next.js app with npm install @supabase/supabase-js.",
+      "env": [],
+      "source": "https://supabase.com/docs/guides/storage/quickstart"
+    },
+    {
+      "step": "Set your project URL and publishable key as environment variables.",
+      "env": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
+      "source": "https://supabase.com/docs/guides/storage/quickstart"
+    },
+    {
+      "step": "Create a storage bucket from the dashboard or the client library, and set access policies for it.",
+      "env": [],
+      "source": "https://supabase.com/docs/guides/storage/quickstart"
+    },
+    {
+      "step": "Use signed upload URLs to let users upload files directly from the browser to the bucket.",
+      "env": [],
+      "source": "https://supabase.com/docs/guides/storage/uploads/standard-uploads"
+    }
+  ],
+  "builder_notes": [
+    "Set row level security policies on storage buckets; do not assume a bucket is private by default.",
+    "Use signed upload URLs for browser uploads instead of proxying file bytes through a Next.js API route.",
+    "Keep the service role key on the server only; never expose it to client code."
+  ]
+}

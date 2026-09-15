@@ -1,0 +1,85 @@
+{
+  "id": "anthropic",
+  "name": "Anthropic API (Claude)",
+  "provider": "anthropic",
+  "slots": ["ai"],
+  "summary": "Anthropic's API lets your app call Claude models to generate text, reason through tasks, and power AI features.",
+  "website": "https://www.anthropic.com/api",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "No guaranteed ongoing free allowance; Anthropic's own support docs say new Console accounts are not guaranteed automatic free credit.",
+      "source": "https://support.claude.com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No flat monthly plan for the API; it is pay-as-you-go per token.",
+      "source": "https://platform.claude.com/docs/en/get-started",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Proprietary Messages API with its own message and content-block format, different from other providers' shapes.",
+      "source": "https://platform.claude.com/docs/en/get-started",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "free_tier": {
+      "value": false,
+      "note": "No ongoing free rate-limited tier is documented; some new accounts may see limited promotional credit, but it is not guaranteed.",
+      "source": "https://support.claude.com",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "Official TypeScript/JavaScript SDK is published as the \"@anthropic-ai/sdk\" npm package.",
+      "source": "https://platform.claude.com/docs/en/get-started",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    },
+    "cheap_model_price": {
+      "value": "Claude Haiku 4.5: $1 input / $5 output per million tokens",
+      "note": "Cheapest current model; described by Anthropic as its fastest, most cost-efficient option.",
+      "source": "https://claude.com/pricing",
+      "retrieved": "2026-09-15",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a Claude Console account at platform.claude.com.",
+      "env": [],
+      "source": "https://platform.claude.com/docs/en/get-started"
+    },
+    {
+      "step": "Create an API key from Console settings.",
+      "env": [],
+      "source": "https://platform.claude.com/docs/en/get-started"
+    },
+    {
+      "step": "Set the key as an environment variable.",
+      "env": ["ANTHROPIC_API_KEY"],
+      "source": "https://platform.claude.com/docs/en/get-started"
+    },
+    {
+      "step": "Install the SDK with npm install @anthropic-ai/sdk.",
+      "env": [],
+      "source": "https://platform.claude.com/docs/en/get-started"
+    },
+    {
+      "step": "Import Anthropic and call client.messages.create from a server-side route handler.",
+      "env": [],
+      "source": "https://platform.claude.com/docs/en/get-started"
+    }
+  ],
+  "builder_notes": [
+    "Keep ANTHROPIC_API_KEY on the server only; never call the Messages API from client-side code.",
+    "Use a smaller model like Haiku for high-volume or low-stakes tasks to control cost.",
+    "Add a payment method before building; there is no guaranteed ongoing free tier to prototype against."
+  ]
+}

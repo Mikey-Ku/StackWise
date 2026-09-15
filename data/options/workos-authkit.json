@@ -1,0 +1,14 @@
+{
+  "id": "workos-authkit",
+  "name": "WorkOS AuthKit",
+  "provider": "workos",
+  "slots": [
+    "login"
+  ],
+  "summary": "A hosted login service with ready-made sign-in pages and business sign-in options.",
+  "website": "https://workos.com/authkit",
+  "coverage": "partial",
+  "facts": {},
+  "setup": [],
+  "builder_notes": []
+}
