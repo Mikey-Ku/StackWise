@@ -30,13 +30,35 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
 
   const importFile = async (file: File) => {
     try {
-      const parsed = sharedPlanSchema.safeParse(JSON.parse(await file.text()));
+      const raw = JSON.parse(await file.text()) as { whystack?: unknown; id?: unknown; plan?: unknown };
+      // A project's whystack.plan.json keeps its plan id, so importing it reconnects to that plan.
+      if (raw.whystack === 1 && raw.plan && typeof raw.id === "string") {
+        const parsed = sharedPlanSchema.safeParse(raw.plan);
+        if (!parsed.success) throw new Error("not a plan");
+        if (store.plans[raw.id]) {
+          dispatch({ type: "switchPlan", id: raw.id });
+          dispatch({ type: "applyRemote", id: raw.id, plan: parsed.data });
+          onToast(`Updated ${parsed.data.appName || "the plan"} from its project file.`);
+        } else {
+          dispatch({ type: "importPlan", id: /^[A-Za-z0-9_-]{1,64}$/.test(raw.id) ? raw.id : newId(), now: now(), plan: parsed.data });
+          onToast(`Imported ${parsed.data.appName || "a plan"} from its project file.`);
+        }
+        return;
+      }
+      const parsed = sharedPlanSchema.safeParse(raw);
       if (!parsed.success) throw new Error("not a plan");
       dispatch({ type: "importPlan", id: newId(), now: now(), plan: parsed.data });
       onToast(`Imported ${parsed.data.appName || "a plan"}.`);
     } catch {
       onToast("That file isn't a WhyStack plan.");
     }
+  };
+
+  const updated = (iso: string) => {
+    const date = new Date(iso);
+    return date.toDateString() === new Date().toDateString()
+      ? date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+      : date.toLocaleDateString([], { month: "short", day: "numeric" });
   };
 
   return (
@@ -61,7 +83,9 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
               }}
             >
               <span>{nameOf(id)}</span>
-              <span className="mk-hint">{store.plans[id].step === "plan" ? "planned" : "in progress"}</span>
+              <span className="mk-hint">
+                {store.plans[id].step === "plan" ? "planned" : "in progress"}, {updated(store.plans[id].updatedAt)}
+              </span>
             </button>
           ))}
         </div>
