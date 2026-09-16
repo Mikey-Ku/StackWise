@@ -16,7 +16,7 @@ import { Planner, type AiStatus } from "./Planner";
 import { SpecDialog } from "./SpecDialog";
 import { usePairing, type ClaudeActivity } from "./usePairing";
 import { newId, usePlans } from "./usePlans";
-import { cx } from "./ui";
+import { cx, useMediaQuery } from "./ui";
 
 type Tab = "options" | "details" | "learn" | "checklist" | "claude";
 const TABS: { id: Tab; label: string }[] = [
@@ -41,6 +41,19 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const [compare, setCompare] = useState<CompareRequest | null>(null);
   const [ai, setAi] = useState<AiStatus | null>(null);
   const [pairOpen, setPairOpen] = useState(false);
+  /**
+   * In a narrow window the planner and the canvas take turns filling the screen, and the side
+   * panel slides up over the canvas as a sheet. Wide windows show all three and ignore both.
+   */
+  const compact = useMediaQuery("(max-width: 1100px)");
+  const [view, setView] = useState<"plan" | "canvas">(() => (plan.step === "plan" ? "canvas" : "plan"));
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [viewFor, setViewFor] = useState({ id: plan.id, step: plan.step });
+  if (viewFor.id !== plan.id || viewFor.step !== plan.step) {
+    // A confirmed plan belongs on the canvas; describing and confirming happen in the planner.
+    setViewFor({ id: plan.id, step: plan.step });
+    setView(plan.step === "plan" ? "canvas" : "plan");
+  }
   const onClaudeChange = useCallback((appName: string, change: ClaudeActivity | undefined) => {
     const what = change ? `${change.summary}${change.changes.length ? `: ${change.changes.slice(0, 2).join("; ")}${change.changes.length > 2 ? ` (+${change.changes.length - 2})` : ""}` : ""}` : "updated the plan";
     setToast(`Claude changed ${appName.trim() || "your plan"}. ${what}. Undo reverses it.`);
@@ -53,6 +66,12 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   useEffect(() => {
     leftRef.current?.scrollTo({ top: 0 });
   }, [plan.step, plan.id]);
+
+  // A different part or connection starts at the top of the panel, not where the last one was scrolled.
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    panelRef.current?.scrollTo({ top: 0 });
+  }, [selectedSlot, connection, tab]);
 
   useEffect(() => {
     if (!toast) return;
@@ -96,24 +115,39 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     return () => window.removeEventListener("keydown", onKey);
   }, [dispatch]);
 
-  const select = useCallback((slot: SlotId) => {
-    setSelectedSlot(slot);
-    setConnection(null);
-    setTab("details");
+  const openPanel = useCallback((next: Tab) => {
+    setTab(next);
+    setSheetOpen(true);
+    setView("canvas");
   }, []);
 
-  const selectConnection = useCallback((slot: SlotId) => {
-    setSelectedSlot(slot);
-    setConnection(slot);
-    setTab("details");
-  }, []);
+  const select = useCallback(
+    (slot: SlotId) => {
+      setSelectedSlot(slot);
+      setConnection(null);
+      openPanel("details");
+    },
+    [openPanel],
+  );
+
+  const selectConnection = useCallback(
+    (slot: SlotId) => {
+      setSelectedSlot(slot);
+      setConnection(slot);
+      openPanel("details");
+    },
+    [openPanel],
+  );
 
   const researched = catalog.options.filter((o) => o.coverage === "full").length;
   const factCount = catalog.options.reduce((n, o) => n + Object.keys(o.facts).length, 0);
   const verified = catalog.options.reduce((n, o) => n + Object.values(o.facts).filter((f) => f.status === "verified").length, 0);
 
+  const step = plan.step === "describe" ? 1 : plan.step === "confirm" ? 2 : 3;
+  const parts = Object.values(model.rec.selection).filter(Boolean).length;
+
   return (
-    <div className="ws">
+    <div className="ws" data-view={view} data-sheet={sheetOpen ? "open" : "closed"}>
       <header className="ws-top">
         <div className="mk-row mk-gap-3 ws-top__left">
           <span className="ws-mark">WhyStack</span>
@@ -152,12 +186,26 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         </div>
       )}
 
+      <nav className="ws-views" aria-label="Views">
+        <div className="mk-seg ws-seg" role="tablist">
+          <button type="button" role="tab" aria-selected={view === "plan"} data-on={view === "plan"} className="mk-seg__opt" onClick={() => setView("plan")}>
+            Plan
+          </button>
+          <button type="button" role="tab" aria-selected={view === "canvas"} data-on={view === "canvas"} className="mk-seg__opt" onClick={() => setView("canvas")}>
+            Canvas
+          </button>
+        </div>
+        <span className="ws-views__hint">
+          {view === "plan" ? `Step ${step} of 3` : parts ? `${parts} part${parts === 1 ? "" : "s"}. Drag to move, click a line to see what it needs.` : "Describe your app to fill the canvas."}
+        </span>
+      </nav>
+
       <div className="ws-body">
-        <aside className="ws-left" ref={leftRef}>
-          <Planner model={model} ai={ai} onSelect={select} onOpenChecklist={() => setTab("checklist")} />
+        <aside className="ws-left" ref={leftRef} inert={compact && view !== "plan"}>
+          <Planner model={model} ai={ai} onSelect={select} onOpenChecklist={() => openPanel("checklist")} />
         </aside>
 
-        <main className="ws-center">
+        <main className="ws-center" inert={compact && view !== "canvas"}>
           <ReactFlowProvider>
             <PlanCanvas
               model={model}
@@ -174,21 +222,32 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           </ReactFlowProvider>
         </main>
 
-        <aside className="ws-right">
+        <aside className="ws-right" inert={compact && view !== "canvas"}>
           <div className="mk-tabs ws-right__tabs" role="tablist">
             {TABS.map((t) => (
-              <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={cx("mk-tab", tab === t.id && "ws-tab-on")} onClick={() => setTab(t.id)}>
+              <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={cx("mk-tab", tab === t.id && "ws-tab-on")} onClick={() => openPanel(t.id)}>
                 {t.label}
               </button>
             ))}
+            <button type="button" className="ws-sheet-toggle mk-btn mk-btn--ghost mk-sm" aria-expanded={sheetOpen} onClick={() => setSheetOpen((open) => !open)}>
+              {sheetOpen ? "Hide" : "Show"}
+            </button>
           </div>
-          <div className="ws-right__body">
+          <div className="ws-right__body" ref={panelRef}>
             {tab === "options" && <Palette model={model} selectedSlot={selectedSlot} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onToast={setToast} />}
             {tab === "details" &&
               (connection ? (
-                <ConnectionPanel model={model} slot={connection} today={today} onShowPart={() => setConnection(null)} onOpenChecklist={() => setTab("checklist")} onToast={setToast} />
+                <ConnectionPanel model={model} slot={connection} today={today} aiOn={ai?.ai ?? null} onShowPart={() => setConnection(null)} onOpenChecklist={() => setTab("checklist")} onToast={setToast} />
               ) : (
-                <Inspector model={model} slot={selectedSlot} today={today} onToast={setToast} onCompare={(slot, optionIds) => setCompare({ slot, optionIds })} onLearn={() => setTab("learn")} />
+                <Inspector
+                  model={model}
+                  slot={selectedSlot}
+                  today={today}
+                  aiOn={ai?.ai ?? null}
+                  onToast={setToast}
+                  onCompare={(slot, optionIds) => setCompare({ slot, optionIds })}
+                  onLearn={() => setTab("learn")}
+                />
               ))}
             {tab === "learn" && <LearnPanel catalog={catalog} focus={selectedSlot} />}
             {tab === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} />}

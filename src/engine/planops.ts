@@ -4,7 +4,7 @@ import { optionIn, worstLevel, type CatalogIndex, type CheckResult, type Level }
 import { questionsThatMatter } from "./followups";
 import { closeCalls, criterionLabel, recommend, type Recommendation } from "./score";
 import { PRIORITY_IDS, SIZE_IDS, SLOT_IDS, type Answer, type PlanInput, type Selection, type SlotId } from "./schema";
-import { sharedPlanSchema, type SharedPlan } from "./share";
+import { NOTE_MAX, sharedPlanSchema, type SharedPlan } from "./share";
 import { planStats } from "./stats";
 import { connectionsOf } from "./wiring";
 import { SIZE_PHRASE, inSentence } from "./text";
@@ -28,6 +28,8 @@ export const planUpdateSchema = z.object({
   size: z.enum(SIZE_IDS).optional(),
   priority: z.enum(PRIORITY_IDS).optional(),
   builder: z.string().max(40).optional(),
+  /** Notes by part id. Text replaces the note; "" removes it. */
+  notes: z.partialRecord(z.enum(SLOT_IDS), z.string().max(NOTE_MAX)).optional(),
 });
 export type PlanUpdate = z.infer<typeof planUpdateSchema>;
 
@@ -38,7 +40,7 @@ export function planInput(plan: SharedPlan): PlanInput {
 }
 
 /** Apply a change the way the planner would, or throw with every reason it can't be applied. */
-export function applyPlanUpdate(index: CatalogIndex, plan: SharedPlan, update: PlanUpdate): { plan: SharedPlan; changes: string[] } {
+export function applyPlanUpdate(index: CatalogIndex, plan: SharedPlan, update: PlanUpdate, now = new Date().toISOString()): { plan: SharedPlan; changes: string[] } {
   const next: SharedPlan = structuredClone(plan);
   const changes: string[] = [];
   const problems: string[] = [];
@@ -110,6 +112,22 @@ export function applyPlanUpdate(index: CatalogIndex, plan: SharedPlan, update: P
     }
   }
 
+  // Notes go last, so a note written for a part that changes in the same update names the new option.
+  const selection = Object.keys(update.notes ?? {}).length ? recommend(index, planInput(next), next.pinned).selection : {};
+  for (const [slot, text] of Object.entries(update.notes ?? {}) as [SlotId, string][]) {
+    const trimmed = text.trim();
+    const current = plan.notes[slot];
+    if (!trimmed) {
+      if (!current) continue;
+      delete next.notes[slot];
+      changes.push(`Removed the note on ${partLabel(slot)}`);
+      continue;
+    }
+    if (current?.text === trimmed) continue;
+    next.notes[slot] = { text: trimmed, optionId: selection[slot] || undefined, updatedAt: now, by: "claude" };
+    changes.push(`${current ? "Rewrote" : "Wrote"} the note on ${partLabel(slot)}`);
+  }
+
   if (problems.length) throw new PlanUpdateError(problems.join(" "));
   return { plan: sharedPlanSchema.parse(next), changes };
 }
@@ -178,6 +196,22 @@ export function planReport(index: CatalogIndex, plan: SharedPlan, rec: Recommend
       what_travels: c.what,
       environment_variables: c.env.map((v) => v.name),
     })),
+    notes: SLOT_IDS.flatMap((slot) => {
+      const note = plan.notes[slot];
+      if (!note) return [];
+      const optionNow = rec.selection[slot];
+      const writtenFor = note.optionId ? index.optionsById.get(note.optionId)?.name ?? note.optionId : undefined;
+      return [
+        {
+          part_id: slot,
+          part: index.slotsById.get(slot)?.label ?? slot,
+          text: note.text,
+          written_by: note.by,
+          updated_at: note.updatedAt,
+          ...(note.optionId && note.optionId !== optionNow ? { written_for: writtenFor, may_be_out_of_date: true } : {}),
+        },
+      ];
+    }),
     accounts_to_create: stats.accounts,
     setup_steps: stats.setupSteps,
     questions: index.catalog.needs.map((n) => ({

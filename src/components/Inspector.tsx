@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { alternativesFor, costLine, CRITERIA, criterionLabel, formatFactValue, inSentence, isStale, optionStats, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
+import { PartWorkbench } from "./PartWorkbench";
 import type { PlanModel } from "./usePlans";
 import { Logo, StatGrid, VerdictBadge, copyText, cx } from "./ui";
 
@@ -35,6 +36,7 @@ export function Inspector({
   model,
   slot,
   today,
+  aiOn,
   onToast,
   onCompare,
   onLearn,
@@ -42,6 +44,7 @@ export function Inspector({
   model: PlanModel;
   slot: SlotId | null;
   today: string;
+  aiOn: boolean | null;
   onToast: (message: string) => void;
   onCompare: (slot: SlotId, optionIds: string[]) => void;
   onLearn: () => void;
@@ -104,6 +107,8 @@ export function Inspector({
           </button>
         )}
       </div>
+
+      <PartWorkbench model={model} slot={slot} aiOn={aiOn} onToast={onToast} />
 
       {learn && (
         <details className="ws-details ws-learn-inline">

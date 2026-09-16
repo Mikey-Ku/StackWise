@@ -4,6 +4,7 @@ import { buildDecisionRecord } from "./decisions";
 import { evaluatePlan, needIsOn, optionIn, type CatalogIndex, type CheckResult } from "./evaluate";
 import { CRITERIA, criterionLabel, criterionScores } from "./score";
 import type { Answer, PlanInput, Selection } from "./schema";
+import type { SharedPlan } from "./share";
 import { SIZE_PHRASE } from "./text";
 import { envFileText, planEnv } from "./wiring";
 
@@ -19,6 +20,8 @@ export interface SpecDetails {
   features: string;
   builderId: string;
   generatedOn: string;
+  /** The person's notes on each part. Left out, a pack has none. */
+  notes?: SharedPlan["notes"];
 }
 
 export interface SpecFile {
@@ -125,6 +128,16 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
   const envNames = unique(env.map((v) => v.name));
   const stackList = filled.map(({ def, option }) => `- ${def.label}: ${option.name}`);
 
+  // The person's notes, kept word for word. A note written for another option says so.
+  const personNotes = filled.flatMap(({ slot, def, option }) => {
+    const note = details.notes?.[slot];
+    if (!note?.text.trim()) return [];
+    const writtenFor = note.optionId && note.optionId !== option.id ? index.optionsById.get(note.optionId)?.name ?? note.optionId : undefined;
+    return [{ heading: `${def.label}: ${option.name}`, text: note.text.trim(), writtenFor }];
+  });
+  const noteBlocks = personNotes.flatMap((n) => [`### ${n.heading}`, "", ...(n.writtenFor ? [`_Written when this part was ${n.writtenFor}. Check that it still applies._`, ""] : []), n.text, ""]);
+  const noteBullets = personNotes.map((n) => `- ${n.heading}${n.writtenFor ? ` (written for ${n.writtenFor})` : ""}: ${n.text.replace(/\s*\n\s*/g, " ")}`);
+
   const spec = [
     `# ${name}: build spec`,
     "",
@@ -148,6 +161,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "|---|---|---|",
     ...stackRows.map(({ def, option, why }) => `| ${def.label} | ${option.name} | ${why} |`),
     "",
+    ...(noteBlocks.length ? ["## Notes on the stack", "", "Written by the person planning the app. Follow them unless they contradict a rule below.", "", ...noteBlocks] : []),
     "## Rules for whoever builds it",
     "",
     ...rules.map((r) => `- ${r}`),
@@ -214,6 +228,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "",
     ...stackList,
     "",
+    ...(noteBullets.length ? ["## Notes on the stack", "", ...noteBullets, ""] : []),
     "## Rules",
     "",
     ...rules.map((r) => `- ${r}`),
@@ -241,6 +256,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "Use exactly this stack:",
     ...stackList,
     "",
+    ...(noteBullets.length ? ["Notes on the stack:", ...noteBullets, ""] : []),
     "Follow these rules:",
     ...rules.map((r) => `- ${r}`),
     ...(problems.length ? ["", "Watch out for:", ...problems.map((p) => `- ${p.title}.${p.fix ? ` ${p.fix}` : ""}`)] : []),

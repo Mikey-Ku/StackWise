@@ -49,12 +49,19 @@ Claude can check stacks, compare options, estimate costs and change the plan you
 **The canvas**
 - Your app in the middle, with slots for hosting, domain name, database, login, email, file storage, payments, AI, web scraping, background jobs, analytics, error monitoring and a phone app. Optional parts stay hidden until you need them, drag something that fits, or show all parts.
 - Drag options from a palette of 79 (59 fully researched), or press Use. Every option has its logo, a dot for what would happen if you used it, and quick stats at your audience size: cost now, the first paid plan, how far the free plan goes, and the trait that matters for that part (a domain's renewal price, whether a scraper charges extra for JavaScript pages, whether analytics needs cookies, whether a free host falls asleep, download fees, sales tax, whether iPhone builds need a Mac). Dropping something in the wrong slot is refused with a reason.
-- Drag any part where you want it. The layout is saved with the plan, and "Tidy up" puts everything back.
+- Drag any part where you want it: the lines follow it as it moves. The layout is saved with the plan, and "Tidy up" puts everything back.
 - Every line between the app and a service says what runs along it: the environment variables your code reads to reach that service. Click a line to see each name, where its value comes from, which ones the browser can read, and the checks on that connection. The line to your host carries every variable in the plan, because the host needs them all.
 - Swap a service without leaving the canvas: "Swap" on any part lists the others that fit it.
+- In a narrow window the planner and the canvas take turns filling the screen, and the side panel slides up over the canvas when you pick something.
 - A strip above the canvas sums up the plan: monthly cost plus yearly and one-time costs, where the cost first jumps as you grow, accounts to sign up for, setup steps, and checks.
 - Every check shows up as a colored line or badge: works, works with a warning, doesn't work, missing a piece, or not verified yet.
 - Undo and redo (Cmd or Ctrl+Z).
+
+**Notes and talking it through**
+- Write a note on any part and the line to it: how it should work, what you decided, what whoever builds it should know. A dot on the line and a chip on the card show it, and a note written before you swapped the service is flagged.
+- Talk a part through: ask how to set it up, which keys it needs, what could go wrong or what else would work. Claude answers from WhyStack's facts and checks for that part, not from memory. Without a key, WhyStack answers the same questions from its own facts.
+- Claude (or WhyStack's facts) can suggest a note or a switch. A suggested switch shows the verdict WhyStack's rules give it right now, and nothing changes until you accept, as one step Undo reverses.
+- Notes travel with the plan: share links, plan files, SPEC.md, each part's build agent, and pairing, where Claude Code can read and write them too.
 
 **Understanding**
 - Details for every part: its stats, every check with its reason and fix, the cost at your size, how it scored for your priority, a comparison table, and the sourced facts behind it, flagged when they may be out of date.
@@ -101,7 +108,7 @@ public/logos/         the logo files, committed
 src/engine/           the logic, no React, fully tested
 src/ai/               Claude pre-fill and explanations, optional
 src/components/       the workspace UI
-src/app/api/          status, prefill, explain, mcp, pair and local routes
+src/app/api/          status, prefill, explain, talk, mcp, pair and local routes
 src/mcp/              the MCP server, its stdio command, and shared plans in .whystack/
 scripts/              evals, source checker, option drafter, logo fetcher
 evals/                eval cases (written by a person) and how to run them

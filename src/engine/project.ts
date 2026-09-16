@@ -37,7 +37,7 @@ function resultLine(r: CheckResult): string {
 }
 
 export function buildProjectPack(index: CatalogIndex, input: PlanInput, selection: Selection, details: ProjectDetails, options: ProjectOptions = {}): SpecFile[] {
-  const spec = buildSpecPack(index, input, selection, details);
+  const spec = buildSpecPack(index, input, selection, { ...details, notes: details.notes ?? details.plan.notes });
   const name = details.appName.trim() || "My app";
   const builder = index.catalog.planning.builders.find((b) => b.id === details.builderId);
   const results = evaluatePlan(index, selection, input);
@@ -174,6 +174,8 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
     ...parts.map(({ slot, option, def, agent: agentName }) => {
       const touching = results.filter((r) => r.slots.includes(slot) && r.level !== "info");
       const notes = results.filter((r) => r.slots.includes(slot) && r.level === "info");
+      const personNote = details.plan.notes[slot];
+      const writtenFor = personNote?.optionId && personNote.optionId !== option.id ? index.optionsById.get(personNote.optionId)?.name ?? personNote.optionId : undefined;
       return agent(
         agentName,
         {
@@ -201,6 +203,15 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
           ...unique([...option.builder_notes, ...results.filter((r) => r.builder && r.slots.includes(slot)).map((r) => r.builder!)]).map((r) => `- ${r}`),
           "- Keep secrets in environment variables, never in code or the browser.",
           "",
+          ...(personNote?.text.trim()
+            ? [
+                "## Notes from the plan",
+                "",
+                ...(writtenFor ? [`Written when this part was ${writtenFor}. Check that it still applies, and ask if it doesn't.`, ""] : []),
+                personNote.text.trim(),
+                "",
+              ]
+            : []),
           ...(touching.length ? ["## Problems WhyStack found", "", ...touching.map(resultLine), ""] : []),
           ...(notes.length ? ["## Good to know", "", ...notes.map(resultLine), ""] : []),
           "## Done when",

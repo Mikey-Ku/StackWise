@@ -4,13 +4,19 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import {
   Background,
   BackgroundVariant,
+  BaseEdge,
   Controls,
+  EdgeLabelRenderer,
+  getBezierPath,
   Handle,
   Position,
   ReactFlow,
+  useInternalNode,
   useReactFlow,
   useStore,
   type Edge,
+  type EdgeProps,
+  type InternalNode,
   type Node,
   type NodeProps,
 } from "@xyflow/react";
@@ -34,6 +40,7 @@ import {
 import type { Spot } from "./store";
 import type { PlanModel } from "./usePlans";
 import { Logo, StatChips, VerdictBadge, VerdictDot, cx, type Verdict } from "./ui";
+import { wireEnds, type Box } from "./wire";
 
 /**
  * The canvas is a graph with typed connections (see docs/DECISIONS.md), shown for now as one app
@@ -50,13 +57,6 @@ const OUTER: OuterSlot[] = ["hosting", "database", "login", "email", "domain", "
 
 const APP_NODE = "app";
 const nodeId = (slot: SlotId) => (slot === "framework" ? APP_NODE : `slot-${slot}`);
-
-function sideToward(from: Spot, to: Spot): { source: Position; target: Position } {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? { source: Position.Right, target: Position.Left } : { source: Position.Left, target: Position.Right };
-  return dy >= 0 ? { source: Position.Bottom, target: Position.Top } : { source: Position.Top, target: Position.Bottom };
-}
 
 /**
  * Where WhyStack puts the parts when nobody has moved them: on an ellipse around the app,
@@ -77,6 +77,9 @@ function autoLayout(visible: OuterSlot[]): Record<string, Spot> {
 
 /** Room for the "show all parts" button and the preview banner above the plan. */
 const FIT_PADDING = { top: "60px", right: "28px", bottom: "28px", left: "28px" } as const;
+/** On a phone-sized canvas, fitting a big plan makes cards unreadable. Stop there and let people pan. */
+const NARROW_CANVAS = 560;
+const NARROW_MIN_ZOOM = 0.45;
 
 /**
  * Keep the plan in view when the step, the visible parts or the canvas size change, and when the
@@ -92,21 +95,23 @@ function AutoFit({ shape }: { shape: string }) {
     return true;
   });
   const size = useStore((state) => `${Math.round(state.width)}x${Math.round(state.height)}`);
+  const narrow = useStore((state) => state.width > 0 && state.width < NARROW_CANVAS);
   const fitted = useRef("");
   useEffect(() => {
     const key = `${shape}|${size}`;
     if (!ready || fitted.current === key) return;
     const frame = requestAnimationFrame(() => {
-      void fitView({ padding: FIT_PADDING, maxZoom: 1, duration: fitted.current ? 250 : 0 });
+      void fitView({ padding: FIT_PADDING, maxZoom: 1, ...(narrow ? { minZoom: NARROW_MIN_ZOOM } : {}), duration: fitted.current ? 250 : 0 });
       fitted.current = key;
     });
     return () => cancelAnimationFrame(frame);
-  }, [fitView, ready, shape, size]);
+  }, [fitView, ready, shape, size, narrow]);
   return null;
 }
 
 interface CanvasActions {
   select: (slot: SlotId) => void;
+  openConnection: (slot: SlotId) => void;
   clear: (slot: SlotId) => void;
   autoPick: (slot: SlotId) => void;
   place: (slot: SlotId, optionId: string) => void;
@@ -114,16 +119,74 @@ interface CanvasActions {
 const ActionsContext = createContext<CanvasActions | null>(null);
 const useActions = () => useContext(ActionsContext)!;
 
+/** Lines find their own ends (see wire.ts), so a card needs just one hidden handle of each kind. */
 function Handles() {
   return (
     <>
-      {[Position.Top, Position.Right, Position.Bottom, Position.Left].map((p) => (
-        <span key={p}>
-          <Handle type="source" position={p} id={`src-${p}`} isConnectable={false} />
-          <Handle type="target" position={p} id={`tgt-${p}`} isConnectable={false} />
-        </span>
-      ))}
+      <Handle type="source" position={Position.Bottom} isConnectable={false} />
+      <Handle type="target" position={Position.Top} isConnectable={false} />
     </>
+  );
+}
+
+type NoteState = "fresh" | "stale" | undefined;
+
+type WireData = {
+  slot: SlotId;
+  /** A connection opens its panel; a line between two parts opens the part it points to. */
+  kind: "connection" | "pair";
+  label: string;
+  level: Verdict;
+  selected: boolean;
+  note: NoteState;
+};
+
+function boxOf(node: InternalNode): Box | null {
+  const { width, height } = node.measured;
+  if (!width || !height) return null;
+  return { ...node.internals.positionAbsolute, width, height };
+}
+
+/**
+ * A line between two cards that follows them as they move, with its label as a real button. It
+ * reads each card's live position from React Flow, so it redraws on every frame of a drag.
+ */
+function WireEdge({ id, source, target, data }: EdgeProps<Edge<WireData>>) {
+  const actions = useActions();
+  const from = useInternalNode(source);
+  const to = useInternalNode(target);
+  const a = from && boxOf(from);
+  const b = to && boxOf(to);
+  if (!a || !b || !data) return null;
+  const [path, labelX, labelY] = getBezierPath(wireEnds(a, b));
+  const open = () => (data.kind === "connection" ? actions.openConnection(data.slot) : actions.select(data.slot));
+  return (
+    <>
+      <BaseEdge id={id} path={path} interactionWidth={24} />
+      <EdgeLabelRenderer>
+        <button
+          type="button"
+          className={cx("ws-wire-label nodrag nopan", `ws-wire-label--${data.level}`, data.kind === "pair" && "is-pair", data.selected && "is-selected", data.note && `has-note is-note-${data.note}`)}
+          style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
+          title={data.note ? `${data.label}. Has a note${data.note === "stale" ? " written for another option" : ""}.` : data.label}
+          onClick={open}
+        >
+          {data.note && <span className="ws-wire-label__note" aria-hidden />}
+          <span className="ws-wire-label__text">{data.label}</span>
+        </button>
+      </EdgeLabelRenderer>
+    </>
+  );
+}
+
+const edgeTypes = { wire: WireEdge };
+
+function NoteChip({ note }: { note: NoteState }) {
+  if (!note) return null;
+  return (
+    <span className={cx("ws-notechip", note === "stale" && "is-stale")} title={note === "stale" ? "This note was written for another option. Check it still applies." : "This part has a note"}>
+      Note
+    </span>
   );
 }
 
@@ -139,8 +202,25 @@ export interface Choice {
 /** Swapping a service without leaving the canvas: the other options for this part, in place. */
 function SwapMenu({ slot, choices, label, onDone }: { slot: OuterSlot; choices: Choice[]; label: string; onDone: () => void }) {
   const actions = useActions();
+  const ref = useRef<HTMLDivElement>(null);
+  // Close on a click anywhere else or on Escape, like any menu. The toggle button handles its own clicks.
+  useEffect(() => {
+    const onPointer = (e: PointerEvent) => {
+      if (e.target instanceof Element && (ref.current?.contains(e.target) || e.target.closest("[data-swap-toggle]"))) return;
+      onDone();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onDone();
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [onDone]);
   return (
-    <div className="ws-swap nodrag nowheel" onClick={(e) => e.stopPropagation()}>
+    <div ref={ref} className="ws-swap nodrag nowheel" onClick={(e) => e.stopPropagation()}>
       <div className="ws-swap__head">
         <span className="mk-eyebrow">Swap {inSentence(label)}</span>
         <button type="button" className="ws-link nodrag" onClick={onDone}>
@@ -178,6 +258,7 @@ type AppData = {
   drop: DropState;
   selected: boolean;
   preview: boolean;
+  note: NoteState;
 };
 
 function AppNode({ data }: NodeProps<Node<AppData>>) {
@@ -185,7 +266,10 @@ function AppNode({ data }: NodeProps<Node<AppData>>) {
   return (
     <div className={cx("ws-node ws-app", data.drop, data.selected && "is-selected")} data-slot="framework" onClick={() => actions.select("framework")}>
       <Handles />
-      <span className="mk-eyebrow">{data.preview ? "Your app (preview)" : "Your app"}</span>
+      <span className="ws-app__eyebrow">
+        <span className="mk-eyebrow">{data.preview ? "Your app (preview)" : "Your app"}</span>
+        <NoteChip note={data.note} />
+      </span>
       <div className="ws-app__name">{data.appName}</div>
       <div className="ws-app__fw">
         <span className="mk-faint">built with</span>
@@ -221,6 +305,7 @@ type SlotData = {
   cleared: boolean;
   drop: DropState;
   selected: boolean;
+  note: NoteState;
 };
 
 function SlotNode({ data }: NodeProps<Node<SlotData>>) {
@@ -253,10 +338,11 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
               </button>
             )}
             {data.choices.length > 0 && (
-              <button type="button" className="ws-link nodrag" onClick={stop(() => setSwapping((v) => !v))}>
+              <button type="button" className="ws-link nodrag" data-swap-toggle onClick={stop(() => setSwapping((v) => !v))}>
                 Choose
               </button>
             )}
+            <NoteChip note={data.note} />
           </span>
         </div>
       ) : (
@@ -275,9 +361,12 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
             </div>
           )}
           <div className="ws-slot__foot">
-            <span className="mk-faint">{data.auto ? "Picked for you" : "Your choice"}</span>
             <span className="mk-row mk-gap-1">
-              <button type="button" className="ws-link nodrag" onClick={stop(() => setSwapping((v) => !v))}>
+              <NoteChip note={data.note} />
+              <span className="mk-faint">{data.auto ? "Picked for you" : "Your choice"}</span>
+            </span>
+            <span className="mk-row mk-gap-1">
+              <button type="button" className="ws-link nodrag" data-swap-toggle onClick={stop(() => setSwapping((v) => !v))}>
                 Swap
               </button>
               {!data.auto && data.needed && (
@@ -366,10 +455,6 @@ function PlanStatsBar({ model }: { model: PlanModel }) {
   );
 }
 
-function truncate(text: string, max = 34): string {
-  return text.length > max ? `${text.slice(0, max - 1).trimEnd()}...` : text;
-}
-
 export function PlanCanvas({
   model,
   selectedSlot,
@@ -397,15 +482,20 @@ export function PlanCanvas({
   const [over, setOver] = useState<SlotId | "pane" | null>(null);
   const [tidied, setTidied] = useState(0);
   const draggedOption = dragging ? index.optionsById.get(dragging) : undefined;
+  /** True from the start of a drag until just after it ends, so letting go doesn't also count as a click. */
+  const moving = useRef(false);
 
   const actions = useMemo<CanvasActions>(
     () => ({
-      select: onSelect,
+      select: (slot) => {
+        if (!moving.current) onSelect(slot);
+      },
+      openConnection: onSelectConnection,
       clear: (slot) => dispatch({ type: "clearSlot", slot }),
       autoPick: (slot) => dispatch({ type: "autoPick", slot }),
       place: (slot, optionId) => dispatch({ type: "place", slot, optionId }),
     }),
-    [dispatch, onSelect],
+    [dispatch, onSelect, onSelectConnection],
   );
 
   const visible = useMemo(
@@ -428,6 +518,11 @@ export function PlanCanvas({
     const framework = rec.selection.framework ? index.optionsById.get(rec.selection.framework) : undefined;
     const env = planEnv(index, rec.selection);
     const wires = new Map<SlotId, Connection>(connectionsOf(index, rec.selection).map((c) => [c.slot, c]));
+    const noteOf = (slot: SlotId): NoteState => {
+      const note = plan.notes[slot];
+      if (!note?.text.trim()) return undefined;
+      return note.optionId && rec.selection[slot] && note.optionId !== rec.selection[slot] ? "stale" : "fresh";
+    };
 
     const nodes: Node[] = [
       {
@@ -443,6 +538,7 @@ export function PlanCanvas({
           drop: dropClass("framework"),
           selected: selectedSlot === "framework" && !selectedConnection,
           preview: plan.step !== "plan",
+          note: noteOf("framework"),
         } satisfies AppData,
       },
     ];
@@ -479,21 +575,25 @@ export function PlanCanvas({
           cleared: plan.pinned[slot] === "",
           drop: dropClass(slot),
           selected: selectedSlot === slot && !selectedConnection,
+          note: noteOf(slot),
         } satisfies SlotData,
       });
 
       if (option || needed) {
-        const sides = sideToward(spots[APP_NODE], spots[nodeId(slot)]);
         edges.push({
           id: `edge-${slot}`,
+          type: "wire",
           source: APP_NODE,
           target: nodeId(slot),
-          sourceHandle: `src-${sides.source}`,
-          targetHandle: `tgt-${sides.target}`,
-          label: wire ? truncate(connectionLabel(wire, env), 44) : `needs ${inSentence(def.label)}`,
           className: cx("ws-edge", `ws-edge--${level}`, !option && "is-dashed", selectedConnection === slot && "is-selected"),
-          labelBgPadding: [6, 3],
-          labelBgBorderRadius: 3,
+          data: {
+            slot,
+            kind: "connection",
+            label: wire ? connectionLabel(wire, env) : `needs ${inSentence(def.label)}`,
+            level,
+            selected: selectedConnection === slot,
+            note: noteOf(slot),
+          } satisfies WireData,
         });
       }
     }
@@ -509,22 +609,26 @@ export function PlanCanvas({
     for (const [key, results] of pairs) {
       const [a, b] = key.split("|") as [OuterSlot, OuterSlot];
       if (!spots[nodeId(a)] || !spots[nodeId(b)]) continue;
-      const sides = sideToward(spots[nodeId(a)], spots[nodeId(b)]);
+      const level = worstLevel(results);
       edges.push({
         id: `pair-${key}`,
+        type: "wire",
         source: nodeId(a),
         target: nodeId(b),
-        sourceHandle: `src-${sides.source}`,
-        targetHandle: `tgt-${sides.target}`,
-        label: truncate(results.length > 1 ? `${results[0].title} (+${results.length - 1})` : results[0].title),
-        className: cx("ws-edge", `ws-edge--${worstLevel(results)}`, "is-pair"),
-        labelBgPadding: [6, 3],
-        labelBgBorderRadius: 3,
+        className: cx("ws-edge", `ws-edge--${level}`, "is-pair"),
+        data: {
+          slot: b,
+          kind: "pair",
+          label: results.length > 1 ? `${results[0].title} (+${results.length - 1})` : results[0].title,
+          level,
+          selected: false,
+          note: undefined,
+        } satisfies WireData,
       });
     }
 
     return { nodes, edges };
-  }, [rec, index, catalog, input, plan.appName, plan.pinned, plan.step, selectedSlot, selectedConnection, over, draggedOption, visible, spots]);
+  }, [rec, index, catalog, input, plan.appName, plan.pinned, plan.step, plan.notes, selectedSlot, selectedConnection, over, draggedOption, visible, spots]);
 
   const slotAt = (event: DragEvent): SlotId | null => {
     const el = (event.target as HTMLElement).closest("[data-slot]");
@@ -600,6 +704,7 @@ export function PlanCanvas({
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             nodeOrigin={[0.5, 0.5]}
             fitView
             fitViewOptions={{ padding: FIT_PADDING, maxZoom: 1 }}
@@ -607,8 +712,20 @@ export function PlanCanvas({
             maxZoom={1.6}
             nodesConnectable={false}
             elementsSelectable={false}
-            onNodeDragStop={(_, node) => land(node)}
-            onEdgeClick={(_, edge) => onSelectConnection(edge.target.replace("slot-", "") as SlotId)}
+            onNodeDragStart={() => {
+              moving.current = true;
+            }}
+            onNodeDragStop={(_, node) => {
+              land(node);
+              // The click that ends a drag arrives after this; let it pass before clicks count again.
+              window.setTimeout(() => {
+                moving.current = false;
+              }, 0);
+            }}
+            onEdgeClick={(_, edge) => {
+              const data = edge.data as WireData | undefined;
+              if (data) (data.kind === "connection" ? onSelectConnection : onSelect)(data.slot);
+            }}
           >
             <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="var(--mk-line-strong)" />
             <Controls showInteractive={false} position="bottom-right" />

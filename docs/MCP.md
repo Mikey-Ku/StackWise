@@ -54,11 +54,13 @@ Other builders get the spec, setup, tasks, decisions and plan file, without the 
 | `compare_options` | Two to five options for one part, each swapped into the stack | No |
 | `estimate_costs` | Monthly, yearly and one-time cost, part by part and at every size | No |
 | `setup_steps` | Ordered setup steps, what runs between the app and each service, and every environment variable with where to get it | No |
-| `get_plan` | The shared plan: stack, checks, close calls, costs, connections, questions | No |
-| `update_plan` | Change answers, parts, size, priority, builder or text, with a note saying why | Yes |
+| `get_plan` | The shared plan: stack, checks, close calls, costs, connections, the person's notes, questions | No |
+| `update_plan` | Change answers, parts, size, priority, builder, text or the notes on each part, with a note saying why | Yes |
 | `export_project` | Every project file above, for Claude to write | No |
 
 `update_plan` goes through the same validation as the planner (`applyPlanUpdate` in `src/engine/planops.ts`): unknown question ids, unknown options, or an option in the wrong part are refused and nothing is saved.
+
+Notes are how Claude helps with a part without touching the stack: `update_plan` with `notes: { "payments": "Take a 20% deposit at booking." }` writes one (marked as written by Claude, with the option it was written for), and `""` removes it. The note shows on the canvas and in Details within a couple of seconds, and Undo reverses it. `get_plan` flags a note written for an option that has since been swapped out. Ask Claude something like "write a note on the payments part about how deposits work" or "check my notes still match the stack".
 
 ## How it works
 

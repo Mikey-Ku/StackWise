@@ -22,7 +22,20 @@ body {
 .ws {
   display: grid;
   grid-template-rows: var(--ws-top) auto minmax(0, 1fr);
+  /* One column that never grows past the window, whatever a child's content would like. */
+  grid-template-columns: minmax(0, 1fr);
   height: 100vh;
+}
+/* Rows are fixed by position, so the body fills the last row whether or not the problems alert or
+   the view switcher is showing. */
+.ws > .ws-top {
+  grid-row: 1;
+}
+.ws > .ws-problems {
+  grid-row: 2;
+}
+.ws > .ws-body {
+  grid-row: -2 / -1;
 }
 .ws-top {
   display: flex;
@@ -422,22 +435,7 @@ body {
 .ws-canvas .ws-edge.is-pair .react-flow__edge-path {
   stroke-dasharray: 6 5;
 }
-.ws-canvas .react-flow__edge-text {
-  fill: var(--mk-text-muted);
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-}
-.ws-canvas .ws-edge--blocked .react-flow__edge-text,
-.ws-canvas .ws-edge--missing .react-flow__edge-text {
-  fill: var(--mk-danger);
-}
-.ws-canvas .ws-edge--warning .react-flow__edge-text {
-  fill: var(--mk-warn);
-}
-.ws-canvas .react-flow__edge-textbg {
-  fill: var(--mk-surface);
-  stroke: var(--mk-line);
-}
+
 
 /* ---------- palette ---------- */
 .ws-palette {
@@ -624,32 +622,130 @@ body {
   font-size: var(--mk-text-sm);
 }
 
+/* Narrow windows: the planner and the canvas take turns filling the screen, and the side panel
+   is a sheet over the canvas that opens when something is picked. Nothing scrolls the page. */
+.ws-views,
+.ws-sheet-toggle {
+  display: none;
+}
 @media (max-width: 1100px) {
-  body {
-    overflow: auto;
-  }
   .ws {
-    height: auto;
-    min-height: 100vh;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    height: 100vh;
+    height: 100dvh;
   }
   .ws-top {
     flex-wrap: wrap;
-    padding-block: var(--mk-3);
+    row-gap: var(--mk-2);
+    padding-block: var(--mk-2);
+  }
+  .ws > .ws-views {
+    grid-row: 3;
+  }
+  .ws-views {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--mk-3);
+    padding: var(--mk-2) var(--mk-4);
+    border-bottom: 1px solid var(--mk-line);
+    background: var(--mk-surface);
+  }
+  .ws-views .ws-seg {
+    flex: none;
+    flex-wrap: nowrap;
+  }
+  .ws-views__hint {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--mk-text-faint);
+    font-size: var(--mk-text-xs);
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .ws-body {
-    grid-template-columns: minmax(0, 1fr);
+    position: relative;
+    display: block;
+    min-height: 0;
+    overflow: hidden;
   }
   .ws-left,
-  .ws-right {
-    border: 0;
-    border-bottom: 1px solid var(--mk-line);
-  }
   .ws-center {
-    height: 72vh;
+    position: absolute;
+    inset: 0;
   }
-  .ws-right__body {
-    max-height: 72vh;
+  .ws-left {
+    border: 0;
+  }
+  /* The view that isn't showing keeps its size, so React Flow never measures zero. Opacity, not
+     visibility: React Flow sets visibility: visible on its own cards, which would show through.
+     The workspace also marks it inert, so nothing in it can be clicked or focused. */
+  .ws[data-view="canvas"] .ws-left,
+  .ws[data-view="plan"] .ws-center,
+  .ws[data-view="plan"] .ws-right {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .ws[data-view="plan"] .ws-left {
+    z-index: 30;
+  }
+  .ws-right {
+    position: absolute;
+    z-index: 20;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: min(60%, 560px);
+    border: 0;
+    border-top: 1px solid var(--mk-line-strong);
+    border-radius: var(--mk-radius-lg) var(--mk-radius-lg) 0 0;
+    box-shadow: 0 -16px 40px -24px rgba(23, 21, 15, 0.4);
+    transform: translateY(calc(100% - 48px));
+    transition: transform var(--mk-dur-slow) var(--mk-ease);
+  }
+  .ws[data-sheet="open"] .ws-right {
+    transform: none;
+  }
+  .ws-right__tabs {
+    flex: none;
+    align-items: center;
+    gap: var(--mk-4);
+    min-height: 48px;
+    padding-inline: var(--mk-4);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ws-sheet-toggle {
+    display: inline-flex;
+    flex: none;
+    margin-left: auto;
+  }
+  .ws-toast {
+    bottom: 64px;
+    max-width: calc(100vw - 32px);
+  }
+  /* Keep the zoom buttons above the closed sheet. */
+  .ws-canvas .react-flow__controls {
+    margin-bottom: 60px;
+  }
+  /* One row of numbers that scrolls sideways, so the canvas keeps its height. (Scoped under .ws
+     to outrank the strip's own rules, which come later in this file.) */
+  .ws .ws-planstats {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ws .ws-planstats__item {
+    flex: 1 0 auto;
+    min-width: 116px;
+    padding-block: 6px;
+  }
+  .ws .ws-planstats__item strong {
+    font-size: var(--mk-text-md);
+  }
+  .ws .ws-planstats__item dd > span:not(:first-of-type) {
+    display: none;
   }
 }
 
@@ -1252,18 +1348,7 @@ a.ws-costlines__row {
   color: var(--mk-danger);
 }
 
-@media (max-width: 1100px) {
-  .ws-center {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-  }
-  .ws-canvas-frame {
-    position: relative;
-    inset: auto;
-    height: 72vh;
-  }
-}
+
 @media (max-width: 720px) {
   .ws-planstats__item {
     flex-basis: 30%;
@@ -1446,9 +1531,7 @@ a.ws-costlines__row {
   stroke: var(--mk-accent);
   stroke-width: 3;
 }
-.ws-canvas .ws-edge.is-selected .react-flow__edge-text {
-  fill: var(--mk-accent);
-}
+
 /* The connection panel: app on one end, service on the other. */
 .ws-wire {
   display: flex;
@@ -1540,4 +1623,241 @@ a.ws-costlines__row {
 .ws-local code {
   font-family: var(--mk-font-mono);
   font-size: var(--mk-text-xs);
+}
+
+/* ---------- v0.6: lines that follow cards, notes, talking a part through ---------- */
+.ws-wire-label {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 270px;
+  padding: 2px 9px;
+  border: 1px solid var(--mk-line);
+  border-radius: 999px;
+  background: var(--mk-surface);
+  color: var(--mk-text-muted);
+  font-family: var(--mk-font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: all;
+  transition: border-color var(--mk-dur-fast) var(--mk-ease), color var(--mk-dur-fast) var(--mk-ease), box-shadow var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-wire-label__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ws-wire-label:hover,
+.ws-wire-label:focus-visible {
+  border-color: var(--mk-line-strong);
+  color: var(--mk-text);
+}
+.ws-wire-label--warning,
+.ws-wire-label--unknown {
+  border-color: color-mix(in srgb, var(--mk-warn) 45%, var(--mk-line));
+  color: var(--mk-warn);
+}
+.ws-wire-label--blocked,
+.ws-wire-label--missing {
+  border-color: color-mix(in srgb, var(--mk-danger) 45%, var(--mk-line));
+  color: var(--mk-danger);
+}
+.ws-wire-label.is-pair {
+  border-style: dashed;
+}
+.ws-wire-label.is-selected {
+  border-color: var(--mk-accent);
+  color: var(--mk-accent);
+  box-shadow: 0 0 0 3px var(--mk-accent-soft);
+}
+.ws-wire-label__note {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mk-accent);
+}
+.ws-wire-label.is-note-stale .ws-wire-label__note {
+  background: var(--mk-warn);
+}
+.ws-notechip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--mk-accent-soft);
+  color: var(--mk-accent);
+  font-family: var(--mk-font-mono);
+  font-size: 10px;
+  line-height: 1.7;
+}
+.ws-notechip.is-stale {
+  background: var(--mk-warn-soft, color-mix(in srgb, var(--mk-warn) 16%, transparent));
+  color: var(--mk-warn);
+}
+.ws-app__eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mk-2);
+}
+
+/* The note and the conversation, in Details and in a connection. */
+.ws-work {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-5);
+  padding: var(--mk-4);
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius-lg);
+  background: var(--mk-surface-sunk);
+}
+.ws-work__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mk-2);
+}
+.ws-work__head .mk-badge {
+  --mk-ctl-h: 34px;
+  --mk-ctl-px: 0.9rem;
+  --mk-ctl-fs: 11px;
+}
+.ws-work__note {
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+  background: var(--mk-surface);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-body);
+}
+.ws-work__stale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--mk-2);
+  padding: var(--mk-2) var(--mk-3);
+  border-left: 3px solid var(--mk-warn);
+  border-radius: var(--mk-radius-sm);
+  background: var(--mk-surface);
+  color: var(--mk-text-muted);
+  font-size: var(--mk-text-xs);
+}
+.ws-thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-3);
+  max-height: 420px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ws-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 100%;
+  padding: var(--mk-2) var(--mk-3);
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius);
+  background: var(--mk-surface);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-snug);
+  overflow-wrap: anywhere;
+}
+.ws-turn--you {
+  align-self: flex-end;
+  max-width: 88%;
+  border-color: transparent;
+  background: var(--mk-accent-soft);
+}
+.ws-turn--facts {
+  border-style: dashed;
+}
+.ws-turn.is-busy {
+  color: var(--mk-text-faint);
+}
+.ws-turn__who {
+  color: var(--mk-text-faint);
+  font-family: var(--mk-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ws-turn__text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ws-turn__text p,
+.ws-turn__text ul,
+.ws-turn__text ol {
+  margin: 0;
+}
+.ws-turn__text ul,
+.ws-turn__text ol {
+  padding-left: 1.2em;
+}
+.ws-turn__done {
+  margin: 0;
+}
+.ws-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-2);
+  margin-top: var(--mk-2);
+  padding: var(--mk-3);
+  border: 1px solid color-mix(in srgb, var(--mk-accent) 35%, var(--mk-line));
+  border-radius: var(--mk-radius);
+  background: var(--mk-surface-sunk);
+}
+.ws-suggest p {
+  margin: 0;
+}
+.ws-suggest__note {
+  max-height: 180px;
+  margin: 0;
+  padding: var(--mk-2) var(--mk-3);
+  overflow: auto;
+  border-radius: var(--mk-radius-sm);
+  background: var(--mk-surface);
+  font-family: var(--mk-font-body);
+  font-size: var(--mk-text-xs);
+  line-height: var(--mk-leading-snug);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ws-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ws-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--mk-line);
+  border-radius: 999px;
+  background: var(--mk-surface);
+  color: var(--mk-text);
+  font: inherit;
+  font-size: var(--mk-text-xs);
+  cursor: pointer;
+}
+.ws-chip:hover:not(:disabled) {
+  border-color: var(--mk-accent);
+  color: var(--mk-accent);
+}
+.ws-compose {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--mk-2);
+}
+.ws-compose .mk-textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  resize: none;
+  background: var(--mk-surface);
+  font-size: var(--mk-text-sm);
 }

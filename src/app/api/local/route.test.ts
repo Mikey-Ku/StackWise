@@ -17,6 +17,7 @@ const plan: SharedPlan = {
   priority: "spend_zero",
   builderId: "claude-code",
   pinned: {},
+  notes: {},
 };
 
 const post = (body: unknown, headers: Record<string, string> = {}) =>

@@ -71,12 +71,22 @@ describe("share links", () => {
     priority: "launch_fast",
     builderId: "claude-code",
     pinned: { hosting: "host-server", login: "" },
+    notes: { hosting: { text: "Set the region to Frankfurt.", optionId: "host-server", updatedAt: "2026-09-16T10:00:00.000Z", by: "you" } },
   };
 
   it("round-trips a plan through a compact, URL-safe token", async () => {
     const token = await encodeSharedPlan(plan);
     expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(await decodeSharedPlan(token)).toEqual(plan);
+  });
+
+  it("still opens a link made before notes existed", async () => {
+    const older: Partial<SharedPlan> = { ...plan };
+    delete older.notes;
+    // Encoded by hand, the way the first release did, so no schema fills the notes in first.
+    const piped = new Blob([new TextEncoder().encode(JSON.stringify(older))]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+    const token = Buffer.from(await new Response(piped).arrayBuffer()).toString("base64url");
+    expect(await decodeSharedPlan(token)).toEqual({ ...older, notes: {} });
   });
 
   it("rejects tokens that aren't plans instead of throwing", async () => {

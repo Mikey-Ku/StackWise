@@ -219,7 +219,7 @@ export function createWhyStackServer(ctx: McpContext): McpServer {
       const index = ctx.index();
       const problems = checkStackIds(index, keep ?? {});
       if (problems.length) return fail(problems.join(" "));
-      const plan = { v: 1 as const, appName: "", description: "", features: "", answers, size: size ?? "up_to_100", priority: priority ?? "spend_zero", builderId: "claude-code", pinned: keep ?? {} };
+      const plan = { v: 1 as const, appName: "", description: "", features: "", answers, size: size ?? "up_to_100", priority: priority ?? "spend_zero", builderId: "claude-code", pinned: keep ?? {}, notes: {} };
       const report = planReport(index, plan);
       log("recommend_stack", `Recommended ${report.stack.map((p) => p.option).join(" + ")}`, report.verdict);
       const { stack, verdict, checks, close_calls, cost } = report;
@@ -315,7 +315,7 @@ export function createWhyStackServer(ctx: McpContext): McpServer {
     "get_plan",
     {
       title: "Get the shared plan",
-      description: "The plan the person shared from WhyStack: the app, its answers, the stack and who picked each part, every check, close calls, costs, and every question id with its answer.",
+      description: "The plan the person shared from WhyStack: the app, its answers, the stack and who picked each part, every check, close calls, costs, what runs along each connection, the person's notes on each part, and every question id with its answer.",
       inputSchema: { plan_id: planIdSchema },
       annotations: { readOnlyHint: true },
     },
@@ -331,7 +331,7 @@ export function createWhyStackServer(ctx: McpContext): McpServer {
     {
       title: "Change the shared plan",
       description:
-        "Change the plan shared from WhyStack: answers, parts, audience size, priority, builder, name, description or features. The change shows up in WhyStack right away and can be undone there. Returns what changed and the plan's new checks and costs.",
+        "Change the plan shared from WhyStack: answers, parts, audience size, priority, builder, name, description, features, or the notes on each part (how it's wired, what to watch, what was decided). The change shows up in WhyStack right away and can be undone there. Returns what changed and the plan's new checks and costs. Only rewrite a person's note when they ask; otherwise add to it.",
       inputSchema: { plan_id: planIdSchema, note: z.string().min(3).max(300).describe("One line saying why, shown in WhyStack next to the change."), ...planUpdateSchema.shape },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
     },
