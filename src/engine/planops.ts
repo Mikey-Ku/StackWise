@@ -6,6 +6,7 @@ import { closeCalls, criterionLabel, recommend, type Recommendation } from "./sc
 import { PRIORITY_IDS, SIZE_IDS, SLOT_IDS, type Answer, type PlanInput, type Selection, type SlotId } from "./schema";
 import { sharedPlanSchema, type SharedPlan } from "./share";
 import { planStats } from "./stats";
+import { connectionsOf } from "./wiring";
 import { SIZE_PHRASE, inSentence } from "./text";
 
 /**
@@ -171,6 +172,12 @@ export function planReport(index: CatalogIndex, plan: SharedPlan, rec: Recommend
       decided_by: ["tie", "accounts", "fewer_problems", "perks", "checks"].includes(c.decidedBy) ? c.decidedBy : criterionLabel(c.decidedBy as Parameters<typeof criterionLabel>[0], c.slot),
     })),
     cost: costReport(index, rec.selection, input),
+    connections: connectionsOf(index, rec.selection).map((c) => ({
+      part: index.slotsById.get(c.slot)?.label ?? c.slot,
+      option: c.optionName,
+      what_travels: c.what,
+      environment_variables: c.env.map((v) => v.name),
+    })),
     accounts_to_create: stats.accounts,
     setup_steps: stats.setupSteps,
     questions: index.catalog.needs.map((n) => ({

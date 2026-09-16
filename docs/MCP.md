@@ -25,6 +25,7 @@ Claude's changes appear on the canvas within about two seconds, with a toast and
 **Export project** downloads a zip. With Claude Code as the builder it holds:
 
 - `SPEC.md`, `SETUP.md`, `DECISIONS.md`: the plan, its accounts and keys, and why each part was picked.
+- `.env.example` and `.gitignore`: every variable name, grouped by service with the step that gives you the value, and the rules that keep the values out of git.
 - `TASKS.md`: the build, part by part, with the agent for each task and when it's done.
 - `whystack.plan.json`: the plan itself. The MCP server keeps it in step with WhyStack.
 - `CLAUDE.md`: the stack and its rules, plus how to work with WhyStack: check every service change with `check_stack`, record it with `update_plan`, build with `/next-step`.
@@ -34,6 +35,8 @@ Claude's changes appear on the canvas within about two seconds, with a toast and
 - `.claude/skills/`: `/next-step` (does the next task with its agent, reviews it, checks it off) and `/check-stack`.
 
 Unzip it as a new project folder and run `claude` there. Claude Code asks once whether to trust the project's MCP server.
+
+Or skip the zip: **Or write it into a folder on this computer** in the same dialog writes the files straight into a folder, plus a `.env.local` with the names and no values, and gives you the `cd ... && claude` line. It only writes inside your home folder, never inside WhyStack's own folder, and never over an existing `.env.local`: your values are yours, and WhyStack has no copy of them. Anything else already in the folder stays until you tick "Replace files that are already there". See `src/app/api/local/route.ts` and `src/mcp/localfiles.ts`.
 
 To bring a project's plan back into WhyStack in another browser, use **Import plan file** on its `whystack.plan.json`. It keeps the plan's id, so changes Claude makes in that project keep showing up.
 
@@ -50,8 +53,8 @@ Other builders get the spec, setup, tasks, decisions and plan file, without the 
 | `recommend_stack` | WhyStack's best stack for answers, size and priority | No |
 | `compare_options` | Two to five options for one part, each swapped into the stack | No |
 | `estimate_costs` | Monthly, yearly and one-time cost, part by part and at every size | No |
-| `setup_steps` | Ordered setup steps with exact environment variable names | No |
-| `get_plan` | The shared plan: stack, checks, close calls, costs, questions | No |
+| `setup_steps` | Ordered setup steps, what runs between the app and each service, and every environment variable with where to get it | No |
+| `get_plan` | The shared plan: stack, checks, close calls, costs, connections, questions | No |
 | `update_plan` | Change answers, parts, size, priority, builder or text, with a note saying why | Yes |
 | `export_project` | Every project file above, for Claude to write | No |
 

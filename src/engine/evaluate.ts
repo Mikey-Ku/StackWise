@@ -12,7 +12,7 @@ import {
   type SlotDef,
   type SlotId,
 } from "./schema";
-import { inSentence } from "./text";
+import { inSentence, possessive as withApostrophe } from "./text";
 
 /**
  * The connection logic. Given which option sits in each slot and what the beginner answered,
@@ -138,7 +138,7 @@ export function fillTemplate(index: CatalogIndex, selection: Selection, text: st
     if (!(SLOT_IDS as readonly string[]).includes(slot)) return whole;
     const option = optionIn(index, selection, slot as SlotId);
     const name = option ? option.name : inSentence(index.slotsById.get(slot as SlotId)?.label ?? slot);
-    return possessive ? `${name}${name.endsWith("s") ? "'" : "'s"}` : name;
+    return possessive ? withApostrophe(name) : name;
   });
 }
 

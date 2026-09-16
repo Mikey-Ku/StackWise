@@ -16,14 +16,16 @@ describe("spec pack", () => {
   const selection = { framework: "fw-server", hosting: "host-server", database: "db-file", payments: "pay-card" };
 
   it("writes the spec, the setup checklist, a file for the chosen builder and the decision record", () => {
-    expect(buildSpecPack(index, plan, selection, details).map((f) => f.name)).toEqual(["SPEC.md", "SETUP.md", "CLAUDE.md", "DECISIONS.md"]);
+    expect(buildSpecPack(index, plan, selection, details).map((f) => f.name)).toEqual(["SPEC.md", "SETUP.md", ".env.example", ".gitignore", "CLAUDE.md", "DECISIONS.md"]);
     expect(buildSpecPack(index, plan, selection, { ...details, builderId: "lovable" }).map((f) => f.name)).toEqual([
       "SPEC.md",
       "SETUP.md",
+      ".env.example",
+      ".gitignore",
       "PROMPT.txt",
       "DECISIONS.md",
     ]);
-    expect(buildSpecPack(index, plan, selection, { ...details, builderId: "cursor" })[2].name).toBe("AGENTS.md");
+    expect(buildSpecPack(index, plan, selection, { ...details, builderId: "cursor" })[4].name).toBe("AGENTS.md");
   });
 
   it("includes the cost at every audience size", () => {
@@ -33,7 +35,9 @@ describe("spec pack", () => {
   });
 
   it("turns warnings into rules the builder must follow", () => {
-    const [spec, , guide] = buildSpecPack(index, plan, selection, details);
+    const files = buildSpecPack(index, plan, selection, details);
+    const spec = files[0];
+    const guide = files.find((f) => f.name === "CLAUDE.md")!;
     expect(spec.content).toContain("**Only works with a paid disk.**");
     expect(spec.content).toContain("Store the database file only on the attached persistent disk path.");
     expect(guide.content).toContain("Store the database file only on the attached persistent disk path.");

@@ -16,6 +16,11 @@ export function inSentence(label: string): string {
   return label.charAt(0).toLowerCase() + label.slice(1);
 }
 
+/** A service's name as a possessive: "Neon's", but "Cloudflare Workers'". */
+export function possessive(name: string): string {
+  return `${name}${name.endsWith("s") ? "'" : "'s"}`;
+}
+
 const VALUE_LABELS: Record<string, string> = {
   none: "None",
   just_me: "Just you",

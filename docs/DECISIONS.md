@@ -206,6 +206,34 @@ Michael asked for a repo and "as many features that I discussed" as possible. Wh
 
 **In your words:**
 
+## Round four: moving parts, wiring and local folders (2026-09-15)
+
+## 32. Parts move, and the canvas remembers
+
+**Michael:** Make the components movable, like n8n. Built as: any part can be dragged anywhere, the layout is saved with the plan in the browser, and "Tidy up" puts everything back on WhyStack's ellipse. Moving is not undoable, so Undo stays about the plan, and the layout is not in the shared plan, so Claude can't rearrange your canvas.
+
+**In your words:**
+
+## 33. A connection carries its environment variables
+
+**Michael:** Connections like n8n, and semi-prepare setting up the environment variables. Built as: every line from the app to a service carries the variable names your code reads to reach it, the line to your host carries every variable in the plan, and clicking a line shows each name, the step that gives you its value, its docs link, and whether the browser can read it. Claude sees the same through `setup_steps` and `get_plan`.
+
+An option with setup steps but no variable recorded says so, instead of claiming it needs none. Twelve researched options are in that state; they are listed in docs/DATA.md.
+
+**In your words:**
+
+## 34. Swapping a part happens on the canvas
+
+**Michael:** Be able to sub it out. Built as: "Swap" on any part lists the other options that fit it, and picking one places it. The scores, the comparison table and the side-by-side dialog stay in Details, because they cost a full re-evaluation of the plan for each option.
+
+**In your words:**
+
+## 35. WhyStack writes the project into a folder on this computer
+
+**Michael:** Tie this locally. Built as: the export dialog writes the same files straight into a folder, plus `.env.local` with names and no values, and gives you the `cd ... && claude` line. The rules: only inside your home folder, never WhyStack's own folder, no hidden or system folders, nothing replaced unless you tick the box, and an existing `.env.local` is never touched. WhyStack has no copy of any value, so it can only ever write names.
+
+**In your words:**
+
 ---
 
 ## Still open
