@@ -5,6 +5,7 @@ import { evaluatePlan, needIsOn, optionIn, type CatalogIndex, type CheckResult }
 import { CRITERIA, criterionLabel, criterionScores } from "./score";
 import type { Answer, PlanInput, Selection } from "./schema";
 import { SIZE_PHRASE } from "./text";
+import { envFileText, planEnv } from "./wiring";
 
 /**
  * The spec pack: what the beginner walks away with. SPEC.md explains the plan, SETUP.md is the
@@ -26,6 +27,27 @@ export interface SpecFile {
 }
 
 const PROBLEM_LEVELS = new Set(["blocked", "missing", "warning", "unknown"]);
+
+/** Keeps the values out of git from the first commit, whichever framework the plan uses. */
+const GITIGNORE = [
+  "# Secrets. Never commit these.",
+  ".env",
+  ".env.local",
+  ".env.*.local",
+  "",
+  "# Installed packages and build output",
+  "node_modules/",
+  ".next/",
+  ".svelte-kit/",
+  ".vercel/",
+  "dist/",
+  "build/",
+  "",
+  "# Editors and computers",
+  ".DS_Store",
+  "*.log",
+  "",
+].join("\n");
 
 function unique(items: string[]): string[] {
   return [...new Set(items.map((s) => s.trim()).filter(Boolean))];
@@ -99,7 +121,8 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     ...outlook.now.fees.map((f) => `- **${f.label}:** $${f.usd} ${f.per === "year" ? "a year" : "one time"}. Source: ${f.source}`),
   ];
 
-  const envNames = unique(filled.flatMap(({ option }) => option.setup.flatMap((s) => s.env.map((e) => adaptEnvName(e, selection.framework)))));
+  const env = planEnv(index, selection);
+  const envNames = unique(env.map((v) => v.name));
   const stackList = filled.map(({ def, option }) => `- ${def.label}: ${option.name}`);
 
   const spec = [
@@ -159,9 +182,9 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
 
   const setupSections = filled.flatMap(({ def, option }, i) => {
     const steps = option.setup.map((s) => {
-      const env = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${adaptEnvName(e, selection.framework)}\``).join(", ")}.` : "";
+      const names = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${adaptEnvName(e, selection.framework)}\``).join(", ")}.` : "";
       const source = /^https?:\/\//.test(s.source) ? ` ([docs](${s.source}))` : "";
-      return `- [ ] ${s.step}${env}${source}`;
+      return `- [ ] ${s.step}${names}${source}`;
     });
     return [`## ${i + 1}. ${option.name} (${def.label})`, "", ...(steps.length ? steps : ["- [ ] Setup steps not researched yet. Follow the provider's quickstart."]), ""];
   });
@@ -174,7 +197,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     ...setupSections,
     "## Environment variables",
     "",
-    "Names only. Fill in the values yourself.",
+    "Copy `.env.example` to `.env.local` and fill in the values. `.env.local` never goes into git.",
     "",
     "```",
     ...(envNames.length ? envNames.map((e) => `${e}=`) : ["# none needed yet"]),
@@ -201,9 +224,9 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "",
     "## Environment variables",
     "",
-    "Names only. Values live in `.env.local`, which must never be committed.",
+    "`.env.example` has every name, grouped by service, with the step that gives you each value. Values live in `.env.local`, which must never be committed.",
     "",
-    ...(envNames.length ? envNames.map((e) => `- \`${e}\``) : ["- None yet."]),
+    ...(envNames.length ? env.map((v) => `- \`${v.name}\` (${v.optionName}${v.browser ? ", reaches the browser, so never a secret" : ""})`) : ["- None yet."]),
     "",
   ].join("\n");
 
@@ -239,6 +262,8 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
   return [
     { name: "SPEC.md", content: spec },
     { name: "SETUP.md", content: setup },
+    { name: ".env.example", content: envFileText(env, { appName: name, generatedOn: details.generatedOn }) },
+    { name: ".gitignore", content: GITIGNORE },
     builderFile,
     { name: "DECISIONS.md", content: decisions },
   ];

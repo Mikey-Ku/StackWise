@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { decodeSharedPlan, staleFacts, todayIso, type Catalog, type SlotId } from "@/engine";
 import { ChecklistPanel } from "./ChecklistPanel";
+import { ConnectionPanel } from "./ConnectionPanel";
 import { ClaudePanel, PairDialog } from "./PairDialog";
 import { CompareDialog, type CompareRequest } from "./CompareDialog";
 import { Inspector } from "./Inspector";
@@ -31,6 +32,8 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const { plan, dispatch, history } = model;
   const [tab, setTab] = useState<Tab>("options");
   const [selectedSlot, setSelectedSlot] = useState<SlotId | null>(null);
+  /** The part at the far end of the connection being looked at, when one is. */
+  const [connection, setConnection] = useState<SlotId | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -95,6 +98,13 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
 
   const select = useCallback((slot: SlotId) => {
     setSelectedSlot(slot);
+    setConnection(null);
+    setTab("details");
+  }, []);
+
+  const selectConnection = useCallback((slot: SlotId) => {
+    setSelectedSlot(slot);
+    setConnection(slot);
     setTab("details");
   }, []);
 
@@ -152,11 +162,13 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             <PlanCanvas
               model={model}
               selectedSlot={selectedSlot}
+              selectedConnection={connection}
               dragging={dragging}
               showAll={showAll}
               onToggleShowAll={() => setShowAll((v) => !v)}
               onDropped={() => setDragging(null)}
               onSelect={select}
+              onSelectConnection={selectConnection}
               onToast={setToast}
             />
           </ReactFlowProvider>
@@ -172,11 +184,14 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           </div>
           <div className="ws-right__body">
             {tab === "options" && <Palette model={model} selectedSlot={selectedSlot} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onToast={setToast} />}
-            {tab === "details" && (
-              <Inspector model={model} slot={selectedSlot} today={today} onToast={setToast} onCompare={(slot, optionIds) => setCompare({ slot, optionIds })} onLearn={() => setTab("learn")} />
-            )}
+            {tab === "details" &&
+              (connection ? (
+                <ConnectionPanel model={model} slot={connection} today={today} onShowPart={() => setConnection(null)} onOpenChecklist={() => setTab("checklist")} onToast={setToast} />
+              ) : (
+                <Inspector model={model} slot={selectedSlot} today={today} onToast={setToast} onCompare={(slot, optionIds) => setCompare({ slot, optionIds })} onLearn={() => setTab("learn")} />
+              ))}
             {tab === "learn" && <LearnPanel catalog={catalog} focus={selectedSlot} />}
-            {tab === "checklist" && <ChecklistPanel model={model} onToast={setToast} />}
+            {tab === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} />}
             {tab === "claude" && <ClaudePanel activity={pairing.activity} enabled={pairing.enabled} onOpenPairing={() => setPairOpen(true)} />}
           </div>
         </aside>

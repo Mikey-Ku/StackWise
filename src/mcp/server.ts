@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   adaptEnvName,
   alternativesFor,
+  connectionsOf,
   applyPlanUpdate,
   buildChecklist,
   buildProjectPack,
@@ -11,6 +12,7 @@ import {
   evaluatePlan,
   formatFactValue,
   optionStats,
+  planEnv,
   planInput,
   planReport,
   PlanUpdateError,
@@ -284,7 +286,8 @@ export function createWhyStackServer(ctx: McpContext): McpServer {
     "setup_steps",
     {
       title: "Get setup steps",
-      description: "The ordered setup steps (accounts, keys, exact environment variable names with docs links) and build order for a stack. Variable names follow the framework in the stack.",
+      description:
+        "The ordered setup steps (accounts, keys, exact environment variable names with docs links), what runs between the app and each service, and the build order for a stack. Variable names follow the framework in the stack.",
       inputSchema: { stack: stackSchema },
       annotations: { readOnlyHint: true },
     },
@@ -295,6 +298,14 @@ export function createWhyStackServer(ctx: McpContext): McpServer {
       const checklist = buildChecklist(index, stack);
       return json({
         setup: checklist.setup.map((i) => ({ part: i.slot, option: i.optionName, step: i.text, environment_variables: i.env.map((e) => adaptEnvName(e, stack.framework)), docs: i.source })),
+        connections: connectionsOf(index, stack).map((c) => ({ part: c.slot, option: c.optionName, what_travels: c.what, environment_variables: c.env.map((v) => v.name) })),
+        environment_variables: planEnv(index, stack).map((v) => ({
+          name: v.name,
+          from: v.optionName,
+          where_to_get_it: v.step,
+          docs: v.source,
+          browser_can_read_it: v.browser,
+        })),
         build_order: checklist.build.map((i) => i.text),
       });
     },

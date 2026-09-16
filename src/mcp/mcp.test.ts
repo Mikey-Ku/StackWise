@@ -120,6 +120,18 @@ describe("MCP server", () => {
     expect(registry.read("p1")!.activity.at(-1)).toMatchObject({ tool: "compare_options", summary: "Compared login-acme, login-lib for Login" });
   });
 
+  it("gives Claude the wiring: what runs between the app and each service, and every variable", async () => {
+    await connect(null);
+    const { data } = await call("setup_steps", { stack: { framework: "fw-server", database: "db-hosted", hosting: "host-server" } });
+    expect(data.connections).toEqual([
+      { part: "database", option: "db-hosted", what_travels: "Your app stores data in db-hosted. Your code reads DB_HOSTED_KEY to reach it.", environment_variables: ["DB_HOSTED_KEY"] },
+      expect.objectContaining({ part: "hosting", option: "host-server" }),
+    ]);
+    expect(data.environment_variables).toEqual(
+      expect.arrayContaining([{ name: "DB_HOSTED_KEY", from: "db-hosted", where_to_get_it: "Set up db-hosted.", docs: "https://example.com/setup", browser_can_read_it: false }]),
+    );
+  });
+
   it("exports the project files, with an MCP config that points back at WhyStack", async () => {
     registry.savePlan("p1", basePlan, "browser");
     await connect("p1");

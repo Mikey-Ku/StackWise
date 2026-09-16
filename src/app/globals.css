@@ -779,11 +779,13 @@ body {
   background: var(--mk-accent-soft);
   font-weight: 600;
 }
-.ws-canvas__toggle {
+.ws-canvas__tools {
   position: absolute;
   z-index: 6;
   top: var(--mk-3);
   left: var(--mk-3);
+  display: flex;
+  gap: var(--mk-2);
 }
 .ws-learn {
   display: flex;
@@ -1348,4 +1350,194 @@ a.ws-costlines__row {
 }
 .ws-spec__pick {
   max-width: 360px;
+}
+
+/* ---------- v0.5: moving parts, wiring and local folders ---------- */
+/* Parts can be dragged. React Flow's own cursor is under mk-ui's, so say it here. */
+.react-flow__node .ws-node {
+  cursor: grab;
+}
+.react-flow__node.dragging .ws-node {
+  cursor: grabbing;
+  border-color: var(--mk-accent);
+  box-shadow: var(--mk-shadow-2);
+}
+.ws-node .mk-btn,
+.ws-node .ws-link,
+.ws-node .ws-swap {
+  cursor: pointer;
+}
+.ws-slot {
+  position: relative;
+}
+.ws-envchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ws-envchips code {
+  padding: 1px 5px;
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius-sm);
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text-muted);
+  font-family: var(--mk-font-mono);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.ws-swap {
+  position: absolute;
+  z-index: 8;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-2);
+  max-height: 220px;
+  padding: var(--mk-2) var(--mk-3);
+  overflow: auto;
+  border: 1px solid var(--mk-line-strong);
+  border-radius: var(--mk-radius);
+  background: var(--mk-surface);
+  box-shadow: var(--mk-shadow-2);
+  cursor: default;
+}
+.ws-swap__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mk-2);
+}
+.ws-swap__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ws-swap__opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--mk-radius-sm);
+  background: transparent;
+  color: var(--mk-text);
+  font: inherit;
+  font-size: var(--mk-text-xs);
+  text-align: left;
+}
+.ws-swap__name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ws-swap__opt:hover {
+  background: var(--mk-surface-sunk);
+}
+.ws-swap__opt.is-current {
+  background: var(--mk-accent-soft);
+}
+.ws-canvas .ws-edge.is-selected .react-flow__edge-path {
+  stroke: var(--mk-accent);
+  stroke-width: 3;
+}
+.ws-canvas .ws-edge.is-selected .react-flow__edge-text {
+  fill: var(--mk-accent);
+}
+/* The connection panel: app on one end, service on the other. */
+.ws-wire {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-2);
+}
+.ws-wire__end {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ws-wire__end strong {
+  font-family: var(--mk-font-display);
+  letter-spacing: var(--mk-display-track);
+  overflow-wrap: anywhere;
+}
+.ws-wire__line {
+  flex: 1;
+  min-width: 20px;
+  height: 0;
+  border-top: 2px dashed var(--mk-line-strong);
+}
+/* Variable names are long and unbreakable; the right panel is 340px. */
+.ws-connection-what {
+  overflow-wrap: anywhere;
+}
+.ws-envrow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--mk-2) var(--mk-3);
+  border: 1px solid var(--mk-line);
+  border-left: 3px solid var(--mk-ok);
+  border-radius: var(--mk-radius);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-snug);
+}
+.ws-envrow.is-public {
+  border-left-color: var(--mk-warn);
+}
+.ws-envrow p {
+  margin: 0;
+}
+.ws-envrow .ws-env {
+  overflow-wrap: anywhere;
+}
+.ws-envrow .mk-badge {
+  --mk-ctl-h: 34px;
+  --mk-ctl-px: 0.9rem;
+  --mk-ctl-fs: 11px;
+}
+.ws-envlist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ws-envlist li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-left: var(--mk-3);
+  border-left: 3px solid var(--mk-ok);
+}
+.ws-envlist li.is-public {
+  border-left-color: var(--mk-warn);
+}
+.ws-envlist code {
+  overflow-wrap: anywhere;
+}
+/* Writing the project into a folder on this computer. */
+.ws-local {
+  padding-top: var(--mk-4);
+  border-top: 1px solid var(--mk-line);
+}
+.ws-local__row {
+  align-items: flex-end;
+}
+.ws-local__row .mk-field {
+  min-width: 240px;
+}
+.ws-local__cmd {
+  padding: var(--mk-2) var(--mk-3);
+  overflow-wrap: anywhere;
+}
+.ws-local code {
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-xs);
 }

@@ -137,6 +137,10 @@ Flagged in the second research round (scraping, domains, analytics, error monito
 - **Namecheap's $11.28 first year** is a standing sale (list $14.98); Cloudflare's community docs mention a wholesale price increase on 2026-11-01.
 - **Monitoring free plans**: Sentry, Rollbar and Honeybadger allow 5,000 errors a month; LogRocket's pricing page now shows only a 14-day trial; Sentry's $29 monthly price was corroborated by trackers because the page only rendered the yearly price; Rollbar's $9 came from its official pricing-for-agents page.
 - **Google Analytics `cookies: required`** reflects the standard gtag.js setup; Google's docs say the libraries can run without cookies.
+
+Found while building the wiring view on 2026-09-15:
+
+- **Twelve researched options have setup steps but name no environment variable**, so the canvas can only say "no environment variable is written down" for them: Cloudflare R2, Crawlee, Expo, Fathom Analytics, Firebase Auth, Firestore, Flutter, Google Analytics 4, LogRocket, Native (Swift and Kotlin), Plausible and Umami Cloud. Firebase and R2 certainly need keys, and the analytics services need a site or measurement id. The names belong in the `env` array of the setup step that hands you the value, taken from the official quickstart. Hosts, frameworks and domain registrars are different: they hold your variables or need none, so an empty list is right for them.
 - **Honeybadger `NEXT_PUBLIC_HONEYBADGER_API_KEY`** is public by design (a write-only project key), as Honeybadger's Next.js guide names it.
 
 The framework files (`nextjs`, `react-vite`, `sveltekit`) and `sqlite-file` were written by Claude from each project's docs; their links were checked and all resolve, but the facts are still drafts.

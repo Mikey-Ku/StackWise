@@ -36,6 +36,6 @@ describe("project pack", () => {
 
   it("gives other builders the spec, tasks and plan file without Claude Code's folders", () => {
     const names = buildProjectPack(index, plan, rec.selection, { ...details, builderId: "cursor" }, { whystackRoot: "/opt/whystack" }).map((f) => f.name);
-    expect(names).toEqual(["SPEC.md", "SETUP.md", "AGENTS.md", "DECISIONS.md", "TASKS.md", "whystack.plan.json"]);
+    expect(names).toEqual(["SPEC.md", "SETUP.md", ".env.example", ".gitignore", "AGENTS.md", "DECISIONS.md", "TASKS.md", "whystack.plan.json"]);
   });
 });

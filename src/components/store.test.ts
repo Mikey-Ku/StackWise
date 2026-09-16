@@ -102,6 +102,31 @@ describe("plan store", () => {
     expect(active(h).checked).toEqual({ "setup:render:0": false, "build:hosting:render": true });
     expect(h.past).toHaveLength(0);
   });
+
+  it("remembers where parts were moved to, and tidying puts them back", () => {
+    const moved = run(start(), { type: "moveNodes", spots: { "slot-hosting": { x: 40, y: -12 } } }, { type: "moveNodes", spots: { app: { x: 5, y: 5 } } });
+    expect(active(moved).layout).toEqual({ "slot-hosting": { x: 40, y: -12 }, app: { x: 5, y: 5 } });
+    expect(active(run(moved, { type: "tidyLayout" })).layout).toEqual({});
+  });
+
+  it("keeps moving a part out of the undo history, so undo stays about the plan", () => {
+    const h = run(start(), { type: "answer", needId: "login", answer: "yes" }, { type: "moveNodes", spots: { app: { x: 9, y: 9 } } });
+    expect(h.past).toHaveLength(1);
+    const back = run(h, { type: "undo" });
+    expect(active(back).answers).toEqual({});
+  });
+
+  it("remembers the folder the project was written into, and forgets it on request", () => {
+    const linked = run(start(), { type: "setFolder", folder: "/Users/me/code/bird-count" });
+    expect(active(linked).folder).toBe("/Users/me/code/bird-count");
+    expect(active(run(linked, { type: "setFolder", folder: null })).folder).toBeUndefined();
+  });
+
+  it("copies the layout and the folder into a duplicate", () => {
+    const h = run(start(), { type: "moveNodes", spots: { app: { x: 3, y: 4 } } }, { type: "setFolder", folder: "/Users/me/code/a" }, { type: "duplicatePlan", id: "p2", now: NOW });
+    expect(active(h).layout).toEqual({ app: { x: 3, y: 4 } });
+    expect(active(h).folder).toBe("/Users/me/code/a");
+  });
 });
 
 describe("saved data from the first release", () => {
@@ -115,6 +140,13 @@ describe("saved data from the first release", () => {
     expect(plan).toMatchObject({ appName: "Fade", priority: "learn", pinned: { hosting: "render" }, checked: {} });
     expect(plan.guesses).toEqual({ uploads: { answer: "yes", evidence: "photo", by: "keywords" } });
     expect("selectedSlot" in plan).toBe(false);
+  });
+
+  it("fills in what a later release added, like the canvas layout", () => {
+    const saved = { version: 2, activeId: "p1", order: ["p1"], plans: { p1: { id: "p1", createdAt: NOW, updatedAt: NOW, step: "plan", appName: "Fade", description: "", features: "", answers: {}, guesses: {}, size: "up_to_100", priority: "learn", builderId: "cursor", pinned: {}, checked: {} } } };
+    const plan = migrate(saved, "p9", NOW)!.plans.p1;
+    expect(plan.layout).toEqual({});
+    expect(plan.priority).toBe("learn");
   });
 
   it("ignores anything it doesn't recognize", () => {

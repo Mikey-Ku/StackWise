@@ -6,6 +6,7 @@ export * from "./prefill";
 export * from "./cost";
 export * from "./spec";
 export * from "./checklist";
+export * from "./wiring";
 export * from "./decisions";
 export * from "./share";
 export * from "./staleness";

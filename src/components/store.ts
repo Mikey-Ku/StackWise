@@ -13,6 +13,12 @@ export interface Guess {
   by: "ai" | "keywords";
 }
 
+/** Where a canvas node sits after someone moved it, in the canvas's own coordinates. */
+export interface Spot {
+  x: number;
+  y: number;
+}
+
 export interface PlanState {
   id: string;
   createdAt: string;
@@ -31,6 +37,10 @@ export interface PlanState {
   pinned: Selection;
   /** Checklist items marked done. */
   checked: Record<string, boolean>;
+  /** Canvas nodes the person moved, by node id. Anything missing sits where WhyStack puts it. */
+  layout: Record<string, Spot>;
+  /** A folder on this computer the project files were written into, if there is one. */
+  folder?: string;
 }
 
 export interface Store {
@@ -59,6 +69,9 @@ export type PlanAction =
   | { type: "clearSlot"; slot: SlotId }
   | { type: "autoPick"; slot: SlotId }
   | { type: "toggleCheck"; itemId: string }
+  | { type: "moveNodes"; spots: Record<string, Spot> }
+  | { type: "tidyLayout" }
+  | { type: "setFolder"; folder: string | null }
   | { type: "loadExample"; appName: string; description: string }
   | { type: "resetPlan" };
 
@@ -94,6 +107,7 @@ export function blankPlan(id: string, now: string): PlanState {
     builderId: "claude-code",
     pinned: {},
     checked: {},
+    layout: {},
   };
 }
 
@@ -146,6 +160,16 @@ function reducePlan(plan: PlanState, action: PlanAction): PlanState {
     }
     case "toggleCheck":
       return { ...plan, checked: { ...plan.checked, [action.itemId]: !plan.checked[action.itemId] } };
+    case "moveNodes":
+      return { ...plan, layout: { ...plan.layout, ...action.spots } };
+    case "tidyLayout":
+      return { ...plan, layout: {} };
+    case "setFolder": {
+      const next = { ...plan };
+      if (action.folder) next.folder = action.folder;
+      else delete next.folder;
+      return next;
+    }
     case "loadExample":
       return { ...blankPlan(plan.id, plan.createdAt), appName: action.appName, description: action.description };
     case "resetPlan":
@@ -249,15 +273,19 @@ export function toSharedPlan(plan: PlanState): SharedPlan {
 }
 
 /**
- * Read whatever was saved before. Version 2 is used as is; the single-plan version 1 from the
- * first release is wrapped into a store, with its keyword guesses converted.
+ * Read whatever was saved before. Version 2 is kept, with defaults filled in for anything a later
+ * release added; the single-plan version 1 from the first release is wrapped into a store, with
+ * its keyword guesses converted.
  */
 export function migrate(raw: unknown, id: string, now: string): Store | null {
   if (!raw || typeof raw !== "object") return null;
   const saved = raw as Record<string, unknown>;
   if (saved.version === 2 && saved.plans && typeof saved.activeId === "string") {
     const store = saved as unknown as Store;
-    return store.plans[store.activeId] ? store : null;
+    if (!store.plans[store.activeId]) return null;
+    // Anything a later release added, like the canvas layout, gets its default. What was saved wins.
+    const plans = Object.fromEntries(Object.entries(store.plans).map(([planId, plan]) => [planId, { ...blankPlan(planId, plan.createdAt ?? now), ...plan }]));
+    return { ...store, plans };
   }
   if (saved.version === 1) {
     const oldGuesses = (saved.guesses ?? {}) as Record<string, string>;
