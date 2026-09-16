@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { initialStore, migrate, reduce, toSharedPlan, type History, type StoreAction } from "./store";
+import { initialStore, migrate, reduce, THREAD_LIMIT, toSharedPlan, type ChatTurn, type History, type StoreAction } from "./store";
 
 const NOW = "2026-09-15T12:00:00.000Z";
 
@@ -120,6 +120,62 @@ describe("plan store", () => {
     const linked = run(start(), { type: "setFolder", folder: "/Users/me/code/bird-count" });
     expect(active(linked).folder).toBe("/Users/me/code/bird-count");
     expect(active(run(linked, { type: "setFolder", folder: null })).folder).toBeUndefined();
+  });
+
+  it("keeps a note per part while typing, drops an empty one, and leaves undo alone", () => {
+    const h = run(start(), { type: "editNote", slot: "payments", text: "Use test keys until launch.", optionId: "stripe", at: NOW });
+    expect(active(h).notes.payments).toEqual({ text: "Use test keys until launch.", optionId: "stripe", updatedAt: NOW, by: "you" });
+    expect(h.past).toHaveLength(0);
+    expect(toSharedPlan(active(h)).notes).toEqual(active(h).notes);
+    expect(active(run(h, { type: "editNote", slot: "payments", text: "   ", at: NOW })).notes).toEqual({});
+  });
+
+  const turn = (id: string, extra: Partial<ChatTurn> = {}): ChatTurn => ({ id, role: "claude", text: `answer ${id}`, at: NOW, ...extra });
+
+  it("uses a suggested note in place of the old one or after it, as one undoable step", () => {
+    const suggested = turn("t1", { proposal: { text: "Verify webhook signatures.", summary: "Adds the webhook rule", status: "open" } });
+    const base = run(start(), { type: "editNote", slot: "payments", text: "Use test keys.", at: NOW }, { type: "addTurns", slot: "payments", turns: [suggested] });
+
+    const added = run(base, { type: "useNote", slot: "payments", text: "Verify webhook signatures.", mode: "append", by: "claude", at: NOW, turnId: "t1" });
+    expect(active(added).notes.payments).toMatchObject({ text: "Use test keys.\n\nVerify webhook signatures.", by: "claude" });
+    expect(active(added).threads.payments![0].proposal!.status).toBe("added");
+
+    const replaced = run(base, { type: "useNote", slot: "payments", text: "Verify webhook signatures.", mode: "replace", by: "claude", at: NOW, turnId: "t1" });
+    expect(active(replaced).notes.payments!.text).toBe("Verify webhook signatures.");
+    expect(active(replaced).threads.payments![0].proposal!.status).toBe("used");
+
+    const undone = run(replaced, { type: "undo" });
+    expect(active(undone).notes.payments!.text).toBe("Use test keys.");
+    expect(active(undone).threads.payments![0].proposal!.status).toBe("open");
+  });
+
+  it("switches to a suggested option as one undoable step", () => {
+    const base = run(start(), { type: "addTurns", slot: "email", turns: [turn("t1", { swap: { optionId: "postmark", status: "open" } })] });
+    const swapped = run(base, { type: "useSwap", slot: "email", optionId: "postmark", turnId: "t1" });
+    expect(active(swapped).pinned.email).toBe("postmark");
+    expect(active(swapped).threads.email![0].swap!.status).toBe("used");
+    expect(active(run(swapped, { type: "undo" })).pinned.email).toBeUndefined();
+  });
+
+  it("keeps the latest turns of a conversation, dismisses suggestions and clears on request", () => {
+    const many = Array.from({ length: THREAD_LIMIT + 5 }, (_, i) => turn(`t${i}`));
+    const h = run(start(), { type: "addTurns", slot: "ai", turns: many }, { type: "addTurns", slot: "ai", turns: [turn("last", { proposal: { text: "x", summary: "y", status: "open" }, text: "z".repeat(9000) })] });
+    const thread = active(h).threads.ai!;
+    expect(thread).toHaveLength(THREAD_LIMIT);
+    expect(thread.at(-1)!.id).toBe("last");
+    expect(thread.at(-1)!.text.length).toBe(4000);
+    expect(h.past).toHaveLength(0);
+
+    const dismissed = run(h, { type: "dismissSuggestion", slot: "ai", turnId: "last", what: "proposal" });
+    expect(active(dismissed).threads.ai!.at(-1)!.proposal!.status).toBe("dismissed");
+    expect(active(run(dismissed, { type: "clearThread", slot: "ai" })).threads.ai).toBeUndefined();
+  });
+
+  it("takes notes from Claude's changes and from imported plans", () => {
+    const h = run(start(), { type: "setText", field: "appName", value: "Fade" });
+    const shared = { ...toSharedPlan(active(h)), notes: { email: { text: "Send from hello@", updatedAt: NOW, by: "claude" as const } } };
+    expect(active(run(h, { type: "applyRemote", id: "p1", plan: shared })).notes.email!.by).toBe("claude");
+    expect(active(run(h, { type: "importPlan", id: "p2", now: NOW, plan: shared })).notes.email!.text).toBe("Send from hello@");
   });
 
   it("copies the layout and the folder into a duplicate", () => {

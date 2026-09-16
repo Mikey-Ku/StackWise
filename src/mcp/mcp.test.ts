@@ -21,6 +21,7 @@ const basePlan: SharedPlan = {
   priority: "spend_zero",
   builderId: "claude-code",
   pinned: {},
+  notes: {},
 };
 
 let dir: string;
@@ -101,6 +102,27 @@ describe("MCP server", () => {
     expect(record.plan.pinned.domain).toBe("domain-cheap");
     expect(record.activity.at(-1)).toMatchObject({ tool: "update_plan", summary: "They want reminders by email" });
     expect(saved).toEqual(["p1"]);
+  });
+
+  it("writes, rewrites and removes notes, and shows them in the plan", async () => {
+    registry.savePlan("p1", basePlan, "browser");
+    await connect("p1");
+
+    const wrote = await call("update_plan", { note: "Record the deposit rule", notes: { login: "Guests can book without an account." } });
+    expect(wrote.data.changes).toEqual(["Wrote the note on Login"]);
+    const saved = registry.read("p1")!.plan.notes.login!;
+    expect(saved).toMatchObject({ text: "Guests can book without an account.", by: "claude" });
+    expect(saved.optionId).toBeTruthy();
+
+    const { data } = await call("get_plan");
+    expect(data.notes).toEqual([expect.objectContaining({ part_id: "login", part: "Login", text: "Guests can book without an account.", written_by: "claude" })]);
+
+    const swapped = await call("update_plan", { note: "Try the library", parts: { login: saved.optionId === "login-lib" ? "login-acme" : "login-lib" } });
+    expect(swapped.data.plan.notes[0]).toMatchObject({ may_be_out_of_date: true });
+
+    const removed = await call("update_plan", { note: "Not needed", notes: { login: "" } });
+    expect(removed.data.changes).toEqual(["Removed the note on Login"]);
+    expect(registry.read("p1")!.plan.notes).toEqual({});
   });
 
   it("refuses a change the planner would refuse, and saves nothing", async () => {

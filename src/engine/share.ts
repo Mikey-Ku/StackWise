@@ -8,6 +8,21 @@ import { PRIORITY_IDS, SIZE_IDS, SLOT_IDS } from "./schema";
 
 const answerSchema = z.enum(["yes", "no", "not_sure"]);
 
+export const NOTE_MAX = 4000;
+
+/**
+ * A person's note on one part of the stack and the line to it: how it's wired, what to watch,
+ * what they decided. It remembers which option filled the part when it was written, so a swap
+ * can flag a note that may no longer apply. Claude can write one too, and says so.
+ */
+export const noteSchema = z.object({
+  text: z.string().max(NOTE_MAX),
+  optionId: z.string().max(80).optional(),
+  updatedAt: z.string().max(40),
+  by: z.enum(["you", "claude"]),
+});
+export type Note = z.infer<typeof noteSchema>;
+
 export const sharedPlanSchema = z.object({
   v: z.literal(1),
   appName: z.string().max(200),
@@ -18,6 +33,8 @@ export const sharedPlanSchema = z.object({
   priority: z.enum(PRIORITY_IDS),
   builderId: z.string().max(40),
   pinned: z.partialRecord(z.enum(SLOT_IDS), z.string().max(80)),
+  /** Added after the first release, so links and plan files without notes still open. */
+  notes: z.partialRecord(z.enum(SLOT_IDS), noteSchema).default({}),
 });
 export type SharedPlan = z.infer<typeof sharedPlanSchema>;
 

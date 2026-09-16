@@ -7,7 +7,7 @@ import { fixtureIndex, input } from "./test-fixtures";
 const index = fixtureIndex();
 const plan = input({ saves_data: "yes", login: "yes", users_pay: "yes" });
 const rec = recommend(index, plan);
-const shared: SharedPlan = { v: 1, appName: "Fade", description: "Bookings for a barber shop.", features: "", answers: plan.answers, size: plan.size, priority: plan.priority, builderId: "claude-code", pinned: {} };
+const shared: SharedPlan = { v: 1, appName: "Fade", description: "Bookings for a barber shop.", features: "", answers: plan.answers, size: plan.size, priority: plan.priority, builderId: "claude-code", pinned: {}, notes: {} };
 const details = { appName: "Fade", description: shared.description, features: "", builderId: "claude-code", generatedOn: "2026-09-15", planId: "fade1", plan: shared };
 const byName = (files: { name: string; content: string }[]) => Object.fromEntries(files.map((f) => [f.name, f.content]));
 
@@ -26,6 +26,27 @@ describe("project pack", () => {
     expect(files[".claude/agents/stack-guard.md"]).toMatch(/^---\nname: stack-guard\ndescription: .+\ntools: Read, Grep, Glob, Edit, mcp__whystack\n---\n/);
     expect(files["TASKS.md"]).toContain("Agent: `build-payments`");
     expect(Object.values(files).some((content) => content.includes("—"))).toBe(false);
+  });
+
+  it("carries the person's notes into the spec, the prompt and the part's build agent, flagging one written for another option", () => {
+    const payments = rec.selection.payments!;
+    const otherDatabase = rec.selection.database === "db-file" ? "db-hosted" : "db-file";
+    const withNotes: SharedPlan = {
+      ...shared,
+      notes: {
+        payments: { text: "Deposits are 20% of the price.\nRefund them if the shop cancels.", optionId: payments, updatedAt: "2026-09-16T10:00:00.000Z", by: "you" },
+        database: { text: "Keep bookings for a year.", optionId: otherDatabase, updatedAt: "2026-09-16T10:00:00.000Z", by: "claude" },
+      },
+    };
+    const files = byName(buildProjectPack(index, plan, rec.selection, { ...details, plan: withNotes }, { whystackRoot: "/opt/whystack" }));
+    expect(files["SPEC.md"]).toContain("## Notes on the stack");
+    expect(files["SPEC.md"]).toContain("Deposits are 20% of the price.\nRefund them if the shop cancels.");
+    expect(files[".claude/agents/build-payments.md"]).toContain("## Notes from the plan\n\nDeposits are 20% of the price.");
+    expect(files["CLAUDE.md"]).toContain("Deposits are 20% of the price. Refund them if the shop cancels.");
+    expect(files["SPEC.md"]).toContain(`_Written when this part was ${otherDatabase}. Check that it still applies._`);
+    expect(files[".claude/agents/build-database.md"]).toContain(`Written when this part was ${otherDatabase}.`);
+    const prompt = byName(buildProjectPack(index, plan, rec.selection, { ...details, builderId: "lovable", plan: withNotes }))["PROMPT.txt"];
+    expect(prompt).toContain("Notes on the stack:");
   });
 
   it("leaves out the MCP config when it can't say where WhyStack is, and says how to add it", () => {

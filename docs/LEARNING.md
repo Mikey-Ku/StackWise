@@ -20,6 +20,8 @@ Facts about services live in JSON files; rules read those facts to decide whethe
 | 8 | `src/engine/cost.ts` | Free at your size, or the first bill, at every size. |
 | 9 | `src/engine/summary.ts`, `src/ai/explain.ts` | The plan brief, explained by a template or by Claude. |
 | 10 | `src/engine/spec.ts`, `decisions.ts`, `checklist.ts` | The spec pack, the decision record and the build checklist. |
+| 10b | `src/engine/wiring.ts` | What runs along each line: the environment variables the app reads to reach each service, and the `.env` file text. |
+| 10c | `src/engine/talk.ts`, `src/ai/talk.ts` | Talking one part through: the brief for that part, answers from WhyStack's facts, or Claude answering from the brief. |
 | 11 | `src/components/store.ts` | Every saved plan, undo and redo, share links and imports, as a pure reducer. |
 | 12 | `src/components/*` | The workspace: planner, canvas, options, details, Learn, Checklist. |
 | 13 | `scripts/*` | Evals, the source checker and the option drafter. |
@@ -54,6 +56,12 @@ Say the description is: *"A booking app for my barber shop. Customers log in, pi
 
 **Share links need no server.** `encodeSharedPlan` turns the plan's answers and choices into JSON, compresses it with the browser's `CompressionStream`, and base64url-encodes it into `#plan=` in the link. Opening the link decodes, validates with the same Zod schema, and imports it as a new plan.
 
+**Talking a part through without letting the AI decide.** `talkBrief` gathers everything about one part from the engine: its connection and variables, setup steps, every check, the cost, the facts with sources, the other options with the verdict each would get, and the person's note. Claude answers from that brief with structured output. It can suggest a note, and it can suggest a switch, but only to an id in a list WhyStack passed (the schema is an enum of those ids, so it can't name anything else). The page then works out the verdict for that switch again with the rules and shows that, not Claude's opinion. Nothing changes until the person accepts, as one undoable step. With no key, `answerFromFacts` answers the common questions straight from the brief. See "can only name a swap WhyStack's rules passed" in `src/ai/ai.test.ts`.
+
+**Each question is one request.** The earlier turns go inside the request as data, instead of being replayed as assistant messages. Newer Claude models tie their thinking to the exact conversation that produced it, so an app that trims or edits a replayed history can have that thinking dropped or the request refused. Sending the transcript as data avoids the problem entirely, and the person can clear a conversation whenever they like.
+
+**Lines that follow cards.** A line is drawn between the middles of two cards and starts where it crosses each card's border (`src/components/wire.ts`). Because it reads each card's live position from React Flow, it redraws while a card is being dragged. Cards are positioned by their middle, but React Flow reports a dragged card's top left corner, so `land()` adds half the card's size before saving; without that every card hopped half its size the moment it was dropped.
+
 **Undo is snapshots.** Every change that alters the plan pushes the previous plan onto a history stack in `store.ts`; typing and checking boxes don't. Undo swaps the current plan for the last snapshot. Because the reducer is pure, `store.test.ts` tests it without a browser.
 
 ## Try it yourself
@@ -73,3 +81,5 @@ Say the description is: *"A booking app for my barber shop. Customers log in, pi
 - Why is the canvas slots now and a free-form graph later?
 - Why did adding four parts make the search 1,000 times slower, and what made it fast again?
 - Why are domains and payment services ranked on different price facts than everything else?
+- When Claude suggests switching a service, why does the page show WhyStack's verdict instead of Claude's?
+- Why do the notes travel with the plan (links, exports, Claude) while the conversations stay in the browser?

@@ -1,7 +1,7 @@
 "use client";
 
 import { strToU8, zipSync } from "fflate";
-import { useState, type CSSProperties } from "react";
+import { useCallback, useState, useSyncExternalStore, type CSSProperties } from "react";
 import type { Level, Logo as LogoFile, Stat } from "@/engine";
 
 export type Verdict = Level | "works";
@@ -104,6 +104,19 @@ export function Seg<T extends string>({
       ))}
     </div>
   );
+}
+
+/** Whether a CSS media query matches right now, following changes as the window resizes. */
+export function useMediaQuery(query: string): boolean {
+  const subscribe = useCallback(
+    (notify: () => void) => {
+      const list = window.matchMedia(query);
+      list.addEventListener("change", notify);
+      return () => list.removeEventListener("change", notify);
+    },
+    [query],
+  );
+  return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches, () => false);
 }
 
 export function cx(...parts: (string | false | null | undefined)[]): string {

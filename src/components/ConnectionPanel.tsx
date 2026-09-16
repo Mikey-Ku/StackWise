@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { connectionsOf, envFileText, inSentence, planEnv, possessive, worstLevel, type EnvVar, type SlotId } from "@/engine";
+import { PartWorkbench } from "./PartWorkbench";
 import type { PlanModel } from "./usePlans";
 import { Logo, VerdictBadge, copyText, cx } from "./ui";
 
@@ -34,6 +35,7 @@ export function ConnectionPanel({
   model,
   slot,
   today,
+  aiOn,
   onShowPart,
   onOpenChecklist,
   onToast,
@@ -41,6 +43,7 @@ export function ConnectionPanel({
   model: PlanModel;
   slot: SlotId;
   today: string;
+  aiOn: boolean | null;
   onShowPart: () => void;
   onOpenChecklist: () => void;
   onToast: (message: string) => void;
@@ -123,6 +126,8 @@ export function ConnectionPanel({
           </>
         )}
       </section>
+
+      <PartWorkbench model={model} slot={slot} aiOn={aiOn} onToast={onToast} />
 
       <section className="mk-stack mk-gap-3">
         <span className="mk-eyebrow">Checks on this connection</span>

@@ -234,6 +234,32 @@ An option with setup steps but no variable recorded says so, instead of claiming
 
 **In your words:**
 
+## Round five: editing that works in a small window, notes, and help from Claude (2026-09-16)
+
+## 36. The canvas gets the screen in a narrow window
+
+**Michael:** Make the rendering for editing work well. What was wrong: in the 683px browser pane the canvas started three screens down the page and was 402px tall, with Details below it. Built as: below 1100px, a Plan and Canvas switch, a canvas that fills the screen, the side panel as a sheet that slides up when something is picked, one row of plan numbers, lines that follow a card while it's dragged, labels you can click, and menus that close when you click elsewhere. Wide windows are unchanged.
+
+**In your words:**
+
+## 37. Notes on every part and the line to it
+
+**Michael:** Add more information about connections, like notes. Built as: one note per part, saved with the plan, shown as a dot on the line and a chip on the card, flagged when it was written for a service that has since been swapped, and written into SPEC.md, the prompt and that part's build agent.
+
+**In your words:**
+
+## 38. Claude helps inside the plan, and still never decides
+
+**Michael:** Have AI help and edit those parts, and be able to talk more about it. Built as: a conversation on each part. Claude answers from a brief WhyStack computes for that part, and can suggest a note or a switch; a switch can only name an option the rules passed, and the page shows the rules' verdict for it. Nothing applies until accepted, as one undoable step. Without an API key, WhyStack answers the common questions from its facts and drafts notes itself. Claude Code can read and write notes through pairing.
+
+**In your words:**
+
+## 39. Conversations stay in the browser; notes travel
+
+**Michael:** (Claude's call, for review.) Notes are the outcome worth keeping, so they go in share links, plan files, exports and pairing. Conversations are working notes, kept per plan in this browser only, capped at 30 turns a part, and each question is sent as one request with the earlier turns as data.
+
+**In your words:**
+
 ---
 
 ## Still open

@@ -1,4 +1,4 @@
-import type { Answer, PriorityId, Selection, SharedPlan, SizeId, SlotId } from "@/engine";
+import { NOTE_MAX, type Answer, type Note, type PriorityId, type Selection, type SharedPlan, type SizeId, type SlotId } from "@/engine";
 
 /**
  * Every plan the person has, kept in their browser. Pure functions only, so the rules for undo,
@@ -18,6 +18,22 @@ export interface Spot {
   x: number;
   y: number;
 }
+
+/** One message in a conversation about a part of the stack. */
+export interface ChatTurn {
+  id: string;
+  /** "facts" is WhyStack answering from its own data when Claude isn't available. */
+  role: "you" | "claude" | "facts";
+  text: string;
+  at: string;
+  /** A note the answer suggested, until it's used or dismissed. */
+  proposal?: { text: string; summary: string; status: "open" | "used" | "added" | "dismissed" };
+  /** An option the answer suggested switching to. Its verdict always comes from WhyStack's rules. */
+  swap?: { optionId: string; status: "open" | "used" | "dismissed" };
+}
+
+export const THREAD_LIMIT = 30;
+export const TURN_MAX = 4000;
 
 export interface PlanState {
   id: string;
@@ -39,6 +55,10 @@ export interface PlanState {
   checked: Record<string, boolean>;
   /** Canvas nodes the person moved, by node id. Anything missing sits where WhyStack puts it. */
   layout: Record<string, Spot>;
+  /** Notes on each part and the line to it. Shared with the plan, exported, and editable by Claude. */
+  notes: Partial<Record<SlotId, Note>>;
+  /** Conversations about each part. Only in this browser: the notes are what's kept. */
+  threads: Partial<Record<SlotId, ChatTurn[]>>;
   /** A folder on this computer the project files were written into, if there is one. */
   folder?: string;
 }
@@ -69,6 +89,15 @@ export type PlanAction =
   | { type: "clearSlot"; slot: SlotId }
   | { type: "autoPick"; slot: SlotId }
   | { type: "toggleCheck"; itemId: string }
+  /** Typing in a note. An empty note is removed. */
+  | { type: "editNote"; slot: SlotId; text: string; optionId?: string; at: string }
+  /** Using a suggested note, in place of the old one or after it. Undoable. */
+  | { type: "useNote"; slot: SlotId; text: string; mode: "replace" | "append"; by: Note["by"]; optionId?: string; at: string; turnId?: string }
+  /** Switching to a suggested option. Undoable, and the rules check it like any other choice. */
+  | { type: "useSwap"; slot: SlotId; optionId: string; turnId: string }
+  | { type: "addTurns"; slot: SlotId; turns: ChatTurn[] }
+  | { type: "dismissSuggestion"; slot: SlotId; turnId: string; what: "proposal" | "swap" }
+  | { type: "clearThread"; slot: SlotId }
   | { type: "moveNodes"; spots: Record<string, Spot> }
   | { type: "tidyLayout" }
   | { type: "setFolder"; folder: string | null }
@@ -88,7 +117,7 @@ export type StoreAction =
   | { type: "redo" };
 
 /** Changes worth undoing: the ones that change the plan, not typing or checking boxes. */
-const UNDOABLE = new Set<StoreAction["type"]>(["applyPrefill", "answer", "setSize", "setPriority", "confirmAll", "place", "clearSlot", "autoPick", "loadExample", "resetPlan"]);
+const UNDOABLE = new Set<StoreAction["type"]>(["applyPrefill", "answer", "setSize", "setPriority", "confirmAll", "place", "clearSlot", "autoPick", "useNote", "useSwap", "loadExample", "resetPlan"]);
 const HISTORY_LIMIT = 50;
 
 export function blankPlan(id: string, now: string): PlanState {
@@ -108,7 +137,22 @@ export function blankPlan(id: string, now: string): PlanState {
     pinned: {},
     checked: {},
     layout: {},
+    notes: {},
+    threads: {},
   };
+}
+
+function withNote(plan: PlanState, slot: SlotId, note: Note | null): PlanState {
+  const notes = { ...plan.notes };
+  if (note && note.text.trim()) notes[slot] = { ...note, text: note.text.slice(0, NOTE_MAX) };
+  else delete notes[slot];
+  return { ...plan, notes };
+}
+
+function mapTurn(plan: PlanState, slot: SlotId, turnId: string | undefined, change: (turn: ChatTurn) => ChatTurn): PlanState {
+  const thread = plan.threads[slot];
+  if (!turnId || !thread) return plan;
+  return { ...plan, threads: { ...plan.threads, [slot]: thread.map((turn) => (turn.id === turnId ? change(turn) : turn)) } };
 }
 
 export function initialStore(id: string, now: string): Store {
@@ -160,6 +204,35 @@ function reducePlan(plan: PlanState, action: PlanAction): PlanState {
     }
     case "toggleCheck":
       return { ...plan, checked: { ...plan.checked, [action.itemId]: !plan.checked[action.itemId] } };
+    case "editNote":
+      return withNote(plan, action.slot, { text: action.text, optionId: action.optionId, updatedAt: action.at, by: "you" });
+    case "useNote": {
+      const old = plan.notes[action.slot]?.text.trim();
+      const text = action.mode === "append" && old ? `${old}\n\n${action.text.trim()}` : action.text.trim();
+      const next = withNote(plan, action.slot, { text, optionId: action.optionId, updatedAt: action.at, by: action.by });
+      return mapTurn(next, action.slot, action.turnId, (turn) => (turn.proposal ? { ...turn, proposal: { ...turn.proposal, status: action.mode === "append" ? "added" : "used" } } : turn));
+    }
+    case "useSwap": {
+      const next = { ...plan, pinned: { ...plan.pinned, [action.slot]: action.optionId } };
+      return mapTurn(next, action.slot, action.turnId, (turn) => (turn.swap ? { ...turn, swap: { ...turn.swap, status: "used" } } : turn));
+    }
+    case "addTurns": {
+      const turns = action.turns.map((turn) => ({ ...turn, text: turn.text.slice(0, TURN_MAX) }));
+      return { ...plan, threads: { ...plan.threads, [action.slot]: [...(plan.threads[action.slot] ?? []), ...turns].slice(-THREAD_LIMIT) } };
+    }
+    case "dismissSuggestion":
+      return mapTurn(plan, action.slot, action.turnId, (turn) =>
+        action.what === "proposal" && turn.proposal
+          ? { ...turn, proposal: { ...turn.proposal, status: "dismissed" } }
+          : action.what === "swap" && turn.swap
+            ? { ...turn, swap: { ...turn.swap, status: "dismissed" } }
+            : turn,
+      );
+    case "clearThread": {
+      const threads = { ...plan.threads };
+      delete threads[action.slot];
+      return { ...plan, threads };
+    }
     case "moveNodes":
       return { ...plan, layout: { ...plan.layout, ...action.spots } };
     case "tidyLayout":
@@ -212,6 +285,7 @@ export function reduce(history: History, action: StoreAction, now = new Date().t
         priority: action.plan.priority,
         builderId: action.plan.builderId,
         pinned: action.plan.pinned,
+        notes: action.plan.notes,
         step: "plan",
       };
       return { store: { ...withPlan(store, plan), activeId: action.id, order: [action.id, ...store.order] }, past: [], future: [] };
@@ -230,6 +304,7 @@ export function reduce(history: History, action: StoreAction, now = new Date().t
         priority: action.plan.priority,
         builderId: action.plan.builderId,
         pinned: action.plan.pinned,
+        notes: action.plan.notes,
         guesses,
         // Claude's answers count as confirmed, so show the plan rather than a preview.
         step: Object.keys(action.plan.answers).length > 0 ? "plan" : target.step,
@@ -269,6 +344,7 @@ export function toSharedPlan(plan: PlanState): SharedPlan {
     priority: plan.priority,
     builderId: plan.builderId,
     pinned: plan.pinned,
+    notes: plan.notes,
   };
 }
 
