@@ -33,6 +33,16 @@ describe("talkBrief", () => {
     expect(brief.facts.find((f) => f.fact === "Where data is kept")).toMatchObject({ value: "A file on your server", source: "https://example.com/fixture", checked_on: "2026-09-15" });
   });
 
+  it("carries the rest of the stack and every problem the rules flag, so a question can be answered in context", () => {
+    expect(brief.stack.map((p) => p.part)).toEqual(expect.arrayContaining(["Framework", "Hosting", "Database"]));
+    expect(brief.stack.every((p) => typeof p.verdict === "string")).toBe(true);
+    const order = ["doesn't work", "missing a piece", "works with a warning", "not verified yet"];
+    const ranks = brief.plan_problems.map((p) => order.indexOf(p.verdict));
+    expect(ranks.length).toBeGreaterThan(0);
+    expect(ranks).not.toContain(-1);
+    expect([...ranks].sort((x, y) => x - y)).toEqual(ranks);
+  });
+
   it("lists other options with the verdict StackWise's rules give each, never the current one", () => {
     expect(brief.alternatives.map((a) => a.id)).toEqual(["db-hosted"]);
     expect(brief.alternatives[0]).toMatchObject({ verdict: "works", researched: true });

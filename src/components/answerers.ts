@@ -92,3 +92,23 @@ export function saveDefaultAnswerer(id: RecipientId): void {
     // Private windows: the default lasts until the tab closes.
   }
 }
+
+/** Each answerer's mark, from the committed logos: the catalog's for AI companies, public/brand for the rest. */
+const ANSWERER_LOGOS: Record<string, string> = {
+  "agent:claude-code": "/brand/claude.svg",
+  "agent:codex": "/logos/openai.png",
+  "agent:gemini-cli": "/logos/google-gemini.svg",
+  "api:claude": "/brand/claude.svg",
+  "api:openai": "/logos/openai.png",
+  "api:gemini": "/logos/google-gemini.svg",
+  "api:openrouter": "/logos/openrouter.svg",
+  "api:groq": "/logos/groq.png",
+  "api:mistral": "/logos/mistral.svg",
+  "api:ollama": "/brand/ollama.svg",
+  facts: "/icon.svg",
+};
+
+export function answererLogo(id: RecipientId): string | null {
+  return ANSWERER_LOGOS[id] ?? (id.startsWith("agent:claude-code") ? ANSWERER_LOGOS["agent:claude-code"] : id.startsWith("agent:codex") ? ANSWERER_LOGOS["agent:codex"] : id.startsWith("agent:gemini-cli") ? ANSWERER_LOGOS["agent:gemini-cli"] : null);
+}
+

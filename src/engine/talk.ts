@@ -1,5 +1,5 @@
 import { costLine } from "./cost";
-import { optionIn, type CatalogIndex, type Level } from "./evaluate";
+import { optionIn, worstLevel, type CatalogIndex, type Level } from "./evaluate";
 import { planInput } from "./planops";
 import { alternativesFor, recommend } from "./score";
 import type { SlotId } from "./schema";
@@ -37,7 +37,13 @@ export interface TalkBrief {
   facts: { fact: string; value: string; note: string; source: string; checked_on: string }[];
   alternatives: { id: string; name: string; verdict: string; score_change: number; cost: string; researched: boolean }[];
   note: { text: string; written_by: "you" | "claude"; written_for?: string; may_be_out_of_date: boolean } | null;
+  /** The rest of the plan, so a question can be answered in context: every part and what fills it. */
+  stack: { part: string; option: string | null; verdict: string }[];
+  /** Everything the rules flag anywhere in the plan, by title, worst first. */
+  plan_problems: { verdict: string; title: string; parts: string[] }[];
 }
+
+const SEVERITY = ["blocked", "missing", "warning", "unknown"] as const;
 
 /** How many other options a brief carries. The best ones come first. */
 const ALTERNATIVES = 6;
@@ -65,6 +71,17 @@ export function talkBrief(index: CatalogIndex, plan: SharedPlan, slot: SlotId): 
         }
       : null,
     setup_steps: option ? option.setup.map((s) => ({ step: s.step, variables: s.env, ...(/^https?:\/\//.test(s.source) ? { docs: s.source } : {}) })) : [],
+    stack: index.catalog.slots
+      .filter((s) => rec.selection[s.id] || rec.needed.includes(s.id))
+      .map((s) => {
+        const picked = optionIn(index, rec.selection, s.id);
+        const touching = rec.results.filter((r) => r.slots.includes(s.id) && r.level !== "info");
+        return { part: s.label, option: picked?.name ?? null, verdict: VERDICT_WORDS[picked ? worstLevel(touching) : "missing"] };
+      }),
+    plan_problems: rec.results
+      .filter((r) => (SEVERITY as readonly string[]).includes(r.level))
+      .sort((a, b) => SEVERITY.indexOf(a.level as (typeof SEVERITY)[number]) - SEVERITY.indexOf(b.level as (typeof SEVERITY)[number]))
+      .map((r) => ({ verdict: VERDICT_WORDS[r.level], title: r.title, parts: r.slots.map((id) => index.slotsById.get(id)?.label ?? id) })),
     rules_for_builders: option ? [...option.builder_notes, ...rec.results.filter((r) => r.builder && r.slots.includes(slot)).map((r) => r.builder!)] : [],
     checks: rec.results
       .filter((r) => r.slots.includes(slot))

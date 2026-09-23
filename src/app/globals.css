@@ -2598,39 +2598,35 @@ body {
 .ws-wire-label--missing .ws-sig {
   --ws-sig-color: var(--mk-danger);
 }
-/* A pulse runs from the app to the service when a line is made or changes. */
+/* A light runs from the app to each service, over and over: data flowing. The dash is short and
+   the gap is long, so a short line rests between lights and a long one carries a light most of the time. */
 @keyframes ws-flow {
-  0% {
-    stroke-dashoffset: 240;
-    opacity: 1;
+  from {
+    stroke-dashoffset: 1016;
   }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    stroke-dashoffset: -240;
-    opacity: 0;
+  to {
+    stroke-dashoffset: 0;
   }
 }
 .ws-canvas .ws-wire-flow {
   stroke: var(--mk-ok);
   stroke-width: 3;
   stroke-linecap: round;
-  stroke-dasharray: 40 400;
-  opacity: 0;
-  animation: ws-flow 1.4s var(--mk-ease) 1 forwards;
+  stroke-dasharray: 16 1000;
+  animation: ws-flow 3.6s linear infinite;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--mk-ok) 70%, transparent));
   pointer-events: none;
   vector-effect: non-scaling-stroke;
 }
 .ws-canvas .ws-wire-flow--warning {
   stroke: var(--mk-warn);
-}
-.ws-canvas .ws-wire-flow--blocked,
-.ws-canvas .ws-wire-flow--missing {
-  stroke: var(--mk-danger);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--mk-warn) 70%, transparent));
+  animation-duration: 5s;
 }
 .ws-canvas .ws-wire-flow--unknown {
   stroke: var(--mk-text-faint);
+  filter: none;
+  animation-duration: 6s;
 }
 
 /* The add-a-part picker. */
@@ -3203,4 +3199,34 @@ body {
 .ws-proj__addagent .mk-input {
   flex: 1;
   min-width: 0;
+}
+.ws-conn__logo {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--mk-surface);
+  box-shadow: inset 0 0 0 0.5px var(--mk-line-strong);
+}
+.ws-conn__logo img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.ws-conn__logo .ws-status-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  box-shadow: 0 0 0 2px var(--mk-surface-sunk);
+}
+.ws-conn .ws-status-dot {
+  margin-top: 0;
+}
+.ws-menu-logo {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
 }

@@ -192,7 +192,9 @@ describe("chatting with a coding agent", () => {
     registry.postMessage("p1", { agent: "claude-code", text: "Use Supabase for login", about: "login", planVersion: 1 });
 
     const { data } = await waiting;
-    expect(data.messages).toEqual([expect.objectContaining({ text: "Use Supabase for login", about: "login", plan_version_when_sent: 1 })]);
+    expect(data.messages).toEqual([expect.objectContaining({ text: "Use Supabase for login", about: expect.objectContaining({ part_id: "login", part: "Login" }), plan_version_when_sent: 1 })]);
+    expect(data.plan.app).toBe("Fade");
+    expect(data.plan.stack).toEqual(expect.arrayContaining([expect.objectContaining({ part: "Login" })]));
     expect(data.plan_version_now).toBe(1);
     const record = registry.read("p1")!;
     expect(record.agents["claude-code"].waitId).toBeUndefined();

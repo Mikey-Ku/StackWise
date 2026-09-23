@@ -1,6 +1,6 @@
 import { Position } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
-import { edgePoint, wireEnds } from "./wire";
+import { arrangeInOrder, edgePoint, wireEnds } from "./wire";
 
 const card = (x: number, y: number, width = 200, height = 100) => ({ x, y, width, height });
 
@@ -23,5 +23,21 @@ describe("wire geometry", () => {
   it("gives both ends of a line, and copes with cards on top of each other", () => {
     expect(wireEnds(card(0, 0), card(600, 0))).toMatchObject({ sourceX: 200, sourcePosition: Position.Right, targetX: 600, targetPosition: Position.Left });
     expect(edgePoint(card(0, 0), card(0, 0)).side).toBe(Position.Bottom);
+  });
+});
+
+describe("tidying without losing the person's order", () => {
+  it("keeps the clockwise order around the app and spaces the parts evenly", () => {
+    const parts = [
+      { id: "left", x: -300, y: 10 },
+      { id: "top", x: 5, y: -400 },
+      { id: "right", x: 200, y: 0 },
+      { id: "bottom", x: -20, y: 90 },
+    ];
+    const spots = arrangeInOrder({ x: 0, y: 0 }, parts, 400, 300);
+    expect(spots.top).toEqual({ x: 0, y: -300 });
+    expect(spots.right).toEqual({ x: 400, y: 0 });
+    expect(spots.bottom).toEqual({ x: 0, y: 300 });
+    expect(spots.left).toEqual({ x: -400, y: 0 });
   });
 });

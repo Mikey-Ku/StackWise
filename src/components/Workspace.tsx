@@ -17,7 +17,7 @@ import { Icon, type IconName } from "./icons";
 import { Inspector } from "./Inspector";
 import { LearnPanel } from "./LearnPanel";
 import { Palette } from "./Palette";
-import { HIDEABLE_PARTS, PlanCanvas, type CanvasTarget } from "./PlanCanvas";
+import { HIDEABLE_PARTS, PlanCanvas, tidySpots, visibleParts, type CanvasTarget } from "./PlanCanvas";
 import { PlanMenu } from "./PlanMenu";
 import { ProjectPanel } from "./ProjectPanel";
 import { Overview, Planner, SummaryPill, type AiStatus } from "./Planner";
@@ -153,8 +153,10 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   // before decoding, and the token is remembered, because development mode runs effects twice.
   const importedToken = useRef<string | null>(null);
   useEffect(() => {
-    const match = window.location.hash.match(/^#plan=([A-Za-z0-9_-]+)$/);
+    // A link can also name the project folder on this computer (&folder=~/Projects/app), so opening it links the project too.
+    const match = window.location.hash.match(/^#plan=([A-Za-z0-9_-]+)(?:&folder=([^&]+))?$/);
     if (!match || importedToken.current === match[1]) return;
+    const folder = match[2] ? decodeURIComponent(match[2]) : null;
     importedToken.current = match[1];
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
     void decodeSharedPlan(match[1]).then((shared) => {
@@ -163,6 +165,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         return;
       }
       dispatch({ type: "importPlan", id: newId(), now: new Date().toISOString(), plan: shared });
+      if (folder) dispatch({ type: "setFolder", folder });
       setToast(`Opened "${shared.appName || "a shared plan"}". It's saved as a new plan in this browser.`);
     });
   }, [dispatch]);
@@ -353,7 +356,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             icon: "fit",
             disabled: !moved,
             onSelect: () => {
-              dispatch({ type: "tidyLayout" });
+              dispatch({ type: "moveNodes", spots: tidySpots(visibleParts(rec.selection, rec.needed, showAll), plan.layout) });
               setFitNonce((n) => n + 1);
             },
           },

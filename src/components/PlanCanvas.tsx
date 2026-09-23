@@ -26,7 +26,7 @@ import { Icon } from "./icons";
 import type { Spot } from "./store";
 import type { PlanModel } from "./usePlans";
 import { Logo, VERDICT_UI, VerdictDot, cx, type Verdict } from "./ui";
-import { wireEnds, type Box } from "./wire";
+import { arrangeInOrder, wireEnds, type Box } from "./wire";
 
 /**
  * The canvas is a graph with typed connections (see docs/DECISIONS.md), shown as one app in the
@@ -56,9 +56,13 @@ export type CanvasTarget = { kind: "part"; slot: SlotId } | { kind: "connection"
  * clockwise from the top, spaced evenly among the ones showing, so a small plan is as balanced as
  * a big one. The ellipse grows with the number of parts so cards don't overlap.
  */
+function ellipseFor(count: number): { rx: number; ry: number } {
+  const rx = Math.min(560, Math.max(320, 250 + count * 24));
+  return { rx, ry: Math.round(rx * 0.72) };
+}
+
 function autoLayout(visible: OuterSlot[]): Record<string, Spot> {
-  const rx = Math.min(560, Math.max(320, 250 + visible.length * 24));
-  const ry = Math.round(rx * 0.72);
+  const { rx, ry } = ellipseFor(visible.length);
   return Object.fromEntries([
     [APP_NODE, { x: 0, y: 0 }],
     ...visible.map((slot, i) => {
@@ -66,6 +70,20 @@ function autoLayout(visible: OuterSlot[]): Record<string, Spot> {
       return [nodeId(slot), { x: Math.round(rx * Math.cos(angle)), y: Math.round(ry * Math.sin(angle)) }];
     }),
   ]);
+}
+
+/** The parts showing on the canvas: filled, needed by the answers, or everything when "show all" is on. */
+export function visibleParts(selection: Partial<Record<SlotId, string>>, needed: SlotId[], showAll: boolean): OuterSlot[] {
+  return OUTER.filter((slot) => Boolean(selection[slot]) || needed.includes(slot) || showAll);
+}
+
+/** Spots for "Tidy up": every showing part keeps its place in the order around the app, evenly spaced. */
+export function tidySpots(visible: OuterSlot[], layout: Record<string, Spot>): Record<string, Spot> {
+  const auto = autoLayout(visible);
+  const center = layout[APP_NODE] ?? auto[APP_NODE];
+  const { rx, ry } = ellipseFor(visible.length);
+  const parts = visible.map((slot) => ({ id: nodeId(slot), ...(layout[nodeId(slot)] ?? auto[nodeId(slot)]) }));
+  return { [APP_NODE]: center, ...arrangeInOrder(center, parts, rx, ry) };
 }
 
 /** Room for the floating bar on top and the dock below, so a fit never tucks a card under them. */
@@ -133,6 +151,8 @@ type WireData = {
   kind: "connection" | "pair";
   other?: SlotId;
   label: string;
+  /** The full description, with the variables that travel along it. */
+  detail?: string;
   level: Verdict;
   selected: boolean;
   note: NoteState;
@@ -162,15 +182,15 @@ function WireEdge({ id, source, target, data }: EdgeProps<Edge<WireData>>) {
   return (
     <>
       <BaseEdge id={id} path={path} interactionWidth={24} />
-      {/* A pulse runs along the line whenever it's made or changes, so a new connection is easy to see. Keyed, so it replays. */}
-      <path key={data.signal} d={path} className={cx("ws-wire-flow", `ws-wire-flow--${data.level}`)} fill="none" />
+      {/* Data flowing: a light travels from the app to the service on every line that works, amber on one with a warning, none on a broken one. Each line starts at its own moment. */}
+      {FLOWS.has(data.level) && <path d={path} className={cx("ws-wire-flow", `ws-wire-flow--${data.level}`)} fill="none" style={{ animationDelay: `-${flowOffset(id)}ms` }} />}
       <EdgeLabelRenderer>
         <button
           key={data.signal}
           type="button"
           className={cx("ws-wire-label nodrag nopan", `ws-wire-label--${data.level}`, data.kind === "pair" && "is-pair", data.selected && "is-selected")}
           style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
-          title={`${status.words}: ${data.label}${data.note ? `. Has a note${data.note === "stale" ? " written for another option" : ""}` : ""}. Right-click for more.`}
+          title={`${status.words}: ${data.detail ?? data.label}${data.note ? `. Has a note${data.note === "stale" ? " written for another option" : ""}` : ""}. Right-click for more.`}
           onClick={open}
           onContextMenu={(e) => actions.menu(target_, e)}
         >
@@ -186,6 +206,15 @@ function WireEdge({ id, source, target, data }: EdgeProps<Edge<WireData>>) {
 }
 
 const edgeTypes = { wire: WireEdge };
+
+const FLOWS = new Set<Verdict>(["works", "info", "warning", "unknown"]);
+
+/** Where in its loop a line's light starts, from its id, so lines don't pulse in step. */
+function flowOffset(id: string): number {
+  let hash = 0;
+  for (const c of id) hash = (hash * 31 + c.charCodeAt(0)) | 0;
+  return Math.abs(hash) % 3600;
+}
 
 /** The mark at the start of every line's label: connected, connected with a warning, broken, missing, or not verified. */
 const SIGNAL: Record<Verdict, { glyph: string; words: string }> = {
@@ -371,6 +400,14 @@ export function PlanCanvas({
    * live node positions, so they follow too.
    */
   const [dragged, setDragged] = useState<Record<string, { x: number; y: number }>>({});
+  /**
+   * Each card's measured size. React Flow keeps a card's measurements (and where its lines attach)
+   * only while it gets the same node object back; a new object without `measured` makes it forget
+   * them, and until it measures again every line on that card has no ends, so the lines vanish and
+   * redraw. The nodes here are rebuilt whenever the plan or the selection changes, so they carry
+   * their sizes back in.
+   */
+  const [sizes, setSizes] = useState<Record<string, { width: number; height: number }>>({});
   const draggedOption = dragging ? index.optionsById.get(dragging) : undefined;
   /** True from the start of a drag until just after it ends, so letting go doesn't also count as a click. */
   const moving = useRef(false);
@@ -478,6 +515,9 @@ export function PlanCanvas({
         edges.push({
           id: `edge-${slot}`,
           type: "wire",
+          // A fixed stacking order: otherwise React Flow lifts lines touching a dragged card, which
+          // rebuilds the line and its label on every frame of the drag and makes them flash.
+          zIndex: 0,
           source: APP_NODE,
           target: nodeId(slot),
           className: cx("ws-edge", `ws-edge--${level}`, !option && "is-dashed", selectedConnection === slot && "is-selected"),
@@ -485,7 +525,9 @@ export function PlanCanvas({
             slot,
             signal: `${framework?.id ?? ""}>${optionId ?? ""}:${level}`,
             kind: "connection",
-            label: wire ? connectionLabel(wire, env) : `needs ${inSentence(def.label)}`,
+            // The verb alone keeps the canvas quiet; the variables are in the tooltip and the connection panel.
+            label: wire ? def.verb : `needs ${inSentence(def.label)}`,
+            detail: wire ? connectionLabel(wire, env) : undefined,
             level,
             selected: selectedConnection === slot,
             note: noteOf(slot),
@@ -509,6 +551,7 @@ export function PlanCanvas({
       edges.push({
         id: `pair-${key}`,
         type: "wire",
+        zIndex: 0,
         source: nodeId(a),
         target: nodeId(b),
         className: cx("ws-edge", `ws-edge--${level}`, "is-pair"),
@@ -529,7 +572,10 @@ export function PlanCanvas({
   }, [rec, index, input, plan.appName, plan.icon, plan.step, plan.notes, selectedSlot, selectedConnection, over, draggedOption, visible, spots]);
 
   // A drag only moves cards: their data (verdicts, stats, notes) isn't rebuilt on every pointer move.
-  const placed = useMemo(() => (Object.keys(dragged).length ? nodes.map((n) => (dragged[n.id] ? { ...n, position: dragged[n.id] } : n)) : nodes), [nodes, dragged]);
+  const placed = useMemo(
+    () => nodes.map((n) => ({ ...n, ...(sizes[n.id] ? { measured: sizes[n.id] } : {}), ...(dragged[n.id] ? { position: dragged[n.id] } : {}) })),
+    [nodes, dragged, sizes],
+  );
 
   const slotAt = (event: DragEvent): SlotId | null => {
     const el = (event.target as HTMLElement).closest("[data-slot]");
@@ -557,6 +603,13 @@ export function PlanCanvas({
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     const moves = changes.flatMap((c) => (c.type === "position" && c.dragging && c.position ? [[c.id, c.position] as const] : []));
     if (moves.length) setDragged((current) => ({ ...current, ...Object.fromEntries(moves) }));
+    const measured = changes.flatMap((c) => (c.type === "dimensions" && c.dimensions ? [[c.id, c.dimensions] as const] : []));
+    if (measured.length) {
+      setSizes((current) => {
+        const changed = measured.some(([id, d]) => current[id]?.width !== d.width || current[id]?.height !== d.height);
+        return changed ? { ...current, ...Object.fromEntries(measured) } : current;
+      });
+    }
   }, []);
 
   const slotOfNode = (id: string): SlotId => (id === APP_NODE ? "framework" : (id.slice("slot-".length) as SlotId));
