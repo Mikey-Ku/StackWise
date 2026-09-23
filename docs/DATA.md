@@ -1,6 +1,6 @@
 # The data
 
-Everything WhyStack knows is in `data/`. Changes go through pull requests, and `pnpm check:data` must pass. As of 2026-09-15: 14 parts, 79 options (59 fully researched), 427 facts, 43 capability rules, 6 product rules, 15 questions, and 50 glossary terms.
+Everything StackWise knows is in `data/`. Changes go through pull requests, and `pnpm check:data` must pass. As of 2026-09-15: 14 parts, 79 options (59 fully researched), 427 facts, 43 capability rules, 6 product rules, 15 questions, and 50 glossary terms.
 
 ## Options: `data/options/<id>.json`
 

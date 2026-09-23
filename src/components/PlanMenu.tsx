@@ -50,7 +50,7 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
       dispatch({ type: "importPlan", id: newId(), now: now(), plan: parsed.data });
       onToast(`Imported ${parsed.data.appName || "a plan"}.`);
     } catch {
-      onToast("That file isn't a WhyStack plan.");
+      onToast("That file isn't a StackWise plan.");
     }
   };
 

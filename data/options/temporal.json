@@ -1,0 +1,63 @@
+{
+  "id": "temporal",
+  "name": "Temporal",
+  "provider": "temporal",
+  "slots": ["jobs"],
+  "summary": "Temporal runs long, multi-step background work that picks up where it left off after a crash, on Temporal Cloud or on your own servers.",
+  "website": "https://temporal.io",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Temporal Cloud has no lasting free plan: new accounts get $150 in credits that expire after 90 days. The open source server is free to run yourself, but you look after it and its database.",
+      "source": "https://temporal.io/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "Temporal Cloud has no base monthly fee. You pay for what you use, starting at $50 per million actions plus storage by the hour. Support plans start at $500 a month but are optional.",
+      "source": "https://temporal.io/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "You can move between Temporal Cloud and a server you run yourself without changing code, but your jobs are written as Temporal Workflows and Activities, so leaving Temporal means rewriting them.",
+      "source": "https://docs.temporal.io/self-hosted-guide",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "Temporal maintains an official TypeScript SDK (temporalio/sdk-typescript), and @temporalio/create starts a new project.",
+      "source": "https://docs.temporal.io/develop/typescript",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "long_running": {
+      "value": true,
+      "note": "A Workflow can keep running for years, and if the app crashes Temporal rebuilds its state and carries on where it stopped.",
+      "source": "https://docs.temporal.io/workflows",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "schedules": {
+      "value": true,
+      "note": "Schedules start a Workflow every set interval or at calendar times like a cron expression, and can be paused, resumed and backfilled.",
+      "source": "https://docs.temporal.io/schedule",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a Temporal Cloud account (or run the open source server yourself) and make a Namespace.", "env": [], "source": "https://temporal.io/pricing" },
+    { "step": "Start the project with @temporalio/create to get the TypeScript SDK, a Workflow, an Activity and a Worker.", "env": [], "source": "https://docs.temporal.io/develop/typescript" },
+    { "step": "Put the Namespace's address, its name and an API key in the environment file used by your Worker and client.", "env": ["TEMPORAL_ADDRESS", "TEMPORAL_NAMESPACE", "TEMPORAL_API_KEY"], "source": "https://docs.temporal.io/develop/typescript/temporal-client" }
+  ],
+  "builder_notes": [
+    "Temporal needs a Worker process that stays running to pick up jobs; host it somewhere that runs long-lived processes, not only in serverless functions.",
+    "Put network calls and database writes in Activities, not in Workflow code; Workflow code must give the same result every time it is replayed.",
+    "Keep TEMPORAL_API_KEY on the server; start Workflows from server code, never from the browser."
+  ]
+}

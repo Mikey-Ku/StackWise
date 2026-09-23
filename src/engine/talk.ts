@@ -11,7 +11,7 @@ import { connectionsOf } from "./wiring";
  * Talking a part of the stack through. Everything a conversation may rely on is gathered here from
  * the engine: the connection and its variables, setup steps, checks, cost, facts with sources, the
  * alternatives with the verdict each would get, and the person's note. Claude answers from this
- * brief and nothing else, and without Claude WhyStack answers from it directly.
+ * brief and nothing else, and without Claude StackWise answers from it directly.
  */
 
 export type BriefVerdict = Level | "works";
@@ -96,7 +96,7 @@ export function talkBrief(index: CatalogIndex, plan: SharedPlan, slot: SlotId): 
   };
 }
 
-/** An alternative Claude may suggest: WhyStack's rules must not find a problem with it. */
+/** An alternative Claude may suggest: StackWise's rules must not find a problem with it. */
 export function swappable(brief: TalkBrief): TalkBrief["alternatives"] {
   return brief.alternatives.filter((a) => a.verdict === VERDICT_WORDS.works || a.verdict === VERDICT_WORDS.info);
 }
@@ -155,9 +155,9 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
 
   switch (intent) {
     case "note":
-      return { reply: `Here's a starting note from what WhyStack knows about ${name}. Edit it to add what you decided.`, proposal: { text: draftNote(brief), summary: "A starting note from the facts" } };
+      return { reply: `Here's a starting note from what StackWise knows about ${name}. Edit it to add what you decided.`, proposal: { text: draftNote(brief), summary: "A starting note from the facts" } };
     case "keys":
-      if (!vars.length) return { reply: brief.setup_steps.length ? `No environment variable is written down for ${name}. Read its setup steps before you build: it may still need one.` : `Nobody has researched ${possessive(name)} setup yet, so WhyStack can't say which variables it needs.` };
+      if (!vars.length) return { reply: brief.setup_steps.length ? `No environment variable is written down for ${name}. Read its setup steps before you build: it may still need one.` : `Nobody has researched ${possessive(name)} setup yet, so StackWise can't say which variables it needs.` };
       return {
         reply: [
           `${brief.connection!.carries_every_variable ? `${name} needs every variable in the plan` : `Your code reads ${vars.length === 1 ? "one variable" : `${vars.length} variables`} to reach ${name}`}:`,
@@ -169,7 +169,7 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
       if (!brief.setup_steps.length) return { reply: `Nobody has researched ${possessive(name)} setup yet. Follow its quickstart at ${brief.option!.website}.` };
       return { reply: [`Setting up ${name}, in order:`, ...brief.setup_steps.map((s, i) => `${i + 1}. ${s.step}${s.variables.length ? ` (${s.variables.join(", ")})` : ""}`)].join("\n") };
     case "cost": {
-      if (!brief.cost) return { reply: `WhyStack doesn't have a price for ${name}.` };
+      if (!brief.cost) return { reply: `StackWise doesn't have a price for ${name}.` };
       const cheaper = brief.alternatives.filter((a) => a.researched).slice(0, 3);
       return {
         reply: [`${name}: ${brief.cost.headline}.${brief.cost.detail ? ` ${brief.cost.detail}` : ""}`, ...(cheaper.length ? ["", "Others for this part, with your plan:", ...cheaper.map((a) => `- ${a.name}: ${a.cost} (${a.verdict})`)] : [])].join("\n"),
@@ -177,7 +177,7 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
     }
     case "swap": {
       const options = brief.alternatives.slice(0, 4);
-      if (!options.length) return { reply: `WhyStack has no other options for ${inSentence(brief.part.label)}.` };
+      if (!options.length) return { reply: `StackWise has no other options for ${inSentence(brief.part.label)}.` };
       const best = swappable(brief).find((a) => a.score_change > 0 && a.researched);
       return {
         reply: [
@@ -197,7 +197,7 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
       return { reply: `${brief.part.what} ${name}: ${brief.option!.summary}` };
     default:
       return {
-        reply: `Your app ${brief.part.verb} ${name}. ${brief.option!.summary} Claude isn't on, so WhyStack answers from its own facts: ask about setup, keys, cost, problems or alternatives, or ask for a note.`,
+        reply: `Your app ${brief.part.verb} ${name}. ${brief.option!.summary} Claude isn't on, so StackWise answers from its own facts: ask about setup, keys, cost, problems or alternatives, or ask for a note.`,
       };
   }
 }

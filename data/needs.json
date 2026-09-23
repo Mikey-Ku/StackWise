@@ -305,5 +305,50 @@
       "monitoring"
     ],
     "not_sure_note": "Before real people use the app, error alerts mean you hear about problems before someone complains."
+  },
+  {
+    "id": "automations",
+    "label": "Connects to other tools",
+    "question": "Should the app kick off work in other tools, like posting to Slack, updating a spreadsheet or syncing a CRM?",
+    "why": "Hooking an app to other tools is often quicker with an automation service than with code, and each one prices by how many steps run.",
+    "keywords": [
+      "zapier",
+      "n8n",
+      "automat*",
+      "workflow*",
+      "slack",
+      "spreadsheet",
+      "google sheets",
+      "crm",
+      "sync with",
+      "integrat*"
+    ],
+    "adds_slots": [
+      "automations"
+    ],
+    "not_sure_note": "If you later want the app to notify a team or update another tool, an automation service can do it without new code in the app."
+  },
+  {
+    "id": "outside_data",
+    "label": "Uses another service's data",
+    "question": "Will the app show data from another service's API, like sports scores, weather or maps?",
+    "why": "Data from someone else's API comes with their rules: a key to keep private, limits on how often you can ask, and sometimes no promise it won't change.",
+    "keywords": [
+      "api data",
+      "sports",
+      "scores",
+      "weather",
+      "maps",
+      "stock price*",
+      "exchange rate*",
+      "espn",
+      "sleeper",
+      "live data",
+      "feed"
+    ],
+    "adds_slots": [
+      "data_apis"
+    ],
+    "not_sure_note": "If what you show comes from another company's service, plan where the key lives and what happens when their API is slow or down."
   }
 ]

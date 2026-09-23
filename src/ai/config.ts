@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 /**
- * Node-only. AI is optional everywhere in WhyStack: with no key configured, the planner uses
+ * Node-only. AI is optional everywhere in StackWise: with no key configured, the planner uses
  * keyword guesses and a template summary, and nothing else changes.
  */
 

@@ -33,7 +33,7 @@ describe("talkBrief", () => {
     expect(brief.facts.find((f) => f.fact === "Where data is kept")).toMatchObject({ value: "A file on your server", source: "https://example.com/fixture", checked_on: "2026-09-15" });
   });
 
-  it("lists other options with the verdict WhyStack's rules give each, never the current one", () => {
+  it("lists other options with the verdict StackWise's rules give each, never the current one", () => {
     expect(brief.alternatives.map((a) => a.id)).toEqual(["db-hosted"]);
     expect(brief.alternatives[0]).toMatchObject({ verdict: "works", researched: true });
     expect(swappable(brief).map((a) => a.id)).toEqual(["db-hosted"]);

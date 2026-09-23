@@ -1,0 +1,61 @@
+{
+  "id": "make",
+  "name": "Make",
+  "provider": "make",
+  "slots": ["automations"],
+  "summary": "Make (formerly Integromat) lets you build workflows, called scenarios, by dragging app modules onto a visual map, run on Make's servers.",
+  "website": "https://www.make.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_100",
+      "note": "The Free plan gives 1,000 credits a month and 2 active scenarios, with scheduled runs at most every 15 minutes. Each module action in a run uses a credit, so a 3 step scenario runs about 330 times a month.",
+      "source": "https://www.make.com/en/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 12,
+      "note": "The Core plan is $12 a month for 10,000 credits, with unlimited active scenarios and runs as often as every minute. Paying yearly saves 15% or more.",
+      "source": "https://www.make.com/en/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "low",
+      "note": "Scenarios are built from Make's own app modules and only run on Make, so moving away means rebuilding each one in another tool.",
+      "source": "https://www.make.com/en/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "self_hostable": {
+      "value": false,
+      "note": "Every plan on the pricing page, Enterprise included, runs on Make's own cloud; there is no version to install on your own server.",
+      "source": "https://www.make.com/en/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "code_steps": {
+      "value": true,
+      "note": "The Make Code app runs JavaScript or Python in a scenario and uses 2 credits per second of run time. It is in open beta; its docs say paid plans, while the pricing page lists it on every plan.",
+      "source": "https://apps.make.com/code",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "webhook_triggers": {
+      "value": true,
+      "note": "The Custom Webhook module gives a scenario a web address your app can call, and Make starts the run as soon as a request arrives. Make accepts up to 300 webhook requests every 10 seconds.",
+      "source": "https://help.make.com/webhooks",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a Make account; the Free plan is enough to build and test a scenario.", "env": [], "source": "https://www.make.com/en/pricing" },
+    { "step": "Start the scenario with a Custom Webhook module, add a webhook, and copy its address into your app's environment file.", "env": ["MAKE_WEBHOOK_URL"], "source": "https://help.make.com/webhooks" }
+  ],
+  "builder_notes": [
+    "Call the Make webhook from server code only, reading the address from MAKE_WEBHOOK_URL.",
+    "Make answers a webhook with \"Accepted\" right away and runs the scenario after, so don't wait on the call for a result unless the scenario ends with a Webhook Response module."
+  ]
+}

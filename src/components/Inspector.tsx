@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { alternativesFor, costLine, CRITERIA, criterionLabel, formatFactValue, inSentence, isStale, optionStats, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
-import { PartWorkbench } from "./PartWorkbench";
+import { Icon } from "./icons";
+import { NoteEditor } from "./NoteEditor";
 import type { PlanModel } from "./usePlans";
 import { Logo, StatGrid, VerdictBadge, copyText, cx } from "./ui";
 
@@ -36,7 +37,7 @@ export function Inspector({
   model,
   slot,
   today,
-  aiOn,
+  onAsk,
   onToast,
   onCompare,
   onLearn,
@@ -44,7 +45,7 @@ export function Inspector({
   model: PlanModel;
   slot: SlotId | null;
   today: string;
-  aiOn: boolean | null;
+  onAsk: (slot: SlotId) => void;
   onToast: (message: string) => void;
   onCompare: (slot: SlotId, optionIds: string[]) => void;
   onLearn: () => void;
@@ -93,22 +94,27 @@ export function Inspector({
           </div>
         )}
         <p className="mk-muted">{option ? option.summary : def.empty_hint}</p>
-        {stats.length > 0 && <StatGrid stats={stats} />}
-        {option && (
-          <button
-            type="button"
-            className="mk-btn mk-btn--ghost mk-sm ws-self-start"
-            onClick={async () => {
-              const text = slotReasoning(index, input, rec.selection, slot);
-              onToast(text && (await copyText(text)) ? "Reasoning copied. Paste it into a doc or pull request." : "Couldn't copy to the clipboard.");
-            }}
-          >
-            Copy the reasoning
+        <div className="mk-row mk-gap-2 mk-wrap mk-sm">
+          <button type="button" className="mk-btn mk-btn--primary" onClick={() => onAsk(slot)}>
+            <Icon name="sparkle" size={14} /> Ask about {option ? option.name : "this"}
           </button>
-        )}
+          {option && (
+            <button
+              type="button"
+              className="mk-btn mk-btn--secondary"
+              onClick={async () => {
+                const text = slotReasoning(index, input, rec.selection, slot);
+                onToast(text && (await copyText(text)) ? "Reasoning copied. Paste it into a doc or pull request." : "Couldn't copy to the clipboard.");
+              }}
+            >
+              Copy the reasoning
+            </button>
+          )}
+        </div>
+        {stats.length > 0 && <StatGrid stats={stats} />}
       </div>
 
-      <PartWorkbench model={model} slot={slot} aiOn={aiOn} onToast={onToast} />
+      <NoteEditor key={`note-${model.plan.id}-${slot}`} model={model} slot={slot} />
 
       {learn && (
         <details className="ws-details ws-learn-inline">
@@ -154,8 +160,8 @@ export function Inspector({
       )}
 
       {option && scores && (
-        <section className="mk-stack mk-gap-3">
-          <span className="mk-eyebrow">How it scored for &ldquo;{priority?.label}&rdquo;</span>
+        <details className="ws-details mk-stack mk-gap-3">
+          <summary>How it scored for &ldquo;{priority?.label}&rdquo;</summary>
           {CRITERIA.map((c) => (
             <div key={c} className="ws-score">
               <div className="mk-row mk-gap-2">
@@ -172,7 +178,7 @@ export function Inspector({
               Your plan also shares {rec.score.accountsSaved} account{rec.score.accountsSaved === 1 ? "" : "s"} across parts, which counts for {priority?.label.toLowerCase()}.
             </p>
           )}
-        </section>
+        </details>
       )}
 
       <section className="mk-stack mk-gap-3">
@@ -236,8 +242,8 @@ export function Inspector({
       </section>
 
       {option && (
-        <section className="mk-stack mk-gap-3">
-          <span className="mk-eyebrow">Facts behind it</span>
+        <details className="ws-details mk-stack mk-gap-3">
+          <summary>Facts behind it ({Object.keys(option.facts).length})</summary>
           {Object.keys(option.facts).length === 0 ? (
             <p className="mk-muted">No facts researched yet. Anyone can add them with a pull request to data/options/{option.id}.json.</p>
           ) : (
@@ -263,7 +269,7 @@ export function Inspector({
               })}
             </dl>
           )}
-        </section>
+        </details>
       )}
     </div>
   );

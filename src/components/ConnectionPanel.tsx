@@ -2,14 +2,15 @@
 
 import { useMemo } from "react";
 import { connectionsOf, envFileText, inSentence, planEnv, possessive, worstLevel, type EnvVar, type SlotId } from "@/engine";
-import { PartWorkbench } from "./PartWorkbench";
+import { Icon } from "./icons";
+import { NoteEditor } from "./NoteEditor";
 import type { PlanModel } from "./usePlans";
 import { Logo, VerdictBadge, copyText, cx } from "./ui";
 
 /**
  * One connection on the canvas: the app reaching one service. It shows what travels along it,
  * which is a set of environment variable names, where each value comes from, and which of them
- * the browser can read. WhyStack never holds a value, so this is names and instructions only.
+ * the browser can read. StackWise never holds a value, so this is names and instructions only.
  */
 
 function EnvRow({ variable }: { variable: EnvVar }) {
@@ -35,7 +36,7 @@ export function ConnectionPanel({
   model,
   slot,
   today,
-  aiOn,
+  onAsk,
   onShowPart,
   onOpenChecklist,
   onToast,
@@ -43,7 +44,7 @@ export function ConnectionPanel({
   model: PlanModel;
   slot: SlotId;
   today: string;
-  aiOn: boolean | null;
+  onAsk: (slot: SlotId, question?: string) => void;
   onShowPart: () => void;
   onOpenChecklist: () => void;
   onToast: (message: string) => void;
@@ -89,6 +90,14 @@ export function ConnectionPanel({
           <span className="mk-badge">{def.label}</span>
         </div>
         <p className="ws-connection-what">{connection.what}</p>
+        <div className="mk-row mk-gap-2 mk-wrap mk-sm">
+          <button type="button" className="mk-btn mk-btn--primary" onClick={() => onAsk(slot, `What travels between my app and ${connection.optionName}, and what could go wrong with it?`)}>
+            <Icon name="sparkle" size={14} /> Explain this connection
+          </button>
+          <button type="button" className="mk-btn mk-btn--secondary" onClick={onShowPart}>
+            {connection.optionName} details
+          </button>
+        </div>
       </div>
 
       <section className="mk-stack mk-gap-3">
@@ -99,7 +108,7 @@ export function ConnectionPanel({
           <p className="mk-muted">
             {connection.stepsKnown
               ? `No environment variable is written down for ${connection.optionName}. Read its setup steps before you build: it may still need one.`
-              : `Nobody has researched ${possessive(connection.optionName)} setup yet, so WhyStack can't say what it needs. Follow its own quickstart.`}
+              : `Nobody has researched ${possessive(connection.optionName)} setup yet, so StackWise can't say what it needs. Follow its own quickstart.`}
           </p>
         ) : (
           <>
@@ -127,7 +136,7 @@ export function ConnectionPanel({
         )}
       </section>
 
-      <PartWorkbench model={model} slot={slot} aiOn={aiOn} onToast={onToast} />
+      <NoteEditor key={`note-${model.plan.id}-${slot}`} model={model} slot={slot} />
 
       <section className="mk-stack mk-gap-3">
         <span className="mk-eyebrow">Checks on this connection</span>
@@ -148,9 +157,6 @@ export function ConnectionPanel({
             </div>
           ))
         )}
-        <button type="button" className="mk-btn mk-btn--secondary mk-sm ws-self-start" onClick={onShowPart}>
-          Everything about {connection.optionName}
-        </button>
       </section>
     </div>
   );

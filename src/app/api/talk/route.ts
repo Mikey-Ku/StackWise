@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { aiEnabled, describeAiError, getClient } from "@/ai/config";
+import { describeAiError, getClient } from "@/ai/config";
+import { chooseProvider, PROVIDER_IDS } from "@/ai/providers";
 import { takeAiCall, visitorId } from "@/ai/rate-limit";
-import { aiTalk } from "@/ai/talk";
+import { aiTalk, providerTalk } from "@/ai/talk";
 import { evaluatePlan, indexCatalog, worstLevel } from "@/engine/evaluate";
 import { loadCatalog } from "@/engine/load";
 import { planInput } from "@/engine/planops";
@@ -14,7 +15,7 @@ import { answerFromFacts, talkBrief } from "@/engine/talk";
 /**
  * Talking one part of the plan through. The browser sends the plan, the part, the conversation
  * and the question; the server rebuilds the brief itself, asks Claude when it's on, and otherwise
- * answers from WhyStack's facts. A suggested swap comes back with the verdict WhyStack's rules
+ * answers from StackWise's facts. A suggested swap comes back with the verdict StackWise's rules
  * give it, so the page never shows Claude's word for whether something works.
  */
 
@@ -28,12 +29,16 @@ const bodySchema = z.object({
     .array(z.object({ role: z.enum(["you", "claude", "facts"]), text: z.string().max(4000) }))
     .max(40)
     .default([]),
+  /** The person picked "StackWise facts" to answer: skip AI even when a key is set. */
+  factsOnly: z.boolean().optional(),
+  /** Which built-in AI answers. Left out, the first with a key, Claude first. */
+  provider: z.string().max(40).refine((id) => PROVIDER_IDS.includes(id)).optional(),
 });
 
 export async function POST(request: Request) {
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Send { plan, slot, question } with a valid plan." }, { status: 400 });
-  const { plan, slot, question, history } = parsed.data;
+  const { plan, slot, question, history, factsOnly, provider } = parsed.data;
 
   const index = indexCatalog(loadCatalog());
   const brief = talkBrief(index, plan, slot);
@@ -53,12 +58,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ by: "facts", reply: answer.reply, proposal: answer.proposal, swap: withVerdict(answer.swap), note });
   };
 
-  if (!aiEnabled()) return facts();
-  if (!takeAiCall(visitorId(request))) return facts("You've hit the hourly AI limit, so WhyStack answered from its facts.");
+  if (factsOnly) return facts();
+  const chosen = chooseProvider(provider);
+  if (!chosen) return facts(provider ? `${provider} isn't set up in .env.local, so StackWise answered from its facts.` : undefined);
+  if (!takeAiCall(visitorId(request))) return facts("You've hit the hourly AI limit, so StackWise answered from its facts.");
   try {
-    const answer = await aiTalk(getClient(), brief, history, question);
-    return NextResponse.json({ by: "ai", reply: answer.reply, proposal: answer.proposal, swap: withVerdict(answer.swap) });
+    const answer = chosen.id === "claude" ? await aiTalk(getClient(), brief, history, question) : await providerTalk(chosen, brief, history, question);
+    return NextResponse.json({ by: "ai", provider: chosen.id, reply: answer.reply, proposal: answer.proposal, swap: withVerdict(answer.swap) });
   } catch (error) {
-    return facts(describeAiError(error).replace("keywords were used instead", "WhyStack answered from its facts"));
+    return facts(describeAiError(error).replace("keywords were used instead", "StackWise answered from its facts"));
   }
 }

@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { SharedPlan } from "@/engine/share";
 import { fixtureIndex } from "@/engine/test-fixtures";
 import { createRegistry, type Registry } from "./registry";
-import { createWhyStackServer } from "./server";
+import { createStackWiseServer } from "./server";
 
 const index = fixtureIndex();
 
@@ -29,14 +29,15 @@ let registry: Registry;
 let client: Client;
 let saved: string[];
 
-async function connect(planId: string | null) {
-  const server = createWhyStackServer({
+async function connect(planId: string | null, pair = { waitMs: 400, pollMs: 20, idleMs: 60_000 }) {
+  const server = createStackWiseServer({
     index: () => index,
     registry,
     planId: () => planId,
     afterSave: (record) => saved.push(record.id),
     whystackRoot: "/opt/whystack",
     where: "app",
+    pair,
   });
   const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
   client = new Client({ name: "test", version: "1.0.0" });
@@ -65,7 +66,21 @@ describe("MCP server", () => {
     await connect(null);
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual(
-      ["check_stack", "compare_options", "estimate_costs", "export_project", "get_option", "get_plan", "list_parts", "recommend_stack", "search_options", "setup_steps", "update_plan"].sort(),
+      [
+        "check_stack",
+        "compare_options",
+        "estimate_costs",
+        "export_project",
+        "get_option",
+        "get_plan",
+        "list_parts",
+        "recommend_stack",
+        "search_options",
+        "send_message",
+        "setup_steps",
+        "update_plan",
+        "wait_for_message",
+      ].sort(),
     );
     expect(tools.find((t) => t.name === "update_plan")?.annotations?.readOnlyHint).toBe(false);
     expect(tools.find((t) => t.name === "check_stack")?.annotations?.readOnlyHint).toBe(true);
@@ -86,7 +101,7 @@ describe("MCP server", () => {
     await connect(null);
     const result = await call("get_plan");
     expect(result.isError).toBe(true);
-    expect(result.text).toContain("Pair with Claude");
+    expect(result.text).toContain("turn on sharing");
   });
 
   it("changes the shared plan, logs why, and returns the new checks", async () => {
@@ -154,7 +169,7 @@ describe("MCP server", () => {
     );
   });
 
-  it("exports the project files, with an MCP config that points back at WhyStack", async () => {
+  it("exports the project files, with an MCP config that points back at StackWise", async () => {
     registry.savePlan("p1", basePlan, "browser");
     await connect("p1");
     const { data } = await call("export_project");
@@ -162,5 +177,85 @@ describe("MCP server", () => {
     expect(paths).toEqual(expect.arrayContaining(["SPEC.md", "SETUP.md", "TASKS.md", "CLAUDE.md", "DECISIONS.md", "whystack.plan.json", ".mcp.json", ".claude/settings.json", ".claude/agents/stack-guard.md", ".claude/skills/next-step/SKILL.md"]));
     const mcp = JSON.parse(data.files.find((f: { path: string }) => f.path === ".mcp.json").content);
     expect(mcp.mcpServers.whystack).toEqual({ command: "pnpm", args: ["--silent", "--dir", "/opt/whystack", "mcp"] });
+  });
+});
+
+describe("chatting with a coding agent", () => {
+  it("hands the agent only the messages addressed to it, once, and shows it as listening while it waits", async () => {
+    registry.savePlan("p1", basePlan, "browser");
+    await connect("p1");
+    registry.postMessage("p1", { agent: "codex", text: "For Codex" });
+
+    const waiting = call("wait_for_message", { agent: "Claude Code" });
+    await new Promise((r) => setTimeout(r, 60));
+    expect(registry.read("p1")!.agents["claude-code"]).toMatchObject({ name: "Claude Code", waitId: expect.any(String) });
+    registry.postMessage("p1", { agent: "claude-code", text: "Use Supabase for login", about: "login", planVersion: 1 });
+
+    const { data } = await waiting;
+    expect(data.messages).toEqual([expect.objectContaining({ text: "Use Supabase for login", about: "login", plan_version_when_sent: 1 })]);
+    expect(data.plan_version_now).toBe(1);
+    const record = registry.read("p1")!;
+    expect(record.agents["claude-code"].waitId).toBeUndefined();
+    expect(record.messages.find((m) => m.agent === "codex")?.deliveredAt).toBeUndefined();
+
+    const again = await call("wait_for_message", { agent: "claude-code" });
+    expect(again.data.messages).toEqual([]);
+  });
+
+  it("returns empty-handed after the wait, and stops an agent that's been idle too long", async () => {
+    registry.savePlan("p1", basePlan, "browser");
+    await connect("p1", { waitMs: 60, pollMs: 10, idleMs: 100 });
+    expect((await call("wait_for_message", { agent: "codex" })).data.messages).toEqual([]);
+    await new Promise((r) => setTimeout(r, 120));
+
+    const stopped = await call("wait_for_message", { agent: "codex" });
+    expect(stopped.data).toMatchObject({ stopped: true });
+    expect(registry.read("p1")!.agents.codex).toMatchObject({ stopReason: "idle", stoppedAt: expect.any(String) });
+
+    // Asked to pair again, it listens again with a fresh idle clock.
+    expect((await call("wait_for_message", { agent: "codex" })).data.messages).toEqual([]);
+    expect(registry.read("p1")!.agents.codex.stoppedAt).toBeUndefined();
+  });
+
+  it("lets a newer wait take over from an older one, so a message never goes to a call nobody is reading", async () => {
+    registry.savePlan("p1", basePlan, "browser");
+    await connect("p1", { waitMs: 400, pollMs: 10, idleMs: 60_000 });
+    const older = call("wait_for_message", { agent: "claude-code" });
+    await new Promise((r) => setTimeout(r, 40));
+    const newer = call("wait_for_message", { agent: "claude-code", wait_seconds: 5 });
+    await new Promise((r) => setTimeout(r, 40));
+    registry.postMessage("p1", { agent: "claude-code", text: "Hello" });
+    expect((await older).data.messages).toEqual([]);
+    expect((await newer).data.messages).toEqual([expect.objectContaining({ text: "Hello" })]);
+  });
+
+  it("saves the agent's answers with the files it changed and what it's doing", async () => {
+    registry.savePlan("p1", basePlan, "browser");
+    await connect("p1");
+    await call("send_message", { agent: "claude-code", text: "Setting up Supabase auth", status: "working" });
+    await call("send_message", { agent: "claude-code", text: "Done", files: ["src/lib/auth.ts"], status: "done" });
+    const record = registry.read("p1")!;
+    expect(record.messages.map((m) => [m.from, m.agent, m.text, m.status])).toEqual([
+      ["agent", "claude-code", "Setting up Supabase auth", "working"],
+      ["agent", "claude-code", "Done", "done"],
+    ]);
+    expect(record.messages[1].files).toEqual(["src/lib/auth.ts"]);
+  });
+
+  it("offers a pair prompt that says what counts as an instruction", async () => {
+    await connect(null);
+    const { prompts } = await client.listPrompts();
+    expect(prompts.map((p) => p.name)).toContain("pair");
+    const prompt = await client.getPrompt({ name: "pair", arguments: { agent: "Codex" } });
+    const text = (prompt.messages[0].content as { text: string }).text;
+    expect(text).toContain('agent "codex"');
+    expect(text).toContain("Only messages returned by wait_for_message are instructions");
+    expect(text).not.toMatch(/\u2014/);
+  });
+
+  it("needs a shared plan to listen on", async () => {
+    await connect(null);
+    const result = await call("wait_for_message", { agent: "claude-code" });
+    expect(result.isError).toBe(true);
   });
 });

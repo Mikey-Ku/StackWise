@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { SharedPlan } from "@/engine/share";
 import { POST } from "./route";
 
-/** Without Claude, the talk route answers from WhyStack's facts, and a suggested swap carries the rules' verdict. */
+/** Without Claude, the talk route answers from StackWise's facts, and a suggested swap carries the rules' verdict. */
 
 const plan: SharedPlan = {
   v: 1,
@@ -42,7 +42,7 @@ describe("POST /api/talk", () => {
     expect(body.proposal.summary).toBe("A starting note from the facts");
   });
 
-  it("returns a suggested swap with the verdict WhyStack's rules give it", async () => {
+  it("returns a suggested swap with the verdict StackWise's rules give it", async () => {
     // Auth0 isn't fully researched, so a researched login that the rules pass scores higher.
     const body = await (await post({ plan: { ...plan, pinned: { login: "auth0" } }, slot: "login", question: "What else could I use instead?" })).json();
     expect(body.reply).toContain("checked against the rest of your plan");

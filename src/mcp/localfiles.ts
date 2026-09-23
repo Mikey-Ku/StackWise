@@ -3,9 +3,9 @@ import type { SpecFile } from "@/engine";
 
 /**
  * Writing a project into a folder on this computer. The rules live here, away from the file
- * system, so they can be tested: which folders WhyStack will write into, and which files it
+ * system, so they can be tested: which folders StackWise will write into, and which files it
  * refuses to write over. `.env.local` is the one it never replaces, because that's where the
- * person's real keys are, and WhyStack has no copy of them.
+ * person's real keys are, and StackWise has no copy of them.
  */
 
 /** Folders under home that aren't places for a project. */
@@ -19,7 +19,7 @@ export function expandHome(input: string, home: string): string {
   return trimmed.startsWith("~/") ? path.join(home, trimmed.slice(2)) : trimmed;
 }
 
-/** The folder WhyStack will write into, or the reason it won't. */
+/** The folder StackWise will write into, or the reason it won't. */
 export function resolveFolder(input: string, home: string, whystackRoot: string): { path: string } | { error: string } {
   if (!input.trim()) return { error: "Type a folder, like ~/code/my-app." };
   if (input.includes("\0")) return { error: "That isn't a folder name." };
@@ -31,8 +31,8 @@ export function resolveFolder(input: string, home: string, whystackRoot: string)
     return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
   };
   if (target === home) return { error: "Pick a folder inside your home folder, not the home folder itself." };
-  if (!inside(home)) return { error: `WhyStack only writes inside your home folder (${home}).` };
-  if (target === whystackRoot || inside(whystackRoot)) return { error: "That's WhyStack's own folder. Pick somewhere else for your project." };
+  if (!inside(home)) return { error: `StackWise only writes inside your home folder (${home}).` };
+  if (target === whystackRoot || inside(whystackRoot)) return { error: "That's StackWise's own folder. Pick somewhere else for your project." };
   const segments = path.relative(home, target).split(path.sep);
   const bad = segments.find((segment) => OFF_LIMITS.has(segment) || segment.startsWith("."));
   if (bad) return { error: `"${bad}" isn't a place for a project. Pick a plain folder, like ~/code/my-app.` };
@@ -56,7 +56,7 @@ export function planWrites(files: SpecFile[], exists: (name: string) => boolean,
       write.push(file);
       continue;
     }
-    if (file.name === NEVER_REPLACE) keep.push({ name: file.name, why: "It's already there, and your real values live in it. WhyStack never writes over it." });
+    if (file.name === NEVER_REPLACE) keep.push({ name: file.name, why: "It's already there, and your real values live in it. StackWise never writes over it." });
     else if (!replace) keep.push({ name: file.name, why: "It's already there. Tick “Replace files that are already there” to update it." });
     else write.push(file);
   }

@@ -1,0 +1,214 @@
+/* StackWise's Apple-style theme, layered over mk-ui. It swaps mk-ui's tokens (type, color, radius,
+   shadow, motion) and softens a few components, so every class the app already uses picks it up.
+   Light and dark follow the system setting. Glass surfaces read --ws-glass and --ws-blur. */
+
+:root {
+  --mk-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-body), "Inter", "Segoe UI", system-ui, sans-serif;
+  --mk-font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-body), "Inter", "Segoe UI", system-ui, sans-serif;
+  --mk-font-mono: ui-monospace, "SF Mono", var(--font-mono), Menlo, monospace;
+  --mk-display-track: -0.022em;
+
+  --paper: #ffffff;
+  --paper-sunk: #f2f2f7;
+  --ink: #1d1d1f;
+  --ink-soft: #6e6e73;
+  --ink-faint: #8e8e93;
+  --line: #e5e5ea;
+  --line-strong: #d1d1d6;
+  --accent: #007aff;
+  --accent-deep: #0062cc;
+
+  --mk-bg: #f5f5f7;
+  --mk-surface: var(--paper);
+  --mk-surface-2: #f5f5f7;
+  --mk-surface-sunk: var(--paper-sunk);
+  --mk-accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+  --mk-ok: #248a3d;
+  --mk-ok-soft: rgba(52, 199, 89, 0.12);
+  --mk-warn: #c93400;
+  --mk-warn-soft: rgba(255, 149, 0, 0.12);
+  --mk-danger: #d70015;
+  --mk-danger-soft: rgba(255, 59, 48, 0.1);
+
+  --mk-radius-sm: 6px;
+  --mk-radius: 10px;
+  --mk-radius-lg: 14px;
+  --mk-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 1px rgba(0, 0, 0, 0.03);
+  --mk-shadow-2: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.05);
+  --mk-focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+
+  --mk-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --mk-dur-fast: 0.15s;
+  --mk-dur: 0.22s;
+  --mk-dur-slow: 0.35s;
+
+  --ws-glass: rgba(255, 255, 255, 0.74);
+  --ws-glass-strong: rgba(255, 255, 255, 0.9);
+  --ws-glass-line: rgba(0, 0, 0, 0.08);
+  --ws-blur: saturate(180%) blur(24px);
+  --ws-float-shadow: 0 18px 48px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --ws-fill: rgba(118, 118, 128, 0.12);
+  --ws-fill-hover: rgba(118, 118, 128, 0.18);
+  --ws-canvas-dot: rgba(0, 0, 0, 0.12);
+  --ws-seg-on: #ffffff;
+  --ws-node-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.06);
+  --ws-node-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.06), 0 12px 30px rgba(0, 0, 0, 0.1);
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1c1c1e;
+    --paper-sunk: #2c2c2e;
+    --ink: #f5f5f7;
+    --ink-soft: #aeaeb2;
+    --ink-faint: #8e8e93;
+    --line: #38383a;
+    --line-strong: #48484a;
+    --accent: #0a84ff;
+    --accent-deep: #409cff;
+
+    --mk-bg: #111113;
+    --mk-surface-2: #2c2c2e;
+    --mk-accent-ink: #ffffff;
+    --mk-ok: #30d158;
+    --mk-ok-soft: rgba(48, 209, 88, 0.16);
+    --mk-warn: #ff9f0a;
+    --mk-warn-soft: rgba(255, 159, 10, 0.16);
+    --mk-danger: #ff453a;
+    --mk-danger-soft: rgba(255, 69, 58, 0.16);
+    --mk-shadow-2: 0 12px 32px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+
+    --ws-glass: rgba(36, 36, 38, 0.72);
+    --ws-glass-strong: rgba(36, 36, 38, 0.92);
+    --ws-glass-line: rgba(255, 255, 255, 0.1);
+    --ws-float-shadow: 0 18px 48px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
+    --ws-fill: rgba(118, 118, 128, 0.24);
+    --ws-fill-hover: rgba(118, 118, 128, 0.32);
+    --ws-canvas-dot: rgba(255, 255, 255, 0.1);
+    --ws-seg-on: #636366;
+    --ws-node-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
+    --ws-node-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 30px rgba(0, 0, 0, 0.45);
+  }
+}
+
+body {
+  letter-spacing: -0.008em;
+  line-height: 1.47;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+}
+
+/* Section labels: small and grey, in sentence case, with no rule in front. */
+.mk-eyebrow {
+  gap: 0;
+  font-family: var(--mk-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--mk-text-muted);
+}
+.mk-eyebrow::before {
+  display: none;
+}
+
+/* Controls, sized like macOS: 28px small, 34px regular. */
+:root {
+  --mk-ctl-h: 34px;
+  --mk-ctl-px: 1rem;
+}
+.mk-sm {
+  --mk-ctl-h: 28px;
+  --mk-ctl-px: 0.8rem;
+  --mk-ctl-fs: 13px;
+}
+.mk-btn {
+  border-radius: var(--mk-radius-full);
+  font-family: var(--mk-font-body);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.mk-btn:hover:not(:disabled),
+.mk-btn:active:not(:disabled) {
+  transform: none;
+}
+.mk-btn:active:not(:disabled) {
+  filter: brightness(0.94);
+}
+.mk-btn--secondary {
+  border-color: transparent;
+  background: var(--ws-fill);
+}
+.mk-btn--secondary:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--ws-fill-hover);
+  color: var(--mk-text);
+}
+.mk-btn--ghost:hover:not(:disabled) {
+  background: var(--ws-fill);
+}
+.mk-btn:focus-visible,
+.mk-input:focus-visible,
+.mk-textarea:focus-visible,
+.mk-select:focus-visible {
+  outline: none;
+  box-shadow: var(--mk-focus-ring);
+}
+
+.mk-input,
+.mk-select,
+.mk-textarea {
+  border-radius: 8px;
+  background: var(--mk-surface);
+}
+.mk-input:focus,
+.mk-textarea:focus,
+.mk-select:focus {
+  border-color: var(--mk-accent);
+}
+
+.mk-badge {
+  border: 0;
+  border-radius: var(--mk-radius-full);
+  font-family: var(--mk-font-body);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.mk-seg {
+  border: 0;
+  border-radius: 9px;
+  background: var(--ws-fill);
+  padding: 2px;
+}
+.mk-seg__opt {
+  height: 26px;
+  border-radius: 7px;
+  font-weight: 500;
+}
+
+.mk-alert {
+  border-width: 0;
+  border-radius: var(--mk-radius);
+}
+
+.mk-modal {
+  border-radius: var(--mk-radius-lg);
+  box-shadow: var(--ws-float-shadow);
+}
+.mk-modal[open]::backdrop {
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(2px);
+}
+
+.mk-table th {
+  font-family: var(--mk-font-body);
+  letter-spacing: 0;
+  text-transform: none;
+}
