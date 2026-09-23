@@ -44,6 +44,25 @@ export interface Inspection extends Detected {
   issues: string[];
   /** The app's own icon, relative to the folder, when StackWise found one. */
   icon: string | null;
+  /** The opening of the project's README, as a starting description for a new plan. */
+  readme: string | null;
+}
+
+/** The first paragraphs of a README, without headings, badges, code or links, cut to a readable length. */
+export function readmeSummary(text: string | null, limit = 700): string | null {
+  if (!text) return null;
+  const paragraphs = text
+    .replace(/```[\s\S]*?```/g, "")
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter((p) => p && !p.startsWith("#") && !p.startsWith("|") && !p.startsWith("![") && !p.startsWith("[!") && !p.startsWith("<"))
+    .map((p) => p.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_`]/g, "").replace(/\s+/g, " "));
+  let out = "";
+  for (const p of paragraphs) {
+    if (out && out.length + p.length > limit) break;
+    out = out ? `${out} ${p}` : p;
+  }
+  return out ? out.slice(0, limit) : null;
 }
 
 const ICON_TYPES: Record<string, string> = { ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
@@ -55,14 +74,15 @@ export function findIcon(folder: string): string | null {
   const has = (file: string) => fs.existsSync(path.join(folder, file));
   for (const root of WEB_ROOTS) {
     for (const page of ["index.html", "templates/index.html"]) {
-      const html = read(folder, path.join(root, page));
+      // Paths in the person's project, not files StackWise ships with: the build's file tracing skips them.
+      const html = read(folder, path.join(/* turbopackIgnore: true */ root, page));
       const href = html?.match(/<link[^>]+rel=["'](?:apple-touch-icon|icon|shortcut icon)["'][^>]*href=["']([^"'?#]+)/i)?.[1] ?? html?.match(/<link[^>]+href=["']([^"'?#]+)["'][^>]*rel=["'](?:apple-touch-icon|icon|shortcut icon)["']/i)?.[1];
       if (href && !/^(https?:|data:|\/\/)/.test(href)) {
-        const file = path.join(root, href.replace(/^\//, ""));
+        const file = path.join(/* turbopackIgnore: true */ root, href.replace(/^\//, ""));
         if (has(file) && ICON_TYPES[path.extname(file).toLowerCase()]) return file;
       }
     }
-    for (const name of ICON_NAMES) if (has(path.join(root, name))) return path.join(root, name);
+    for (const name of ICON_NAMES) if (has(path.join(/* turbopackIgnore: true */ root, name))) return path.join(/* turbopackIgnore: true */ root, name);
   }
   return null;
 }
@@ -122,7 +142,7 @@ export function inspect(folder: string): Inspection {
     } else issues.push(`This project needs Java ${detected.javaVersion}, and StackWise couldn't find it on this Mac. Install it with: brew install openjdk@${detected.javaVersion}`);
   }
   if (rows.size && !envIgnored && has(WRITE_TO)) issues.push("Git doesn't ignore .env.local, so your keys could be committed. Add .env.local to .gitignore.");
-  return { ...detected, commands, folder, exists, env: [...rows.values()], configRefs: [...new Set(configRefs)], envIgnored, planFile: has("whystack.plan.json"), issues, icon: exists ? findIcon(folder) : null };
+  return { ...detected, commands, folder, exists, env: [...rows.values()], configRefs: [...new Set(configRefs)], envIgnored, planFile: has("whystack.plan.json"), issues, icon: exists ? findIcon(folder) : null, readme: exists ? readmeSummary(read(folder, "README.md") ?? read(folder, "readme.md")) : null };
 }
 
 /** Every value the project's env files set, later files winning, the way most frameworks load them. */

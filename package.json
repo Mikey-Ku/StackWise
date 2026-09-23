@@ -17,7 +17,8 @@
     "eval:plain-llm": "tsx --env-file-if-exists=.env.local scripts/eval-plain-llm.ts",
     "check:sources": "tsx --env-file-if-exists=.env.local scripts/check-sources.ts",
     "draft:option": "tsx --env-file-if-exists=.env.local scripts/draft-option.ts",
-    "build:logos": "tsx scripts/build-logos.ts"
+    "build:logos": "tsx scripts/build-logos.ts",
+    "stackwise": "tsx scripts/stackwise.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
@@ -42,5 +43,8 @@
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"
   },
-  "packageManager": "pnpm@12.3.4"
+  "packageManager": "pnpm@12.3.4",
+  "bin": {
+    "stackwise": "bin/stackwise"
+  }
 }

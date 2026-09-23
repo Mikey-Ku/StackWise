@@ -89,3 +89,13 @@ describe("the read-only SQL console", () => {
     expect(sqliteFrom({ DATABASE_URL: "file:./dev.db" })).toBe("./dev.db");
   });
 });
+
+describe("a new plan's description from the README", () => {
+  it("keeps the opening prose and drops headings, badges, tables, code and link syntax", async () => {
+    const { readmeSummary } = await import("./local");
+    const readme = "# wheelhouse\n\n![build](x.svg)\n\nA fantasy football game where you **spin a wheel** to assemble a roster. See [the rules](RULES.md).\n\n| a | b |\n\n```sh\n./run\n```\n\nPlayable without signing up.";
+    expect(readmeSummary(readme)).toBe("A fantasy football game where you spin a wheel to assemble a roster. See the rules. Playable without signing up.");
+    expect(readmeSummary(null)).toBeNull();
+    expect(readmeSummary("# Only a heading")).toBeNull();
+  });
+});

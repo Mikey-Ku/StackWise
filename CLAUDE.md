@@ -9,6 +9,7 @@ Planning tool for beginners building web apps with AI builders. A deterministic 
 - `pnpm check:options -- --id <id,id>` checks single option files without loading the catalog (safe while others write data)
 - `pnpm eval:prefill`, `pnpm eval:plain-llm`, `pnpm check:sources [--apply]`, `pnpm draft:option -- ...` (these call Claude; they read `.env.local`)
 - `pnpm build:logos [-- --only <id,id>]` downloads logos into `public/logos` (network, no key)
+- `stackwise [folder]` (from `bin/stackwise`, installed with `pnpm link --global`; or `pnpm stackwise -- <folder>`) starts StackWise in the background if it isn't up (log and pid in `.whystack/`) and opens `#open=<folder>`; `stackwise setup` adds the MCP server to Claude Code; `stackwise stop` stops it
 - `pnpm mcp` runs StackWise's MCP server over stdio; the app serves the same tools at `/api/mcp` (docs/MCP.md)
 
 ## Map
@@ -86,5 +87,6 @@ Planning tool for beginners building web apps with AI builders. A deterministic 
 - During a drag only positions change: `placed` maps `dragged` over the nodes, so cards' data isn't rebuilt on every pointer move.
 - Line labels show only the part's verb; the variables are in the tooltip (`detail`) and the connection panel. A light flows along every line that works (amber with a warning, none when broken), each starting at its own offset.
 - "Tidy up" keeps the parts' clockwise order around the app and spaces them evenly (`arrangeInOrder`), so lines from the app can't cross, without undoing the person's arrangement.
+- `#open=<absolute folder>` (what `stackwise` opens) picks the folder's `whystack.plan.json`, else a plan whose folder matches (paths compared after expanding `~` with the home folder `/api/project` reports), else a new plan named after the folder with its README summary as the description and its detected framework pinned.
 - A share link can carry a project folder: `#plan=<token>&folder=~/Projects/app` imports the plan and links the folder.
 - Side panels are 380px (Details) and 360px (left), 330px under 900px. Anything new in Details or the palette needs to wrap; long URLs and env var names in the checklist use `overflow-wrap: anywhere`.

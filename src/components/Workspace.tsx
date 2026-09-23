@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { connectionsOf, decodeSharedPlan, envFileText, planEnv, staleFacts, todayIso, type Catalog, type SlotId } from "@/engine";
+import { connectionsOf, decodeSharedPlan, envFileText, planEnv, staleFacts, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
 import { presence } from "@/mcp/pairing";
 import { AddPart } from "./AddPart";
 import { BrandMark } from "./BrandMark";
@@ -147,6 +147,55 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
       .then((r) => r.json())
       .then((status: AiStatus) => setAi(status))
       .catch(() => setAi({ ai: false, model: "" }));
+  }, []);
+
+  /**
+   * `stackwise` run in a project folder opens #open=<folder>. The folder's own plan file wins; then
+   * a plan already linked to that folder; otherwise a new plan named after it, linked, with the
+   * framework StackWise recognizes in it.
+   */
+  const openedFolder = useRef<string | null>(null);
+  useEffect(() => {
+    const match = window.location.hash.match(/^#open=(.+)$/);
+    if (!match) return;
+    const folder = decodeURIComponent(match[1]);
+    if (openedFolder.current === folder) return;
+    openedFolder.current = folder;
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    const call = (body: Record<string, unknown>) => fetch("/api/project", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ path: folder, ...body }) }).then(async (r) => ({ ok: r.ok, body: await r.json() }));
+    void (async () => {
+      const name = folder.replace(/\/+$/, "").split("/").pop() || "app";
+      const [planFile, project] = await Promise.all([call({ action: "planfile" }).catch(() => null), call({ action: "inspect" }).catch(() => null)]);
+      if (!project?.ok) {
+        setToast(project?.body?.error ?? `Couldn't open ${folder}.`);
+        return;
+      }
+      const home: string = project.body.home ?? "";
+      const absolute = (p: string) => p.replace(/^~(?=\/|$)/, home).replace(/\/+$/, "");
+      const plans = history.store.plans;
+      const linked = Object.values(plans).find((p) => p.folder && absolute(p.folder) === absolute(project.body.folder));
+      if (planFile?.ok && planFile.body.plan) {
+        const { id, plan: shared } = planFile.body as { id: string; plan: SharedPlan };
+        if (plans[id]) {
+          dispatch({ type: "switchPlan", id });
+          dispatch({ type: "applyRemote", id, plan: shared });
+        } else dispatch({ type: "importPlan", id, now: new Date().toISOString(), plan: shared });
+        dispatch({ type: "setFolder", folder: project.body.folder });
+        setToast(`Opened ${shared.appName || name} from its whystack.plan.json.`);
+      } else if (linked) {
+        dispatch({ type: "switchPlan", id: linked.id });
+        setToast(`Opened ${linked.appName || name}, already linked to ${folder}.`);
+      } else {
+        dispatch({ type: "newPlan", id: newId(), now: new Date().toISOString() });
+        dispatch({ type: "setText", field: "appName", value: name });
+        if (project.body.readme) dispatch({ type: "setText", field: "description", value: project.body.readme });
+        dispatch({ type: "setFolder", folder: project.body.folder });
+        if (project.body.framework) dispatch({ type: "place", slot: "framework", optionId: project.body.framework });
+        setToast(`Started a plan for ${name}, linked to its folder${project.body.framework ? `, built with ${project.body.label}` : ""}${project.body.readme ? ". Its README is the description: check it and read it" : ""}.`);
+      }
+      setPanel("project");
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per folder in the address
   }, []);
 
   // Opening a share link imports the plan exactly once. The link is cleared from the address bar

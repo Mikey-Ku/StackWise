@@ -52,7 +52,8 @@ export function parseWorktrees(porcelain: string, mainPath: string): Worktree[] 
         path: wtPath,
         branch,
         head: (line("HEAD") ?? "").slice(0, 12),
-        main: path.resolve(wtPath) === path.resolve(mainPath),
+        // Paths in someone's project, not files the app ships with: the build's file tracing skips them.
+        main: path.resolve(/* turbopackIgnore: true */ wtPath) === path.resolve(/* turbopackIgnore: true */ mainPath),
         agent: branch?.startsWith(BRANCH_PREFIX) ? branch.slice(BRANCH_PREFIX.length) : null,
       };
     });
