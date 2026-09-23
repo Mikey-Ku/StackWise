@@ -1,0 +1,66 @@
+{
+  "id": "spring-boot",
+  "name": "Spring Boot",
+  "provider": "open-source",
+  "slots": [
+    "framework"
+  ],
+  "summary": "A Java framework for building web servers and APIs that run on your own server code.",
+  "website": "https://spring.io/projects/spring-boot",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free and open source under the Apache 2.0 license. You pay only for hosting.",
+      "source": "https://github.com/spring-projects/spring-boot",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No paid plan. The framework itself is free.",
+      "source": "https://github.com/spring-projects/spring-boot",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Packages as a runnable jar or a container image, so it runs on cloud hosts, virtual machines or your own server.",
+      "source": "https://docs.spring.io/spring-boot/how-to/deployment/index.html",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "language": {
+      "value": "Java or Kotlin",
+      "note": "Written in Java. Kotlin also works.",
+      "source": "https://docs.spring.io/spring-boot/tutorial/first-application/index.html",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "has_server_code": {
+      "value": true,
+      "note": "Your controllers run only on the server, so secrets stay private.",
+      "source": "https://docs.spring.io/spring-boot/tutorial/first-application/index.html",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "uses_react": {
+      "value": false,
+      "note": "Spring Boot is a server framework. Screens are not written in React unless you add a separate frontend.",
+      "source": "https://docs.spring.io/spring-boot/tutorial/first-application/index.html",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create the project at start.spring.io with the Web starter, then push it to a GitHub repository.",
+      "env": [],
+      "source": "https://docs.spring.io/spring-boot/tutorial/first-application/index.html"
+    }
+  ],
+  "builder_notes": [
+    "Put settings in application.properties and keep secrets out of it. Spring reads environment variables too, and they override the file.",
+    "Environment variable names map to properties by using capitals and underscores: SPRING_DATASOURCE_URL sets spring.datasource.url."
+  ]
+}

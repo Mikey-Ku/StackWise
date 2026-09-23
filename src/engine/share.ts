@@ -64,7 +64,7 @@ export async function encodeSharedPlan(plan: SharedPlan): Promise<string> {
   return toBase64Url(await transform(json, new CompressionStream("deflate-raw")));
 }
 
-/** Returns null for anything that isn't a valid WhyStack plan, instead of throwing. */
+/** Returns null for anything that isn't a valid StackWise plan, instead of throwing. */
 export async function decodeSharedPlan(token: string): Promise<SharedPlan | null> {
   try {
     const json = await transform(fromBase64Url(token), new DecompressionStream("deflate-raw"));

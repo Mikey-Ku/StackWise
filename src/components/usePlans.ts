@@ -90,7 +90,9 @@ export function usePlans(catalog: Catalog) {
     const description = plan.description;
     setPrefill({ loading: true });
     try {
-      const response = await fetch("/api/prefill", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ description }) });
+      // The built-in AI saved as the default in the Ask panel reads the description too.
+      const provider = savedProvider();
+      const response = await fetch("/api/prefill", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ description, ...(provider ? { provider } : {}) }) });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const result = (await response.json()) as { by: Guess["by"]; guesses: Record<string, Omit<Guess, "by">>; features: string[]; note?: string };
       dispatch({ type: "applyPrefill", by: result.by, guesses: result.guesses, features: result.features });
@@ -107,3 +109,13 @@ export function usePlans(catalog: Catalog) {
 }
 
 export type PlanModel = ReturnType<typeof usePlans>;
+
+/** The built-in AI picked as the default answerer ("api:openai" and so on), if one was. */
+function savedProvider(): string | undefined {
+  try {
+    const saved = window.localStorage.getItem("whystack.answerer");
+    return saved?.startsWith("api:") ? saved.slice(4) : undefined;
+  } catch {
+    return undefined;
+  }
+}

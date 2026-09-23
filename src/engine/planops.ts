@@ -12,7 +12,7 @@ import { SIZE_PHRASE, inSentence } from "./text";
 /**
  * Plans as something another program can read and change: what the MCP server gives Claude.
  * Every change goes through the same validation as the planner, and every report comes from the
- * same verdicts, costs and scores, so Claude can only ask WhyStack, never overrule it.
+ * same verdicts, costs and scores, so Claude can only ask StackWise, never overrule it.
  */
 
 const ANSWER_WORDS: Record<Answer, string> = { yes: "yes", no: "no", not_sure: "not sure" };
@@ -23,7 +23,7 @@ export const planUpdateSchema = z.object({
   description: z.string().max(5000).optional(),
   features: z.string().max(5000).optional(),
   answers: z.record(z.string(), z.enum(["yes", "no", "not_sure"])).optional(),
-  /** An option id puts it in the part; "" keeps the part empty; null lets WhyStack pick again. */
+  /** An option id puts it in the part; "" keeps the part empty; null lets StackWise pick again. */
   parts: z.partialRecord(z.enum(SLOT_IDS), z.string().max(80).nullable()).optional(),
   size: z.enum(SIZE_IDS).optional(),
   priority: z.enum(PRIORITY_IDS).optional(),
@@ -74,7 +74,7 @@ export function applyPlanUpdate(index: CatalogIndex, plan: SharedPlan, update: P
     if (value === null) {
       if (plan.pinned[slot] === undefined) continue;
       delete next.pinned[slot];
-      changes.push(`Let WhyStack pick ${inSentence(partLabel(slot))}`);
+      changes.push(`Let StackWise pick ${inSentence(partLabel(slot))}`);
     } else if (value === "") {
       if (plan.pinned[slot] === "") continue;
       next.pinned[slot] = "";

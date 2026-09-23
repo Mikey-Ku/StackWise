@@ -1,14 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { SharedPlan } from "@/engine";
-import { toSharedPlan, type History, type StoreAction } from "./store";
+import type { SharedPlan, SlotId } from "@/engine";
+import type { AgentState } from "@/mcp/pairing";
+import type { Message } from "@/mcp/registry";
+import { toSharedPlan, type History, type PlanState, type StoreAction } from "./store";
 
 /**
- * Pairing with Claude from the browser side. When it's on, the plan you have open is shared with
- * WhyStack's server, where Claude's MCP tools read and change it. Whether or not it's on, the tab
- * keeps asking the server what Claude did, so changes from a paired session or an exported
- * project show up here, as undoable steps, with Claude's reasons in the Claude tab.
+ * Pairing with coding agents from the browser side. When sharing is on, the plan you have open is
+ * shared with StackWise's server, where an agent's MCP tools read and change it. Whether or not
+ * it's on, the tab keeps asking the server what agents did and said, so changes from a paired
+ * session or an exported project show up here as undoable steps, and their answers show up in
+ * the Ask panel. Writing to an agent turns sharing on, since the agent can only read a shared plan.
  */
 
 export interface ClaudeActivity {
@@ -20,6 +23,9 @@ export interface ClaudeActivity {
   verdict?: string;
 }
 
+export type AgentMessage = Message;
+export type Agent = AgentState;
+
 interface SharedRecord {
   id: string;
   version: number;
@@ -27,6 +33,8 @@ interface SharedRecord {
   updatedBy: "browser" | "claude";
   plan: SharedPlan;
   activity: ClaudeActivity[];
+  messages?: Message[];
+  agents?: Record<string, AgentState>;
 }
 
 const PAIRING_KEY = "whystack.pairing";
@@ -48,8 +56,10 @@ export function usePairing({
       return false;
     }
   });
-  const [activity, setActivity] = useState<Record<string, ClaudeActivity[]>>({});
+  const [records, setRecords] = useState<Record<string, Pick<SharedRecord, "activity" | "messages" | "agents">>>({});
   const [reachable, setReachable] = useState<boolean | null>(null);
+  /** The server's clock at the last look, so presence doesn't depend on this computer's clock. */
+  const [serverNow, setServerNow] = useState(() => Date.now());
   const known = useRef<Record<string, number>>({});
   const synced = useRef<Record<string, string>>({});
   const sharedId = useRef<string | null>(null);
@@ -76,7 +86,7 @@ export function usePairing({
     [dispatch, onClaudeChange],
   );
 
-  // Ask the server what Claude changed or did since the last look.
+  // Ask the server what agents changed, did or said since the last look.
   useEffect(() => {
     let stopped = false;
     let timer = 0;
@@ -86,9 +96,12 @@ export function usePairing({
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const body = (await response.json()) as { now: string; records: SharedRecord[] };
         since.current = body.now;
+        // Presence only needs a coarse clock; updating it every poll would re-render the workspace every 1.5 seconds.
+        const serverTime = Date.parse(body.now);
+        setServerNow((previous) => (Math.abs(serverTime - previous) >= 5000 ? serverTime : previous));
         setReachable(true);
         if (body.records.length) {
-          setActivity((previous) => ({ ...previous, ...Object.fromEntries(body.records.map((r) => [r.id, r.activity])) }));
+          setRecords((previous) => ({ ...previous, ...Object.fromEntries(body.records.map((r) => [r.id, { activity: r.activity, messages: r.messages ?? [], agents: r.agents ?? {} }])) }));
           body.records.forEach(applyRecord);
         }
       } catch {
@@ -103,36 +116,45 @@ export function usePairing({
     };
   }, [applyRecord]);
 
-  // Share the open plan whenever it changes, or when you switch plans.
-  useEffect(() => {
-    if (!enabled) return;
-    const plan = toSharedPlan(active);
-    const json = JSON.stringify(plan);
-    if (synced.current[active.id] === json && sharedId.current === active.id) return;
-    const timer = window.setTimeout(async () => {
+  /** Put a plan on the server. False when the server couldn't be reached. */
+  const share = useCallback(
+    async (plan: PlanState): Promise<boolean> => {
+      const shared = toSharedPlan(plan);
+      const json = JSON.stringify(shared);
       try {
         const response = await fetch("/api/pair", {
           method: "PUT",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ id: active.id, plan, baseVersion: known.current[active.id] ?? 0 }),
+          body: JSON.stringify({ id: plan.id, plan: shared, baseVersion: known.current[plan.id] ?? 0 }),
         });
         if (response.status === 409) {
           applyRecord(((await response.json()) as { record: SharedRecord }).record);
-          sharedId.current = active.id;
-          return;
+          sharedId.current = plan.id;
+          return true;
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const { version } = (await response.json()) as { version: number };
-        known.current[active.id] = version;
-        synced.current[active.id] = json;
-        sharedId.current = active.id;
+        known.current[plan.id] = version;
+        synced.current[plan.id] = json;
+        sharedId.current = plan.id;
         setReachable(true);
+        return true;
       } catch {
         setReachable(false);
+        return false;
       }
-    }, 400);
+    },
+    [applyRecord],
+  );
+
+  // Share the open plan whenever it changes, or when you switch plans.
+  useEffect(() => {
+    if (!enabled) return;
+    const json = JSON.stringify(toSharedPlan(active));
+    if (synced.current[active.id] === json && sharedId.current === active.id) return;
+    const timer = window.setTimeout(() => void share(active), 400);
     return () => window.clearTimeout(timer);
-  }, [enabled, active, applyRecord]);
+  }, [enabled, active, share]);
 
   const setEnabled = useCallback((on: boolean) => {
     setEnabledState(on);
@@ -147,5 +169,43 @@ export function usePairing({
     }
   }, []);
 
-  return { enabled, setEnabled, reachable, activity: activity[active.id] ?? [] };
+  /** Write to one agent. The message waits in the shared plan's inbox until that agent picks it up. */
+  const send = useCallback(
+    async (agent: string, text: string, about: SlotId): Promise<string | null> => {
+      if (!enabled) setEnabled(true);
+      if (sharedId.current !== active.id && !(await share(active))) return "Couldn't reach StackWise's server, so the message wasn't sent.";
+      try {
+        const response = await fetch("/api/pair", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ id: active.id, agent, text, about, planVersion: known.current[active.id] }),
+        });
+        const body = (await response.json()) as { message?: Message; error?: string };
+        if (!response.ok || !body.message) return body.error ?? `The message wasn't sent (HTTP ${response.status}).`;
+        const message = body.message;
+        setRecords((previous) => {
+          const current = previous[active.id] ?? { activity: [], messages: [], agents: {} };
+          return { ...previous, [active.id]: { ...current, messages: [...(current.messages ?? []), message] } };
+        });
+        return null;
+      } catch {
+        return "Couldn't reach StackWise's server, so the message wasn't sent.";
+      }
+    },
+    [enabled, setEnabled, share, active],
+  );
+
+  const record = records[active.id];
+  return {
+    enabled,
+    setEnabled,
+    reachable,
+    serverNow,
+    send,
+    activity: record?.activity ?? [],
+    messages: record?.messages ?? [],
+    agents: record?.agents ?? {},
+  };
 }
+
+export type Pairing = ReturnType<typeof usePairing>;

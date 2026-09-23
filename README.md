@@ -1,19 +1,44 @@
-# WhyStack
+# StackWise
 
 Plan a web app stack you actually understand.
 
-You describe your app in a paragraph. WhyStack works out what it needs (logins, payments, uploads, email, live updates, background jobs, data from other websites, your own domain), asks you to confirm each guess, and fills a canvas with a host, domain, database, login, file storage, payments, email, AI provider, web scraper, jobs service, analytics, error monitoring and, if you want one, a phone app. A rules engine checks every connection against sourced facts, so each verdict comes with a reason and a link. When the plan looks right, WhyStack hands your AI builder (Lovable, Bolt, Replit, Claude Code, Cursor) a spec pack: the spec, an ordered setup checklist, a prompt or agent file, and a decision record.
+You describe your app in a paragraph. StackWise works out what it needs (logins, payments, uploads, email, live updates, background jobs, data from other websites, your own domain), asks you to confirm each guess, and fills a canvas with a host, domain, database, login, file storage, payments, email, AI provider, web scraper, jobs service, analytics, error monitoring and, if you want one, a phone app. A rules engine checks every connection against sourced facts, so each verdict comes with a reason and a link. When the plan looks right, StackWise hands your AI builder (Lovable, Bolt, Replit, Claude Code, Cursor) a spec pack: the spec, an ordered setup checklist, a prompt or agent file, and a decision record.
 
 The AI never decides whether two services work together. Rules do, from facts with a source and a date. AI reads your description, explains the plan and drafts new facts for a person to review.
 
-## Run it
+## Start in two minutes
+
+You need Node 22.9 or newer and pnpm. Claude Code is optional, for working with an agent.
 
 ```bash
+git clone <this repo> stackwise && cd stackwise
 pnpm install
-pnpm dev          # http://localhost:4310
+pnpm link --global     # adds the `stackwise` command
+stackwise setup        # once: lets Claude Code talk to StackWise
 ```
 
-Everything works without an API key. To turn on Claude reading your description and explaining your plan, copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY`.
+Then, in any project folder:
+
+```bash
+stackwise
+```
+
+StackWise starts in the background (on http://localhost:4310) and opens your browser on that project. If the folder has a `whystack.plan.json`, that plan opens; if you've opened the folder before, its plan comes back; otherwise a new plan starts, named after the folder, with its README as the description and its framework recognized. `stackwise stop` stops it.
+
+To build with an agent, open Claude Code in the same folder and run `/mcp__whystack__pair`. Write to it from **Ask** in StackWise (Cmd+K); it works in your repo and answers there.
+
+Or just run the app: `pnpm dev` and open http://localhost:4310.
+
+Everything works without an API key. To have an AI read your description, answer questions and explain your plan, copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY`, `GEMINI_API_KEY`, or any model listed there).
+
+## Using it
+
+1. **Connect your AI.** The first screen: a coding agent in your terminal or an API key. The pill in the top bar always says what's connected.
+2. **Say what you're building.** Pick a kind of app (web, iOS, Android, both, AI app, store, internal tool) or describe it, then confirm each guess.
+3. **Read the canvas.** Your app in the middle, a card per part, and a line per connection: a check means it works, `!` a warning, a cross that it doesn't. A light flows along the lines that work. Click a card for why it was picked; right-click anything for everything else; press A to add a part.
+4. **Ask.** Cmd+K opens one conversation per plan. Pick who answers: an agent in your terminal, a model with a key, or StackWise's own facts.
+5. **Link your project.** The Project panel runs the app, sets environment variables, checks every service with your keys, reads the database (read only) and gives extra agents their own git worktree.
+6. **Export.** A spec pack for your AI builder, or the files written straight into the project.
 
 ```bash
 pnpm test             # engine, AI (with a fake client), store, scripts and data checks
@@ -26,18 +51,18 @@ pnpm eval:plain-llm   # how often a plain LLM picks a stack that breaks a rule
 pnpm check:sources    # reread every fact's source page with Claude; --apply to update
 pnpm draft:option -- --id resend --name "Resend" --slot email --website https://resend.com
 pnpm build:logos      # refetch logos into public/logos; -- --only <id,id> for a few
-pnpm mcp              # WhyStack's MCP server over stdio (exported projects start it themselves)
+pnpm mcp              # StackWise's MCP server over stdio (exported projects start it themselves)
 ```
 
-## Pair with Claude
+## Pair with a coding agent
 
-WhyStack is also an MCP server, so Claude uses its rules instead of guessing. Click **Pair with Claude** in the app, then add it to Claude Code once:
+StackWise is also an MCP server, so your coding agent uses its rules instead of guessing. Open **Ask** (Cmd+K), pick your agent in the Answering menu, then add StackWise to Claude Code once (any agent that speaks MCP can connect to the same address) and run `/mcp__whystack__pair` so you can write to it from StackWise:
 
 ```bash
 claude mcp add --transport http --scope user whystack http://localhost:4310/api/mcp
 ```
 
-Claude can check stacks, compare options, estimate costs and change the plan you share; its changes appear on the canvas with its reasons, and Undo reverses them. **Export project** gives Claude Code a ready project: tasks, an agent per part, `/next-step`, and an `.mcp.json` that starts WhyStack's server. See [docs/MCP.md](docs/MCP.md).
+Claude can check stacks, compare options, estimate costs and change the plan you share; its changes appear on the canvas with its reasons, and Undo reverses them. **Export project** gives Claude Code a ready project: tasks, an agent per part, `/next-step`, and an `.mcp.json` that starts StackWise's server. See [docs/MCP.md](docs/MCP.md).
 
 ## What it does
 
@@ -46,22 +71,37 @@ Claude can check stacks, compare options, estimate costs and change the plan you
 - Only the follow-up questions that would change your plan are asked.
 - Pick a priority (spend $0, launch fast, learn, ready to grow), an audience size and your builder.
 
+**Getting started**
+- Connect your AI first: a coding agent in your terminal (Claude Code, Codex, Gemini CLI) or an API key (Claude, OpenAI or Gemini). A pill in the top bar always shows what's connected, and you can change it there. StackWise's facts work with nothing connected.
+- Start from a kind of app (web, iOS, Android, iOS and Android, AI app, online store, internal tool) or describe yours. A template's answers are guesses you confirm like any other.
+
 **The canvas**
+- The canvas fills the window. A bar on top holds your plans, the plan in one line (monthly cost, accounts, checks) and Ask; a dock at the bottom opens Overview, Parts, Checklist and Learn, with undo, redo and fit to screen. Light and dark follow your system.
+- Add parts the way you add nodes in n8n: press A, the + in the dock or the + on your app, search every service, and pick one. The dot beside each shows what the rules say it would do to your plan. Hover a card to ask about it, swap it or remove it; Delete removes the selected one.
+- Every line starts with a mark that says whether it's connected: a check, a warning, a cross, or a question mark when it isn't verified. When a line is made or changes, a pulse runs along it and the mark pops, so you see the change as it happens.
+- Cards stay small: a logo, a name and a dot for its verdict. Click one for Details, double-click to ask about it, right-click for everything else (ask, swap, let StackWise pick, learn, clear). Right-click a line to explain the connection or copy its variable names, and the empty canvas to add parts, show all parts, tidy up, undo or edit your answers.
 - Your app in the middle, with slots for hosting, domain name, database, login, email, file storage, payments, AI, web scraping, background jobs, analytics, error monitoring and a phone app. Optional parts stay hidden until you need them, drag something that fits, or show all parts.
 - Drag options from a palette of 79 (59 fully researched), or press Use. Every option has its logo, a dot for what would happen if you used it, and quick stats at your audience size: cost now, the first paid plan, how far the free plan goes, and the trait that matters for that part (a domain's renewal price, whether a scraper charges extra for JavaScript pages, whether analytics needs cookies, whether a free host falls asleep, download fees, sales tax, whether iPhone builds need a Mac). Dropping something in the wrong slot is refused with a reason.
 - Drag any part where you want it: the lines follow it as it moves. The layout is saved with the plan, and "Tidy up" puts everything back.
 - Every line between the app and a service says what runs along it: the environment variables your code reads to reach that service. Click a line to see each name, where its value comes from, which ones the browser can read, and the checks on that connection. The line to your host carries every variable in the plan, because the host needs them all.
-- Swap a service without leaving the canvas: "Swap" on any part lists the others that fit it.
-- In a narrow window the planner and the canvas take turns filling the screen, and the side panel slides up over the canvas when you pick something.
-- A strip above the canvas sums up the plan: monthly cost plus yearly and one-time costs, where the cost first jumps as you grow, accounts to sign up for, setup steps, and checks.
-- Every check shows up as a colored line or badge: works, works with a warning, doesn't work, missing a piece, or not verified yet.
+- Swap a service without leaving the canvas: right-click any part and "Swap for" lists the others that fit it.
+- Describing your app and confirming the guesses happen in a sheet over the canvas. In a small window, panels slide up from the bottom.
+- Lines stay grey when they work, so the ones with a warning, a problem or an unverified fact stand out in color.
 - Undo and redo (Cmd or Ctrl+Z).
 
-**Notes and talking it through**
-- Write a note on any part and the line to it: how it should work, what you decided, what whoever builds it should know. A dot on the line and a chip on the card show it, and a note written before you swapped the service is flagged.
-- Talk a part through: ask how to set it up, which keys it needs, what could go wrong or what else would work. Claude answers from WhyStack's facts and checks for that part, not from memory. Without a key, WhyStack answers the same questions from its own facts.
-- Claude (or WhyStack's facts) can suggest a note or a switch. A suggested switch shows the verdict WhyStack's rules give it right now, and nothing changes until you accept, as one step Undo reverses.
+**Notes and asking**
+- Write a note on any part and the line to it: how it should work, what you decided, what whoever builds it should know. A dot on the card and the line shows it, and a note written before you swapped the service is flagged.
+- Ask (Cmd+K, the Ask button, or right-click "Ask about this") opens one floating panel and one conversation per plan. The Answering menu picks who answers: a coding agent in your terminal (Claude Code, Codex, Gemini CLI), the Claude API, or StackWise's own facts. It defaults to Claude, and you can save your own default. Ask how to set it up, which keys it needs, what could go wrong or what else would work. Claude answers from StackWise's facts and checks for that part, not from memory. Without a key, StackWise answers the same questions from its own facts.
+- Claude (or StackWise's facts) can suggest a note or a switch. A suggested switch shows the verdict StackWise's rules give it right now, and nothing changes until you accept, as one step Undo reverses.
 - Notes travel with the plan: share links, plan files, SPEC.md, each part's build agent, and pairing, where Claude Code can read and write them too.
+
+**Your project, live**
+- Link a plan to its project folder in the Project panel. StackWise reads what it is (Next.js, Spring Boot, Django, Rails and more), how to run it, and which Java or Node it needs.
+- Start and stop the app from StackWise and watch its log. Its health check shows whether it's up.
+- Every environment variable the plan needs, marked set, missing or readable by the browser. Paste a value to write it into the project's `.env.local`; StackWise never shows it again or sends it anywhere.
+- Check every service with your own keys: one read-only request each, shown with the keys masked, what came back, an example of what travels on that connection, and a link to the service's status page.
+- A read-only SQL console for the project's Postgres or SQLite database.
+- The plan file in the project and StackWise's copy merge instead of overwriting each other, so an agent in your terminal and you in the browser can both change the plan.
 
 **Understanding**
 - Details for every part: its stats, every check with its reason and fix, the cost at your size, how it scored for your priority, a comparison table, and the sourced facts behind it, flagged when they may be out of date.
@@ -73,8 +113,8 @@ Claude can check stacks, compare options, estimate costs and change the plan you
 
 **Leaving with a plan**
 - Project pack, as a zip: SPEC.md, SETUP.md, TASKS.md, DECISIONS.md with the reasoning for every part, the plan file, `.env.example` with every variable name grouped by service, a `.gitignore` that keeps the values out of git, and PROMPT.txt, AGENTS.md or CLAUDE.md for your builder. For Claude Code it adds `.mcp.json`, a build agent per part, a stack guard, a setup guide, a reviewer and a `/next-step` skill. Environment variable names follow your framework.
-- Or write the same files straight into a folder on this computer, plus a `.env.local` with the names and no values, ready to open with `claude`. WhyStack only writes inside your home folder, never writes over an existing `.env.local`, and tells you which names yours is missing.
-- Pair with Claude through WhyStack's MCP server: 11 tools, a shared plan, and a Claude tab showing what Claude did.
+- Or write the same files straight into a folder on this computer, plus a `.env.local` with the names and no values, ready to open with `claude`. StackWise only writes inside your home folder, never writes over an existing `.env.local`, and tells you which names yours is missing.
+- Pair a coding agent through StackWise's MCP server: 13 tools, a shared plan, and two-way chat. Run `/mcp__whystack__pair` in Claude Code, write to it from StackWise, and it works in your project and answers in the Ask panel, with the files it changed.
 - Build checklist: every account, key and build step in order, checked off as you go.
 - Copy the reasoning for one part, to paste into a proposal or pull request.
 - Several saved plans, share links (the whole plan lives in the link, no account needed), and plan files to export and import.
@@ -95,7 +135,7 @@ Claude can check stacks, compare options, estimate costs and change the plan you
 ## Where things are
 
 ```
-data/                 everything WhyStack knows, as JSON
+data/                 everything StackWise knows, as JSON
   options/*.json      one file per service, with sourced facts
   rules/              capability.json and product.json
   needs.json          the questions a beginner answers

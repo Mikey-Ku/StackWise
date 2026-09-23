@@ -6,7 +6,7 @@ import { possessive } from "./text";
 /**
  * What runs between the parts of a stack. A connection on the canvas is the app reaching one
  * service, and what travels across it is a set of environment variables: the names the code reads
- * and the values only the person has. WhyStack never holds a value, so everything here is names,
+ * and the values only the person has. StackWise never holds a value, so everything here is names,
  * where each one comes from and whether it reaches the browser.
  */
 
@@ -102,7 +102,7 @@ export function connectionsOf(index: CatalogIndex, selection: Selection): Connec
         ? `${opening} Your code reads ${list(names)} to reach it.`
         : stepsKnown
           ? `${opening} No environment variable is written down for it, so read its setup steps before you build.`
-          : `${opening} Nobody has researched its setup yet, so WhyStack can't say what it needs.`;
+          : `${opening} Nobody has researched its setup yet, so StackWise can't say what it needs.`;
     return [{ id: `app-${slot}`, slot, label: def.verb, optionId: option.id, optionName: option.name, env: mine, everything, stepsKnown, what }];
   });
 }
@@ -117,13 +117,13 @@ export function connectionLabel(connection: Connection, all: EnvVar[]): string {
 
 /**
  * The body of `.env.local` and `.env.example`: names grouped by service, with the step that gives
- * you each value and a link to the docs. Values are always empty. WhyStack never writes a secret.
+ * you each value and a link to the docs. Values are always empty. StackWise never writes a secret.
  */
 export function envFileText(vars: EnvVar[], details: { appName: string; generatedOn: string }): string {
   const name = details.appName.trim() || "this app";
   const lines = [
     `# Environment variables for ${name}`,
-    `# Planned with WhyStack on ${details.generatedOn}. Names only: fill in the values yourself.`,
+    `# Planned with StackWise on ${details.generatedOn}. Names only: fill in the values yourself.`,
     "# Keep this file out of git. Anything with a public prefix is readable by everyone who opens the app.",
   ];
   if (vars.length === 0) {

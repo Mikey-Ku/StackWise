@@ -1,0 +1,61 @@
+{
+  "id": "activepieces",
+  "name": "Activepieces",
+  "provider": "activepieces",
+  "slots": ["automations"],
+  "summary": "Activepieces is an open source workflow tool for connecting your app to other services, used in its cloud or run on your own server.",
+  "website": "https://www.activepieces.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "up_to_1000",
+      "note": "The cloud Free plan gives 100 credits a day with unlimited flows, and a run costs one credit however many steps it has (AI steps cost more). That is about 3,000 runs a month, but never more than 100 in one day. The self-hosted Community edition is free with no credit limit.",
+      "source": "https://www.activepieces.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 20,
+      "note": "The Plus plan is a flat $20 a month for 10,000 credits and up to 5 users, then $0.007 per extra credit. Paying yearly saves two months.",
+      "source": "https://www.activepieces.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "The core is open source under the MIT license, so you can keep running your flows on your own server if you leave the cloud. Moving to a different tool still means rebuilding the flows.",
+      "source": "https://www.activepieces.com/docs/about/license",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "self_hostable": {
+      "value": true,
+      "note": "The free Community edition installs with Docker Compose, PostgreSQL and Redis, or on Kubernetes. Paid features such as SSO and audit logs need a license key.",
+      "source": "https://www.activepieces.com/docs/install/overview",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "code_steps": {
+      "value": true,
+      "note": "Code steps run JavaScript or TypeScript inside a flow. In the recommended sandbox mode on your own server, a code step can't load npm packages; other modes allow them.",
+      "source": "https://www.activepieces.com/docs/install/architecture/sandboxing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "webhook_triggers": {
+      "value": true,
+      "note": "The Webhook piece's Catch Webhook trigger gives a flow a web address that accepts GET, POST and other requests, and a Return Response action can answer the caller.",
+      "source": "https://www.activepieces.com/pieces/webhook",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Activepieces Cloud account, or install the Community edition with Docker Compose.", "env": [], "source": "https://www.activepieces.com/docs/install/overview" },
+    { "step": "Start a flow with the Webhook piece's Catch Webhook trigger, publish it, and copy its address into your app's environment file.", "env": ["ACTIVEPIECES_WEBHOOK_URL"], "source": "https://www.activepieces.com/pieces/webhook" }
+  ],
+  "builder_notes": [
+    "Call the Activepieces webhook from server code only, reading the address from ACTIVEPIECES_WEBHOOK_URL.",
+    "Keep logins for other services in Activepieces connections, not typed into flow steps."
+  ]
+}

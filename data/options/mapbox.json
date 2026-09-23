@@ -1,0 +1,54 @@
+{
+  "id": "mapbox",
+  "name": "Mapbox",
+  "provider": "mapbox",
+  "slots": ["data_apis"],
+  "summary": "Mapbox gives your app maps, address search (geocoding) and directions through keyed APIs and a map library for the browser.",
+  "website": "https://www.mapbox.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free each month: 50,000 web map loads with Mapbox GL JS, 100,000 geocoding requests and 100,000 directions requests. Past that you pay per use, starting at $5 per 1,000 map loads.",
+      "source": "https://www.mapbox.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan is needed: Mapbox is pay as you go once you pass the free amounts. Support plans start at $50 a month but are optional.",
+      "source": "https://www.mapbox.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Map styles, the GL JS library and the geocoding and directions responses are Mapbox's own, so switching to another map service means redoing the map code and response handling.",
+      "source": "https://www.mapbox.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "official_api": {
+      "value": "official",
+      "note": "Mapbox documents and sells its APIs and SDKs, with published free amounts and prices.",
+      "source": "https://www.mapbox.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "needs_api_key": {
+      "value": true,
+      "note": "Every Mapbox tool, API and SDK needs an access token. Public tokens (starting pk.) are made to sit in the browser for showing maps and can be locked to your site's address; secret tokens (sk.) must stay on the server.",
+      "source": "https://docs.mapbox.com/help/dive-deeper/access-tokens/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a Mapbox account and copy your default public token from the account page.", "env": ["NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN"], "source": "https://docs.mapbox.com/help/dive-deeper/access-tokens/" },
+    { "step": "Add a URL restriction to the public token so it only works from your site, and use a separate token for server calls like geocoding.", "env": ["MAPBOX_ACCESS_TOKEN"], "source": "https://docs.mapbox.com/help/dive-deeper/access-tokens/" }
+  ],
+  "builder_notes": [
+    "Only a public pk. token may go in browser code, and it should be URL restricted; never put an sk. secret token in the page.",
+    "Run geocoding and directions from server code and cache results for repeated addresses to stay within the free amounts."
+  ]
+}

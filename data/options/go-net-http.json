@@ -1,0 +1,66 @@
+{
+  "id": "go-net-http",
+  "name": "Go (net/http)",
+  "provider": "open-source",
+  "slots": [
+    "framework"
+  ],
+  "summary": "The web server built into Go's standard library, for APIs and pages without an extra framework.",
+  "website": "https://pkg.go.dev/net/http",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free and open source under the BSD 3-Clause license. You pay only for hosting.",
+      "source": "https://go.dev/LICENSE",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No paid plan. The framework itself is free.",
+      "source": "https://go.dev/LICENSE",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Builds into one program file that runs on almost any server or container.",
+      "source": "https://go.dev/doc/articles/wiki/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "language": {
+      "value": "Go",
+      "note": "Written in Go.",
+      "source": "https://go.dev/doc/articles/wiki/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "has_server_code": {
+      "value": true,
+      "note": "Handlers run only on the server, so secrets stay private.",
+      "source": "https://pkg.go.dev/net/http",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "uses_react": {
+      "value": false,
+      "note": "Pages are Go HTML templates or a separate frontend, not React by default.",
+      "source": "https://go.dev/doc/articles/wiki/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a module with go mod init, write the server with net/http, and push it to a GitHub repository.",
+      "env": [],
+      "source": "https://go.dev/doc/tutorial/getting-started"
+    }
+  ],
+  "builder_notes": [
+    "Read settings and secrets with os.Getenv, or os.LookupEnv to tell a missing variable from an empty one.",
+    "Use only the standard library (net/http, html/template) unless the plan names another package."
+  ]
+}

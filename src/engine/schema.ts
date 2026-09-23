@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 /**
- * Everything WhyStack knows lives in /data as JSON. These schemas are the contract for those
+ * Everything StackWise knows lives in /data as JSON. These schemas are the contract for those
  * files: the app refuses to start on a file that breaks them, and the data tests run them in CI.
  */
 
-export const SLOT_IDS = ["framework", "hosting", "domain", "database", "login", "files", "payments", "ai", "scraping", "jobs", "email", "analytics", "monitoring", "mobile"] as const;
+export const SLOT_IDS = ["framework", "hosting", "domain", "database", "login", "files", "payments", "ai", "scraping", "jobs", "email", "analytics", "monitoring", "mobile", "automations", "data_apis"] as const;
 export const slotIdSchema = z.enum(SLOT_IDS);
 export type SlotId = z.infer<typeof slotIdSchema>;
 
@@ -164,6 +164,11 @@ export const planningSchema = z.object({
     .default([]),
   /** Providers whose one paid plan covers every part they fill, so the plan is counted once. */
   shared_plans: z.array(z.object({ provider: z.string(), note: z.string(), source: httpUrl })).default([]),
+  /**
+   * Which option goes first when options score exactly the same, by part. Only breaks exact ties:
+   * it never outranks a better score. Without it, ties break alphabetically.
+   */
+  tie_order: z.record(z.string(), z.array(z.string())).default({}),
 });
 export type Planning = z.infer<typeof planningSchema>;
 export type Fee = Planning["fees"][number];

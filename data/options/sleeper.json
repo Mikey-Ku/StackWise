@@ -1,0 +1,54 @@
+{
+  "id": "sleeper",
+  "name": "Sleeper API",
+  "provider": "sleeper",
+  "slots": ["data_apis"],
+  "summary": "Sleeper's read-only API gives fantasy football data, like leagues, rosters, matchups and players, with no key needed.",
+  "website": "https://sleeper.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free with no plan or user cap. Sleeper asks you to stay under 1,000 calls a minute or risk your address being blocked, which is plenty if your server caches.",
+      "source": "https://docs.sleeper.com/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "There is no paid plan. The API is free for non-commercial use; a commercial app has to arrange a license with Sleeper directly.",
+      "source": "https://docs.sleeper.com/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "The data comes in Sleeper's own shapes and ids, so moving to another fantasy platform or data service means rewriting the code that reads it.",
+      "source": "https://docs.sleeper.com/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "official_api": {
+      "value": "official",
+      "note": "Sleeper documents the API itself at docs.sleeper.com, with the base address https://api.sleeper.app/v1.",
+      "source": "https://docs.sleeper.com/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "needs_api_key": {
+      "value": false,
+      "note": "No token is needed because the API is read-only: it can't change anything in Sleeper.",
+      "source": "https://docs.sleeper.com/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "No account or key: call https://api.sleeper.app/v1 from your server, starting with a user's leagues or a league's rosters.", "env": [], "source": "https://docs.sleeper.com/" }
+  ],
+  "builder_notes": [
+    "Fetch the full players list (about 5 MB) at most once a day and store it on your server, as Sleeper asks.",
+    "Call Sleeper from server code and cache responses so the app stays well under 1,000 calls a minute.",
+    "The API is free only for non-commercial use; flag it before the app charges money."
+  ]
+}

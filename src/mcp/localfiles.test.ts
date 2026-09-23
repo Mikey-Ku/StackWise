@@ -20,9 +20,9 @@ describe("resolveFolder", () => {
     expect(errorOf("  ")).toContain("Type a folder");
   });
 
-  it("refuses WhyStack's own folder", () => {
-    expect(errorOf("~/code/whystack")).toContain("WhyStack's own folder");
-    expect(errorOf("~/code/whystack/src")).toContain("WhyStack's own folder");
+  it("refuses StackWise's own folder", () => {
+    expect(errorOf("~/code/whystack")).toContain("StackWise's own folder");
+    expect(errorOf("~/code/whystack/src")).toContain("StackWise's own folder");
     expect(resolve("~/code/whystack-app")).toEqual({ path: "/Users/sam/code/whystack-app" });
   });
 
@@ -56,7 +56,7 @@ describe("planWrites", () => {
   it("never writes over an existing .env.local, even when asked to replace", () => {
     const { write, keep } = planWrites(files, () => true, true);
     expect(write.map((f) => f.name)).toEqual(["SPEC.md", ".claude/agents/build-hosting.md"]);
-    expect(keep).toEqual([{ name: ".env.local", why: "It's already there, and your real values live in it. WhyStack never writes over it." }]);
+    expect(keep).toEqual([{ name: ".env.local", why: "It's already there, and your real values live in it. StackWise never writes over it." }]);
   });
 });
 

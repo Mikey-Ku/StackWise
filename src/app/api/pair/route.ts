@@ -1,17 +1,27 @@
 import { z } from "zod";
 import { sharedPlanSchema } from "@/engine/share";
 import { localOnly } from "@/mcp/local";
-import { createRegistry, PLAN_ID } from "@/mcp/registry";
+import { SLOT_IDS } from "@/engine/schema";
+import { AGENT_ID } from "@/mcp/pairing";
+import { createRegistry, MESSAGE_MAX, PLAN_ID } from "@/mcp/registry";
 
 /**
- * How the WhyStack tab and Claude share a plan. The tab puts the plan you have open (PUT), asks
- * for anything Claude changed or did since it last looked (GET), and stops sharing (DELETE).
+ * How the StackWise tab and coding agents share a plan. The tab puts the plan you have open (PUT),
+ * asks for anything an agent changed, did or said since it last looked (GET), writes to an agent
+ * (POST), and stops sharing (DELETE).
  */
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const putSchema = z.object({ id: z.string().regex(PLAN_ID), plan: sharedPlanSchema, baseVersion: z.number().int().min(0) });
+const postSchema = z.object({
+  id: z.string().regex(PLAN_ID),
+  agent: z.string().regex(AGENT_ID),
+  text: z.string().trim().min(1).max(MESSAGE_MAX),
+  about: z.enum(SLOT_IDS).optional(),
+  planVersion: z.number().int().min(0).optional(),
+});
 
 export function GET(request: Request) {
   const blocked = localOnly(request);
@@ -39,6 +49,17 @@ export async function PUT(request: Request) {
   const record = registry.savePlan(id, plan, "browser");
   registry.setActive(id);
   return Response.json({ version: record.version, touchedAt: record.touchedAt });
+}
+
+export async function POST(request: Request) {
+  const blocked = localOnly(request);
+  if (blocked) return blocked;
+  const parsed = postSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return Response.json({ error: "Send { id, agent, text } for a shared plan." }, { status: 400 });
+  const { id, ...message } = parsed.data;
+  const saved = createRegistry(process.cwd()).postMessage(id, message);
+  if (!saved) return Response.json({ error: "That plan isn't shared yet. Turn on sharing first." }, { status: 404 });
+  return Response.json({ message: saved });
 }
 
 export function DELETE(request: Request) {

@@ -1,0 +1,11 @@
+#!/bin/sh
+# `stackwise` in any project folder opens StackWise on it. Install once from StackWise's folder with:
+#   pnpm link --global
+# Resolves its own location through the symlink pnpm makes, then runs scripts/stackwise.ts.
+self="$0"
+while [ -L "$self" ]; do
+  target="$(readlink "$self")"
+  case "$target" in /*) self="$target" ;; *) self="$(dirname "$self")/$target" ;; esac
+done
+ROOT="$(cd "$(dirname "$self")/.." && pwd)"
+exec "$ROOT/node_modules/.bin/tsx" "$ROOT/scripts/stackwise.ts" "$@"

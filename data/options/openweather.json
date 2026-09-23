@@ -1,0 +1,53 @@
+{
+  "id": "openweather",
+  "name": "OpenWeather",
+  "provider": "openweather",
+  "slots": ["data_apis"],
+  "summary": "OpenWeather gives current weather, forecasts, air quality and place lookups for any location through a keyed API.",
+  "website": "https://openweathermap.org",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "The Free plan allows 60 calls a minute and 1,000,000 a month for current weather, the 5 day forecast, air pollution, maps and place lookups. The One Call API is billed separately, with the first 1,000 calls a day free.",
+      "source": "https://openweathermap.org/price",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 40,
+      "note": "The Startup plan is $40 a month for 600 calls a minute and 10 million a month, and adds the 16 day daily forecast. The One Call API is pay per call instead, at $0.0015 a call after the free 1,000 a day.",
+      "source": "https://openweathermap.org/price",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Weather data is much the same everywhere, but the addresses, field names and units are OpenWeather's own, so switching services means rewriting the code that reads it.",
+      "source": "https://openweathermap.org/price",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "official_api": {
+      "value": "official",
+      "note": "OpenWeather documents and sells the API itself, with published plans and limits.",
+      "source": "https://openweathermap.org/price",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "needs_api_key": {
+      "value": true,
+      "note": "Every call must include your API key (appid); requests without one are refused.",
+      "source": "https://openweathermap.org/appid",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Sign up at openweathermap.org; your API key arrives in the confirmation email and is also on your account page.", "env": ["OPENWEATHER_API_KEY"], "source": "https://openweathermap.org/appid" }
+  ],
+  "builder_notes": [
+    "Call OpenWeather from server code and keep OPENWEATHER_API_KEY out of the browser.",
+    "Cache each location's weather for several minutes so many visitors share one call and the app stays under 60 calls a minute."
+  ]
+}

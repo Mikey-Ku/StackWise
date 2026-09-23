@@ -1,0 +1,61 @@
+{
+  "id": "zapier",
+  "name": "Zapier",
+  "provider": "zapier",
+  "slots": ["automations"],
+  "summary": "Zapier connects your app to thousands of other apps with no-code workflows called Zaps, run on Zapier's own servers.",
+  "website": "https://zapier.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "just_me",
+      "note": "The Free plan gives 100 tasks a month and only two-step Zaps (one trigger, one action), and it can't use Webhooks, so your app can't start a Zap on it. Enough to try Zapier, not to run an app.",
+      "source": "https://zapier.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 29.99,
+      "note": "The Professional plan is $29.99 a month billed monthly ($19.99 a month billed yearly) for 750 tasks. More tasks cost more.",
+      "source": "https://zapier.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "low",
+      "note": "Zaps are built in Zapier's editor from Zapier's own app connections and only run on Zapier, so moving away means rebuilding each one somewhere else.",
+      "source": "https://zapier.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "self_hostable": {
+      "value": false,
+      "note": "Every plan on the pricing page is hosted by Zapier; there is no version you can run on your own server.",
+      "source": "https://zapier.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "code_steps": {
+      "value": true,
+      "note": "Code by Zapier runs JavaScript or Python in a step. The Free plan allows 1 second of run time per step and Professional allows 30 seconds; outside npm packages need a paid plan.",
+      "source": "https://help.zapier.com/hc/en-us/articles/8496310939021-Use-JavaScript-code-in-Zaps",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "webhook_triggers": {
+      "value": true,
+      "note": "The Catch Hook trigger in Webhooks by Zapier gives a Zap a web address your app can send data to. It needs a paid plan (Professional or higher).",
+      "source": "https://help.zapier.com/hc/en-us/articles/8496288690317-Trigger-Zaps-from-webhooks",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a Zapier account and pick a Professional plan, since webhook triggers aren't on the Free plan.", "env": [], "source": "https://zapier.com/pricing" },
+    { "step": "Make a Zap that starts with Webhooks by Zapier, Catch Hook, and copy the webhook address into your app's environment file.", "env": ["ZAPIER_WEBHOOK_URL"], "source": "https://help.zapier.com/hc/en-us/articles/8496288690317-Trigger-Zaps-from-webhooks" }
+  ],
+  "builder_notes": [
+    "POST to the Zapier webhook from server code, reading the address from ZAPIER_WEBHOOK_URL; anyone who has the address can start the Zap.",
+    "Every action step in a Zap counts as a task, so send one webhook per event instead of one per field or item."
+  ]
+}

@@ -38,6 +38,12 @@ describe("data", () => {
     expect(elapsed).toBeLessThan(1500);
   });
 
+  it("gives a plain web app Next.js: frameworks tie on every score, and tie_order breaks the tie", () => {
+    const index = indexCatalog(catalog);
+    const rec = recommend(index, { answers: { saves_data: "yes", login: "yes" }, size: "up_to_100", priority: "spend_zero" });
+    expect(rec.selection.framework).toBe("nextjs");
+  });
+
   it("has a logo file on disk for every option", () => {
     const missing = catalog.options.filter((o) => !fs.existsSync(path.join(__dirname, "..", "..", "public", "logos", catalog.logos[o.id]?.file ?? "none")));
     expect(missing.map((o) => o.id)).toEqual([]);

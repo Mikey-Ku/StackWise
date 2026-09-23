@@ -195,6 +195,25 @@ export function optionStats(index: CatalogIndex, option: Option, slot: SlotId, i
         return [now(), paidFrom(), freePlan(), flag("long_running", "Long-running jobs", ["Supported", "Long jobs OK", "good"], ["Short jobs only", "Short jobs only", "neutral"]), switching()];
       case "email":
         return [now(), paidFrom(), freePlan(), switching()];
+      case "automations":
+        return [
+          now(),
+          paidFrom(),
+          freePlan(),
+          flag("self_hostable", "Run it yourself", ["Yes", "Can self-host", "good"], ["Hosted only", "Hosted only", "neutral"]),
+          flag("code_steps", "Your own code", ["Yes", "Runs your code", "good"], ["Built-in steps only", "No code steps", "neutral"]),
+          flag("webhook_triggers", "Started by your app", ["Yes", "Webhook start", "good"], ["No", "No webhooks", "warn"]),
+          switching(),
+        ];
+      case "data_apis":
+        return [
+          now(),
+          choice("official_api", "Official API", { official: ["Yes", "Official API", "good"], unofficial: ["No, unofficial", "Unofficial API", "warn"] }),
+          flag("needs_api_key", "Needs a key", ["Yes, keep it on the server", "Needs a key", "neutral"], ["No key", "No key", "good"]),
+          paidFrom(),
+          freePlan(),
+          switching(),
+        ];
       case "analytics":
         return [
           now(),
