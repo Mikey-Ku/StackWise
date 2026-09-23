@@ -178,7 +178,7 @@ export function evaluateCapabilityRule(
       level: "unknown",
       slots,
       title: `Can't check ${gaps.join("; ")}`,
-      explanation: `This check needs a fact that hasn't been researched, so WhyStack can't say whether the combination works. It never assumes a missing fact means "works". The check it would run: ${fill(rule.title).replace(/\.$/, "")}.`,
+      explanation: `This check needs a fact that hasn't been researched, so StackWise can't say whether the combination works. It never assumes a missing fact means "works". The check it would run: ${fill(rule.title).replace(/\.$/, "")}.`,
       missingFacts: unknown.map((u) => ({ optionId: u.optionId, fact: u.fact })),
     };
   }

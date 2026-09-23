@@ -8,7 +8,24 @@
   "summary": "Amazon hosting for web apps, deployed from your Git repository.",
   "website": "https://aws.amazon.com/amplify/hosting/",
   "coverage": "partial",
-  "facts": {},
+  "facts": {
+    "framework_support": {
+      "value": {
+        "spring-boot": "none",
+        "django": "none",
+        "fastapi": "none",
+        "rails": "none",
+        "laravel": "none",
+        "express": "full",
+        "go-net-http": "none",
+        "aspnet-core": "none"
+      },
+      "note": "Amplify Hosting compute runs only a Node.js HTTP server (Node 20, 22 or 24), and AWS has a guide for deploying an Express server with the deployment manifest. Java, Python, Ruby, PHP, Go and .NET servers cannot run on it.",
+      "source": "https://docs.aws.amazon.com/amplify/latest/userguide/ssr-deployment-specification.html",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
   "setup": [],
   "builder_notes": []
 }

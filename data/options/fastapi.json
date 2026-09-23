@@ -1,0 +1,66 @@
+{
+  "id": "fastapi",
+  "name": "FastAPI",
+  "provider": "open-source",
+  "slots": [
+    "framework"
+  ],
+  "summary": "A Python framework for building APIs, the server part that other apps and pages call.",
+  "website": "https://fastapi.tiangolo.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free and open source under the MIT license. You pay only for hosting.",
+      "source": "https://github.com/fastapi/fastapi",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No paid plan. The framework itself is free.",
+      "source": "https://github.com/fastapi/fastapi",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Runs in Docker, on a server you set up or on many cloud hosts.",
+      "source": "https://fastapi.tiangolo.com/deployment/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "language": {
+      "value": "Python",
+      "note": "Written in Python using type hints.",
+      "source": "https://fastapi.tiangolo.com/tutorial/first-steps/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "has_server_code": {
+      "value": true,
+      "note": "Your API endpoints run only on the server, so secrets stay private.",
+      "source": "https://fastapi.tiangolo.com/tutorial/first-steps/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "uses_react": {
+      "value": false,
+      "note": "FastAPI builds APIs that return data. Screens need a separate frontend, which may or may not use React.",
+      "source": "https://github.com/fastapi/fastapi",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Install it with pip install \"fastapi[standard]\", start it with fastapi dev, and push the project to a GitHub repository.",
+      "env": [],
+      "source": "https://fastapi.tiangolo.com/tutorial/first-steps/"
+    }
+  ],
+  "builder_notes": [
+    "Read settings and secrets with a pydantic-settings BaseSettings class. It reads environment variables and can load a .env file.",
+    "Keep the .env file out of Git."
+  ]
+}

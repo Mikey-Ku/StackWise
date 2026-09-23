@@ -25,5 +25,5 @@ next-env.d.ts
 npm-debug.log*
 .pnpm-debug.log*
 
-# shared plans between the WhyStack tab and Claude (see docs/MCP.md)
+# shared plans between the StackWise tab and Claude (see docs/MCP.md)
 /.whystack

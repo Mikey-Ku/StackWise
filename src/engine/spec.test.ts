@@ -26,6 +26,7 @@ describe("spec pack", () => {
       "DECISIONS.md",
     ]);
     expect(buildSpecPack(index, plan, selection, { ...details, builderId: "cursor" })[4].name).toBe("AGENTS.md");
+    expect(buildSpecPack(index, plan, selection, { ...details, builderId: "cursor" })[4].content).toContain('call `wait_for_message` with agent "cursor"');
   });
 
   it("includes the cost at every audience size", () => {

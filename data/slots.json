@@ -216,5 +216,34 @@
       "needs_mac_for_ios"
     ],
     "build_task": "Build the phone app with {option}, using the same login and database as the web app."
+  },
+  {
+    "id": "automations",
+    "label": "Automations",
+    "verb": "automates with",
+    "empty_hint": "Workflows that connect your app to other tools",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "self_hostable",
+      "code_steps",
+      "webhook_triggers"
+    ],
+    "build_task": "Build the workflows in {option}: start each one from a webhook your app calls or a schedule, and keep secrets in {option}'s credentials, not in the workflow steps."
+  },
+  {
+    "id": "data_apis",
+    "label": "Outside data",
+    "verb": "gets data from",
+    "empty_hint": "Data your app reads from another service's API",
+    "required_facts": [
+      "free_plan_covers",
+      "first_paid_usd_month",
+      "portability",
+      "official_api",
+      "needs_api_key"
+    ],
+    "build_task": "Read data from {option} in server code, cache what you fetch, and keep working with the last good copy when it's down or changes."
   }
 ]

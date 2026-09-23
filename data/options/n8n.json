@@ -1,0 +1,62 @@
+{
+  "id": "n8n",
+  "name": "n8n",
+  "provider": "n8n",
+  "slots": ["automations"],
+  "summary": "n8n is a visual workflow tool that connects your app to other services, and you can use n8n's cloud or run it on your own server.",
+  "website": "https://n8n.io",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "just_me",
+      "note": "The cloud Free plan includes 50 workflow runs a month and 1 user, enough to try things out. The self-hosted Community edition is free with no run limit, but you pay for and look after the server yourself.",
+      "source": "https://n8n.io/pricing/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 24,
+      "note": "The cloud Starter plan is 24 a month billed monthly (20 a month billed yearly) for 2,500 workflow runs. n8n lists its prices in euros, so the dollar amount on your card can differ a little.",
+      "source": "https://n8n.io/pricing/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "You can move between n8n's cloud and your own server, but workflows are built from n8n's own nodes and only run inside n8n, so leaving n8n means rebuilding them.",
+      "source": "https://docs.n8n.io/choose-how-to-use-n8n/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "self_hostable": {
+      "value": true,
+      "note": "The Community edition runs on your own server for free, with full control over setup. Some team features need a paid license.",
+      "source": "https://docs.n8n.io/choose-how-to-use-n8n/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "code_steps": {
+      "value": true,
+      "note": "The Code node runs JavaScript or Python. On n8n's cloud you can't add outside libraries (JavaScript only gets crypto and moment); on your own server you can.",
+      "source": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.code/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "webhook_triggers": {
+      "value": true,
+      "note": "The Webhook node gives each workflow a web address your app can call. It has a test address for building and a production address that works once the workflow is published.",
+      "source": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create an n8n Cloud account, or install the free Community edition on your own server.", "env": [], "source": "https://docs.n8n.io/choose-how-to-use-n8n/" },
+    { "step": "Start the workflow with a Webhook node, publish it, and copy its production address into your app's environment file.", "env": ["N8N_WEBHOOK_URL"], "source": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/" }
+  ],
+  "builder_notes": [
+    "Call the n8n webhook from server code only, and read its address from N8N_WEBHOOK_URL instead of writing it into the page.",
+    "Use the production webhook address in the deployed app; the test address only works while someone is listening in the editor.",
+    "Keep service logins in n8n's credentials, not typed into workflow steps."
+  ]
+}

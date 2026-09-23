@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { initialStore, migrate, reduce, THREAD_LIMIT, toSharedPlan, type ChatTurn, type History, type StoreAction } from "./store";
+import { CHAT_LIMIT, initialStore, migrate, reduce, toSharedPlan, type ChatTurn, type History, type StoreAction } from "./store";
 
 const NOW = "2026-09-15T12:00:00.000Z";
 
@@ -130,45 +130,60 @@ describe("plan store", () => {
     expect(active(run(h, { type: "editNote", slot: "payments", text: "   ", at: NOW })).notes).toEqual({});
   });
 
-  const turn = (id: string, extra: Partial<ChatTurn> = {}): ChatTurn => ({ id, role: "claude", text: `answer ${id}`, at: NOW, ...extra });
+  const turn = (id: string, extra: Partial<ChatTurn> = {}): ChatTurn => ({ id, role: "claude", text: `answer ${id}`, at: NOW, about: "payments", ...extra });
 
   it("uses a suggested note in place of the old one or after it, as one undoable step", () => {
     const suggested = turn("t1", { proposal: { text: "Verify webhook signatures.", summary: "Adds the webhook rule", status: "open" } });
-    const base = run(start(), { type: "editNote", slot: "payments", text: "Use test keys.", at: NOW }, { type: "addTurns", slot: "payments", turns: [suggested] });
+    const base = run(start(), { type: "editNote", slot: "payments", text: "Use test keys.", at: NOW }, { type: "addTurns", turns: [suggested] });
 
     const added = run(base, { type: "useNote", slot: "payments", text: "Verify webhook signatures.", mode: "append", by: "claude", at: NOW, turnId: "t1" });
     expect(active(added).notes.payments).toMatchObject({ text: "Use test keys.\n\nVerify webhook signatures.", by: "claude" });
-    expect(active(added).threads.payments![0].proposal!.status).toBe("added");
+    expect(active(added).chat[0].proposal!.status).toBe("added");
 
     const replaced = run(base, { type: "useNote", slot: "payments", text: "Verify webhook signatures.", mode: "replace", by: "claude", at: NOW, turnId: "t1" });
     expect(active(replaced).notes.payments!.text).toBe("Verify webhook signatures.");
-    expect(active(replaced).threads.payments![0].proposal!.status).toBe("used");
+    expect(active(replaced).chat[0].proposal!.status).toBe("used");
 
     const undone = run(replaced, { type: "undo" });
     expect(active(undone).notes.payments!.text).toBe("Use test keys.");
-    expect(active(undone).threads.payments![0].proposal!.status).toBe("open");
+    expect(active(undone).chat[0].proposal!.status).toBe("open");
   });
 
   it("switches to a suggested option as one undoable step", () => {
-    const base = run(start(), { type: "addTurns", slot: "email", turns: [turn("t1", { swap: { optionId: "postmark", status: "open" } })] });
+    const base = run(start(), { type: "addTurns", turns: [turn("t1", { about: "email", swap: { optionId: "postmark", status: "open" } })] });
     const swapped = run(base, { type: "useSwap", slot: "email", optionId: "postmark", turnId: "t1" });
     expect(active(swapped).pinned.email).toBe("postmark");
-    expect(active(swapped).threads.email![0].swap!.status).toBe("used");
+    expect(active(swapped).chat[0].swap!.status).toBe("used");
     expect(active(run(swapped, { type: "undo" })).pinned.email).toBeUndefined();
   });
 
   it("keeps the latest turns of a conversation, dismisses suggestions and clears on request", () => {
-    const many = Array.from({ length: THREAD_LIMIT + 5 }, (_, i) => turn(`t${i}`));
-    const h = run(start(), { type: "addTurns", slot: "ai", turns: many }, { type: "addTurns", slot: "ai", turns: [turn("last", { proposal: { text: "x", summary: "y", status: "open" }, text: "z".repeat(9000) })] });
-    const thread = active(h).threads.ai!;
-    expect(thread).toHaveLength(THREAD_LIMIT);
+    const many = Array.from({ length: CHAT_LIMIT + 5 }, (_, i) => turn(`t${i}`));
+    const h = run(start(), { type: "addTurns", turns: many }, { type: "addTurns", turns: [turn("last", { about: "ai", proposal: { text: "x", summary: "y", status: "open" }, text: "z".repeat(9000) })] });
+    const thread = active(h).chat;
+    expect(thread).toHaveLength(CHAT_LIMIT);
     expect(thread.at(-1)!.id).toBe("last");
     expect(thread.at(-1)!.text.length).toBe(4000);
     expect(h.past).toHaveLength(0);
 
-    const dismissed = run(h, { type: "dismissSuggestion", slot: "ai", turnId: "last", what: "proposal" });
-    expect(active(dismissed).threads.ai!.at(-1)!.proposal!.status).toBe("dismissed");
-    expect(active(run(dismissed, { type: "clearThread", slot: "ai" })).threads.ai).toBeUndefined();
+    const dismissed = run(h, { type: "dismissSuggestion", turnId: "last", what: "proposal" });
+    expect(active(dismissed).chat.at(-1)!.proposal!.status).toBe("dismissed");
+    expect(active(run(dismissed, { type: "clearChat" })).chat).toEqual([]);
+  });
+
+  it("merges the per-part conversations saved before into one, in time order, each tagged with its part", () => {
+    const saved = initialStore("p1", NOW) as unknown as { plans: Record<string, Record<string, unknown>> };
+    delete saved.plans.p1.chat;
+    saved.plans.p1.threads = {
+      payments: [{ id: "b", role: "claude", text: "second", at: "2026-09-22T10:02:00.000Z" }],
+      email: [{ id: "a", role: "you", text: "first", at: "2026-09-22T10:01:00.000Z" }],
+    };
+    const plan = migrate(saved, "p9", NOW)!.plans.p1;
+    expect(plan.chat.map((t) => [t.id, t.about])).toEqual([
+      ["a", "email"],
+      ["b", "payments"],
+    ]);
+    expect("threads" in plan).toBe(false);
   });
 
   it("takes notes from Claude's changes and from imported plans", () => {
@@ -209,5 +224,15 @@ describe("saved data from the first release", () => {
     expect(migrate(null, "p", NOW)).toBeNull();
     expect(migrate({ version: 7 }, "p", NOW)).toBeNull();
     expect(migrate({ version: 2, activeId: "gone", plans: {} }, "p", NOW)).toBeNull();
+  });
+
+  it("starts from a template: its answers become guesses to confirm, and it can pick a phone toolkit, as one undoable step", () => {
+    const h = run(start(), { type: "applyTemplate", label: "iOS app", description: "An iPhone app.", answers: { login: "yes", might_go_mobile: "yes" }, pinned: { mobile: "native-mobile" } });
+    const plan = active(h);
+    expect(plan).toMatchObject({ step: "confirm", description: "An iPhone app.", answers: { login: "yes", might_go_mobile: "yes" }, pinned: { mobile: "native-mobile" } });
+    expect(plan.guesses.login).toEqual({ answer: "yes", evidence: "iOS app", by: "template" });
+    expect(active(run(h, { type: "undo" })).step).toBe("describe");
+    const typed = run(start(), { type: "setText", field: "description", value: "My own words" }, { type: "applyTemplate", label: "Web app", description: "A web app.", answers: {} });
+    expect(active(typed).description).toBe("My own words");
   });
 });

@@ -79,7 +79,7 @@ export function slotReasoning(index: CatalogIndex, input: PlanInput, selection: 
     "",
     "**What would change this decision:**",
     "",
-    ...(changes.length ? changes.map((c) => `- ${c}`) : ["- Nothing among the priorities WhyStack measures."]),
+    ...(changes.length ? changes.map((c) => `- ${c}`) : ["- Nothing among the priorities StackWise measures."]),
     "",
     "**Sources:**",
     "",
@@ -98,7 +98,7 @@ export function buildDecisionRecord(
   return [
     `# ${details.appName.trim() || "My app"}: stack decisions`,
     "",
-    `> Written by WhyStack on ${details.generatedOn} from the same rules and scores as the plan. Facts marked draft haven't been reviewed by a person yet.`,
+    `> Written by StackWise on ${details.generatedOn} from the same rules and scores as the plan. Facts marked draft haven't been reviewed by a person yet.`,
     "",
     ...sections,
   ].join("\n");

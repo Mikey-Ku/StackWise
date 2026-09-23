@@ -295,5 +295,34 @@
     "label": "Card fee, fixed",
     "help": "The fixed amount the service keeps from each US card payment, in US dollars.",
     "type": "number"
+  },
+  "self_hostable": {
+    "label": "Run it yourself",
+    "help": "Whether you can run it on your own server instead of paying for the hosted version.",
+    "type": "boolean"
+  },
+  "code_steps": {
+    "label": "Custom code steps",
+    "help": "Whether a workflow step can run code you write, for anything the built-in steps don't cover.",
+    "type": "boolean"
+  },
+  "webhook_triggers": {
+    "label": "Started by your app",
+    "help": "Whether your app can start a workflow by calling a web address (a webhook).",
+    "type": "boolean"
+  },
+  "official_api": {
+    "label": "Official API",
+    "help": "Whether the provider documents and supports the API, or it's an undocumented one that can change without notice.",
+    "type": "enum",
+    "values": [
+      "official",
+      "unofficial"
+    ]
+  },
+  "needs_api_key": {
+    "label": "Needs a key",
+    "help": "Whether every request needs an API key, which has to stay on your server.",
+    "type": "boolean"
   }
 }

@@ -141,7 +141,7 @@ describe("talking a part through", () => {
     expect(prompt.endsWith("Question: What else would work?")).toBe(true);
   });
 
-  it("can only name a swap WhyStack's rules passed", () => {
+  it("can only name a swap StackWise's rules passed", () => {
     const schema = buildTalkSchema(brief);
     const reply = { reply: "x", propose_note: false, note_text: "", note_summary: "" };
     expect(schema.safeParse({ ...reply, swap_to: "db-hosted" }).success).toBe(true);

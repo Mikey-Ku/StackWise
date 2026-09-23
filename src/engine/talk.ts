@@ -1,5 +1,5 @@
 import { costLine } from "./cost";
-import { optionIn, type CatalogIndex, type Level } from "./evaluate";
+import { optionIn, worstLevel, type CatalogIndex, type Level } from "./evaluate";
 import { planInput } from "./planops";
 import { alternativesFor, recommend } from "./score";
 import type { SlotId } from "./schema";
@@ -11,7 +11,7 @@ import { connectionsOf } from "./wiring";
  * Talking a part of the stack through. Everything a conversation may rely on is gathered here from
  * the engine: the connection and its variables, setup steps, checks, cost, facts with sources, the
  * alternatives with the verdict each would get, and the person's note. Claude answers from this
- * brief and nothing else, and without Claude WhyStack answers from it directly.
+ * brief and nothing else, and without Claude StackWise answers from it directly.
  */
 
 export type BriefVerdict = Level | "works";
@@ -37,7 +37,13 @@ export interface TalkBrief {
   facts: { fact: string; value: string; note: string; source: string; checked_on: string }[];
   alternatives: { id: string; name: string; verdict: string; score_change: number; cost: string; researched: boolean }[];
   note: { text: string; written_by: "you" | "claude"; written_for?: string; may_be_out_of_date: boolean } | null;
+  /** The rest of the plan, so a question can be answered in context: every part and what fills it. */
+  stack: { part: string; option: string | null; verdict: string }[];
+  /** Everything the rules flag anywhere in the plan, by title, worst first. */
+  plan_problems: { verdict: string; title: string; parts: string[] }[];
 }
+
+const SEVERITY = ["blocked", "missing", "warning", "unknown"] as const;
 
 /** How many other options a brief carries. The best ones come first. */
 const ALTERNATIVES = 6;
@@ -65,6 +71,17 @@ export function talkBrief(index: CatalogIndex, plan: SharedPlan, slot: SlotId): 
         }
       : null,
     setup_steps: option ? option.setup.map((s) => ({ step: s.step, variables: s.env, ...(/^https?:\/\//.test(s.source) ? { docs: s.source } : {}) })) : [],
+    stack: index.catalog.slots
+      .filter((s) => rec.selection[s.id] || rec.needed.includes(s.id))
+      .map((s) => {
+        const picked = optionIn(index, rec.selection, s.id);
+        const touching = rec.results.filter((r) => r.slots.includes(s.id) && r.level !== "info");
+        return { part: s.label, option: picked?.name ?? null, verdict: VERDICT_WORDS[picked ? worstLevel(touching) : "missing"] };
+      }),
+    plan_problems: rec.results
+      .filter((r) => (SEVERITY as readonly string[]).includes(r.level))
+      .sort((a, b) => SEVERITY.indexOf(a.level as (typeof SEVERITY)[number]) - SEVERITY.indexOf(b.level as (typeof SEVERITY)[number]))
+      .map((r) => ({ verdict: VERDICT_WORDS[r.level], title: r.title, parts: r.slots.map((id) => index.slotsById.get(id)?.label ?? id) })),
     rules_for_builders: option ? [...option.builder_notes, ...rec.results.filter((r) => r.builder && r.slots.includes(slot)).map((r) => r.builder!)] : [],
     checks: rec.results
       .filter((r) => r.slots.includes(slot))
@@ -96,7 +113,7 @@ export function talkBrief(index: CatalogIndex, plan: SharedPlan, slot: SlotId): 
   };
 }
 
-/** An alternative Claude may suggest: WhyStack's rules must not find a problem with it. */
+/** An alternative Claude may suggest: StackWise's rules must not find a problem with it. */
 export function swappable(brief: TalkBrief): TalkBrief["alternatives"] {
   return brief.alternatives.filter((a) => a.verdict === VERDICT_WORDS.works || a.verdict === VERDICT_WORDS.info);
 }
@@ -155,9 +172,9 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
 
   switch (intent) {
     case "note":
-      return { reply: `Here's a starting note from what WhyStack knows about ${name}. Edit it to add what you decided.`, proposal: { text: draftNote(brief), summary: "A starting note from the facts" } };
+      return { reply: `Here's a starting note from what StackWise knows about ${name}. Edit it to add what you decided.`, proposal: { text: draftNote(brief), summary: "A starting note from the facts" } };
     case "keys":
-      if (!vars.length) return { reply: brief.setup_steps.length ? `No environment variable is written down for ${name}. Read its setup steps before you build: it may still need one.` : `Nobody has researched ${possessive(name)} setup yet, so WhyStack can't say which variables it needs.` };
+      if (!vars.length) return { reply: brief.setup_steps.length ? `No environment variable is written down for ${name}. Read its setup steps before you build: it may still need one.` : `Nobody has researched ${possessive(name)} setup yet, so StackWise can't say which variables it needs.` };
       return {
         reply: [
           `${brief.connection!.carries_every_variable ? `${name} needs every variable in the plan` : `Your code reads ${vars.length === 1 ? "one variable" : `${vars.length} variables`} to reach ${name}`}:`,
@@ -169,7 +186,7 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
       if (!brief.setup_steps.length) return { reply: `Nobody has researched ${possessive(name)} setup yet. Follow its quickstart at ${brief.option!.website}.` };
       return { reply: [`Setting up ${name}, in order:`, ...brief.setup_steps.map((s, i) => `${i + 1}. ${s.step}${s.variables.length ? ` (${s.variables.join(", ")})` : ""}`)].join("\n") };
     case "cost": {
-      if (!brief.cost) return { reply: `WhyStack doesn't have a price for ${name}.` };
+      if (!brief.cost) return { reply: `StackWise doesn't have a price for ${name}.` };
       const cheaper = brief.alternatives.filter((a) => a.researched).slice(0, 3);
       return {
         reply: [`${name}: ${brief.cost.headline}.${brief.cost.detail ? ` ${brief.cost.detail}` : ""}`, ...(cheaper.length ? ["", "Others for this part, with your plan:", ...cheaper.map((a) => `- ${a.name}: ${a.cost} (${a.verdict})`)] : [])].join("\n"),
@@ -177,7 +194,7 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
     }
     case "swap": {
       const options = brief.alternatives.slice(0, 4);
-      if (!options.length) return { reply: `WhyStack has no other options for ${inSentence(brief.part.label)}.` };
+      if (!options.length) return { reply: `StackWise has no other options for ${inSentence(brief.part.label)}.` };
       const best = swappable(brief).find((a) => a.score_change > 0 && a.researched);
       return {
         reply: [
@@ -197,7 +214,7 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
       return { reply: `${brief.part.what} ${name}: ${brief.option!.summary}` };
     default:
       return {
-        reply: `Your app ${brief.part.verb} ${name}. ${brief.option!.summary} Claude isn't on, so WhyStack answers from its own facts: ask about setup, keys, cost, problems or alternatives, or ask for a note.`,
+        reply: `Your app ${brief.part.verb} ${name}. ${brief.option!.summary} Claude isn't on, so StackWise answers from its own facts: ask about setup, keys, cost, problems or alternatives, or ask for a note.`,
       };
   }
 }

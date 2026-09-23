@@ -151,3 +151,32 @@ export function downloadText(name: string, content: string, type = "text/plain;c
   link.click();
   URL.revokeObjectURL(url);
 }
+
+/**
+ * An image the person picked, as a 128px square data URL, so an app logo stays small enough to
+ * keep with the plan in this browser. SVGs under 64KB are kept as they are, since they scale.
+ */
+export async function imageToIcon(file: Blob): Promise<string> {
+  const read = (blob: Blob) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Couldn't read that image."));
+      reader.readAsDataURL(blob);
+    });
+  if (file.type === "image/svg+xml" && file.size < 64 * 1024) return read(file);
+  const url = await read(file);
+  const image = new Image();
+  image.src = url;
+  await image.decode();
+  const size = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const scale = Math.min(size / image.width, size / image.height);
+  const w = image.width * scale;
+  const h = image.height * scale;
+  canvas.getContext("2d")!.drawImage(image, (size - w) / 2, (size - h) / 2, w, h);
+  return canvas.toDataURL("image/png");
+}
+

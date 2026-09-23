@@ -1,0 +1,66 @@
+{
+  "id": "express",
+  "name": "Express",
+  "provider": "open-source",
+  "slots": [
+    "framework"
+  ],
+  "summary": "A small JavaScript framework for building web servers and APIs on Node.js.",
+  "website": "https://expressjs.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "Free and open source under the MIT license. You pay only for hosting.",
+      "source": "https://github.com/expressjs/express",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No paid plan. The framework itself is free.",
+      "source": "https://github.com/expressjs/express",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Runs anywhere Node.js runs, on your own server or any host.",
+      "source": "https://expressjs.com/en/advanced/best-practice-performance.html",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "language": {
+      "value": "JavaScript or TypeScript",
+      "note": "Written in JavaScript. TypeScript also works with type definitions.",
+      "source": "https://expressjs.com/en/starter/installing.html",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "has_server_code": {
+      "value": true,
+      "note": "Route handlers run only on the server, so secrets stay private.",
+      "source": "https://github.com/expressjs/express",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "uses_react": {
+      "value": false,
+      "note": "Express is a server framework. Screens need templates or a separate frontend, which may or may not use React.",
+      "source": "https://github.com/expressjs/express",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create the project with npm init, add Express with npm install express, and push it to a GitHub repository.",
+      "env": [],
+      "source": "https://expressjs.com/en/starter/installing.html"
+    }
+  ],
+  "builder_notes": [
+    "Read settings and secrets from process.env and never commit them.",
+    "Set NODE_ENV to production on the server; it makes Express faster and hides detailed errors."
+  ]
+}

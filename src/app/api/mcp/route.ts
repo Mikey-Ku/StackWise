@@ -3,10 +3,10 @@ import { indexCatalog } from "@/engine/evaluate";
 import { loadCatalog } from "@/engine/load";
 import { localOnly } from "@/mcp/local";
 import { createRegistry } from "@/mcp/registry";
-import { createWhyStackServer } from "@/mcp/server";
+import { createStackWiseServer } from "@/mcp/server";
 
 /**
- * WhyStack's MCP server over HTTP, for Claude to pair on the plan open in WhyStack:
+ * StackWise's MCP server over HTTP, for Claude to pair on the plan open in StackWise:
  *   claude mcp add --transport http --scope user whystack http://localhost:4310/api/mcp
  * Stateless: each request gets a fresh server, and the shared plan lives in .whystack/.
  */
@@ -19,7 +19,7 @@ async function handle(request: Request): Promise<Response> {
   if (blocked) return blocked;
   const root = process.cwd();
   const registry = createRegistry(root);
-  const server = createWhyStackServer({
+  const server = createStackWiseServer({
     index: () => indexCatalog(loadCatalog()),
     registry,
     planId: () => registry.activeId(),

@@ -23,7 +23,7 @@ export function localOnly(request: Request): Response | null {
   const origin = request.headers.get("origin");
   const originHost = origin ? hostname(origin) : null;
   if (!host || !LOCAL_HOSTS.has(host) || (origin !== null && (!originHost || !LOCAL_HOSTS.has(originHost)))) {
-    return Response.json({ error: "WhyStack's MCP server and pairing only answer requests from this computer." }, { status: 403 });
+    return Response.json({ error: "StackWise's MCP server and pairing only answer requests from this computer." }, { status: 403 });
   }
   return null;
 }

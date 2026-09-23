@@ -8,7 +8,24 @@
   "summary": "Managed hosting that runs your app from a Git repository or a container.",
   "website": "https://www.digitalocean.com/products/app-platform",
   "coverage": "partial",
-  "facts": {},
+  "facts": {
+    "framework_support": {
+      "value": {
+        "spring-boot": "full",
+        "django": "full",
+        "fastapi": "full",
+        "rails": "full",
+        "laravel": "full",
+        "express": "full",
+        "go-net-http": "full",
+        "aspnet-core": "full"
+      },
+      "note": "App Platform builds Node.js, Python, Ruby, PHP, Go and .NET apps with buildpacks, and builds any app, including Java, from a Dockerfile, so all of these run as normal web services.",
+      "source": "https://docs.digitalocean.com/products/app-platform/reference/buildpacks/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
   "setup": [],
   "builder_notes": []
 }

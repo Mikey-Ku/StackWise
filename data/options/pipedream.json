@@ -1,0 +1,61 @@
+{
+  "id": "pipedream",
+  "name": "Pipedream",
+  "provider": "pipedream",
+  "slots": ["automations"],
+  "summary": "Pipedream runs workflows made of ready-made app steps and your own code, started by a web address, a schedule or an app event, on Pipedream's servers.",
+  "website": "https://pipedream.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "just_me",
+      "note": "The Free plan gives up to 100 credits a month, 3 active workflows and 3 connected accounts. A credit is 30 seconds of run time, so most short runs use one credit each: about 100 runs a month.",
+      "source": "https://pipedream.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": 45,
+      "note": "The Basic plan is $45 a month billed monthly, or $29 a month billed yearly ($348 a year), and includes 2,000 credits a month. The pricing page only shows these numbers after it loads in a browser.",
+      "source": "https://pipedream.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Code steps are ordinary Node.js, Python, Go or Bash you can copy out, but triggers, connected accounts and the steps around them are Pipedream's own and need rebuilding elsewhere.",
+      "source": "https://pipedream.com/docs/workflows/building-workflows/code",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "self_hostable": {
+      "value": false,
+      "note": "Workflows run on servers Pipedream manages. Its library of app steps is published as source code, but the platform that runs workflows isn't offered for your own server.",
+      "source": "https://pipedream.com/docs/workflows/building-workflows/triggers",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "code_steps": {
+      "value": true,
+      "note": "Code steps run Node.js 20, Python, Go or Bash inside a workflow. Runs stop after 30 seconds by default for web requests, up to 5 minutes on the free plan and 12.5 minutes on paid plans.",
+      "source": "https://pipedream.com/docs/workflows/building-workflows/code",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "webhook_triggers": {
+      "value": true,
+      "note": "An HTTP trigger gives the workflow its own web address that accepts any request. It needs no password by default; you can add a token check.",
+      "source": "https://pipedream.com/docs/workflows/building-workflows/triggers",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "Create a free Pipedream account and start a new workflow.", "env": [], "source": "https://pipedream.com/pricing" },
+    { "step": "Pick the HTTP / Webhook trigger, add token checking, and copy the workflow's address into your app's environment file.", "env": ["PIPEDREAM_WEBHOOK_URL"], "source": "https://pipedream.com/docs/workflows/building-workflows/triggers" }
+  ],
+  "builder_notes": [
+    "Call the Pipedream webhook from server code only, reading the address from PIPEDREAM_WEBHOOK_URL; the address works without a password unless the workflow checks a token.",
+    "Keep each run short: a web request trigger stops after 30 seconds by default, and longer runs use more credits."
+  ]
+}

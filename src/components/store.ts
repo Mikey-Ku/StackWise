@@ -8,9 +8,10 @@ import { NOTE_MAX, type Answer, type Note, type PriorityId, type Selection, type
 export type Step = "describe" | "confirm" | "plan";
 
 export interface Guess {
-  answer: "yes" | "no";
+  answer: "yes" | "no" | "not_sure";
+  /** The words behind the guess, or the template's name when a template made it. */
   evidence: string;
-  by: "ai" | "keywords";
+  by: "ai" | "keywords" | "template";
 }
 
 /** Where a canvas node sits after someone moved it, in the canvas's own coordinates. */
@@ -19,20 +20,28 @@ export interface Spot {
   y: number;
 }
 
-/** One message in a conversation about a part of the stack. */
+/**
+ * One message in the plan's conversation with the built-in AI. Messages to and from coding agents
+ * live in the shared plan on the server instead, so the agent can read them; the Ask panel shows
+ * both in one timeline.
+ */
 export interface ChatTurn {
   id: string;
-  /** "facts" is WhyStack answering from its own data when Claude isn't available. */
+  /** "facts" is StackWise answering from its own data when Claude isn't available. */
   role: "you" | "claude" | "facts";
   text: string;
   at: string;
+  /** The part of the plan it's about. Suggestions apply to this part. */
+  about: SlotId;
+  /** Which built-in AI wrote it, when one did. Older turns are Claude's. */
+  by?: string;
   /** A note the answer suggested, until it's used or dismissed. */
   proposal?: { text: string; summary: string; status: "open" | "used" | "added" | "dismissed" };
-  /** An option the answer suggested switching to. Its verdict always comes from WhyStack's rules. */
+  /** An option the answer suggested switching to. Its verdict always comes from StackWise's rules. */
   swap?: { optionId: string; status: "open" | "used" | "dismissed" };
 }
 
-export const THREAD_LIMIT = 30;
+export const CHAT_LIMIT = 80;
 export const TURN_MAX = 4000;
 
 export interface PlanState {
@@ -53,14 +62,16 @@ export interface PlanState {
   pinned: Selection;
   /** Checklist items marked done. */
   checked: Record<string, boolean>;
-  /** Canvas nodes the person moved, by node id. Anything missing sits where WhyStack puts it. */
+  /** Canvas nodes the person moved, by node id. Anything missing sits where StackWise puts it. */
   layout: Record<string, Spot>;
   /** Notes on each part and the line to it. Shared with the plan, exported, and editable by Claude. */
   notes: Partial<Record<SlotId, Note>>;
-  /** Conversations about each part. Only in this browser: the notes are what's kept. */
-  threads: Partial<Record<SlotId, ChatTurn[]>>;
+  /** The conversation about this plan. Only in this browser: the notes are what's kept. */
+  chat: ChatTurn[];
   /** A folder on this computer the project files were written into, if there is one. */
   folder?: string;
+  /** The app's own logo, as a small data URL. Only in this browser, like the layout. */
+  icon?: string;
 }
 
 export interface Store {
@@ -95,13 +106,16 @@ export type PlanAction =
   | { type: "useNote"; slot: SlotId; text: string; mode: "replace" | "append"; by: Note["by"]; optionId?: string; at: string; turnId?: string }
   /** Switching to a suggested option. Undoable, and the rules check it like any other choice. */
   | { type: "useSwap"; slot: SlotId; optionId: string; turnId: string }
-  | { type: "addTurns"; slot: SlotId; turns: ChatTurn[] }
-  | { type: "dismissSuggestion"; slot: SlotId; turnId: string; what: "proposal" | "swap" }
-  | { type: "clearThread"; slot: SlotId }
+  | { type: "addTurns"; turns: ChatTurn[] }
+  | { type: "dismissSuggestion"; turnId: string; what: "proposal" | "swap" }
+  | { type: "clearChat" }
   | { type: "moveNodes"; spots: Record<string, Spot> }
   | { type: "tidyLayout" }
   | { type: "setFolder"; folder: string | null }
+  | { type: "setIcon"; icon: string | null }
   | { type: "loadExample"; appName: string; description: string }
+  /** Start from a kind of app: its answers become guesses to confirm, and it may pick a phone toolkit. */
+  | { type: "applyTemplate"; label: string; description: string; answers: Record<string, Answer>; pinned?: Selection }
   | { type: "resetPlan" };
 
 export type StoreAction =
@@ -111,13 +125,13 @@ export type StoreAction =
   | { type: "deletePlan"; now: string; fallbackId: string }
   | { type: "switchPlan"; id: string }
   | { type: "importPlan"; id: string; now: string; plan: SharedPlan }
-  /** A change Claude made through WhyStack's MCP server. On the open plan it can be undone. */
+  /** A change Claude made through StackWise's MCP server. On the open plan it can be undone. */
   | { type: "applyRemote"; id: string; plan: SharedPlan }
   | { type: "undo" }
   | { type: "redo" };
 
 /** Changes worth undoing: the ones that change the plan, not typing or checking boxes. */
-const UNDOABLE = new Set<StoreAction["type"]>(["applyPrefill", "answer", "setSize", "setPriority", "confirmAll", "place", "clearSlot", "autoPick", "useNote", "useSwap", "loadExample", "resetPlan"]);
+const UNDOABLE = new Set<StoreAction["type"]>(["applyPrefill", "answer", "setSize", "setPriority", "confirmAll", "place", "clearSlot", "autoPick", "useNote", "useSwap", "loadExample", "applyTemplate", "resetPlan"]);
 const HISTORY_LIMIT = 50;
 
 export function blankPlan(id: string, now: string): PlanState {
@@ -138,7 +152,7 @@ export function blankPlan(id: string, now: string): PlanState {
     checked: {},
     layout: {},
     notes: {},
-    threads: {},
+    chat: [],
   };
 }
 
@@ -149,10 +163,9 @@ function withNote(plan: PlanState, slot: SlotId, note: Note | null): PlanState {
   return { ...plan, notes };
 }
 
-function mapTurn(plan: PlanState, slot: SlotId, turnId: string | undefined, change: (turn: ChatTurn) => ChatTurn): PlanState {
-  const thread = plan.threads[slot];
-  if (!turnId || !thread) return plan;
-  return { ...plan, threads: { ...plan.threads, [slot]: thread.map((turn) => (turn.id === turnId ? change(turn) : turn)) } };
+function mapTurn(plan: PlanState, turnId: string | undefined, change: (turn: ChatTurn) => ChatTurn): PlanState {
+  if (!turnId) return plan;
+  return { ...plan, chat: plan.chat.map((turn) => (turn.id === turnId ? change(turn) : turn)) };
 }
 
 export function initialStore(id: string, now: string): Store {
@@ -210,29 +223,26 @@ function reducePlan(plan: PlanState, action: PlanAction): PlanState {
       const old = plan.notes[action.slot]?.text.trim();
       const text = action.mode === "append" && old ? `${old}\n\n${action.text.trim()}` : action.text.trim();
       const next = withNote(plan, action.slot, { text, optionId: action.optionId, updatedAt: action.at, by: action.by });
-      return mapTurn(next, action.slot, action.turnId, (turn) => (turn.proposal ? { ...turn, proposal: { ...turn.proposal, status: action.mode === "append" ? "added" : "used" } } : turn));
+      return mapTurn(next, action.turnId, (turn) => (turn.proposal ? { ...turn, proposal: { ...turn.proposal, status: action.mode === "append" ? "added" : "used" } } : turn));
     }
     case "useSwap": {
       const next = { ...plan, pinned: { ...plan.pinned, [action.slot]: action.optionId } };
-      return mapTurn(next, action.slot, action.turnId, (turn) => (turn.swap ? { ...turn, swap: { ...turn.swap, status: "used" } } : turn));
+      return mapTurn(next, action.turnId, (turn) => (turn.swap ? { ...turn, swap: { ...turn.swap, status: "used" } } : turn));
     }
     case "addTurns": {
       const turns = action.turns.map((turn) => ({ ...turn, text: turn.text.slice(0, TURN_MAX) }));
-      return { ...plan, threads: { ...plan.threads, [action.slot]: [...(plan.threads[action.slot] ?? []), ...turns].slice(-THREAD_LIMIT) } };
+      return { ...plan, chat: [...plan.chat, ...turns].slice(-CHAT_LIMIT) };
     }
     case "dismissSuggestion":
-      return mapTurn(plan, action.slot, action.turnId, (turn) =>
+      return mapTurn(plan, action.turnId, (turn) =>
         action.what === "proposal" && turn.proposal
           ? { ...turn, proposal: { ...turn.proposal, status: "dismissed" } }
           : action.what === "swap" && turn.swap
             ? { ...turn, swap: { ...turn.swap, status: "dismissed" } }
             : turn,
       );
-    case "clearThread": {
-      const threads = { ...plan.threads };
-      delete threads[action.slot];
-      return { ...plan, threads };
-    }
+    case "clearChat":
+      return { ...plan, chat: [] };
     case "moveNodes":
       return { ...plan, layout: { ...plan.layout, ...action.spots } };
     case "tidyLayout":
@@ -243,8 +253,25 @@ function reducePlan(plan: PlanState, action: PlanAction): PlanState {
       else delete next.folder;
       return next;
     }
+    case "setIcon": {
+      const next = { ...plan };
+      if (action.icon) next.icon = action.icon;
+      else delete next.icon;
+      return next;
+    }
     case "loadExample":
       return { ...blankPlan(plan.id, plan.createdAt), appName: action.appName, description: action.description };
+    case "applyTemplate": {
+      const guesses = Object.fromEntries(Object.entries(action.answers).map(([needId, answer]) => [needId, { answer, evidence: action.label, by: "template" as const }]));
+      return {
+        ...plan,
+        description: plan.description.trim() || action.description,
+        answers: { ...action.answers },
+        guesses,
+        pinned: { ...action.pinned },
+        step: "confirm",
+      };
+    }
     case "resetPlan":
       return blankPlan(plan.id, plan.createdAt);
   }
@@ -348,6 +375,15 @@ export function toSharedPlan(plan: PlanState): SharedPlan {
   };
 }
 
+/** Before one conversation per plan there was one per part. Their turns merge in time order, each tagged with its part. */
+function withOneChat(plan: PlanState & { threads?: Partial<Record<SlotId, Omit<ChatTurn, "about">[]>> }): PlanState {
+  if (!plan.threads) return plan;
+  const { threads, ...rest } = plan;
+  const merged = Object.entries(threads).flatMap(([slot, turns]) => (turns ?? []).map((turn) => ({ ...turn, about: slot as SlotId })));
+  const chat = [...rest.chat, ...merged].sort((a, b) => a.at.localeCompare(b.at)).slice(-CHAT_LIMIT);
+  return { ...rest, chat };
+}
+
 /**
  * Read whatever was saved before. Version 2 is kept, with defaults filled in for anything a later
  * release added; the single-plan version 1 from the first release is wrapped into a store, with
@@ -360,7 +396,7 @@ export function migrate(raw: unknown, id: string, now: string): Store | null {
     const store = saved as unknown as Store;
     if (!store.plans[store.activeId]) return null;
     // Anything a later release added, like the canvas layout, gets its default. What was saved wins.
-    const plans = Object.fromEntries(Object.entries(store.plans).map(([planId, plan]) => [planId, { ...blankPlan(planId, plan.createdAt ?? now), ...plan }]));
+    const plans = Object.fromEntries(Object.entries(store.plans).map(([planId, plan]) => [planId, withOneChat({ ...blankPlan(planId, plan.createdAt ?? now), ...plan })]));
     return { ...store, plans };
   }
   if (saved.version === 1) {

@@ -1,6 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { PlanBrief } from "@/engine/summary";
 import { AI_EFFORT, AI_MODEL, AiError, FALLBACK_BETA, withoutEmDashes } from "./config";
+import { askText, type FetchLike, type ProviderStatus } from "./providers";
 
 /**
  * The plain-language explanation of a plan. The model gets only the computed brief, so it can
@@ -16,6 +17,13 @@ Write three short paragraphs, 170 words at most in total:
 
 Use only the plan below. Don't add services, prices, limits, features or advice that aren't in it. Plain words; if you use a technical term, explain it in the same sentence. No headings, no lists, no em dashes.`;
 
+const planPrompt = (brief: PlanBrief) => `<plan>\n${JSON.stringify(brief, null, 2)}\n</plan>`;
+
+/** The same explanation from OpenAI or Gemini, from the same brief. */
+export async function providerExplain(status: ProviderStatus, brief: PlanBrief, env?: Record<string, string | undefined>, fetchImpl?: FetchLike): Promise<string> {
+  return withoutEmDashes(await askText(status, { system: SYSTEM, user: planPrompt(brief), maxTokens: 4000 }, env, fetchImpl));
+}
+
 export async function aiExplain(client: Anthropic, brief: PlanBrief): Promise<string> {
   const response = await client.beta.messages.create({
     model: AI_MODEL,
@@ -24,7 +32,7 @@ export async function aiExplain(client: Anthropic, brief: PlanBrief): Promise<st
     fallbacks: "default",
     output_config: { effort: AI_EFFORT },
     system: SYSTEM,
-    messages: [{ role: "user", content: `<plan>\n${JSON.stringify(brief, null, 2)}\n</plan>` }],
+    messages: [{ role: "user", content: planPrompt(brief) }],
   });
   if (response.stop_reason === "refusal") throw new AiError("Claude declined to explain this plan, so the standard summary is shown.", "refused");
   const text = response.content
