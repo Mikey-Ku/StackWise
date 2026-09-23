@@ -41,6 +41,9 @@ describe("checklist", () => {
   it("renames browser-visible variables for the plan's framework", () => {
     expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "sveltekit")).toBe("PUBLIC_SUPABASE_URL");
     expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "react-vite")).toBe("VITE_SUPABASE_URL");
+    // A server-rendered app has no browser-visible variables: the value is read on the server.
+    expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "spring-boot")).toBe("SUPABASE_URL");
+    expect(adaptEnvName("STRIPE_SECRET_KEY", "django")).toBe("STRIPE_SECRET_KEY");
     expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "nextjs")).toBe("NEXT_PUBLIC_SUPABASE_URL");
     expect(adaptEnvName("STRIPE_SECRET_KEY", "sveltekit")).toBe("STRIPE_SECRET_KEY");
   });

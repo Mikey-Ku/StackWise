@@ -131,6 +131,10 @@ export function checkCatalog(catalog: Catalog): string[] {
     if (!index.optionsById.has(id)) problems.push(`logos.json has a logo for unknown option "${id}"`);
   }
 
+  for (const [slot, ids] of Object.entries(catalog.planning.tie_order)) {
+    if (!catalog.slots.some((s) => s.id === slot)) problems.push(`planning.json tie_order: there's no part "${slot}"`);
+    for (const id of ids) if (!catalog.options.some((o) => o.id === id && o.slots.includes(slot as never))) problems.push(`planning.json tie_order: "${id}" isn't an option in ${slot}`);
+  }
   const learnSlots = catalog.learn.slots as Partial<Learn["slots"]>;
   for (const slot of catalog.slots) {
     const entry = learnSlots[slot.id as SlotId];

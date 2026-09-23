@@ -97,7 +97,7 @@ export function SpecDialog({
         onToast(`Wrote ${body.wrote.length} file${body.wrote.length === 1 ? "" : "s"} into ${body.path}.`);
       }
     } catch {
-      setError("Couldn't reach WhyStack's server. It writes files only while the app is running on this computer.");
+      setError("Couldn't reach StackWise's server. It writes files only while the app is running on this computer.");
     } finally {
       setBusy(false);
     }
@@ -117,8 +117,8 @@ export function SpecDialog({
         </div>
         <p className="mk-muted">
           {files.length} files: the spec, setup steps, an ordered task list and the plan itself
-          {agents ? `, plus ${agents} Claude Code agents, skills like /next-step, and the WhyStack MCP server so Claude checks every stack change with WhyStack` : ""}. Unzip it as your project folder.
-          {builder?.format === "claude-md" && !whystackRoot ? " WhyStack's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
+          {agents ? `, plus ${agents} Claude Code agents, skills like /next-step, and the StackWise MCP server so Claude checks every stack change with StackWise` : ""}. Unzip it as your project folder.
+          {builder?.format === "claude-md" && !whystackRoot ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
         </p>
         <label className="mk-field ws-spec__pick">
           <span className="mk-label">File</span>
@@ -164,7 +164,7 @@ export function SpecDialog({
           <div className="mk-stack mk-gap-1">
             <span className="mk-eyebrow">Or write it into a folder on this computer</span>
             <p className="mk-muted">
-              The same files, in a folder you can open straight away, plus a <code>.env.local</code> with the names your stack needs and no values. WhyStack never writes over an existing{" "}
+              The same files, in a folder you can open straight away, plus a <code>.env.local</code> with the names your stack needs and no values. StackWise never writes over an existing{" "}
               <code>.env.local</code>, and only writes inside your home folder.
             </p>
           </div>
@@ -209,7 +209,7 @@ export function SpecDialog({
                   </p>
                   {report.keep.some((k) => k.name === ".env.local") && (
                     <p className="mk-hint">
-                      Your <code>.env.local</code> is one of them. Your real values live in it, so WhyStack never writes over it.
+                      Your <code>.env.local</code> is one of them. Your real values live in it, so StackWise never writes over it.
                     </p>
                   )}
                   {report.keep.some((k) => k.name !== ".env.local") && (

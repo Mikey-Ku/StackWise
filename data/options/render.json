@@ -74,11 +74,19 @@
       "value": {
         "nextjs": "full",
         "react-vite": "full",
-        "sveltekit": "full"
+        "sveltekit": "full",
+        "spring-boot": "full",
+        "django": "full",
+        "fastapi": "full",
+        "rails": "full",
+        "laravel": "full",
+        "express": "full",
+        "go-net-http": "full",
+        "aspnet-core": "full"
       },
-      "note": "Next.js deploys as a full Node web service with SSR and API routes; static Vite apps and SvelteKit (Node adapter) both have official Render guides.",
+      "note": "Next.js deploys as a full Node web service with SSR and API routes; static Vite apps and SvelteKit (Node adapter) both have official Render guides. Render runs Node.js, Python, Ruby and Go natively, so Express, Django, FastAPI, Rails and Go servers run as normal web services; Spring Boot, Laravel and ASP.NET Core run from a Docker image.",
       "source": "https://render.com/docs/deploy-nextjs-app",
-      "retrieved": "2026-09-15",
+      "retrieved": "2026-09-23",
       "status": "draft"
     },
     "custom_domain_free": {

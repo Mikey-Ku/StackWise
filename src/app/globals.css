@@ -1,15 +1,3 @@
-/* WhyStack layout on top of mk-ui (src/styles/mk-ui.css, copied from Projects/mk-ui at 3df5687).
-   Tokens only: every color, radius and duration below comes from mk-ui. */
-
-:root {
-  --mk-font-display: var(--font-display), "Space Grotesk", "Inter", system-ui, sans-serif;
-  --mk-font-body: var(--font-body), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mk-font-mono: var(--font-mono), "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --ws-left: 340px;
-  --ws-right: 340px;
-  --ws-top: 56px;
-}
-
 html,
 body {
   height: 100%;
@@ -18,107 +6,7 @@ body {
   overflow: hidden;
 }
 
-/* ---------- frame ---------- */
-.ws {
-  display: grid;
-  grid-template-rows: var(--ws-top) auto minmax(0, 1fr);
-  /* One column that never grows past the window, whatever a child's content would like. */
-  grid-template-columns: minmax(0, 1fr);
-  height: 100vh;
-}
-/* Rows are fixed by position, so the body fills the last row whether or not the problems alert or
-   the view switcher is showing. */
-.ws > .ws-top {
-  grid-row: 1;
-}
-.ws > .ws-problems {
-  grid-row: 2;
-}
-.ws > .ws-body {
-  grid-row: -2 / -1;
-}
-.ws-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mk-4);
-  padding-inline: var(--mk-5);
-  border-bottom: 1px solid var(--mk-line);
-  background: var(--mk-surface);
-}
-.ws-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--mk-font-display);
-  font-size: var(--mk-text-md);
-  font-weight: 650;
-  letter-spacing: var(--mk-display-track);
-}
-.ws-mark::before {
-  content: "";
-  width: 9px;
-  height: 9px;
-  border-radius: var(--mk-radius-sm);
-  background: var(--mk-accent);
-}
-.ws-top__sep {
-  width: 1px;
-  height: 18px;
-  background: var(--mk-line-strong);
-}
-.ws-top__app {
-  font-size: var(--mk-text-sm);
-}
-.ws-problems {
-  margin: var(--mk-3) var(--mk-5) 0;
-}
-.ws-body {
-  display: grid;
-  grid-template-columns: var(--ws-left) minmax(0, 1fr) var(--ws-right);
-  min-height: 0;
-}
-.ws-left {
-  overflow-y: auto;
-  padding: var(--mk-6) var(--mk-5) var(--mk-12);
-  border-right: 1px solid var(--mk-line);
-  background: var(--mk-surface);
-}
-.ws-center {
-  position: relative;
-  min-width: 0;
-  min-height: 0;
-  background: var(--mk-surface-sunk);
-}
-.ws-right {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  border-left: 1px solid var(--mk-line);
-  background: var(--mk-surface);
-}
-.ws-right__tabs {
-  padding-inline: var(--mk-5);
-}
-.ws-right__body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-.ws-tab-on {
-  color: var(--mk-text);
-  box-shadow: inset 0 -2px 0 var(--mk-accent);
-}
-.ws-h2 {
-  font-size: var(--mk-text-xl);
-}
-.ws-h3 {
-  font-size: var(--mk-text-lg);
-}
-
 /* Small badges inside dense UI read the small size vocabulary. */
-.ws-slot .mk-badge,
-.ws-app .mk-badge,
 .ws-opt .mk-badge,
 .ws-compare .mk-badge,
 .ws-issue .mk-badge,
@@ -129,28 +17,16 @@ body {
 }
 
 /* ---------- controls ---------- */
-.ws-seg {
-  flex-wrap: wrap;
-  align-self: flex-start;
-}
-.ws-seg .mk-seg__opt {
-  border-radius: calc(var(--mk-radius) - 2px);
-}
-.ws-seg .mk-seg__opt[data-on="true"] {
-  color: var(--mk-text);
-  background: var(--mk-surface);
-  box-shadow: inset 0 0 0 1px var(--mk-line-strong);
-}
+
 .ws-q {
   display: flex;
   flex-direction: column;
   gap: var(--mk-2);
-  padding: var(--mk-3) var(--mk-4);
-  border: 1px solid var(--mk-line);
-  border-radius: var(--mk-radius);
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--mk-surface-sunk);
 }
 .ws-q.is-guessed {
-  border-color: color-mix(in srgb, var(--mk-accent) 40%, transparent);
   background: var(--mk-accent-soft);
 }
 .ws-q__text p:first-child {
@@ -168,9 +44,9 @@ body {
   flex-direction: column;
   gap: 2px;
   padding: var(--mk-3);
-  border: 1px solid var(--mk-line);
+  border: 1px solid transparent;
   border-radius: var(--mk-radius);
-  background: var(--mk-surface);
+  background: var(--mk-surface-sunk);
   font-size: var(--mk-text-sm);
   text-align: left;
   cursor: pointer;
@@ -188,17 +64,7 @@ body {
   border-color: var(--mk-accent);
   box-shadow: inset 0 0 0 1px var(--mk-accent);
 }
-.ws-details {
-  border-top: 1px solid var(--mk-line);
-  padding-top: var(--mk-3);
-}
-.ws-details > summary {
-  margin-bottom: var(--mk-3);
-  font-family: var(--mk-font-display);
-  font-size: var(--mk-text-sm);
-  font-weight: 500;
-  cursor: pointer;
-}
+
 .ws-issue {
   display: flex;
   align-items: center;
@@ -219,8 +85,8 @@ body {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--mk-2);
-  padding: var(--mk-3) var(--mk-4);
-  border-left: 2px solid var(--mk-line-strong);
+  padding: 12px 14px;
+  border-radius: 12px;
   background: var(--mk-surface-sunk);
   font-size: var(--mk-text-sm);
   line-height: var(--mk-leading-snug);
@@ -287,155 +153,6 @@ body {
 .ws-canvas .react-flow svg {
   max-width: none;
 }
-.ws-canvas__banner {
-  position: absolute;
-  z-index: 5;
-  top: var(--mk-4);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 6px 12px;
-  border: 1px solid var(--mk-line-strong);
-  border-radius: var(--mk-radius);
-  background: var(--mk-surface);
-  color: var(--mk-text-muted);
-  font-family: var(--mk-font-mono);
-  font-size: var(--mk-text-xs);
-  white-space: nowrap;
-  pointer-events: none;
-}
-.ws-node {
-  background: var(--mk-surface);
-  border: 1px solid var(--mk-line-strong);
-  border-radius: var(--mk-radius-lg);
-  font-family: var(--mk-font-body);
-  cursor: pointer;
-  transition: border-color var(--mk-dur-fast) var(--mk-ease), box-shadow var(--mk-dur-fast) var(--mk-ease), background-color var(--mk-dur-fast) var(--mk-ease);
-}
-.ws-node:hover {
-  box-shadow: var(--mk-shadow-2);
-}
-.ws-node.is-selected {
-  border-color: var(--mk-accent);
-  box-shadow: 0 0 0 3px var(--mk-accent-soft);
-}
-.ws-node.is-over {
-  border-style: dashed;
-  border-color: var(--mk-accent);
-  background: var(--mk-accent-soft);
-}
-.ws-node.is-bad {
-  border-style: dashed;
-  border-color: var(--mk-danger);
-  background: var(--mk-danger-soft);
-}
-.ws-node .react-flow__handle {
-  width: 1px;
-  min-width: 0;
-  height: 1px;
-  min-height: 0;
-  border: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-.ws-app {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mk-2);
-  width: 250px;
-  padding: var(--mk-4) var(--mk-5);
-  border: 1.5px solid var(--mk-text);
-}
-.ws-app__name {
-  font-family: var(--mk-font-display);
-  font-size: var(--mk-text-lg);
-  font-weight: 650;
-  line-height: 1.1;
-  letter-spacing: var(--mk-display-track);
-}
-.ws-app__fw {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--mk-text-sm);
-}
-.ws-app__needs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: var(--mk-1);
-}
-.ws-slot {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 212px;
-  padding: var(--mk-3) var(--mk-4);
-}
-.ws-slot__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mk-2);
-}
-.ws-slot__name {
-  font-family: var(--mk-font-display);
-  font-size: var(--mk-text-md);
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: var(--mk-display-track);
-}
-.ws-slot__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 2px;
-  padding-top: 6px;
-  border-top: 1px solid var(--mk-line);
-  font-size: 11px;
-}
-.ws-slot.is-empty {
-  border-style: dashed;
-  background: color-mix(in srgb, var(--mk-surface) 70%, transparent);
-}
-.ws-slot.is-unneeded {
-  opacity: 0.55;
-}
-.ws-slot__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  color: var(--mk-text-muted);
-  font-size: var(--mk-text-xs);
-  line-height: var(--mk-leading-snug);
-}
-.ws-canvas .react-flow__edge-path {
-  stroke: var(--mk-line-strong);
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-}
-.ws-canvas .ws-edge--works .react-flow__edge-path,
-.ws-canvas .ws-edge--info .react-flow__edge-path {
-  stroke: var(--mk-ok);
-}
-.ws-canvas .ws-edge--warning .react-flow__edge-path {
-  stroke: var(--mk-warn);
-  stroke-width: 2.5;
-}
-.ws-canvas .ws-edge--blocked .react-flow__edge-path,
-.ws-canvas .ws-edge--missing .react-flow__edge-path {
-  stroke: var(--mk-danger);
-  stroke-width: 2.5;
-}
-.ws-canvas .ws-edge--unknown .react-flow__edge-path {
-  stroke: var(--mk-text-faint);
-  stroke-dasharray: 2 4;
-}
-.ws-canvas .ws-edge.is-dashed .react-flow__edge-path,
-.ws-canvas .ws-edge.is-pair .react-flow__edge-path {
-  stroke-dasharray: 6 5;
-}
-
 
 /* ---------- palette ---------- */
 .ws-palette {
@@ -526,26 +243,21 @@ body {
   flex-direction: column;
   gap: 6px;
   padding: var(--mk-3) var(--mk-4);
-  border: 1px solid var(--mk-line);
-  border-left-width: 3px;
-  border-radius: var(--mk-radius);
+  border: 0;
+  border-radius: 12px;
+  background: var(--mk-surface-sunk);
   font-size: var(--mk-text-sm);
   line-height: var(--mk-leading-snug);
 }
 .ws-result--blocked,
 .ws-result--missing {
-  border-left-color: var(--mk-danger);
 }
 .ws-result--warning {
-  border-left-color: var(--mk-warn);
 }
 .ws-result--unknown {
-  border-left-color: var(--mk-text-faint);
-  border-left-style: dashed;
 }
 .ws-result--info,
 .ws-result--works {
-  border-left-color: var(--mk-ok);
 }
 .ws-score {
   display: flex;
@@ -600,160 +312,17 @@ body {
   font-size: 12px;
   white-space: pre-wrap;
 }
-.ws-toast {
-  position: fixed;
-  z-index: 50;
-  bottom: var(--mk-6);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: var(--mk-3) var(--mk-4);
-  border-radius: var(--mk-radius);
-  background: var(--mk-text);
-  color: var(--mk-surface);
-  font-size: var(--mk-text-sm);
-  box-shadow: var(--mk-shadow-2);
-}
+
 .ws-loading {
   display: grid;
   place-items: center;
   height: 100vh;
   color: var(--mk-text-faint);
-  font-family: var(--mk-font-mono);
   font-size: var(--mk-text-sm);
 }
 
-/* Narrow windows: the planner and the canvas take turns filling the screen, and the side panel
-   is a sheet over the canvas that opens when something is picked. Nothing scrolls the page. */
-.ws-views,
-.ws-sheet-toggle {
-  display: none;
-}
-@media (max-width: 1100px) {
-  .ws {
-    grid-template-rows: auto auto auto minmax(0, 1fr);
-    height: 100vh;
-    height: 100dvh;
-  }
-  .ws-top {
-    flex-wrap: wrap;
-    row-gap: var(--mk-2);
-    padding-block: var(--mk-2);
-  }
-  .ws > .ws-views {
-    grid-row: 3;
-  }
-  .ws-views {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--mk-3);
-    padding: var(--mk-2) var(--mk-4);
-    border-bottom: 1px solid var(--mk-line);
-    background: var(--mk-surface);
-  }
-  .ws-views .ws-seg {
-    flex: none;
-    flex-wrap: nowrap;
-  }
-  .ws-views__hint {
-    min-width: 0;
-    overflow: hidden;
-    color: var(--mk-text-faint);
-    font-size: var(--mk-text-xs);
-    text-align: right;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .ws-body {
-    position: relative;
-    display: block;
-    min-height: 0;
-    overflow: hidden;
-  }
-  .ws-left,
-  .ws-center {
-    position: absolute;
-    inset: 0;
-  }
-  .ws-left {
-    border: 0;
-  }
-  /* The view that isn't showing keeps its size, so React Flow never measures zero. Opacity, not
-     visibility: React Flow sets visibility: visible on its own cards, which would show through.
-     The workspace also marks it inert, so nothing in it can be clicked or focused. */
-  .ws[data-view="canvas"] .ws-left,
-  .ws[data-view="plan"] .ws-center,
-  .ws[data-view="plan"] .ws-right {
-    opacity: 0;
-    pointer-events: none;
-  }
-  .ws[data-view="plan"] .ws-left {
-    z-index: 30;
-  }
-  .ws-right {
-    position: absolute;
-    z-index: 20;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: min(60%, 560px);
-    border: 0;
-    border-top: 1px solid var(--mk-line-strong);
-    border-radius: var(--mk-radius-lg) var(--mk-radius-lg) 0 0;
-    box-shadow: 0 -16px 40px -24px rgba(23, 21, 15, 0.4);
-    transform: translateY(calc(100% - 48px));
-    transition: transform var(--mk-dur-slow) var(--mk-ease);
-  }
-  .ws[data-sheet="open"] .ws-right {
-    transform: none;
-  }
-  .ws-right__tabs {
-    flex: none;
-    align-items: center;
-    gap: var(--mk-4);
-    min-height: 48px;
-    padding-inline: var(--mk-4);
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .ws-sheet-toggle {
-    display: inline-flex;
-    flex: none;
-    margin-left: auto;
-  }
-  .ws-toast {
-    bottom: 64px;
-    max-width: calc(100vw - 32px);
-  }
-  /* Keep the zoom buttons above the closed sheet. */
-  .ws-canvas .react-flow__controls {
-    margin-bottom: 60px;
-  }
-  /* One row of numbers that scrolls sideways, so the canvas keeps its height. (Scoped under .ws
-     to outrank the strip's own rules, which come later in this file.) */
-  .ws .ws-planstats {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .ws .ws-planstats__item {
-    flex: 1 0 auto;
-    min-width: 116px;
-    padding-block: 6px;
-  }
-  .ws .ws-planstats__item strong {
-    font-size: var(--mk-text-md);
-  }
-  .ws .ws-planstats__item dd > span:not(:first-of-type) {
-    display: none;
-  }
-}
-
 /* ---------- v0.2: plans menu, examples, explain, learn, checklist, compare ---------- */
-.ws-top__left,
-.ws-top__right {
-  min-width: 0;
-}
+
 .ws-self-start {
   align-self: flex-start;
 }
@@ -830,31 +399,9 @@ body {
 .ws-menu__item--danger {
   color: var(--mk-danger);
 }
-.ws-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.ws-chip {
-  padding: 5px 10px;
-  border: 1px solid var(--mk-line-strong);
-  border-radius: var(--mk-radius-full);
-  background: var(--mk-surface);
-  font-size: var(--mk-text-xs);
-  cursor: pointer;
-  transition: border-color var(--mk-dur-fast) var(--mk-ease), color var(--mk-dur-fast) var(--mk-ease);
-}
-.ws-chip:hover {
-  border-color: var(--mk-accent);
-  color: var(--mk-accent);
-}
-.ws-chip--small {
-  padding: 2px 8px;
-  font-size: 11px;
-}
+
 .ws-note-inline {
   padding: 6px 10px;
-  border-left: 2px solid var(--mk-warn);
   background: var(--mk-warn-soft);
 }
 .ws-explain {
@@ -868,21 +415,12 @@ body {
   font-size: var(--mk-text-sm);
   line-height: var(--mk-leading-body);
 }
-.ws-details--flush {
-  padding-top: var(--mk-2);
-}
+
 .ws-cost-table tr.is-current td {
   background: var(--mk-accent-soft);
   font-weight: 600;
 }
-.ws-canvas__tools {
-  position: absolute;
-  z-index: 6;
-  top: var(--mk-3);
-  left: var(--mk-3);
-  display: flex;
-  gap: var(--mk-2);
-}
+
 .ws-learn {
   display: flex;
   flex-direction: column;
@@ -984,21 +522,8 @@ body {
   --mk-ctl-fs: 11px;
 }
 
-@media (max-width: 1100px) {
-  .ws-top__left,
-  .ws-top__right {
-    flex-wrap: wrap;
-  }
-  .ws-canvas__banner {
-    max-width: calc(100% - 24px);
-    white-space: normal;
-    text-align: center;
-  }
-}
 @media (max-width: 720px) {
-  .ws-top__facts {
-    display: none;
-  }
+  
   .ws-priorities {
     grid-template-columns: 1fr;
   }
@@ -1118,10 +643,8 @@ body {
 }
 .ws-statgrid__item dt {
   color: var(--mk-text-faint);
-  font-family: var(--mk-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 500;
 }
 .ws-statgrid__item dd {
   margin: 0;
@@ -1172,16 +695,6 @@ body {
   margin-top: 4px;
 }
 
-.ws-slot__name {
-  display: flex;
-  align-items: center;
-  gap: var(--mk-2);
-  min-width: 0;
-}
-.ws-slot__name > span:last-child {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
 .ws-inspector__title {
   display: flex;
   align-items: center;
@@ -1272,132 +785,8 @@ a.ws-costlines__row {
   font-variant-numeric: tabular-nums;
 }
 
-/* The plan in numbers, in a strip above the canvas. */
-.ws-canvas-frame {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-}
-.ws-canvas-frame > .ws-canvas {
-  position: relative;
-  inset: auto;
-  flex: 1;
-  min-height: 0;
-}
-.ws-planstats {
-  display: flex;
-  flex: none;
-  flex-wrap: wrap;
-  gap: 1px;
-  margin: 0;
-  border-bottom: 1px solid var(--mk-line);
-  background: var(--mk-line);
-}
-.ws-planstats__item {
-  display: flex;
-  flex: 1 1 128px;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  padding: var(--mk-2) var(--mk-4);
-  background: var(--mk-surface);
-}
-.ws-planstats__item dt {
-  color: var(--mk-text-faint);
-  font-family: var(--mk-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.ws-planstats__item dd {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-}
-.ws-planstats__item strong {
-  font-family: var(--mk-font-display);
-  font-size: var(--mk-text-lg);
-  font-weight: 650;
-  line-height: 1.15;
-  letter-spacing: var(--mk-display-track);
-  font-variant-numeric: tabular-nums;
-}
-.ws-planstats__item small {
-  margin-left: 1px;
-  color: var(--mk-text-muted);
-  font-family: var(--mk-font-body);
-  font-size: var(--mk-text-xs);
-  font-weight: 500;
-  letter-spacing: 0;
-}
-.ws-planstats__item dd > span {
-  color: var(--mk-text-muted);
-  font-size: 11px;
-  line-height: var(--mk-leading-snug);
-}
-.ws-planstats__item--works strong {
-  color: var(--mk-ok);
-}
-.ws-planstats__item--warning strong,
-.ws-planstats__item--unknown strong {
-  color: var(--mk-warn);
-}
-.ws-planstats__item--blocked strong,
-.ws-planstats__item--missing strong {
-  color: var(--mk-danger);
-}
-
-
-@media (max-width: 720px) {
-  .ws-planstats__item {
-    flex-basis: 30%;
-    padding-inline: var(--mk-3);
-  }
-  .ws-planstats__item strong {
-    font-size: var(--mk-text-md);
-  }
-  .ws-planstats__item dd > span {
-    display: none;
-  }
-}
-
 /* ---------- v0.4: pairing with Claude, project pack ---------- */
-.ws-paired {
-  border-color: color-mix(in srgb, var(--mk-accent) 45%, transparent);
-  color: var(--mk-accent);
-}
-.ws-pair {
-  width: min(620px, calc(100vw - 32px));
-}
-.ws-pair__toggle {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--mk-3);
-  padding: var(--mk-3) var(--mk-4);
-  border: 1px solid var(--mk-line-strong);
-  border-radius: var(--mk-radius);
-  cursor: pointer;
-}
-.ws-pair__toggle.is-on {
-  border-color: color-mix(in srgb, var(--mk-accent) 45%, transparent);
-  background: var(--mk-accent-soft);
-}
-.ws-pair__toggle input {
-  margin-top: 4px;
-  accent-color: var(--mk-accent);
-}
-.ws-pair__cmd {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.ws-pair__examples {
-  margin: 0;
-  padding-left: 1.1em;
-  color: var(--mk-text-muted);
-  font-size: var(--mk-text-sm);
-  line-height: var(--mk-leading-snug);
-}
+
 .ws-activity {
   display: flex;
   flex-direction: column;
@@ -1418,7 +807,6 @@ a.ws-costlines__row {
   overflow-wrap: anywhere;
 }
 .ws-activity__item.is-change {
-  border-left: 3px solid var(--mk-accent);
 }
 .ws-activity__item ul {
   margin: 0;
@@ -1438,99 +826,6 @@ a.ws-costlines__row {
 }
 
 /* ---------- v0.5: moving parts, wiring and local folders ---------- */
-/* Parts can be dragged. React Flow's own cursor is under mk-ui's, so say it here. */
-.react-flow__node .ws-node {
-  cursor: grab;
-}
-.react-flow__node.dragging .ws-node {
-  cursor: grabbing;
-  border-color: var(--mk-accent);
-  box-shadow: var(--mk-shadow-2);
-}
-.ws-node .mk-btn,
-.ws-node .ws-link,
-.ws-node .ws-swap {
-  cursor: pointer;
-}
-.ws-slot {
-  position: relative;
-}
-.ws-envchips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.ws-envchips code {
-  padding: 1px 5px;
-  border: 1px solid var(--mk-line);
-  border-radius: var(--mk-radius-sm);
-  background: var(--mk-surface-sunk);
-  color: var(--mk-text-muted);
-  font-family: var(--mk-font-mono);
-  font-size: 10px;
-  overflow-wrap: anywhere;
-}
-.ws-swap {
-  position: absolute;
-  z-index: 8;
-  top: calc(100% + 6px);
-  right: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--mk-2);
-  max-height: 220px;
-  padding: var(--mk-2) var(--mk-3);
-  overflow: auto;
-  border: 1px solid var(--mk-line-strong);
-  border-radius: var(--mk-radius);
-  background: var(--mk-surface);
-  box-shadow: var(--mk-shadow-2);
-  cursor: default;
-}
-.ws-swap__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mk-2);
-}
-.ws-swap__list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.ws-swap__opt {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 4px 6px;
-  border: 0;
-  border-radius: var(--mk-radius-sm);
-  background: transparent;
-  color: var(--mk-text);
-  font: inherit;
-  font-size: var(--mk-text-xs);
-  text-align: left;
-}
-.ws-swap__name {
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.ws-swap__opt:hover {
-  background: var(--mk-surface-sunk);
-}
-.ws-swap__opt.is-current {
-  background: var(--mk-accent-soft);
-}
-.ws-canvas .ws-edge.is-selected .react-flow__edge-path {
-  stroke: var(--mk-accent);
-  stroke-width: 3;
-}
 
 /* The connection panel: app on one end, service on the other. */
 .ws-wire {
@@ -1565,13 +860,11 @@ a.ws-costlines__row {
   gap: 4px;
   padding: var(--mk-2) var(--mk-3);
   border: 1px solid var(--mk-line);
-  border-left: 3px solid var(--mk-ok);
   border-radius: var(--mk-radius);
   font-size: var(--mk-text-sm);
   line-height: var(--mk-leading-snug);
 }
 .ws-envrow.is-public {
-  border-left-color: var(--mk-warn);
 }
 .ws-envrow p {
   margin: 0;
@@ -1597,10 +890,8 @@ a.ws-costlines__row {
   flex-direction: column;
   gap: 1px;
   padding-left: var(--mk-3);
-  border-left: 3px solid var(--mk-ok);
 }
 .ws-envlist li.is-public {
-  border-left-color: var(--mk-warn);
 }
 .ws-envlist code {
   overflow-wrap: anywhere;
@@ -1625,107 +916,6 @@ a.ws-costlines__row {
   font-size: var(--mk-text-xs);
 }
 
-/* ---------- v0.6: lines that follow cards, notes, talking a part through ---------- */
-.ws-wire-label {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 270px;
-  padding: 2px 9px;
-  border: 1px solid var(--mk-line);
-  border-radius: 999px;
-  background: var(--mk-surface);
-  color: var(--mk-text-muted);
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-  line-height: 1.6;
-  white-space: nowrap;
-  cursor: pointer;
-  pointer-events: all;
-  transition: border-color var(--mk-dur-fast) var(--mk-ease), color var(--mk-dur-fast) var(--mk-ease), box-shadow var(--mk-dur-fast) var(--mk-ease);
-}
-.ws-wire-label__text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ws-wire-label:hover,
-.ws-wire-label:focus-visible {
-  border-color: var(--mk-line-strong);
-  color: var(--mk-text);
-}
-.ws-wire-label--warning,
-.ws-wire-label--unknown {
-  border-color: color-mix(in srgb, var(--mk-warn) 45%, var(--mk-line));
-  color: var(--mk-warn);
-}
-.ws-wire-label--blocked,
-.ws-wire-label--missing {
-  border-color: color-mix(in srgb, var(--mk-danger) 45%, var(--mk-line));
-  color: var(--mk-danger);
-}
-.ws-wire-label.is-pair {
-  border-style: dashed;
-}
-.ws-wire-label.is-selected {
-  border-color: var(--mk-accent);
-  color: var(--mk-accent);
-  box-shadow: 0 0 0 3px var(--mk-accent-soft);
-}
-.ws-wire-label__note {
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--mk-accent);
-}
-.ws-wire-label.is-note-stale .ws-wire-label__note {
-  background: var(--mk-warn);
-}
-.ws-notechip {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--mk-accent-soft);
-  color: var(--mk-accent);
-  font-family: var(--mk-font-mono);
-  font-size: 10px;
-  line-height: 1.7;
-}
-.ws-notechip.is-stale {
-  background: var(--mk-warn-soft, color-mix(in srgb, var(--mk-warn) 16%, transparent));
-  color: var(--mk-warn);
-}
-.ws-app__eyebrow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mk-2);
-}
-
-/* The note and the conversation, in Details and in a connection. */
-.ws-work {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mk-5);
-  padding: var(--mk-4);
-  border: 1px solid var(--mk-line);
-  border-radius: var(--mk-radius-lg);
-  background: var(--mk-surface-sunk);
-}
-.ws-work__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mk-2);
-}
-.ws-work__head .mk-badge {
-  --mk-ctl-h: 34px;
-  --mk-ctl-px: 0.9rem;
-  --mk-ctl-fs: 11px;
-}
 .ws-work__note {
   width: 100%;
   min-height: 84px;
@@ -1740,77 +930,860 @@ a.ws-costlines__row {
   align-items: baseline;
   gap: var(--mk-2);
   padding: var(--mk-2) var(--mk-3);
-  border-left: 3px solid var(--mk-warn);
   border-radius: var(--mk-radius-sm);
   background: var(--mk-surface);
   color: var(--mk-text-muted);
   font-size: var(--mk-text-xs);
 }
+
+
+/* ---------- v0.7: the canvas fills the window, and everything else floats over it ---------- */
+html,
+body {
+  background: var(--mk-bg);
+}
+.ws {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--mk-bg);
+}
+.ws-h2 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.ws-h3 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* Frosted glass, for everything that floats: lighter for the bars, denser for panels and menus that hold text. */
+.ws-bar__side,
+.ws-summary,
+.ws-dock {
+  border: 0.5px solid var(--ws-glass-line);
+  background: var(--ws-glass);
+  -webkit-backdrop-filter: var(--ws-blur);
+  backdrop-filter: var(--ws-blur);
+  box-shadow: var(--ws-float-shadow);
+}
+.ws-float,
+.ws-ask,
+.ws-cmenu,
+.ws-menu__panel {
+  border: 0.5px solid var(--ws-glass-line);
+  background: var(--ws-glass-strong);
+  -webkit-backdrop-filter: var(--ws-blur);
+  backdrop-filter: var(--ws-blur);
+  box-shadow: var(--ws-float-shadow);
+}
+/* Keyboard focus shows as a soft accent ring. */
+.ws button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mk-accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+@keyframes ws-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+}
+@keyframes ws-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.ws-iconbtn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ws-fill);
+  color: var(--mk-text-muted);
+  cursor: pointer;
+}
+.ws-iconbtn:hover {
+  background: var(--ws-fill-hover);
+  color: var(--mk-text);
+}
+.ws-status-dot {
+  display: inline-block;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mk-text-faint);
+  opacity: 0.6;
+}
+.ws-status-dot.is-on {
+  background: var(--mk-ok);
+  opacity: 1;
+  box-shadow: 0 0 0 3px var(--mk-ok-soft);
+}
+
+/* The bar on top: plans on the left, the plan in one line in the middle, Ask and Export on the right. */
+.ws-bar {
+  position: absolute;
+  z-index: 30;
+  top: 12px;
+  right: 12px;
+  left: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+.ws-bar > * {
+  pointer-events: auto;
+}
+.ws-bar__side {
+  display: flex;
+  align-items: center;
+  justify-self: start;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  height: 40px;
+  padding: 0 4px 0 9px;
+  border-radius: 999px;
+}
+.ws-bar__side--end {
+  grid-column: 3;
+  justify-self: end;
+  gap: 4px;
+  padding: 0 6px;
+}
+.ws-mark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  margin-right: 4px;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.ws-menu__button {
+  min-width: 0;
+  max-width: 220px;
+  height: 30px;
+  overflow: hidden;
+  padding: 0 10px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.ws-menu__button:hover {
+  background: var(--ws-fill);
+}
+.ws-menu__panel {
+  top: calc(100% + 10px);
+  left: -14px;
+  border-radius: 14px;
+}
+.ws-menu__item:hover {
+  background: var(--ws-fill);
+}
+
+.ws-summary {
+  display: inline-flex;
+  grid-column: 2;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  color: var(--mk-text-muted);
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ws-summary:hover {
+  color: var(--mk-text);
+}
+.ws-summary strong {
+  color: var(--mk-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ws-summary small {
+  margin-left: 1px;
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.ws-summary__sep {
+  width: 1px;
+  height: 14px;
+  background: var(--mk-line-strong);
+}
+.ws-summary__checks {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+.ws-summary__checks .ws-vdot {
+  width: 7px;
+  height: 7px;
+}
+.ws-summary__checks--works {
+  color: var(--mk-ok);
+}
+.ws-summary__checks--warning,
+.ws-summary__checks--unknown {
+  color: var(--mk-warn);
+}
+.ws-summary__checks--blocked,
+.ws-summary__checks--missing {
+  color: var(--mk-danger);
+}
+
+.ws-askbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mk-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ws-askbtn:hover,
+.ws-askbtn.is-on {
+  background: var(--ws-fill);
+}
+.ws-askbtn svg {
+  color: var(--mk-accent);
+}
+.ws-askbtn kbd {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--ws-fill);
+  color: var(--mk-text-faint);
+  font-family: var(--mk-font-body);
+  font-size: 11px;
+}
+
+.ws-problems {
+  position: absolute;
+  z-index: 29;
+  top: 62px;
+  left: 50%;
+  translate: -50% 0;
+  max-width: min(720px, calc(100% - 32px));
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--mk-danger-soft);
+  color: var(--mk-danger);
+  font-size: 12px;
+}
+
+/* The dock: panels on the left, undo and redo. */
+.ws-dock {
+  position: absolute;
+  z-index: 20;
+  bottom: 16px;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border-radius: 16px;
+  animation: ws-fade var(--mk-dur-slow) var(--mk-ease);
+}
+.ws-dock__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--mk-text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--mk-dur-fast) var(--mk-ease), color var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-dock__btn:hover:not(:disabled) {
+  background: var(--ws-fill);
+  color: var(--mk-text);
+}
+.ws-dock__btn.is-on {
+  background: var(--ws-seg-on);
+  color: var(--mk-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.ws-dock__btn.is-on svg {
+  color: var(--mk-accent);
+}
+.ws-dock__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.ws-dock__btn--icon {
+  justify-content: center;
+  width: 34px;
+  padding: 0;
+}
+.ws-dock__sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--mk-line-strong);
+}
+
+/* Panels: one on the left from the dock, Details on the right when something is picked. */
+.ws-float {
+  position: absolute;
+  z-index: 15;
+  top: 64px;
+  bottom: 72px;
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  border-radius: 18px;
+  overflow: hidden;
+  animation: ws-pop var(--mk-dur) var(--mk-ease);
+}
+.ws-float--left {
+  left: 12px;
+}
+.ws-float--right {
+  z-index: 16;
+  right: 12px;
+  width: 380px;
+}
+.ws-float__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 14px 6px 20px;
+}
+.ws-float__head h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.ws-float__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ws-float__body > .mk-stack {
+  padding: 6px 20px 20px;
+}
+.ws-float__foot {
+  padding: 0 20px 24px;
+}
+.ws-float .ws-inspector {
+  gap: var(--mk-5);
+  padding: 6px 20px 28px;
+}
+.ws-float .ws-palette,
+.ws-float .ws-learn {
+  padding: 0 20px 28px;
+}
+.ws-float .ws-palette__top {
+  padding-top: 6px;
+  background: var(--ws-glass-strong);
+}
+.ws-canvas .react-flow__attribution {
+  background: transparent;
+  opacity: 0.45;
+}
+/* Describing the app and confirming the guesses: a sheet over the canvas, which fills in behind it. */
+.ws-sheet-wrap {
+  position: absolute;
+  z-index: 25;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 68px 16px 16px;
+  background: color-mix(in srgb, var(--mk-bg) 45%, transparent);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: ws-fade var(--mk-dur) var(--mk-ease);
+}
+.ws-sheet {
+  width: min(620px, 100%);
+  max-height: 100%;
+  padding: 28px 32px 32px;
+  overflow-y: auto;
+  border: 0.5px solid var(--ws-glass-line);
+  border-radius: 22px;
+  background: var(--mk-surface);
+  box-shadow: var(--ws-float-shadow);
+  overscroll-behavior: contain;
+  animation: ws-pop var(--mk-dur-slow) var(--mk-ease);
+}
+
+/* Cards on the canvas: a logo, a name and a verdict dot. */
+.ws-node {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px 9px 9px;
+  border: 0.5px solid var(--ws-glass-line);
+  border-radius: 14px;
+  background: var(--mk-surface);
+  box-shadow: var(--ws-node-shadow);
+  font-family: var(--mk-font-body);
+  cursor: grab;
+  transition: box-shadow var(--mk-dur-fast) var(--mk-ease), opacity var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-node:hover {
+  box-shadow: var(--ws-node-shadow-hover);
+}
+.ws-node.is-selected {
+  box-shadow: 0 0 0 2px var(--mk-accent), var(--ws-node-shadow-hover);
+}
+.ws-node.is-over {
+  outline: 2px dashed var(--mk-accent);
+  outline-offset: 3px;
+}
+.ws-node.is-bad {
+  outline: 2px dashed var(--mk-danger);
+  outline-offset: 3px;
+}
+.react-flow__node.dragging .ws-node {
+  cursor: grabbing;
+  box-shadow: var(--ws-float-shadow);
+}
+.ws-node .react-flow__handle {
+  width: 1px;
+  min-width: 0;
+  height: 1px;
+  min-height: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.ws-slot {
+  min-width: 160px;
+  max-width: 220px;
+}
+.ws-app {
+  gap: 12px;
+  min-width: 220px;
+  padding: 14px 18px 14px 14px;
+  border-radius: 18px;
+}
+.ws-node__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.ws-node__kicker {
+  color: var(--mk-text-faint);
+  font-size: 11px;
+  font-weight: 500;
+}
+.ws-node__name {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.ws-app .ws-node__name {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.ws-node__sub {
+  color: var(--mk-text-muted);
+  font-size: 12px;
+}
+.ws-node__marks {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 5px;
+  margin-top: 4px;
+}
+.ws-node__marks .ws-vdot {
+  width: 8px;
+  height: 8px;
+}
+.ws-node__blank {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1.5px dashed var(--mk-line-strong);
+  border-radius: 8px;
+  color: var(--mk-text-faint);
+}
+.ws-slot.is-empty {
+  border: 1px dashed var(--mk-line-strong);
+  background: color-mix(in srgb, var(--mk-surface) 55%, transparent);
+  box-shadow: none;
+}
+.ws-slot.is-empty .ws-node__name {
+  color: var(--mk-accent);
+}
+.ws-slot.is-unneeded {
+  opacity: 0.55;
+}
+.ws-slot.is-unneeded .ws-node__name {
+  color: var(--mk-text-faint);
+}
+.ws-notedot {
+  display: inline-block;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mk-accent);
+}
+.ws-notedot.is-stale {
+  background: var(--mk-warn);
+}
+
+/* Lines stay grey when they work, so only the ones with something to say stand out. */
+.ws-canvas .react-flow__edge-path {
+  stroke: var(--mk-line-strong);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.ws-canvas .ws-edge--warning .react-flow__edge-path {
+  stroke: var(--mk-warn);
+  stroke-width: 2;
+}
+.ws-canvas .ws-edge--blocked .react-flow__edge-path,
+.ws-canvas .ws-edge--missing .react-flow__edge-path {
+  stroke: var(--mk-danger);
+  stroke-width: 2;
+}
+.ws-canvas .ws-edge--unknown .react-flow__edge-path {
+  stroke: var(--mk-text-faint);
+  stroke-dasharray: 2 4;
+}
+.ws-canvas .ws-edge.is-dashed .react-flow__edge-path,
+.ws-canvas .ws-edge.is-pair .react-flow__edge-path {
+  stroke-dasharray: 5 5;
+}
+.ws-canvas .ws-edge.is-selected .react-flow__edge-path {
+  stroke: var(--mk-accent);
+  stroke-width: 2.5;
+}
+.ws-wire-label {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 240px;
+  padding: 2px 9px;
+  border: 0.5px solid var(--mk-line-strong);
+  border-radius: 999px;
+  background: var(--mk-surface);
+  color: var(--mk-text-muted);
+  font-family: var(--mk-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: all;
+  box-shadow: var(--mk-shadow-1);
+  transition: color var(--mk-dur-fast) var(--mk-ease), box-shadow var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-wire-label__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ws-wire-label:hover,
+.ws-wire-label:focus-visible {
+  color: var(--mk-text);
+  box-shadow: var(--ws-node-shadow-hover);
+}
+.ws-wire-label--warning,
+.ws-wire-label--unknown {
+  border-color: color-mix(in srgb, var(--mk-warn) 45%, transparent);
+  color: var(--mk-warn);
+}
+.ws-wire-label--blocked,
+.ws-wire-label--missing {
+  border-color: color-mix(in srgb, var(--mk-danger) 45%, transparent);
+  color: var(--mk-danger);
+}
+.ws-wire-label.is-pair {
+  border-style: dashed;
+}
+.ws-wire-label.is-selected {
+  border-color: var(--mk-accent);
+  color: var(--mk-accent);
+}
+
+/* The Ask panel. */
+.ws-ask {
+  position: absolute;
+  z-index: 28;
+  bottom: 72px;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  width: min(600px, calc(100% - 24px));
+  max-height: min(560px, calc(100% - 150px));
+  border-radius: 20px;
+  animation: ws-pop var(--mk-dur) var(--mk-ease);
+}
+.ws.is-planning .ws-ask {
+  bottom: 16px;
+}
+.ws-ask__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 8px 12px;
+}
+.ws-answerer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 28px;
+  margin-right: auto;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ws-fill);
+  color: var(--mk-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ws-answerer:hover {
+  background: var(--ws-fill-hover);
+}
+.ws-answerer > span:not(.ws-status-dot) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-status-dot.is-warn {
+  background: var(--mk-warn);
+  opacity: 1;
+}
+.ws-ask__filter {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  margin-bottom: 10px;
+  background: var(--mk-surface);
+  box-shadow: 0 0 0 0.5px var(--mk-line-strong), var(--mk-shadow-1);
+}
+.ws-ask__filter:hover:not(:disabled) {
+  background: var(--mk-surface);
+  color: var(--mk-accent);
+}
+.ws-ask__filter.is-on {
+  background: var(--mk-accent);
+  color: #fff;
+}
+.ws-ask__pending {
+  color: var(--mk-text-faint);
+  font-size: 12px;
+  animation: ws-breathe 1.4s ease-in-out infinite;
+}
+.ws-thread__item {
+  display: flex;
+  flex-direction: column;
+}
+.ws-turn--agent .ws-turn__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mk-accent);
+}
+.ws-turn__meta {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 11px;
+}
+.ws-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+.ws-files code {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: var(--ws-fill);
+  font-family: var(--mk-font-mono);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.ws-activity-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.ws-activity-row.is-change {
+}
+.ws-activity-row ul {
+  margin: 0;
+  padding-left: 1.1em;
+}
+.ws-connect {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--mk-surface-sunk);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.ws-connect ol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--mk-text-muted);
+}
+.ws-connect .ws-agent__cmd {
+  background: var(--mk-surface);
+}
+.ws-connect .ws-agent__toggle {
+  padding: 0;
+  background: transparent;
+}
+.ws-ask__about {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--ws-fill);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ws-ask__about select {
+  min-width: 0;
+  max-width: 220px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-overflow: ellipsis;
+  appearance: none;
+  cursor: pointer;
+}
+.ws-ask__body {
+  flex: 1;
+  min-height: 60px;
+  padding: 4px 18px 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ws-ask__empty {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0;
+  color: var(--mk-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
 .ws-thread {
   display: flex;
   flex-direction: column;
-  gap: var(--mk-3);
-  max-height: 420px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  gap: 14px;
 }
 .ws-turn {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-width: 100%;
-  padding: var(--mk-2) var(--mk-3);
-  border: 1px solid var(--mk-line);
-  border-radius: var(--mk-radius);
-  background: var(--mk-surface);
-  font-size: var(--mk-text-sm);
-  line-height: var(--mk-leading-snug);
+  font-size: 14px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
+}
+.ws-turn p,
+.ws-turn ul,
+.ws-turn ol {
+  margin: 0;
+}
+.ws-turn ul,
+.ws-turn ol {
+  padding-left: 1.2em;
 }
 .ws-turn--you {
   align-self: flex-end;
-  max-width: 88%;
-  border-color: transparent;
-  background: var(--mk-accent-soft);
-}
-.ws-turn--facts {
-  border-style: dashed;
-}
-.ws-turn.is-busy {
-  color: var(--mk-text-faint);
+  max-width: 85%;
+  padding: 7px 13px;
+  border-radius: 18px;
+  background: var(--mk-accent);
+  color: #fff;
 }
 .ws-turn__who {
   color: var(--mk-text-faint);
-  font-family: var(--mk-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
 }
 .ws-turn__text {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.ws-turn__text p,
-.ws-turn__text ul,
-.ws-turn__text ol {
-  margin: 0;
+.ws-turn.is-busy p {
+  color: var(--mk-text-faint);
+  animation: ws-breathe 1.4s ease-in-out infinite;
 }
-.ws-turn__text ul,
-.ws-turn__text ol {
-  padding-left: 1.2em;
-}
-.ws-turn__done {
-  margin: 0;
+@keyframes ws-breathe {
+  50% {
+    opacity: 0.45;
+  }
 }
 .ws-suggest {
   display: flex;
   flex-direction: column;
-  gap: var(--mk-2);
-  margin-top: var(--mk-2);
-  padding: var(--mk-3);
-  border: 1px solid color-mix(in srgb, var(--mk-accent) 35%, var(--mk-line));
-  border-radius: var(--mk-radius);
+  gap: 8px;
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 14px;
   background: var(--mk-surface-sunk);
 }
 .ws-suggest p {
@@ -1819,15 +1792,74 @@ a.ws-costlines__row {
 .ws-suggest__note {
   max-height: 180px;
   margin: 0;
-  padding: var(--mk-2) var(--mk-3);
+  padding: 8px 12px;
   overflow: auto;
-  border-radius: var(--mk-radius-sm);
+  border-radius: 8px;
   background: var(--mk-surface);
   font-family: var(--mk-font-body);
-  font-size: var(--mk-text-xs);
-  line-height: var(--mk-leading-snug);
+  font-size: 12px;
+  line-height: 1.45;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+.ws-ask__compose {
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 0 12px;
+  padding: 5px 5px 5px 14px;
+  border: 0.5px solid var(--mk-line-strong);
+  border-radius: 20px;
+  background: var(--mk-surface);
+}
+.ws-ask__compose:focus-within {
+  border-color: var(--mk-accent);
+  box-shadow: var(--mk-focus-ring);
+}
+.ws-ask__compose textarea {
+  flex: 1;
+  min-width: 0;
+  max-height: 120px;
+  padding: 5px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--mk-text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: none;
+  field-sizing: content;
+}
+.ws-ask__send {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mk-accent);
+  color: #fff;
+  cursor: pointer;
+}
+.ws-ask__send:disabled {
+  background: var(--ws-fill);
+  color: var(--mk-text-faint);
+  cursor: default;
+}
+.ws-ask__foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px 12px;
+  color: var(--mk-text-faint);
+  font-size: 11px;
+}
+.ws-ask__clear {
+  margin-left: auto;
 }
 .ws-chips {
   display: flex;
@@ -1835,29 +1867,1340 @@ a.ws-costlines__row {
   gap: 6px;
 }
 .ws-chip {
-  padding: 4px 10px;
-  border: 1px solid var(--mk-line);
+  padding: 5px 11px;
+  border: 0;
   border-radius: 999px;
-  background: var(--mk-surface);
+  background: var(--ws-fill);
   color: var(--mk-text);
   font: inherit;
-  font-size: var(--mk-text-xs);
+  font-size: 12px;
   cursor: pointer;
+  transition: background-color var(--mk-dur-fast) var(--mk-ease);
 }
 .ws-chip:hover:not(:disabled) {
-  border-color: var(--mk-accent);
-  color: var(--mk-accent);
+  background: var(--ws-fill-hover);
 }
-.ws-compose {
+
+/* The agent side of the Ask panel. */
+.ws-agent {
   display: flex;
-  align-items: flex-end;
-  gap: var(--mk-2);
+  flex-direction: column;
+  gap: 14px;
+  padding: 2px 0 6px;
+  font-size: 13px;
+  line-height: 1.45;
 }
-.ws-compose .mk-textarea {
+.ws-agent__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--mk-surface-sunk);
+  cursor: pointer;
+}
+.ws-switch {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border-radius: 11px;
+  background: var(--ws-fill-hover);
+  appearance: none;
+  cursor: pointer;
+  transition: background-color var(--mk-dur) var(--mk-ease);
+}
+.ws-switch::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform var(--mk-dur) var(--mk-ease);
+}
+.ws-switch:checked {
+  background: #34c759;
+}
+.ws-switch:checked::before {
+  transform: translateX(16px);
+}
+.ws-switch:focus-visible {
+  outline: none;
+  box-shadow: var(--mk-focus-ring);
+}
+.ws-agent__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--mk-text-muted);
+}
+.ws-agent__steps > li > span {
+  display: block;
+}
+.ws-agent__cmd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 6px 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text);
+  text-align: left;
+  cursor: pointer;
+}
+.ws-agent__cmd code {
   flex: 1;
   min-width: 0;
-  min-height: 42px;
-  resize: none;
+  font-family: var(--mk-font-mono);
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+.ws-agent__cmd:hover {
+  background: var(--ws-fill-hover);
+}
+
+/* Right-click menus, like the ones in macOS. */
+.ws-cmenu-root {
+  position: fixed;
+  z-index: 60;
+  animation: ws-fade 0.12s ease-out;
+}
+.ws-cmenu {
+  min-width: 220px;
+  max-width: 300px;
+  margin: 0;
+  padding: 5px;
+  border-radius: 10px;
+  list-style: none;
+  font-size: 13px;
+}
+.ws-cmenu__li {
+  position: relative;
+}
+.ws-cmenu--sub {
+  position: absolute;
+  z-index: 1;
+  top: -5px;
+  left: calc(100% + 3px);
+  max-height: 340px;
+  overflow-y: auto;
+}
+.ws-cmenu--sub.is-flipped {
+  right: calc(100% + 3px);
+  left: auto;
+}
+.ws-cmenu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  outline: 0;
+  background: transparent;
+  color: var(--mk-text);
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: default;
+}
+.ws-cmenu__item:not(:disabled):hover,
+.ws-cmenu__item:not(:disabled):focus-visible,
+.ws-cmenu__item.is-open {
+  background: var(--mk-accent);
+  color: #fff;
+}
+.ws-cmenu__item:disabled {
+  color: var(--mk-text-faint);
+}
+.ws-cmenu__item.is-danger {
+  color: var(--mk-danger);
+}
+.ws-cmenu__item.is-danger:not(:disabled):hover,
+.ws-cmenu__item.is-danger:not(:disabled):focus-visible {
+  background: var(--mk-danger);
+  color: #fff;
+}
+.ws-cmenu__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  color: var(--mk-text-muted);
+}
+.ws-cmenu__item:not(:disabled):hover .ws-cmenu__icon,
+.ws-cmenu__item:not(:disabled):focus-visible .ws-cmenu__icon,
+.ws-cmenu__item.is-open .ws-cmenu__icon,
+.ws-cmenu__item:disabled .ws-cmenu__icon {
+  color: inherit;
+}
+.ws-cmenu__icon .ws-logo {
+  border: 0;
+}
+.ws-cmenu__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ws-cmenu__hint {
+  color: var(--mk-text-faint);
+  font-size: 12px;
+}
+.ws-cmenu__item:not(:disabled):hover .ws-cmenu__hint,
+.ws-cmenu__item:not(:disabled):focus-visible .ws-cmenu__hint {
+  color: rgba(255, 255, 255, 0.8);
+}
+.ws-cmenu__chev {
+  color: var(--mk-text-faint);
+}
+.ws-cmenu__item.is-open .ws-cmenu__chev,
+.ws-cmenu__item:hover .ws-cmenu__chev {
+  color: inherit;
+}
+.ws-cmenu__sep {
+  height: 1px;
+  margin: 5px 8px;
+  background: var(--mk-line);
+}
+.ws-cmenu__header {
+  padding: 4px 8px 3px;
+  overflow: hidden;
+  color: var(--mk-text-faint);
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-cmenu__check {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Details, notes and the smaller pieces inside panels. */
+.ws-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ws-sec__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ws-seg {
+  flex-wrap: wrap;
+  align-self: flex-start;
+}
+.ws-seg .mk-seg__opt[data-on="true"] {
+  background: var(--ws-seg-on);
+  color: var(--mk-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+.ws-details {
+  padding-top: 12px;
+  border-top: 0.5px solid var(--mk-line);
+}
+.ws-details > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+.ws-details > summary::-webkit-details-marker {
+  display: none;
+}
+.ws-details > summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--mk-text-faint);
+  border-bottom: 1.5px solid var(--mk-text-faint);
+  transform: rotate(-45deg);
+  transition: transform var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-details[open] > summary {
+  margin-bottom: 12px;
+}
+.ws-details[open] > summary::before {
+  transform: rotate(45deg);
+}
+.ws-toast {
+  position: fixed;
+  z-index: 70;
+  top: 62px;
+  left: 50%;
+  translate: -50% 0;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: rgba(28, 28, 30, 0.9);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-backdrop-filter: var(--ws-blur);
+  backdrop-filter: var(--ws-blur);
+  box-shadow: var(--ws-float-shadow);
+  animation: ws-pop var(--mk-dur) var(--mk-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-float,
+  .ws-ask,
+  .ws-sheet,
+  .ws-sheet-wrap,
+  .ws-dock,
+  .ws-toast,
+  .ws-cmenu-root,
+  .ws-turn.is-busy p {
+    animation: none;
+  }
+}
+
+/* Small windows: panels become sheets from the bottom, and the dock shows icons only. */
+@media (max-width: 900px) {
+    .ws-float,
+  .ws-float--right {
+    width: 330px;
+  }
+  .ws-askbtn kbd {
+    display: none;
+  }
+}
+@media (max-width: 720px) {
+  .ws-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .ws-summary {
+    display: none;
+  }
+  .ws-bar__side--end {
+    grid-column: 2;
+  }
+}
+@media (max-width: 640px) {
+  .ws-float,
+  .ws-float--right {
+    top: auto;
+    right: 8px;
+    bottom: 60px;
+    left: 8px;
+    width: auto;
+    height: min(70%, 600px);
+  }
+  }
+@media (max-width: 600px) {
+  .ws-bar {
+    top: 8px;
+    right: 8px;
+    left: 8px;
+    gap: 6px;
+  }
+  .ws-mark__name {
+    display: none;
+  }
+  .ws-askbtn kbd,
+  .ws-dock__btn span {
+    display: none;
+  }
+  .ws-dock__btn {
+    padding: 0 10px;
+  }
+  .ws-dock {
+    bottom: 10px;
+  }
+  .ws-ask {
+    bottom: 64px;
+    width: calc(100% - 16px);
+  }
+  .ws-sheet-wrap {
+    padding: 60px 8px 8px;
+  }
+  .ws-sheet {
+    padding: 20px;
+  }
+  }
+
+/* ---------- v0.8: connecting the AI first, and templates ---------- */
+.ws-connpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mk-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ws-connpill:hover,
+.ws-connpill.is-on {
+  background: var(--ws-fill);
+}
+.ws-connpill__state {
+  color: var(--mk-text-faint);
+  font-size: 12px;
+}
+.ws-float--connect {
+  z-index: 26;
+  top: 64px;
+  right: 12px;
+  bottom: auto;
+  width: 440px;
+  max-height: calc(100% - 140px);
+}
+.ws-float--connect .ws-connect-panel {
+  padding: 4px 20px 20px;
+}
+.ws-float--connect .ws-connect-panel > .mk-stack:first-child {
+  display: none;
+}
+.ws-connect-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.ws-conn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ws-conn-group .mk-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ws-conn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.ws-conn {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--mk-dur-fast) var(--mk-ease), background-color var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-conn:hover {
+  background: var(--ws-fill-hover);
+}
+.ws-conn.is-on {
+  border-color: var(--mk-accent);
+  background: var(--mk-accent-soft);
+}
+.ws-conn .ws-status-dot {
+  margin-top: 6px;
+}
+.ws-conn__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ws-conn__text strong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ws-conn__text > span {
+  overflow: hidden;
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-conn__tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--mk-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+.ws-conn-ok {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mk-ok);
+  font-size: 13px;
+  font-weight: 500;
+}
+.ws-connect code {
+  font-family: var(--mk-font-mono);
+  font-size: 12px;
+}
+.ws-link.is-on {
+  color: var(--mk-accent);
+}
+.ws-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.ws-template {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--mk-dur-fast) var(--mk-ease), background-color var(--mk-dur-fast) var(--mk-ease), border-color var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-template:hover {
+  border-color: var(--mk-accent);
   background: var(--mk-surface);
-  font-size: var(--mk-text-sm);
+  transform: translateY(-1px);
+}
+.ws-template strong {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ws-template > span:last-child {
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.ws-template__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--mk-accent);
+  color: #fff;
+}
+.ws-template__icon--phone {
+  background: #1d1d1f;
+}
+.ws-template__icon--android {
+  background: #3ddc84;
+  color: #073042;
+}
+.ws-template__icon--phones {
+  background: #30b0c7;
+}
+.ws-template__icon--sparkle {
+  background: linear-gradient(135deg, #af52de, #5e5ce6);
+}
+.ws-template__icon--cart {
+  background: #ff9500;
+}
+.ws-template__icon--tool {
+  background: #8e8e93;
+}
+.ws-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--mk-text-faint);
+  font-size: 12px;
+}
+.ws-or::before,
+.ws-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--mk-line);
+}
+@media (max-width: 640px) {
+  .ws-float--connect {
+    top: 56px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+  }
+  .ws-connpill__state {
+    display: none;
+  }
+}
+
+/* ---------- v0.8: a canvas that's easy to change, like n8n ---------- */
+/* Cards arrive with a small pop, and a swapped service slides in. */
+@keyframes ws-node-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+@keyframes ws-swap-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.ws-node {
+  position: relative;
+}
+.ws-node__body {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: inherit;
+  min-width: 0;
+  animation: ws-swap-in 0.28s var(--mk-ease);
+}
+
+
+/* Hover tools on a card: ask, swap, remove. */
+.ws-node__tools {
+  position: absolute;
+  top: -14px;
+  right: 10px;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 0.5px solid var(--ws-glass-line);
+  border-radius: 9px;
+  background: var(--ws-glass-strong);
+  box-shadow: var(--mk-shadow-2);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity var(--mk-dur-fast) var(--mk-ease), transform var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-node:hover .ws-node__tools,
+.ws-node.is-selected .ws-node__tools,
+.ws-node__tools:focus-within {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.react-flow__node.dragging .ws-node__tools {
+  opacity: 0;
+}
+.ws-node__tools button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 22px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--mk-text-muted);
+  cursor: pointer;
+}
+.ws-node__tools button:hover {
+  background: var(--ws-fill);
+  color: var(--mk-text);
+}
+.ws-node__tools button.is-danger:hover {
+  background: var(--mk-danger-soft);
+  color: var(--mk-danger);
+}
+
+/* The + on the app card: add a part. */
+.ws-node__add {
+  position: absolute;
+  top: 50%;
+  right: -13px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mk-accent);
+  color: #fff;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--mk-accent) 45%, transparent);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.8);
+  transition: opacity var(--mk-dur-fast) var(--mk-ease), transform var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-node:hover .ws-node__add,
+.ws-node.is-selected .ws-node__add,
+.ws-node__add:focus-visible {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* Every line says whether it's connected. */
+.ws-sig {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--mk-ok);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+.ws-sig--warning {
+  background: var(--mk-warn);
+}
+.ws-sig--blocked,
+.ws-sig--missing {
+  background: var(--mk-danger);
+}
+.ws-sig--unknown {
+  background: var(--mk-text-faint);
+}
+.ws-wire-label {
+  padding-left: 4px;
+}
+@keyframes ws-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ws-sig-color) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+.ws-wire-label--warning .ws-sig {
+  --ws-sig-color: var(--mk-warn);
+}
+.ws-wire-label--blocked .ws-sig,
+.ws-wire-label--missing .ws-sig {
+  --ws-sig-color: var(--mk-danger);
+}
+/* A pulse runs from the app to the service when a line is made or changes. */
+@keyframes ws-flow {
+  0% {
+    stroke-dashoffset: 240;
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -240;
+    opacity: 0;
+  }
+}
+.ws-canvas .ws-wire-flow {
+  stroke: var(--mk-ok);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 40 400;
+  opacity: 0;
+  animation: ws-flow 1.4s var(--mk-ease) 1 forwards;
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+.ws-canvas .ws-wire-flow--warning {
+  stroke: var(--mk-warn);
+}
+.ws-canvas .ws-wire-flow--blocked,
+.ws-canvas .ws-wire-flow--missing {
+  stroke: var(--mk-danger);
+}
+.ws-canvas .ws-wire-flow--unknown {
+  stroke: var(--mk-text-faint);
+}
+
+/* The add-a-part picker. */
+.ws-add-wrap {
+  position: fixed;
+  z-index: 55;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 72px 16px 16px;
+  background: color-mix(in srgb, var(--mk-bg) 30%, transparent);
+  animation: ws-fade 0.15s ease-out;
+}
+.ws-add {
+  display: flex;
+  flex-direction: column;
+  width: min(620px, 100%);
+  max-height: min(620px, 100%);
+  border: 0.5px solid var(--ws-glass-line);
+  border-radius: 18px;
+  background: var(--ws-glass-strong);
+  -webkit-backdrop-filter: var(--ws-blur);
+  backdrop-filter: var(--ws-blur);
+  box-shadow: var(--ws-float-shadow);
+  overflow: hidden;
+  animation: ws-pop var(--mk-dur) var(--mk-ease);
+}
+.ws-add__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 0.5px solid var(--mk-line);
+  color: var(--mk-text-muted);
+}
+.ws-add__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--mk-text);
+  font: inherit;
+  font-size: 16px;
+}
+.ws-add kbd {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--ws-fill);
+  color: var(--mk-text-faint);
+  font-family: var(--mk-font-body);
+  font-size: 11px;
+}
+.ws-add__list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+  overscroll-behavior: contain;
+}
+.ws-add__list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ws-add__group {
+  display: block;
+  padding: 10px 10px 4px;
+  color: var(--mk-text-faint);
+  font-size: 11px;
+  font-weight: 600;
+}
+.ws-add__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--mk-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ws-add__row.is-active {
+  background: var(--mk-accent-soft);
+}
+.ws-add__row:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.ws-add__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.ws-add__text strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.ws-add__text span {
+  overflow: hidden;
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-add__tag {
+  color: var(--mk-accent);
+  font-size: 11px;
+  font-weight: 600;
+}
+.ws-add__empty {
+  padding: 24px;
+  color: var(--mk-text-muted);
+  text-align: center;
+}
+.ws-add__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 0.5px solid var(--mk-line);
+  color: var(--mk-text-faint);
+  font-size: 11px;
+}
+.ws-dock__add {
+  background: var(--mk-accent);
+  color: #fff;
+}
+.ws-dock__add:hover:not(:disabled) {
+  background: var(--mk-accent-hover);
+  color: #fff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws-node,
+  .ws-node__body,
+  .ws-wire-label .ws-sig,
+  .ws-add,
+  .ws-add-wrap {
+    animation: none;
+  }
+  .ws-canvas .ws-wire-flow {
+    display: none;
+  }
+}
+
+/* No colored side bars: a check, a variable or a change is a soft tinted card, and its badge carries the color. */
+.ws-result--blocked,
+.ws-result--missing {
+  background: var(--mk-danger-soft);
+}
+.ws-result--warning {
+  background: var(--mk-warn-soft);
+}
+.ws-envrow,
+.ws-activity__item,
+.ws-activity-row,
+.ws-work__stale,
+.ws-note-inline {
+  border: 0;
+  border-radius: 12px;
+  background: var(--mk-surface-sunk);
+}
+.ws-envrow.is-public,
+.ws-work__stale,
+.ws-note-inline {
+  background: var(--mk-warn-soft);
+}
+.ws-activity-row.is-change {
+  background: var(--mk-accent-soft);
+}
+.ws-envlist li {
+  padding-left: 0;
+}
+
+/* The steps at the top of the planner sheet. Any step can be reopened. */
+.ws-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: -8px 0 20px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--ws-fill);
+  width: fit-content;
+}
+.ws-steps__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px 0 6px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--mk-text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ws-steps__step:hover {
+  color: var(--mk-text);
+}
+.ws-steps__step.is-on {
+  background: var(--ws-seg-on);
+  color: var(--mk-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.ws-steps__n {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--mk-line-strong);
+  color: var(--mk-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+.ws-steps__step.is-on .ws-steps__n {
+  background: var(--mk-accent);
+  color: #fff;
+}
+.ws-steps__step.is-done .ws-steps__n {
+  background: var(--mk-ok);
+  color: #fff;
+}
+
+/* ---------- v0.9: the project panel: run, check, set variables, read the database ---------- */
+.ws-proj {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 20px 24px;
+  font-size: 13px;
+}
+.ws-proj__link {
+  display: flex;
+  gap: 8px;
+}
+.ws-proj__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--mk-text-muted);
+}
+.ws-proj__folder {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--mk-text);
+  font-family: var(--mk-font-mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-proj__tag {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--ws-fill);
+  color: var(--mk-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+.ws-proj__tag.is-ok {
+  background: var(--mk-ok-soft);
+  color: var(--mk-ok);
+}
+.ws-proj__tag.is-bad {
+  background: var(--mk-danger-soft);
+  color: var(--mk-danger);
+}
+.ws-proj__tag.is-warn {
+  background: var(--mk-warn-soft);
+  color: var(--mk-warn);
+}
+.ws-proj__issues {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px 10px 28px;
+  border-radius: 12px;
+  background: var(--mk-warn-soft);
+  line-height: 1.4;
+}
+.ws-proj__error {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--mk-danger-soft);
+  color: var(--mk-danger);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.ws-proj__sec {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ws-proj__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ws-proj__head .mk-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ws-proj__health {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--mk-text-muted);
+  font-size: 12px;
+}
+.ws-proj__health.is-ok {
+  color: var(--mk-ok);
+}
+.ws-proj__health.is-bad {
+  color: var(--mk-danger);
+}
+.ws-proj__runrow {
+  display: flex;
+  gap: 8px;
+}
+.ws-proj__cmd {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mk-font-mono);
+  font-size: 12px;
+}
+.ws-chip.is-on {
+  background: var(--mk-accent);
+  color: #fff;
+}
+.ws-proj__log {
+  max-height: 220px;
+  margin: 0;
+  padding: 10px 12px;
+  overflow: auto;
+  border-radius: 10px;
+  background: #1c1c1e;
+  color: #e5e5ea;
+  font-family: var(--mk-font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ws-proj__envs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ws-proj__env {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--mk-surface-sunk);
+}
+.ws-proj__envtop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.ws-proj__envtop code {
+  font-family: var(--mk-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.ws-proj__edit {
+  margin-left: auto;
+}
+.ws-proj__env .mk-hint {
+  overflow-wrap: anywhere;
+}
+.ws-proj__envform {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ws-proj__envform .mk-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mk-font-mono);
+}
+.ws-proj__probe {
+  border-radius: 12px;
+  background: var(--mk-surface-sunk);
+}
+.ws-proj__probe > summary,
+.ws-proj__probe.is-idle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  list-style: none;
+  cursor: pointer;
+}
+.ws-proj__probe > summary::-webkit-details-marker {
+  display: none;
+}
+.ws-proj__probe.is-bad {
+  background: var(--mk-danger-soft);
+}
+.ws-proj__probetext {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.ws-proj__probetext strong {
+  font-size: 13px;
+}
+.ws-proj__probetext span {
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.ws-proj__code {
+  flex: none;
+  color: var(--mk-text-faint);
+  font-family: var(--mk-font-mono);
+  font-size: 11px;
+}
+.ws-proj__probebody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 10px 10px;
+}
+.ws-proj__probebody pre,
+.ws-proj__sample pre {
+  max-height: 200px;
+  margin: 0;
+  padding: 8px 10px;
+  overflow: auto;
+  border-radius: 8px;
+  background: var(--mk-surface);
+  font-family: var(--mk-font-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ws-proj__sample {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+.ws-proj__sql {
+  font-family: var(--mk-font-mono);
+  font-size: 12px;
+}
+.ws-proj__table {
+  max-height: 260px;
+  overflow: auto;
+}
+.ws-proj__table td,
+.ws-proj__table th {
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.ws-node__icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  object-fit: cover;
+}
+.ws-proj__logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ws-proj__logobtn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  overflow: hidden;
+  border: 1.5px dashed var(--mk-line-strong);
+  border-radius: 12px;
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text-muted);
+  cursor: pointer;
+}
+.ws-proj__logobtn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ws-proj__logotext {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ws-proj__logotext > span {
+  color: var(--mk-text-muted);
+  font-size: 12px;
+}
+.ws-conn-more ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding-left: 1.1em;
+  font-size: 12px;
+}
+.ws-conn-more code {
+  font-family: var(--mk-font-mono);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.ws-proj__agent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--mk-surface-sunk);
+}
+.ws-proj__branch {
+  font-family: var(--mk-font-mono);
+  font-size: 11px;
+  color: var(--mk-text-muted);
+}
+.ws-proj__files ul {
+  margin: 4px 0 0;
+  padding-left: 1.1em;
+  font-size: 11px;
+}
+.ws-proj__files summary {
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.ws-proj__addagent {
+  display: flex;
+  gap: 6px;
+}
+.ws-proj__addagent .mk-select {
+  width: auto;
+  flex: none;
+}
+.ws-proj__addagent .mk-input {
+  flex: 1;
+  min-width: 0;
 }

@@ -2,10 +2,12 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
+import { SLOT_IDS } from "@/engine/schema";
 import { sharedPlanSchema, type SharedPlan } from "@/engine/share";
+import { AGENT_ID, agentName, type AgentState } from "./pairing";
 
 /**
- * Plans shared between WhyStack's browser tab and Claude, kept as small JSON files in
+ * Plans shared between StackWise's browser tab and Claude, kept as small JSON files in
  * `.whystack/` (gitignored) so the app's server and the command-line MCP server both see them.
  * The browser shares the plan you have open; Claude reads and changes it through the MCP tools;
  * the browser polls and shows what Claude did. Nothing here leaves the machine.
@@ -13,6 +15,8 @@ import { sharedPlanSchema, type SharedPlan } from "@/engine/share";
 
 export const PLAN_ID = /^[A-Za-z0-9_-]{1,64}$/;
 const ACTIVITY_LIMIT = 100;
+const MESSAGE_LIMIT = 200;
+export const MESSAGE_MAX = 4000;
 
 export const activitySchema = z.object({
   id: z.string(),
@@ -24,6 +28,40 @@ export const activitySchema = z.object({
 });
 export type Activity = z.infer<typeof activitySchema>;
 
+/** One message between the person and a coding agent, in either direction. */
+export const messageSchema = z.object({
+  id: z.string(),
+  at: z.string(),
+  from: z.enum(["you", "agent"]),
+  /** Who it's for (from you) or who wrote it (from an agent). */
+  agent: z.string().regex(AGENT_ID),
+  text: z.string().max(MESSAGE_MAX),
+  /** The part of the plan it's about. */
+  about: z.enum(SLOT_IDS).optional(),
+  /** The plan's version when the person wrote it, so the agent can tell if it changed since. */
+  planVersion: z.number().int().min(0).optional(),
+  /** Files the agent says it changed. */
+  files: z.array(z.string().max(300)).max(50).optional(),
+  status: z.enum(["working", "done", "needs_you"]).optional(),
+  /** When the agent picked it up. */
+  deliveredAt: z.string().optional(),
+});
+export type Message = z.infer<typeof messageSchema>;
+
+export const agentStateSchema = z.object({
+  id: z.string().regex(AGENT_ID),
+  name: z.string().max(60),
+  firstSeenAt: z.string(),
+  lastSeenAt: z.string(),
+  waitingSince: z.string().optional(),
+  waitId: z.string().max(40).optional(),
+  waitingUntil: z.string().optional(),
+  activeAt: z.string(),
+  stoppedAt: z.string().optional(),
+  stopReason: z.enum(["idle"]).optional(),
+  status: z.enum(["working", "done", "needs_you"]).optional(),
+}) satisfies z.ZodType<AgentState>;
+
 export const planRecordSchema = z.object({
   id: z.string().regex(PLAN_ID),
   /** Goes up when the plan itself changes. */
@@ -34,6 +72,12 @@ export const planRecordSchema = z.object({
   touchedAt: z.string(),
   plan: sharedPlanSchema,
   activity: z.array(activitySchema),
+  /** The conversation with coding agents. Older files have none. */
+  messages: z.array(messageSchema).default([]),
+  /** Agents that have listened on this plan, by id. */
+  agents: z.record(z.string(), agentStateSchema).default({}),
+  /** The plan as it was when a project's whystack.plan.json and this copy last agreed: the base for merging them. */
+  synced: sharedPlanSchema.optional(),
 });
 export type PlanRecord = z.infer<typeof planRecordSchema>;
 
@@ -46,6 +90,16 @@ export interface Registry {
   addActivity(id: string, activity: Omit<Activity, "id" | "at">): PlanRecord | null;
   activeId(): string | null;
   setActive(id: string | null): void;
+  /** The person writes to one agent. Returns null when the plan isn't shared. */
+  postMessage(id: string, message: Pick<Message, "agent" | "text" | "about" | "planVersion">): Message | null;
+  /** Hands an agent the messages waiting for it, oldest first, and marks them delivered. */
+  takeMessages(id: string, agent: string, at: string): Message[];
+  /** An agent answers. */
+  agentReply(id: string, message: Pick<Message, "agent" | "text" | "files" | "status">): Message | null;
+  /** Remember the copy a project's plan file and this record both have, for the next merge. */
+  setSynced(id: string, plan: SharedPlan): void;
+  /** Updates what StackWise knows about an agent, creating it the first time it's seen. */
+  updateAgent(id: string, agent: string, change: (current: AgentState) => AgentState, at: string): AgentState | null;
 }
 
 function writeAtomic(file: string, data: unknown) {
@@ -110,6 +164,9 @@ export function createRegistry(root: string): Registry {
         touchedAt: at,
         plan: sharedPlanSchema.parse(plan),
         activity: withActivity(previous?.activity ?? [], activity, at),
+        messages: previous?.messages ?? [],
+        agents: previous?.agents ?? {},
+        ...(previous?.synced ? { synced: previous.synced } : {}),
       };
       writeAtomic(planFile(id), record);
       return record;
@@ -121,6 +178,49 @@ export function createRegistry(root: string): Registry {
       const record = { ...previous, touchedAt: at, activity: withActivity(previous.activity, activity, at) };
       writeAtomic(planFile(id), record);
       return record;
+    },
+    postMessage(id, message) {
+      const previous = read(id);
+      if (!previous) return null;
+      const at = laterThan(previous.touchedAt);
+      const entry = messageSchema.parse({ ...message, id: randomUUID().slice(0, 12), at, from: "you", text: message.text.slice(0, MESSAGE_MAX) });
+      writeAtomic(planFile(id), { ...previous, touchedAt: at, messages: [...previous.messages, entry].slice(-MESSAGE_LIMIT) });
+      return entry;
+    },
+    takeMessages(id, agent, now) {
+      const previous = read(id);
+      if (!previous) return [];
+      const waiting = previous.messages.filter((m) => m.from === "you" && m.agent === agent && !m.deliveredAt);
+      if (waiting.length === 0) return [];
+      const at = laterThan(previous.touchedAt);
+      const ids = new Set(waiting.map((m) => m.id));
+      const messages = previous.messages.map((m) => (ids.has(m.id) ? { ...m, deliveredAt: now } : m));
+      const agents = previous.agents[agent] ? { ...previous.agents, [agent]: { ...previous.agents[agent], activeAt: now, lastSeenAt: now } } : previous.agents;
+      writeAtomic(planFile(id), { ...previous, touchedAt: at, messages, agents });
+      return waiting.map((m) => ({ ...m, deliveredAt: now }));
+    },
+    agentReply(id, message) {
+      const previous = read(id);
+      if (!previous) return null;
+      const at = laterThan(previous.touchedAt);
+      const entry = messageSchema.parse({ ...message, id: randomUUID().slice(0, 12), at, from: "agent", text: message.text.slice(0, MESSAGE_MAX) });
+      const current = previous.agents[message.agent];
+      const agents = current ? { ...previous.agents, [message.agent]: { ...current, lastSeenAt: at, activeAt: at, status: message.status } } : previous.agents;
+      writeAtomic(planFile(id), { ...previous, touchedAt: at, messages: [...previous.messages, entry].slice(-MESSAGE_LIMIT), agents });
+      return entry;
+    },
+    updateAgent(id, agent, change, now) {
+      const previous = read(id);
+      if (!previous) return null;
+      const at = laterThan(previous.touchedAt);
+      const current: AgentState = previous.agents[agent] ?? { id: agent, name: agentName(agent), firstSeenAt: now, lastSeenAt: now, activeAt: now };
+      const next = agentStateSchema.parse(change(current));
+      writeAtomic(planFile(id), { ...previous, touchedAt: at, agents: { ...previous.agents, [agent]: next } });
+      return next;
+    },
+    setSynced(id, plan) {
+      const previous = read(id);
+      if (previous) writeAtomic(planFile(id), { ...previous, synced: sharedPlanSchema.parse(plan) });
     },
     activeId() {
       try {

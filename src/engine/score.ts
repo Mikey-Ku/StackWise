@@ -179,14 +179,14 @@ export interface Recommendation {
   results: CheckResult[];
   score: PlanScore;
   needed: SlotId[];
-  /** Slots WhyStack filled, as opposed to ones the person chose. */
+  /** Slots StackWise filled, as opposed to ones the person chose. */
   autoPicked: SlotId[];
 }
 
 /**
  * Find the best-scoring plan. Pinned slots stay as the person set them (an empty string keeps a
  * slot empty); every other needed slot is searched over fully researched options only, because
- * WhyStack never recommends something it can't verify. Branch and bound keeps this fast: a
+ * StackWise never recommends something it can't verify. Branch and bound keeps this fast: a
  * partial plan is dropped as soon as even its best possible finish can't beat the best plan found.
  */
 export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selection = {}): Recommendation {
@@ -225,7 +225,7 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
       }
       unary.set(`${slot}:${option.id}`, value);
     }
-    candidates.get(slot)!.sort((a, b) => unary.get(`${slot}:${b.id}`)! - unary.get(`${slot}:${a.id}`)! || a.id.localeCompare(b.id));
+    candidates.get(slot)!.sort((a, b) => unary.get(`${slot}:${b.id}`)! - unary.get(`${slot}:${a.id}`)! || tieBreak(index, slot, a.id, b.id));
   }
 
   const pairValue = new Map<string, number>();
@@ -353,8 +353,15 @@ export function alternativesFor(index: CatalogIndex, input: PlanInput, selection
     .sort((a, b) => {
       const blocked = Number(a.worst === "blocked") - Number(b.worst === "blocked");
       const verified = Number(a.option.coverage === "partial") - Number(b.option.coverage === "partial");
-      return blocked || verified || b.total - a.total || a.option.id.localeCompare(b.option.id);
+      return blocked || verified || b.total - a.total || tieBreak(index, slot, a.option.id, b.option.id);
     });
+}
+
+/** Exact ties go to the option listed first in planning.json's tie_order for that part, then alphabetically. */
+export function tieBreak(index: CatalogIndex, slot: SlotId, a: string, b: string): number {
+  const order = index.catalog.planning.tie_order[slot] ?? [];
+  const rank = (id: string) => (order.includes(id) ? order.indexOf(id) : order.length);
+  return rank(a) - rank(b) || a.localeCompare(b);
 }
 
 export interface CloseCall {

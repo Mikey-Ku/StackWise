@@ -472,5 +472,113 @@
     "url": "https://logrocket.com",
     "file": "logrocket.png",
     "source": "https://logrocket.com/favicon/apple-touch-icon.png"
+  },
+  "spring-boot": {
+    "from": "simple-icons",
+    "slug": "springboot",
+    "file": "spring-boot.svg",
+    "source": "https://simpleicons.org/?q=springboot"
+  },
+  "django": {
+    "from": "simple-icons",
+    "slug": "django",
+    "file": "django.svg",
+    "source": "https://simpleicons.org/?q=django"
+  },
+  "fastapi": {
+    "from": "simple-icons",
+    "slug": "fastapi",
+    "file": "fastapi.svg",
+    "source": "https://simpleicons.org/?q=fastapi"
+  },
+  "rails": {
+    "from": "simple-icons",
+    "slug": "rubyonrails",
+    "file": "rails.svg",
+    "source": "https://simpleicons.org/?q=rubyonrails"
+  },
+  "laravel": {
+    "from": "simple-icons",
+    "slug": "laravel",
+    "file": "laravel.svg",
+    "source": "https://simpleicons.org/?q=laravel"
+  },
+  "express": {
+    "from": "simple-icons",
+    "slug": "express",
+    "file": "express.svg",
+    "source": "https://simpleicons.org/?q=express"
+  },
+  "go-net-http": {
+    "from": "simple-icons",
+    "slug": "go",
+    "file": "go-net-http.svg",
+    "source": "https://simpleicons.org/?q=go"
+  },
+  "aspnet-core": {
+    "from": "simple-icons",
+    "slug": "dotnet",
+    "file": "aspnet-core.svg",
+    "source": "https://simpleicons.org/?q=dotnet"
+  },
+  "n8n": {
+    "from": "simple-icons",
+    "slug": "n8n",
+    "file": "n8n.svg",
+    "source": "https://simpleicons.org/?q=n8n"
+  },
+  "zapier": {
+    "from": "simple-icons",
+    "slug": "zapier",
+    "file": "zapier.svg",
+    "source": "https://simpleicons.org/?q=zapier"
+  },
+  "make": {
+    "from": "simple-icons",
+    "slug": "make",
+    "file": "make.svg",
+    "source": "https://simpleicons.org/?q=make"
+  },
+  "temporal": {
+    "from": "simple-icons",
+    "slug": "temporal",
+    "file": "temporal.svg",
+    "source": "https://simpleicons.org/?q=temporal"
+  },
+  "mapbox": {
+    "from": "simple-icons",
+    "slug": "mapbox",
+    "file": "mapbox.svg",
+    "source": "https://simpleicons.org/?q=mapbox"
+  },
+  "pipedream": {
+    "from": "site",
+    "url": "https://pipedream.com",
+    "file": "pipedream.svg",
+    "source": "https://pipedream.com/assets/favicon.svg"
+  },
+  "activepieces": {
+    "from": "site",
+    "url": "https://www.activepieces.com",
+    "file": "activepieces.svg",
+    "source": "https://www.activepieces.com/favicon.svg"
+  },
+  "espn": {
+    "from": "site",
+    "url": "https://www.espn.com",
+    "file": "espn.png",
+    "source": "https://www.google.com/s2/favicons?domain=www.espn.com&sz=128"
+  },
+  "sleeper": {
+    "from": "site",
+    "url": "https://sleeper.com",
+    "file": "sleeper.ico",
+    "source": "https://sleepercdn.com/favicon-42796bbb4386661535d79905a6379e51.ico"
+  },
+  "openweather": {
+    "from": "site",
+    "url": "https://openweathermap.org",
+    "file": "openweather.svg",
+    "source": "https://openweathermap.org/icon.svg?icon.12sbjawem7k1w.svg"
   }
 }

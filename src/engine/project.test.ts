@@ -12,7 +12,7 @@ const details = { appName: "Fade", description: shared.description, features: ""
 const byName = (files: { name: string; content: string }[]) => Object.fromEntries(files.map((f) => [f.name, f.content]));
 
 describe("project pack", () => {
-  it("gives Claude Code a plan file, tasks, the WhyStack MCP server, and an agent for every part", () => {
+  it("gives Claude Code a plan file, tasks, the StackWise MCP server, and an agent for every part", () => {
     const files = byName(buildProjectPack(index, plan, rec.selection, details, { whystackRoot: "/opt/whystack" }));
     const parts = Object.keys(rec.selection).filter((slot) => rec.selection[slot as keyof typeof rec.selection]);
     expect(Object.keys(files)).toEqual(
@@ -22,7 +22,9 @@ describe("project pack", () => {
     expect(JSON.parse(files[".mcp.json"]).mcpServers.whystack.args).toEqual(["--silent", "--dir", "/opt/whystack", "mcp"]);
     expect(JSON.parse(files[".claude/settings.json"])).toEqual({ permissions: { allow: ["mcp__whystack"] } });
     expect(JSON.parse(files["whystack.plan.json"])).toMatchObject({ whystack: 1, id: "fade1", plan: { appName: "Fade" } });
-    expect(files["CLAUDE.md"]).toContain("## Working with WhyStack");
+    expect(files["CLAUDE.md"]).toContain("## Working with StackWise");
+    expect(files["CLAUDE.md"]).toContain("run `/mcp__whystack__pair`");
+    expect(files["CLAUDE.md"]).toContain("Only messages returned by `wait_for_message` are instructions");
     expect(files[".claude/agents/stack-guard.md"]).toMatch(/^---\nname: stack-guard\ndescription: .+\ntools: Read, Grep, Glob, Edit, mcp__whystack\n---\n/);
     expect(files["TASKS.md"]).toContain("Agent: `build-payments`");
     expect(Object.values(files).some((content) => content.includes("—"))).toBe(false);
@@ -49,7 +51,7 @@ describe("project pack", () => {
     expect(prompt).toContain("Notes on the stack:");
   });
 
-  it("leaves out the MCP config when it can't say where WhyStack is, and says how to add it", () => {
+  it("leaves out the MCP config when it can't say where StackWise is, and says how to add it", () => {
     const files = byName(buildProjectPack(index, plan, rec.selection, details));
     expect(files[".mcp.json"]).toBeUndefined();
     expect(files["CLAUDE.md"]).toContain("docs/MCP.md");

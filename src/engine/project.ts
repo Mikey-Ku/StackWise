@@ -6,9 +6,9 @@ import { buildSpecPack, type SpecDetails, type SpecFile } from "./spec";
 
 /**
  * The project pack: the spec pack plus what an AI builder needs to work through it on its own.
- * For Claude Code that's a plan file, the WhyStack MCP server in `.mcp.json`, a task list, and
+ * For Claude Code that's a plan file, the StackWise MCP server in `.mcp.json`, a task list, and
  * agents: one per part of the stack, a stack guard that checks every service change with
- * WhyStack, a setup guide and a reviewer. File formats follow Claude Code's docs for subagents
+ * StackWise, a setup guide and a reviewer. File formats follow Claude Code's docs for subagents
  * (.claude/agents), skills (.claude/skills) and project MCP servers (.mcp.json).
  */
 
@@ -18,7 +18,7 @@ export interface ProjectDetails extends SpecDetails {
 }
 
 export interface ProjectOptions {
-  /** Where WhyStack lives on this machine, so the project can start its MCP server. */
+  /** Where StackWise lives on this machine, so the project can start its MCP server. */
   whystackRoot?: string;
 }
 
@@ -70,7 +70,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
     content: [
       `# Tasks for ${name}`,
       "",
-      `Planned with WhyStack on ${details.generatedOn}. Work top to bottom. In Claude Code, \`/next-step\` does the next unchecked task with the agent it names. Check a box only when everything under "Done when" is true.`,
+      `Planned with StackWise on ${details.generatedOn}. Work top to bottom. In Claude Code, \`/next-step\` does the next unchecked task with the agent it names. Check a box only when everything under "Done when" is true.`,
       "",
       "## 0. Before you build",
       "",
@@ -94,16 +94,16 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
 
   const mcpReady = Boolean(options.whystackRoot);
   const whystackSection = [
-    "## Working with WhyStack",
+    "## Working with StackWise",
     "",
-    "`whystack.plan.json` is the record of this stack and why each part was picked. The WhyStack MCP server" +
+    "`whystack.plan.json` is the record of this stack and why each part was picked. The StackWise MCP server" +
       (mcpReady ? " (in `.mcp.json`)" : "") +
-      " runs the same checks as the WhyStack planner, from sourced facts.",
+      " runs the same checks as the StackWise planner, from sourced facts.",
     "",
     "- Don't decide from memory whether services work together, what they cost or what their limits are. Before adding, removing or swapping a hosted service, SDK or host, use the `stack-guard` agent, or call `check_stack` yourself.",
     "- After the stack changes, call `update_plan` with a one-line note saying why, then add the decision to DECISIONS.md.",
     "- For exact setup steps and environment variable names, call `setup_steps`.",
-    ...(mcpReady ? [] : ["- The MCP server isn't connected yet. See docs/MCP.md in WhyStack to add it."]),
+    ...(mcpReady ? [] : ["- The MCP server isn't connected yet. See docs/MCP.md in StackWise to add it."]),
     "",
     "## How to build",
     "",
@@ -122,11 +122,11 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
     agent(
       "stack-guard",
       {
-        description: "Use before adding, removing or swapping any hosted service, SDK or host, and whenever someone asks whether two services work together or what they cost. Checks the change with WhyStack and records it in the plan.",
+        description: "Use before adding, removing or swapping any hosted service, SDK or host, and whenever someone asks whether two services work together or what they cost. Checks the change with StackWise and records it in the plan.",
         tools: "Read, Grep, Glob, Edit, mcp__whystack",
       },
       [
-        `You keep ${name}'s stack honest. WhyStack decides whether services work together, from sourced facts. You never decide that from memory.`,
+        `You keep ${name}'s stack honest. StackWise decides whether services work together, from sourced facts. You never decide that from memory.`,
         "",
         "For any proposed change:",
         "",
@@ -212,7 +212,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
                 "",
               ]
             : []),
-          ...(touching.length ? ["## Problems WhyStack found", "", ...touching.map(resultLine), ""] : []),
+          ...(touching.length ? ["## Problems StackWise found", "", ...touching.map(resultLine), ""] : []),
           ...(notes.length ? ["## Good to know", "", ...notes.map(resultLine), ""] : []),
           "## Done when",
           "",
@@ -237,7 +237,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
       "4. Run `spec-reviewer` on the result. If anything fails, fix it or report it, and leave the box unchecked.",
       "5. When the review passes, check the task's box in TASKS.md and say what's next.",
     ]),
-    skill("check-stack", { description: "Check this project's stack with WhyStack and explain every problem, its fix and the cost.", "argument-hint": "[a change to check, like: swap Resend for Postmark]" }, [
+    skill("check-stack", { description: "Check this project's stack with StackWise and explain every problem, its fix and the cost.", "argument-hint": "[a change to check, like: swap Resend for Postmark]" }, [
       "Call `get_plan` and explain, in plain words, every problem with its fix, then the monthly and yearly cost.",
       "",
       "If a change was given ($ARGUMENTS), follow `stack-guard`'s steps for it instead: check it with `check_stack` or `compare_options`, and only update the plan once the person agrees.",

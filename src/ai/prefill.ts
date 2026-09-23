@@ -3,6 +3,7 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import type { Catalog } from "@/engine/schema";
 import { AI_EFFORT, AI_MODEL, AiError, FALLBACK_BETA, withoutEmDashes } from "./config";
+import { askJson, type FetchLike, type ProviderStatus } from "./providers";
 
 /**
  * AI pre-fill: the model reads the description and answers the fixed questions. It must quote the
@@ -76,6 +77,15 @@ export function acceptAnswers(
   }
   const features = [...new Set(output.features.map((f) => withoutEmDashes(f.trim())).filter(Boolean))].slice(0, 8);
   return { guesses, features, discarded };
+}
+
+/** The same reading from OpenAI or Gemini. Quotes that aren't in the description are thrown out the same way. */
+export async function providerPrefill(status: ProviderStatus, catalog: Catalog, description: string, env?: Record<string, string | undefined>, fetchImpl?: FetchLike): Promise<PrefillResult> {
+  // A question id the model made up drops that answer, not the whole reading.
+  const ids = new Set(catalog.needs.map((n) => n.id));
+  const schema = z.object({ answers: z.array(z.object({ need: z.string(), answer: z.enum(["yes", "no", "unclear"]), evidence: z.string() })), features: z.array(z.string()) });
+  const output = await askJson(status, { system: SYSTEM, user: buildPrefillPrompt(catalog, description), schema, name: "prefill_answers" }, env, fetchImpl);
+  return acceptAnswers(description, { ...output, answers: output.answers.filter((a) => ids.has(a.need)) });
 }
 
 export async function aiPrefill(client: Anthropic, catalog: Catalog, description: string): Promise<PrefillResult> {

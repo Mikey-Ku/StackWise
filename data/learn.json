@@ -13,7 +13,12 @@
         "Picking a framework with no server code, then trying to add payments or a private AI key to it anyway",
         "Choosing a framework for its popularity without checking that your hosting choice fully supports it"
       ],
-      "terms": ["server", "environment-variable", "portability", "vendor-lock-in"]
+      "terms": [
+        "server",
+        "environment-variable",
+        "portability",
+        "vendor-lock-in"
+      ]
     },
     "hosting": {
       "what": "Hosting is the computer, or network of computers, that runs your app around the clock and gives it an address on the internet so anyone can open it.",
@@ -28,7 +33,16 @@
         "Assuming background work, like sending a batch of emails, keeps running after the request that started it ends, especially on serverless hosting",
         "Building a live, chat-like feature without checking whether the host can hold connections open for it"
       ],
-      "terms": ["serverless", "server", "edge", "cold-start", "persistent-disk", "websocket", "connection-pooling", "portability"]
+      "terms": [
+        "serverless",
+        "server",
+        "edge",
+        "cold-start",
+        "persistent-disk",
+        "websocket",
+        "connection-pooling",
+        "portability"
+      ]
     },
     "domain": {
       "what": "A domain is your app's own web address, like yourapp.com, instead of the free address your host gives you, like yourapp.vercel.app.",
@@ -44,7 +58,12 @@
         "Budgeting for a discounted first-year price and being surprised by a much higher renewal price the year after",
         "Assuming the domain itself lets an app send email from its own name; most email services still require verifying that exact domain separately"
       ],
-      "terms": ["registrar", "dns", "whois-privacy", "domain-verification"]
+      "terms": [
+        "registrar",
+        "dns",
+        "whois-privacy",
+        "domain-verification"
+      ]
     },
     "database": {
       "what": "The database is where anything your app needs to remember lives: posts, profiles, bookings, whatever people create or you store about them.",
@@ -59,7 +78,16 @@
         "Storing data in a plain file when your host has no persistent disk, so it disappears on the next deploy",
         "Skipping the serverless-friendly check, then hitting dropped connections once real traffic shows up"
       ],
-      "terms": ["relational-database", "document-database", "connection-pooling", "realtime", "persistent-disk", "sdk", "row-level-security", "portability"]
+      "terms": [
+        "relational-database",
+        "document-database",
+        "connection-pooling",
+        "realtime",
+        "persistent-disk",
+        "sdk",
+        "row-level-security",
+        "portability"
+      ]
     },
     "login": {
       "what": "Login is how people prove who they are in your app: creating an account, signing in, and staying signed in across visits.",
@@ -74,7 +102,13 @@
         "Building login before picking a database, then finding the two don't share who's logged in cleanly",
         "Skipping the mobile SDK check, then having to rebuild login for a future phone app"
       ],
-      "terms": ["oauth", "magic-link", "row-level-security", "sdk", "portability"]
+      "terms": [
+        "oauth",
+        "magic-link",
+        "row-level-security",
+        "sdk",
+        "portability"
+      ]
     },
     "files": {
       "what": "File storage is where uploaded photos, videos, PDFs and other files are kept. It's separate from the database, which is built for structured data, not large files.",
@@ -89,7 +123,12 @@
         "Routing large uploads, like videos, through your own server, where size and time limits can cut them off",
         "Making every uploaded file public by default because private access felt like extra work"
       ],
-      "terms": ["signed-url", "egress", "cdn", "portability"]
+      "terms": [
+        "signed-url",
+        "egress",
+        "cdn",
+        "portability"
+      ]
     },
     "payments": {
       "what": "Payments is how your app charges people and keeps track of what they've paid for, whether that's a one-time purchase or a recurring subscription.",
@@ -104,7 +143,16 @@
         "Putting a secret key in browser code instead of keeping it in server-only environment variables",
         "Forgetting to handle the provider's webhooks, so a successful payment never actually unlocks access"
       ],
-      "terms": ["merchant-of-record", "sales-tax", "subscription", "secret-key", "publishable-key", "webhook", "environment-variable", "portability"]
+      "terms": [
+        "merchant-of-record",
+        "sales-tax",
+        "subscription",
+        "secret-key",
+        "publishable-key",
+        "webhook",
+        "environment-variable",
+        "portability"
+      ]
     },
     "ai": {
       "what": "This is the AI model provider your app calls to do things like answer questions, summarize text, or generate images, instead of a feature you'd have to build entirely yourself.",
@@ -119,7 +167,15 @@
         "Calling the AI provider directly from browser code, which exposes your API key to anyone who looks",
         "Defaulting to the most capable model for every request instead of matching the model to the task"
       ],
-      "terms": ["free-tier", "model", "token", "rate-limit", "api-key", "secret-key", "sdk"]
+      "terms": [
+        "free-tier",
+        "model",
+        "token",
+        "rate-limit",
+        "api-key",
+        "secret-key",
+        "sdk"
+      ]
     },
     "scraping": {
       "what": "This is the tool your app uses to pull content or data from other websites, like fetching a product page's price or turning an article into text your app can use.",
@@ -135,7 +191,12 @@
         "Pulling in personal data (names, emails, profile photos) without a real reason and a plan for storing it safely",
         "Hammering a site with requests fast enough to look like an attack; slow down and handle rate limits instead of retrying instantly"
       ],
-      "terms": ["headless-browser", "robots-txt", "rate-limit", "api-key"]
+      "terms": [
+        "headless-browser",
+        "robots-txt",
+        "rate-limit",
+        "api-key"
+      ]
     },
     "jobs": {
       "what": "Background jobs are pieces of work your app runs outside of answering someone's request directly, like resizing an uploaded image, sending a batch of emails, or cleaning up old data overnight.",
@@ -150,7 +211,11 @@
         "Running slow work directly inside a web request, where a host's time limit can cut it off halfway through",
         "Assuming a job ran successfully with no way to check, then discovering later that it silently failed"
       ],
-      "terms": ["background-job", "cron", "queue"]
+      "terms": [
+        "background-job",
+        "cron",
+        "queue"
+      ]
     },
     "email": {
       "what": "Email is how your app sends messages to people automatically: a welcome email, a password reset, a receipt, a daily digest.",
@@ -165,7 +230,11 @@
         "Sending from an unverified domain, so messages land in spam or get rejected outright",
         "Using a personal inbox or its everyday account to send app email instead of a dedicated sending service"
       ],
-      "terms": ["transactional-email", "smtp", "domain-verification"]
+      "terms": [
+        "transactional-email",
+        "smtp",
+        "domain-verification"
+      ]
     },
     "analytics": {
       "what": "Analytics is how your app counts visitors and sees what they do once they arrive, like which pages they view, how they got there, and which buttons or features they actually use.",
@@ -181,7 +250,12 @@
         "Sending personal details like names or emails as event properties instead of sticking to page views and simple actions",
         "Assuming a free trial is a permanent free plan, then getting billed once it ends"
       ],
-      "terms": ["page-view", "event", "cookie-consent", "portability"]
+      "terms": [
+        "page-view",
+        "event",
+        "cookie-consent",
+        "portability"
+      ]
     },
     "monitoring": {
       "what": "Error monitoring catches the moments your app breaks for a real person, somewhere you can't see, and tells you: what broke, the exact code line, and often what that person was doing right before it happened.",
@@ -196,7 +270,12 @@
         "Only installing it in the browser and missing errors that happen in your server code, which a person never sees but your app still fails on",
         "Turning on session replay without masking personal data first, so private details end up stored in a third party's recordings"
       ],
-      "terms": ["source-map", "session-replay", "uptime", "environment-variable"]
+      "terms": [
+        "source-map",
+        "session-replay",
+        "uptime",
+        "environment-variable"
+      ]
     },
     "mobile": {
       "what": "This is whether, and how, your app could become a phone app in an app store later, in addition to or instead of a website.",
@@ -211,7 +290,48 @@
         "Picking a login or database with no mobile SDK, then having to rebuild that piece for the phone app",
         "Assuming a phone app is just the website in a wrapper, when app store rules can require real changes, especially around payments"
       ],
-      "terms": ["sdk", "react-native", "app-store", "oauth"]
+      "terms": [
+        "sdk",
+        "react-native",
+        "app-store",
+        "oauth"
+      ]
+    },
+    "automations": {
+      "what": "An automation service runs workflows between your app and other tools, like posting a message to Slack when someone books, or adding a row to a spreadsheet when a payment clears.",
+      "why": "Connecting to another tool yourself means learning its API, storing its keys and handling its errors. An automation service already knows hundreds of tools, so a workflow can take minutes instead of a day of code.",
+      "choosing": [
+        "How it prices: by task, by run, or free when you run it yourself",
+        "Whether your app can start a workflow by calling a webhook, and whether a workflow can call your app back",
+        "Whether a step can run your own code for anything the built-in steps don't cover",
+        "Whether you can run it on your own server, if your data can't leave it"
+      ],
+      "watch_for": [
+        "Pricing that counts every step, so a busy workflow costs far more than it looked",
+        "Business logic that ends up spread across workflows nobody can find later"
+      ],
+      "terms": [
+        "webhook",
+        "rate-limit"
+      ]
+    },
+    "data_apis": {
+      "what": "Outside data is information your app reads from another company's service, like live sports scores, weather, maps or prices.",
+      "why": "Your app can show things it doesn't own, but the service decides the rules: whether you need a key, how often you can ask, and whether the API is official or can change overnight.",
+      "choosing": [
+        "Whether the API is official and documented, or unofficial and likely to break without warning",
+        "Whether it needs a key, which has to stay on your server",
+        "How often you're allowed to ask, and what happens past the limit",
+        "What your app shows when the service is slow or down"
+      ],
+      "watch_for": [
+        "Calling the API on every page view instead of caching the answer",
+        "Relying on an unofficial API as if it came with a promise"
+      ],
+      "terms": [
+        "api-key",
+        "rate-limit"
+      ]
     }
   },
   "terms": {

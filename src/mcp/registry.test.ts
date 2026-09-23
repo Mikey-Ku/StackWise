@@ -49,4 +49,39 @@ describe("shared plan registry", () => {
     expect(() => fresh().savePlan("../evil", plan, "browser")).toThrow("isn't a valid plan id");
     expect(fresh().read("../evil")).toBeNull();
   });
+
+  it("keeps older plan files readable, with an empty conversation", () => {
+    const registry = fresh();
+    const record = registry.savePlan("p1", plan, "browser");
+    const file = path.join(registry.dir, "plans", "p1.json");
+    const old: Partial<typeof record> = { ...record };
+    delete old.messages;
+    delete old.agents;
+    fs.writeFileSync(file, JSON.stringify(old));
+    expect(registry.read("p1")).toMatchObject({ messages: [], agents: {} });
+  });
+
+  it("delivers each message once, to the agent it's addressed to, and keeps the conversation when the plan changes", () => {
+    const registry = fresh();
+    expect(registry.postMessage("p1", { agent: "claude-code", text: "hi" })).toBeNull();
+    registry.savePlan("p1", plan, "browser");
+    registry.postMessage("p1", { agent: "claude-code", text: "one" });
+    registry.postMessage("p1", { agent: "codex", text: "two" });
+    registry.savePlan("p1", { ...plan, appName: "Fade 2" }, "browser");
+    expect(registry.takeMessages("p1", "claude-code", "2026-09-22T10:00:00.000Z").map((m) => m.text)).toEqual(["one"]);
+    expect(registry.takeMessages("p1", "claude-code", "2026-09-22T10:00:01.000Z")).toEqual([]);
+    registry.agentReply("p1", { agent: "claude-code", text: "on it", status: "working" });
+    const record = registry.read("p1")!;
+    expect(record.messages.map((m) => [m.from, m.agent, m.text, Boolean(m.deliveredAt)])).toEqual([
+      ["you", "claude-code", "one", true],
+      ["you", "codex", "two", false],
+      ["agent", "claude-code", "on it", false],
+    ]);
+  });
+
+  it("refuses agent ids that aren't tidy slugs", () => {
+    const registry = fresh();
+    registry.savePlan("p1", plan, "browser");
+    expect(() => registry.postMessage("p1", { agent: "../evil", text: "x" })).toThrow();
+  });
 });

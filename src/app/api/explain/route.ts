@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { aiEnabled, describeAiError, getClient } from "@/ai/config";
-import { aiExplain } from "@/ai/explain";
+import { describeAiError, getClient } from "@/ai/config";
+import { aiExplain, providerExplain } from "@/ai/explain";
+import { chooseProvider, PROVIDER_IDS } from "@/ai/providers";
 import { takeAiCall, visitorId } from "@/ai/rate-limit";
 import { indexCatalog } from "@/engine/evaluate";
 import { loadCatalog } from "@/engine/load";
@@ -19,22 +20,27 @@ const bodySchema = z.object({
   size: z.enum(SIZE_IDS),
   priority: z.enum(PRIORITY_IDS),
   pinned: z.partialRecord(z.enum(SLOT_IDS), z.string().max(80)),
+  /** The person picked "StackWise facts" to answer: use the template even when AI is on. */
+  factsOnly: z.boolean().optional(),
+  provider: z.string().max(40).refine((id) => PROVIDER_IDS.includes(id)).optional(),
 });
 
 export async function POST(request: Request) {
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "That plan couldn't be read." }, { status: 400 });
-  const { appName, description, answers, size, priority, pinned } = parsed.data;
+  const { appName, description, answers, size, priority, pinned, factsOnly, provider } = parsed.data;
 
   const index = indexCatalog(loadCatalog());
   const input = { answers, size, priority };
   const brief = planBrief(index, input, recommend(index, input, pinned), appName, description);
   const template = (note?: string) => NextResponse.json({ by: "template", text: templateSummary(brief), note });
 
-  if (!aiEnabled()) return template();
+  const chosen = factsOnly ? null : chooseProvider(provider);
+  if (!chosen) return template();
   if (!takeAiCall(visitorId(request))) return template("You've hit the hourly AI limit, so the standard summary is shown.");
   try {
-    return NextResponse.json({ by: "ai", text: await aiExplain(getClient(), brief) });
+    const text = chosen.id === "claude" ? await aiExplain(getClient(), brief) : await providerExplain(chosen, brief);
+    return NextResponse.json({ by: "ai", provider: chosen.id, text });
   } catch (error) {
     return template(describeAiError(error).replace("keywords were used instead", "the standard summary is shown"));
   }

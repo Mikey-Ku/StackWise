@@ -1,52 +1,155 @@
 {
   "sizes": [
-    { "id": "just_me", "label": "Just me" },
-    { "id": "up_to_100", "label": "Up to 100" },
-    { "id": "up_to_1000", "label": "Up to 1,000" },
-    { "id": "more", "label": "More" }
+    {
+      "id": "just_me",
+      "label": "Just me"
+    },
+    {
+      "id": "up_to_100",
+      "label": "Up to 100"
+    },
+    {
+      "id": "up_to_1000",
+      "label": "Up to 1,000"
+    },
+    {
+      "id": "more",
+      "label": "More"
+    }
   ],
   "priorities": [
     {
       "id": "spend_zero",
       "label": "Spend $0",
       "help": "Stay on free plans as long as possible.",
-      "weights": { "cost": 3, "price": 1, "setup": 1, "portability": 0.5, "accounts": 1 }
+      "weights": {
+        "cost": 3,
+        "price": 1,
+        "setup": 1,
+        "portability": 0.5,
+        "accounts": 1
+      }
     },
     {
       "id": "launch_fast",
       "label": "Launch fast",
       "help": "Fewest setup steps and accounts.",
-      "weights": { "cost": 1, "price": 0.5, "setup": 3, "portability": 0.5, "accounts": 2 }
+      "weights": {
+        "cost": 1,
+        "price": 0.5,
+        "setup": 3,
+        "portability": 0.5,
+        "accounts": 2
+      }
     },
     {
       "id": "learn",
       "label": "Learn how it works",
       "help": "Standard tools whose skills carry over to other projects.",
-      "weights": { "cost": 1, "price": 0.5, "setup": 1, "portability": 3, "accounts": 0.5 }
+      "weights": {
+        "cost": 1,
+        "price": 0.5,
+        "setup": 1,
+        "portability": 3,
+        "accounts": 0.5
+      }
     },
     {
       "id": "ready_to_grow",
       "label": "Ready to grow",
       "help": "Reasonable paid plans and easy to move later.",
-      "weights": { "cost": 0.5, "price": 2, "setup": 0.5, "portability": 2, "accounts": 0.5 }
+      "weights": {
+        "cost": 0.5,
+        "price": 2,
+        "setup": 0.5,
+        "portability": 2,
+        "accounts": 0.5
+      }
     }
   ],
   "builders": [
-    { "id": "lovable", "label": "Lovable", "format": "prompt" },
-    { "id": "bolt", "label": "Bolt", "format": "prompt" },
-    { "id": "replit", "label": "Replit", "format": "prompt" },
-    { "id": "claude-code", "label": "Claude Code", "format": "claude-md" },
-    { "id": "cursor", "label": "Cursor", "format": "agents-md" },
-    { "id": "other", "label": "Something else", "format": "prompt" }
+    {
+      "id": "lovable",
+      "label": "Lovable",
+      "format": "prompt"
+    },
+    {
+      "id": "bolt",
+      "label": "Bolt",
+      "format": "prompt"
+    },
+    {
+      "id": "replit",
+      "label": "Replit",
+      "format": "prompt"
+    },
+    {
+      "id": "claude-code",
+      "label": "Claude Code",
+      "format": "claude-md"
+    },
+    {
+      "id": "cursor",
+      "label": "Cursor",
+      "format": "agents-md"
+    },
+    {
+      "id": "other",
+      "label": "Something else",
+      "format": "prompt"
+    }
   ],
-  "penalties": { "warning": 1.5, "unknown": 1, "info_bonus": 0.5 },
+  "penalties": {
+    "warning": 1.5,
+    "unknown": 1,
+    "info_bonus": 0.5
+  },
   "close_call_margin": 0.75,
-  "no_account_providers": ["open-source", "better-auth"],
+  "no_account_providers": [
+    "open-source",
+    "better-auth"
+  ],
   "fees": [
-    { "id": "apple-developer-program", "slot": "mobile", "label": "Apple Developer Program, to publish on the App Store", "usd": 99, "per": "year", "source": "https://developer.apple.com/programs/enroll/" },
-    { "id": "google-play-registration", "slot": "mobile", "label": "Google Play developer account, to publish on Google Play", "usd": 25, "per": "once", "source": "https://support.google.com/googleplay/android-developer/answer/6112435?hl=en" }
+    {
+      "id": "apple-developer-program",
+      "slot": "mobile",
+      "label": "Apple Developer Program, to publish on the App Store",
+      "usd": 99,
+      "per": "year",
+      "source": "https://developer.apple.com/programs/enroll/"
+    },
+    {
+      "id": "google-play-registration",
+      "slot": "mobile",
+      "label": "Google Play developer account, to publish on Google Play",
+      "usd": 25,
+      "per": "once",
+      "source": "https://support.google.com/googleplay/android-developer/answer/6112435?hl=en"
+    }
   ],
   "shared_plans": [
-    { "provider": "supabase", "note": "One Supabase Pro plan covers a project's database, login and storage together.", "source": "https://supabase.com/pricing" }
-  ]
+    {
+      "provider": "supabase",
+      "note": "One Supabase Pro plan covers a project's database, login and storage together.",
+      "source": "https://supabase.com/pricing"
+    }
+  ],
+  "tie_order": {
+    "framework": [
+      "nextjs",
+      "sveltekit",
+      "nuxt",
+      "react-router",
+      "astro",
+      "react-vite",
+      "express",
+      "django",
+      "fastapi",
+      "rails",
+      "laravel",
+      "spring-boot",
+      "aspnet-core",
+      "go-net-http"
+    ]
+  }
 }

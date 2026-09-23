@@ -5,7 +5,7 @@ import type { Selection, SlotId } from "./schema";
  * The order things get set up and built in: the app first, the pieces it depends on next, and
  * hosting last, once every environment variable exists.
  */
-export const BUILD_ORDER: SlotId[] = ["framework", "domain", "database", "login", "email", "files", "payments", "ai", "scraping", "jobs", "analytics", "monitoring", "mobile", "hosting"];
+export const BUILD_ORDER: SlotId[] = ["framework", "domain", "database", "login", "email", "files", "payments", "ai", "data_apis", "scraping", "jobs", "automations", "analytics", "monitoring", "mobile", "hosting"];
 
 /**
  * Quickstarts name browser-visible variables the Next.js way. Each framework has its own prefix
@@ -13,9 +13,17 @@ export const BUILD_ORDER: SlotId[] = ["framework", "domain", "database", "login"
  */
 const PUBLIC_PREFIX: Record<string, string> = { sveltekit: "PUBLIC_", "react-vite": "VITE_" };
 
+/**
+ * Frameworks that render pages on the server have no way to hand an env variable to the browser,
+ * so a "public" name means nothing there: the value is read on the server like any other.
+ */
+const SERVER_ONLY = new Set(["spring-boot", "django", "fastapi", "rails", "laravel", "express", "go-net-http", "aspnet-core"]);
+
 export function adaptEnvName(name: string, frameworkId: string | undefined): string {
-  const prefix = frameworkId ? PUBLIC_PREFIX[frameworkId] : undefined;
-  return prefix && name.startsWith("NEXT_PUBLIC_") ? `${prefix}${name.slice("NEXT_PUBLIC_".length)}` : name;
+  if (!frameworkId || !name.startsWith("NEXT_PUBLIC_")) return name;
+  if (SERVER_ONLY.has(frameworkId)) return name.slice("NEXT_PUBLIC_".length);
+  const prefix = PUBLIC_PREFIX[frameworkId];
+  return prefix ? `${prefix}${name.slice("NEXT_PUBLIC_".length)}` : name;
 }
 
 export interface ChecklistItem {

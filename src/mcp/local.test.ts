@@ -18,7 +18,7 @@ describe("local-only guard", () => {
     expect(localOnly(request({ host: "whystack.evil.example" }))?.status).toBe(403);
     const fromWebsite = localOnly(request({ host: "localhost:4310", origin: "https://evil.example" }));
     expect(fromWebsite?.status).toBe(403);
-    expect(await fromWebsite?.json()).toEqual({ error: "WhyStack's MCP server and pairing only answer requests from this computer." });
+    expect(await fromWebsite?.json()).toEqual({ error: "StackWise's MCP server and pairing only answer requests from this computer." });
   });
 
   it("can be turned off", () => {

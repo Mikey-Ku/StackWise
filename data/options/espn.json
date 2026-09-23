@@ -1,0 +1,54 @@
+{
+  "id": "espn",
+  "name": "ESPN (unofficial)",
+  "provider": "espn",
+  "slots": ["data_apis"],
+  "summary": "ESPN's own website loads scores, schedules and team data from JSON addresses like site.api.espn.com, which apps can read too, but ESPN doesn't document or support them.",
+  "website": "https://www.espn.com",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "more",
+      "note": "There is no plan, price or published limit: a request to the scoreboard address returned data with no key. ESPN can slow down or block any caller at any time, and one automated request here was refused with a 403 while a plain request worked, so cache what you fetch.",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "ESPN doesn't sell access to this data, so there is no plan to buy. The Disney terms that cover ESPN forbid commercial use and building a business on its products.",
+      "source": "https://disneytermsofuse.com/english/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "The JSON shape is ESPN's own and undocumented, so switching to a licensed sports data service means rewriting the code that reads and maps it.",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "official_api": {
+      "value": "unofficial",
+      "note": "ESPN publishes no API docs for these addresses and they can change without notice. The Disney terms that cover ESPN forbid copying or extracting its content with scripts or other automated means, and forbid commercial use, so ask whether a licensed sports data service fits better before you ship.",
+      "source": "https://disneytermsofuse.com/english/",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "needs_api_key": {
+      "value": false,
+      "note": "The scoreboard address answered a plain request with JSON and no key.",
+      "source": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    { "step": "No account or key: read the JSON address for the sport and league you need, like the NFL scoreboard, from your server.", "env": [], "source": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard" }
+  ],
+  "builder_notes": [
+    "Fetch ESPN data from server code with a descriptive User-Agent, cache each response for at least a minute, and never call it once per visitor.",
+    "Check each response's shape before using it and keep showing the last good copy when a request fails or the fields change.",
+    "This data is unofficial and ESPN's terms forbid automated and commercial use; keep it behind one small module so it can be swapped for a licensed source."
+  ]
+}

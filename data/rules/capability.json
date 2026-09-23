@@ -808,5 +808,42 @@
     "title": "Session replays can capture what people type",
     "explanation": "{monitoring} can record sessions to replay them. Mask form fields and personal details before turning replays on.",
     "builder": "Mask all form inputs and personal data in session replays."
+  },
+  {
+    "id": "unofficial-data-api",
+    "severity": "warning",
+    "needs": [],
+    "when": [
+      {
+        "slot": "data_apis",
+        "fact": "official_api",
+        "is": "unofficial"
+      }
+    ],
+    "title": "{data_apis} can change or block you without warning",
+    "explanation": "{data_apis} doesn't offer an official, supported API. The addresses your app reads can change shape or start refusing requests at any time, and its terms may not allow automated or commercial use.",
+    "fix": "Cache what you fetch, keep showing the last good copy when a request fails, identify your app with a clear User-Agent, and read {data_apis}'s terms before you rely on it. For anything commercial, look for a licensed data source.",
+    "builder": "Cache every response from {data_apis}, fall back to the last good copy on failure, and send a descriptive User-Agent."
+  },
+  {
+    "id": "browser-only-app-with-data-key",
+    "severity": "blocked",
+    "needs": [],
+    "when": [
+      {
+        "slot": "framework",
+        "fact": "has_server_code",
+        "is": false
+      },
+      {
+        "slot": "data_apis",
+        "fact": "needs_api_key",
+        "is": true
+      }
+    ],
+    "title": "Your {data_apis} key would be public",
+    "explanation": "{framework} apps run only in the browser, and {data_apis} needs a key on every request. Anything in the browser can be read, so the key could be copied and used up on your account.",
+    "fix": "Pick a framework with server code, or call {data_apis} from a server function and send only the results to the browser.",
+    "builder": "Call {data_apis} only from server code and keep its key out of client bundles."
   }
 ]

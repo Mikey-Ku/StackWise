@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { criterionLabel, describeTotal, inSentence, money, optionStats, SIZE_IDS, SIZE_PHRASE, type CloseCall, type Need, type PriorityId, type SizeId, type SlotId } from "@/engine";
-import { EXAMPLES } from "./examples";
+import { TEMPLATES, type Template } from "./templates";
 import type { PlanModel } from "./usePlans";
-import { Logo, Seg, VerdictBadge, cx } from "./ui";
+import { Icon, type IconName } from "./icons";
+import { Logo, Seg, VerdictBadge, VerdictDot, cx, type Verdict } from "./ui";
 
 const ANSWERS = [
   { id: "yes" as const, label: "Yes" },
@@ -12,10 +12,24 @@ const ANSWERS = [
   { id: "not_sure" as const, label: "Not sure" },
 ];
 
+export interface ProviderInfo {
+  id: string;
+  label: string;
+  on: boolean;
+  model: string;
+  keyName: string;
+  /** What it still needs in .env.local, by name. Older servers leave it out. */
+  needs?: string[];
+  /** Claude, OpenAI and Gemini are always offered; other models show once they're set up. */
+  featured?: boolean;
+}
+
 export interface AiStatus {
   ai: boolean;
   model: string;
-  /** Where WhyStack runs from, so exported projects can start its MCP server. */
+  /** Every built-in AI and whether it has a key. Older servers leave it out. */
+  providers?: ProviderInfo[];
+  /** Where StackWise runs from, so exported projects can start its MCP server. */
   root?: string;
 }
 
@@ -28,7 +42,15 @@ function QuestionRow({ model, need }: { model: PlanModel; need: Need }) {
         <p>{need.question}</p>
         {guess ? (
           <p className="mk-hint">
-            {guess.by === "ai" ? "Claude read" : "Matched"} &ldquo;{guess.evidence}&rdquo; and guessed {guess.answer}. Click an answer to confirm.
+            {guess.by === "template" ? (
+              <>
+                The {guess.evidence} template says {guess.answer === "not_sure" ? "not sure" : guess.answer}. Click an answer to confirm.
+              </>
+            ) : (
+              <>
+                {guess.by === "ai" ? "The AI read" : "Matched"} &ldquo;{guess.evidence}&rdquo; and guessed {guess.answer}. Click an answer to confirm.
+              </>
+            )}
           </p>
         ) : (
           <p className="mk-hint">{need.why}</p>
@@ -84,26 +106,44 @@ function PlanSettings({ model }: { model: PlanModel }) {
   );
 }
 
+const TEMPLATE_ICONS: Record<Template["icon"], IconName> = { web: "web", phone: "phone", phones: "phones", sparkle: "sparkle", cart: "cart", tool: "tool" };
+
+function TemplateIcon({ id, icon }: { id: string; icon: Template["icon"] }) {
+  return (
+    <span className={`ws-template__icon ws-template__icon--${icon} ws-template__icon--${id}`} aria-hidden>
+      <Icon name={TEMPLATE_ICONS[icon]} size={20} />
+    </span>
+  );
+}
+
 function DescribeStep({ model, ai }: { model: PlanModel; ai: AiStatus | null }) {
   const { plan, dispatch, prefill } = model;
   const ready = plan.description.trim().length >= 12;
   return (
     <div className="mk-stack mk-gap-6">
       <div className="mk-stack mk-gap-3">
-        <span className="mk-eyebrow">Step 1 of 3</span>
         <h2 className="ws-h2">What are you building?</h2>
-        <p className="mk-muted">Describe it the way you would to a friend. WhyStack picks out what your app needs, and you confirm every guess before anything is decided.</p>
+        <p className="mk-muted">Start from a kind of app, or describe yours. Either way you confirm every guess before anything is decided.</p>
       </div>
 
-      <div className="mk-stack mk-gap-2">
-        <span className="mk-label">Or start from an example</span>
-        <div className="ws-chips">
-          {EXAMPLES.map((example) => (
-            <button key={example.appName} type="button" className="ws-chip" onClick={() => dispatch({ type: "loadExample", appName: example.appName, description: example.description })}>
-              {example.label}
-            </button>
-          ))}
-        </div>
+      <div className="ws-templates" role="list">
+        {TEMPLATES.map((template) => (
+          <button
+            key={template.id}
+            type="button"
+            role="listitem"
+            className="ws-template"
+            onClick={() => dispatch({ type: "applyTemplate", label: template.label, description: template.description, answers: template.answers, pinned: template.pinned })}
+          >
+            <TemplateIcon id={template.id} icon={template.icon} />
+            <strong>{template.label}</strong>
+            <span>{template.blurb}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="ws-or" aria-hidden>
+        <span>or describe it yourself</span>
       </div>
 
       <label className="mk-field">
@@ -142,18 +182,18 @@ function ConfirmStep({ model }: { model: PlanModel }) {
   const shown = catalog.needs.filter((n) => n.id in plan.guesses || followups.includes(n.id) || plan.answers[n.id] !== undefined);
   const rest = catalog.needs.filter((n) => !shown.includes(n));
   const guessCount = Object.keys(plan.guesses).length;
+  const template = Object.values(plan.guesses).find((g) => g.by === "template")?.evidence;
 
   return (
     <div className="mk-stack mk-gap-6">
       <div className="mk-stack mk-gap-3">
-        <span className="mk-eyebrow">Step 2 of 3</span>
         <h2 className="ws-h2">{guessCount ? "Here's what I picked up" : "A few questions"}</h2>
         <p className="mk-muted">
           {guessCount
-            ? `${guessCount} guess${guessCount === 1 ? "" : "es"} from your description, plus only the questions whose answers would change your plan.`
+            ? `${guessCount} answer${guessCount === 1 ? "" : "s"} ${template ? `from the ${template} template` : "guessed from your description"}, plus only the questions whose answers would change your plan.`
             : "Only the questions whose answers would change your plan."}
         </p>
-        {prefill.by && <p className="mk-hint">{prefill.by === "ai" ? "Guesses by Claude, each with the words it read." : "Guesses from keywords in your description."}</p>}
+        {prefill.by && <p className="mk-hint">{prefill.by === "ai" ? "Guesses by the AI, each with the words it read." : "Guesses from keywords in your description."}</p>}
         {prefill.note && <p className="mk-hint ws-note-inline">{prefill.note}</p>}
       </div>
 
@@ -185,7 +225,7 @@ function closeCallText(model: PlanModel, call: CloseCall): string {
   const lead = `${call.chosen.name} edges out ${call.runnerUp.name} for ${label}`;
   const base =
     call.decidedBy === "tie"
-      ? `${call.chosen.name} and ${call.runnerUp.name} tie on everything WhyStack measures for ${label}, so either is a fine pick.`
+      ? `${call.chosen.name} and ${call.runnerUp.name} tie on everything StackWise measures for ${label}, so either is a fine pick.`
       : call.decidedBy === "accounts"
         ? `${lead} because it shares an account with another part of your stack.`
         : call.decidedBy === "fewer_problems"
@@ -199,48 +239,8 @@ function closeCallText(model: PlanModel, call: CloseCall): string {
   return flip ? `${base} If "${flip}" mattered most, ${call.runnerUp.name} would win.` : base;
 }
 
-function Explanation({ model }: { model: PlanModel }) {
-  const { plan } = model;
-  const key = JSON.stringify([plan.answers, plan.size, plan.priority, plan.pinned, plan.appName]);
-  const [state, setState] = useState<{ key: string; text?: string; by?: string; note?: string; loading: boolean }>({ key: "", loading: false });
-  const current = state.key === key ? state : { key, loading: false };
-
-  const explain = async () => {
-    setState({ key, loading: true });
-    try {
-      const response = await fetch("/api/explain", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ appName: plan.appName, description: plan.description, answers: plan.answers, size: plan.size, priority: plan.priority, pinned: plan.pinned }),
-      });
-      const result = (await response.json()) as { text?: string; by?: string; note?: string; error?: string };
-      setState({ key, loading: false, text: result.text ?? result.error, by: result.by, note: result.note });
-    } catch {
-      setState({ key, loading: false, text: "Couldn't reach the server to explain the plan." });
-    }
-  };
-
-  return (
-    <section className="mk-stack mk-gap-3">
-      <span className="mk-eyebrow">In plain words</span>
-      {current.text ? (
-        <div className="ws-explain">
-          {current.text.split(/\n\s*\n/).map((paragraph, i) => (
-            <p key={i}>{paragraph}</p>
-          ))}
-          <p className="mk-hint">{current.by === "ai" ? "Written by Claude from your plan's verdicts, scores and costs." : "Standard summary from your plan."}</p>
-          {current.note && <p className="mk-hint">{current.note}</p>}
-        </div>
-      ) : (
-        <button type="button" className="mk-btn mk-btn--secondary mk-sm ws-self-start" disabled={current.loading} onClick={explain}>
-          {current.loading ? "Explaining..." : "Explain my plan"}
-        </button>
-      )}
-    </section>
-  );
-}
-
-function PlanStep({ model, onSelect, onOpenChecklist }: { model: PlanModel; onSelect: (slot: SlotId) => void; onOpenChecklist: () => void }) {
+/** Everything about the plan as a whole, in the Overview panel: what to look at, close calls, cost, features and answers. */
+export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { model: PlanModel; onSelect: (slot: SlotId) => void; onOpenChecklist: () => void; onExplain: () => void }) {
   const { plan, dispatch, catalog, rec, calls, followups, notSure, cost, costSizes, index, input } = model;
   const problems = rec.results.filter((r) => r.level !== "info");
   const serious = problems.filter((r) => r.level === "blocked" || r.level === "missing");
@@ -249,15 +249,10 @@ function PlanStep({ model, onSelect, onOpenChecklist }: { model: PlanModel; onSe
 
   return (
     <div className="mk-stack mk-gap-6">
-      <div className="mk-stack mk-gap-3">
-        <span className="mk-eyebrow">Step 3 of 3</span>
-        <h2 className="ws-h2">{plan.appName.trim() || "Your plan"}</h2>
-      </div>
-
       <div className={cx("mk-alert", serious.length ? "mk-alert--danger" : problems.length ? "mk-alert--warn" : "mk-alert--ok")}>
         <div className="mk-stack mk-gap-1">
           <strong>{problems.length === 0 ? "Every connection checks out." : `${problems.length} thing${problems.length === 1 ? "" : "s"} to look at before you build.`}</strong>
-          <span className="mk-muted">Click any part of the canvas to see why it was picked and what else would work.</span>
+          <span className="mk-muted">Click a part to see why it was picked. Right-click it for everything else.</span>
         </div>
       </div>
 
@@ -272,7 +267,9 @@ function PlanStep({ model, onSelect, onOpenChecklist }: { model: PlanModel; onSe
         </div>
       )}
 
-      <Explanation model={model} />
+      <button type="button" className="mk-btn mk-btn--secondary mk-sm ws-self-start" onClick={onExplain}>
+        <Icon name="sparkle" size={14} /> Explain my plan
+      </button>
 
       {calls.length > 0 && (
         <section className="mk-stack mk-gap-3">
@@ -415,18 +412,39 @@ function PlanStep({ model, onSelect, onOpenChecklist }: { model: PlanModel; onSe
   );
 }
 
-export function Planner({
-  model,
-  ai,
-  onSelect,
-  onOpenChecklist,
-}: {
-  model: PlanModel;
-  ai: AiStatus | null;
-  onSelect: (slot: SlotId) => void;
-  onOpenChecklist: () => void;
-}) {
+/** Describing the app and confirming the guesses, shown in a sheet over the canvas until the plan is built. */
+export function Planner({ model, ai }: { model: PlanModel; ai: AiStatus | null }) {
   if (model.plan.step === "describe") return <DescribeStep model={model} ai={ai} />;
-  if (model.plan.step === "confirm") return <ConfirmStep model={model} />;
-  return <PlanStep model={model} onSelect={onSelect} onOpenChecklist={onOpenChecklist} />;
+  return <ConfirmStep model={model} />;
+}
+
+/** The plan in one quiet line: what it costs now, how many accounts, and whether every check passes. Opens the Overview. */
+export function SummaryPill({ model, onOpen }: { model: PlanModel; onOpen: () => void }) {
+  const { stats } = model;
+  const level: Verdict = stats.problems === 0 ? "works" : stats.worst;
+  const extra = [stats.now.yearlyUsd > 0 && `${money(stats.now.yearlyUsd)}/yr`, stats.now.oneTimeUsd > 0 && `${money(stats.now.oneTimeUsd)} once`].filter(Boolean).join(" + ");
+  const jump = stats.firstIncrease;
+  const title = [
+    `${money(stats.now.monthlyUsd)} a month for ${SIZE_PHRASE[stats.now.size]}${stats.now.hasUsage ? ", plus usage" : ""}${extra ? `, plus ${extra}` : ""}.`,
+    jump ? `${money(jump.monthlyUsd)} a month at ${SIZE_PHRASE[jump.size]}.` : "No price jump as you grow.",
+    `${stats.accounts} accounts to sign up for, ${stats.setupSteps} setup steps.`,
+    stats.problems === 0 ? "Every connection checks out." : `${stats.problems} thing${stats.problems === 1 ? "" : "s"} to look at.`,
+  ].join("\n");
+  return (
+    <button type="button" className="ws-summary" title={title} onClick={onOpen}>
+      <strong>
+        {money(stats.now.monthlyUsd)}
+        <small>/mo</small>
+      </strong>
+      <span className="ws-summary__sep" aria-hidden />
+      <span>
+        {stats.accounts} account{stats.accounts === 1 ? "" : "s"}
+      </span>
+      <span className="ws-summary__sep" aria-hidden />
+      <span className={cx("ws-summary__checks", `ws-summary__checks--${level}`)}>
+        <VerdictDot level={level} />
+        {stats.problems === 0 ? "All clear" : `${stats.problems} to look at`}
+      </span>
+    </button>
+  );
 }

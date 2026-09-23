@@ -1,4 +1,4 @@
-# How WhyStack works
+# How StackWise works
 
 A plain-English walkthrough, in the order data moves through the app. Read it with the code open.
 
@@ -10,7 +10,7 @@ Facts about services live in JSON files; rules read those facts to decide whethe
 
 | Step | File | What it does |
 |---|---|---|
-| 1 | `data/*.json` | Everything WhyStack knows: services and their sourced facts, the rules, the questions, the weights, the teaching content. |
+| 1 | `data/*.json` | Everything StackWise knows: services and their sourced facts, the rules, the questions, the weights, the teaching content. |
 | 2 | `src/engine/schema.ts`, `load.ts` | Reads the JSON and refuses to start if a file breaks the contract. |
 | 3 | `src/engine/integrity.ts` | Checks across files: every rule's facts exist, every "full" option has all its facts, no em dashes. |
 | 4 | `src/ai/prefill.ts`, `src/engine/prefill.ts` | Turns a description into guessed answers: Claude with quoted evidence, or keywords. |
@@ -21,7 +21,7 @@ Facts about services live in JSON files; rules read those facts to decide whethe
 | 9 | `src/engine/summary.ts`, `src/ai/explain.ts` | The plan brief, explained by a template or by Claude. |
 | 10 | `src/engine/spec.ts`, `decisions.ts`, `checklist.ts` | The spec pack, the decision record and the build checklist. |
 | 10b | `src/engine/wiring.ts` | What runs along each line: the environment variables the app reads to reach each service, and the `.env` file text. |
-| 10c | `src/engine/talk.ts`, `src/ai/talk.ts` | Talking one part through: the brief for that part, answers from WhyStack's facts, or Claude answering from the brief. |
+| 10c | `src/engine/talk.ts`, `src/ai/talk.ts` | Talking one part through: the brief for that part, answers from StackWise's facts, or Claude answering from the brief. |
 | 11 | `src/components/store.ts` | Every saved plan, undo and redo, share links and imports, as a pure reducer. |
 | 12 | `src/components/*` | The workspace: planner, canvas, options, details, Learn, Checklist. |
 | 13 | `scripts/*` | Evals, the source checker and the option drafter. |
@@ -36,7 +36,7 @@ Say the description is: *"A booking app for my barber shop. Customers log in, pi
 4. **Search.** `recommend` tries combinations of fully researched options for those parts and keeps the best total. A blocked pair costs 1000 points, so it loses unless nothing else works.
 5. **Verdicts.** For the winning plan, `evaluatePlan` runs every rule. If the host can't run scheduled jobs and there's no jobs service, "No built-in way to run things on a schedule" appears; drag a jobs service onto the canvas and it clears.
 6. **Canvas.** Each card shows the worst verdict touching that part. The line from the app shows that part's own checks. Problems between two parts get their own dashed line.
-7. **Leaving.** The spec pack lists the stack with its strongest reasons, turns every warning and note with builder guidance into a rule, orders the build, renames environment variables for your framework, and writes a decision record for every part. The Checklist tab tracks the same steps as you do them.
+7. **Leaving.** The spec pack lists the stack with its strongest reasons, turns every warning and note with builder guidance into a rule, orders the build, renames environment variables for your framework, and writes a decision record for every part. The Checklist panel tracks the same steps as you do them.
 
 ## Ideas to be able to explain
 
@@ -56,7 +56,7 @@ Say the description is: *"A booking app for my barber shop. Customers log in, pi
 
 **Share links need no server.** `encodeSharedPlan` turns the plan's answers and choices into JSON, compresses it with the browser's `CompressionStream`, and base64url-encodes it into `#plan=` in the link. Opening the link decodes, validates with the same Zod schema, and imports it as a new plan.
 
-**Talking a part through without letting the AI decide.** `talkBrief` gathers everything about one part from the engine: its connection and variables, setup steps, every check, the cost, the facts with sources, the other options with the verdict each would get, and the person's note. Claude answers from that brief with structured output. It can suggest a note, and it can suggest a switch, but only to an id in a list WhyStack passed (the schema is an enum of those ids, so it can't name anything else). The page then works out the verdict for that switch again with the rules and shows that, not Claude's opinion. Nothing changes until the person accepts, as one undoable step. With no key, `answerFromFacts` answers the common questions straight from the brief. See "can only name a swap WhyStack's rules passed" in `src/ai/ai.test.ts`.
+**Talking a part through without letting the AI decide.** `talkBrief` gathers everything about one part from the engine: its connection and variables, setup steps, every check, the cost, the facts with sources, the other options with the verdict each would get, and the person's note. Claude answers from that brief with structured output. It can suggest a note, and it can suggest a switch, but only to an id in a list StackWise passed (the schema is an enum of those ids, so it can't name anything else). The page then works out the verdict for that switch again with the rules and shows that, not Claude's opinion. Nothing changes until the person accepts, as one undoable step. With no key, `answerFromFacts` answers the common questions straight from the brief. See "can only name a swap StackWise's rules passed" in `src/ai/ai.test.ts`.
 
 **Each question is one request.** The earlier turns go inside the request as data, instead of being replayed as assistant messages. Newer Claude models tie their thinking to the exact conversation that produced it, so an app that trims or edits a replayed history can have that thinking dropped or the request refused. Sending the transcript as data avoids the problem entirely, and the person can clear a conversation whenever they like.
 
@@ -73,7 +73,7 @@ Say the description is: *"A booking app for my barber shop. Customers log in, pi
 
 ## Questions to answer in your own words
 
-- Why does WhyStack refuse to let an AI decide whether two services work together?
+- Why does StackWise refuse to let an AI decide whether two services work together?
 - What goes wrong if a product rule could turn "doesn't work" into "works"?
 - Why ask only the questions that change the plan, and how does the code know which ones do?
 - How would you show the AI pre-fill is better than keywords, and what number would convince you?
@@ -81,5 +81,5 @@ Say the description is: *"A booking app for my barber shop. Customers log in, pi
 - Why is the canvas slots now and a free-form graph later?
 - Why did adding four parts make the search 1,000 times slower, and what made it fast again?
 - Why are domains and payment services ranked on different price facts than everything else?
-- When Claude suggests switching a service, why does the page show WhyStack's verdict instead of Claude's?
+- When Claude suggests switching a service, why does the page show StackWise's verdict instead of Claude's?
 - Why do the notes travel with the plan (links, exports, Claude) while the conversations stay in the browser?
