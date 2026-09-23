@@ -39,3 +39,20 @@ export function wireEnds(source: Box, target: Box) {
   const end = edgePoint(target, source);
   return { sourceX: start.x, sourceY: start.y, sourcePosition: start.side, targetX: end.x, targetY: end.y, targetPosition: end.side };
 }
+
+/**
+ * Tidying without undoing the person's arrangement: the parts keep the order they're in around
+ * the center, clockwise from the top, and are spaced evenly on an ellipse. Lines that all run out
+ * from the center can't cross each other that way, however the cards had been dragged.
+ */
+export function arrangeInOrder(center: { x: number; y: number }, parts: { id: string; x: number; y: number }[], rx: number, ry: number): Record<string, { x: number; y: number }> {
+  // Clockwise from the top: 0 at twelve o'clock, growing toward three o'clock.
+  const angle = (p: { x: number; y: number }) => (Math.atan2(p.x - center.x, -(p.y - center.y)) + 2 * Math.PI) % (2 * Math.PI);
+  const ordered = [...parts].sort((a, b) => angle(a) - angle(b) || a.id.localeCompare(b.id));
+  return Object.fromEntries(
+    ordered.map((p, i) => {
+      const theta = ((-90 + (i * 360) / ordered.length) * Math.PI) / 180;
+      return [p.id, { x: Math.round(center.x + rx * Math.cos(theta)), y: Math.round(center.y + ry * Math.sin(theta)) }];
+    }),
+  );
+}

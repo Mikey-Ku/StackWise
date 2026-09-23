@@ -1,7 +1,7 @@
 "use client";
 
 import { ConnectCard } from "./AskPanel";
-import { STATE_TEXT, live, pickDefault, providersOf, recipientsFor, type Recipient, type RecipientId } from "./answerers";
+import { STATE_TEXT, answererLogo, live, pickDefault, providersOf, recipientsFor, type Recipient, type RecipientId } from "./answerers";
 import { Icon } from "./icons";
 import type { AiStatus } from "./Planner";
 import type { Pairing } from "./usePairing";
@@ -39,7 +39,13 @@ export function ConnectPanel({
 
   const card = (r: Recipient, recommended = false) => (
     <button key={r.id} type="button" className={cx("ws-conn", r.id === current.id && "is-on")} aria-pressed={r.id === current.id} onClick={() => choose(r)}>
-      <span className={cx("ws-status-dot", live(r) && "is-on", r.state === "stopped" && "is-warn")} aria-hidden />
+      <span className="ws-conn__logo" aria-hidden>
+        {answererLogo(r.id) && (
+          // eslint-disable-next-line @next/next/no-img-element -- a committed brand icon
+          <img src={answererLogo(r.id)!} alt="" />
+        )}
+        <span className={cx("ws-status-dot", live(r) && "is-on", r.state === "stopped" && "is-warn")} />
+      </span>
       <span className="ws-conn__text">
         <strong>
           {r.group === "api" ? r.label.replace(/ \(.*\)$/, "") : r.label}
@@ -115,16 +121,6 @@ export function ConnectPanel({
             {live(current) ? "Continue" : "Continue for now"}
           </button>
         )}
-        <button
-          type="button"
-          className={cx("ws-link", current.id === "facts" && "is-on")}
-          onClick={() => {
-            onChoose("facts");
-            onDone?.();
-          }}
-        >
-          Use StackWise&apos;s facts only, no AI
-        </button>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { answerFromFacts, evaluatePlan, inSentence, planInput, talkBrief, worstLevel, type SlotId } from "@/engine";
 import { agentName, pairInstructions } from "@/mcp/pairing";
-import { providerLabel, recipientsFor, pickDefault, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
+import { answererLogo, providerLabel, recipientsFor, pickDefault, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
 import { Icon } from "./icons";
 import type { AiStatus, ProviderInfo } from "./Planner";
@@ -460,7 +460,12 @@ export function AskPanel({
     const box = e.currentTarget.getBoundingClientRect();
     const entry = (r: Recipient): MenuItem => ({
       label: r.label,
-      lead: <StateDot state={r.state} />,
+      lead: answererLogo(r.id) ? (
+        // eslint-disable-next-line @next/next/no-img-element -- a committed brand icon
+        <img className="ws-menu-logo" src={answererLogo(r.id)!} alt="" />
+      ) : (
+        <StateDot state={r.state} />
+      ),
       hint: r.state === "needs-key" && r.keyName ? `Add ${r.keyName}` : STATE_TEXT[r.state],
       checked: r.id === recipientId,
       disabled: r.state === "soon" || r.state === "needs-key",
@@ -518,7 +523,14 @@ export function AskPanel({
       <header className="ws-ask__head">
         <button type="button" className="ws-answerer" aria-haspopup="menu" onClick={openMenu} title="Who answers">
           <StateDot state={recipient.state} />
-          {recipient.group === "agent" ? <Icon name="terminal" size={13} /> : <Icon name="sparkle" size={13} />}
+          {answererLogo(recipient.id) ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a committed brand icon
+            <img className="ws-menu-logo" src={answererLogo(recipient.id)!} alt="" />
+          ) : recipient.group === "agent" ? (
+            <Icon name="terminal" size={13} />
+          ) : (
+            <Icon name="sparkle" size={13} />
+          )}
           <span>{recipient.label}</span>
           <Icon name="down" size={11} />
         </button>

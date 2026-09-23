@@ -455,11 +455,25 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
         const messages = ctx.registry.takeMessages(record.id, id, iso(Date.now()));
         if (messages.length) {
           finish();
-          const current = ctx.registry.read(record.id);
+          const current = ctx.registry.read(record.id) ?? record;
+          // Enough of the plan to act on without a second call: what each message is about, and the stack with its problems.
+          const index = ctx.index();
+          const rec = recommend(index, planInput(current.plan), current.plan.pinned);
+          const about = (slot: SlotId | undefined) => {
+            if (!slot) return undefined;
+            const option = rec.selection[slot] ? index.optionsById.get(rec.selection[slot]!) : undefined;
+            return { part_id: slot, part: index.slotsById.get(slot)?.label ?? slot, option: option?.name ?? null };
+          };
           return json({
-            messages: messages.map((m) => ({ text: m.text, about: m.about, sent_at: m.at, plan_version_when_sent: m.planVersion })),
-            plan_version_now: current?.version,
-            next: "Do what the person asks, reply with send_message, then call wait_for_message again.",
+            messages: messages.map((m) => ({ text: m.text, about: about(m.about), sent_at: m.at, plan_version_when_sent: m.planVersion })),
+            plan_version_now: current.version,
+            plan: {
+              app: current.plan.appName,
+              stack: stackReport(index, rec.selection).map((p) => ({ part: p.part_label, option: p.option })),
+              problems: rec.results.filter((r) => r.level === "blocked" || r.level === "missing" || r.level === "warning").map((r) => `${r.level}: ${r.title}`),
+              notes: Object.keys(current.plan.notes),
+            },
+            next: "Do what the person asks, reply with send_message, then call wait_for_message again. Call get_plan for the full plan with reasons, costs and notes.",
           });
         }
         if (Date.now() - start >= waitMs) break;
