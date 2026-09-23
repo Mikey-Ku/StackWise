@@ -6,14 +6,39 @@ You describe your app in a paragraph. StackWise works out what it needs (logins,
 
 The AI never decides whether two services work together. Rules do, from facts with a source and a date. AI reads your description, explains the plan and drafts new facts for a person to review.
 
-## Run it
+## Start in two minutes
+
+You need Node 22.9 or newer and pnpm. Claude Code is optional, for working with an agent.
 
 ```bash
+git clone <this repo> stackwise && cd stackwise
 pnpm install
-pnpm dev          # http://localhost:4310
+pnpm link --global     # adds the `stackwise` command
+stackwise setup        # once: lets Claude Code talk to StackWise
 ```
 
-Everything works without an API key. To turn on Claude reading your description and explaining your plan, copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY`.
+Then, in any project folder:
+
+```bash
+stackwise
+```
+
+StackWise starts in the background (on http://localhost:4310) and opens your browser on that project. If the folder has a `whystack.plan.json`, that plan opens; if you've opened the folder before, its plan comes back; otherwise a new plan starts, named after the folder, with its README as the description and its framework recognized. `stackwise stop` stops it.
+
+To build with an agent, open Claude Code in the same folder and run `/mcp__whystack__pair`. Write to it from **Ask** in StackWise (Cmd+K); it works in your repo and answers there.
+
+Or just run the app: `pnpm dev` and open http://localhost:4310.
+
+Everything works without an API key. To have an AI read your description, answer questions and explain your plan, copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY`, `GEMINI_API_KEY`, or any model listed there).
+
+## Using it
+
+1. **Connect your AI.** The first screen: a coding agent in your terminal or an API key. The pill in the top bar always says what's connected.
+2. **Say what you're building.** Pick a kind of app (web, iOS, Android, both, AI app, store, internal tool) or describe it, then confirm each guess.
+3. **Read the canvas.** Your app in the middle, a card per part, and a line per connection: a check means it works, `!` a warning, a cross that it doesn't. A light flows along the lines that work. Click a card for why it was picked; right-click anything for everything else; press A to add a part.
+4. **Ask.** Cmd+K opens one conversation per plan. Pick who answers: an agent in your terminal, a model with a key, or StackWise's own facts.
+5. **Link your project.** The Project panel runs the app, sets environment variables, checks every service with your keys, reads the database (read only) and gives extra agents their own git worktree.
+6. **Export.** A spec pack for your AI builder, or the files written straight into the project.
 
 ```bash
 pnpm test             # engine, AI (with a fake client), store, scripts and data checks

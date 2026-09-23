@@ -1,7 +1,9 @@
+import fs from "node:fs";
 import os from "node:os";
 import { z } from "zod";
 import { localOnly } from "@/mcp/local";
 import { resolveFolder } from "@/mcp/localfiles";
+import { projectPlanFileSchema } from "@/mcp/registry";
 import { ENV_NAME } from "@/project/envfile";
 import { iconData, inspect, listRuns, probe, runLog, runSql, startRun, stopRun, writeEnv } from "@/project/local";
 import { addWorktree, changes, mergeBranch, removeWorktree, repoInfo } from "@/project/git";
@@ -27,6 +29,7 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("runs"), path, logFor: z.string().max(40).optional(), after: z.number().int().min(0).default(0) }),
   z.object({ action: z.literal("icon"), path }),
   z.object({ action: z.literal("git"), path }),
+  z.object({ action: z.literal("planfile"), path }),
   z.object({ action: z.literal("worktree-add"), path, agent: z.string().max(40) }),
   z.object({ action: z.literal("merge"), path, branch: z.string().max(80) }),
   z.object({ action: z.literal("worktree-remove"), path, worktree: z.string().max(1024) }),
@@ -44,7 +47,7 @@ export async function POST(request: Request) {
 
   switch (body.action) {
     case "inspect":
-      return Response.json({ ...inspect(dir), probes: Object.keys(PROBES) });
+      return Response.json({ ...inspect(dir), probes: Object.keys(PROBES), home: os.homedir() });
     case "env": {
       if (!inspect(dir).exists) return Response.json({ error: "That folder doesn't exist." }, { status: 404 });
       const result = writeEnv(dir, body.name, body.value);
@@ -64,6 +67,15 @@ export async function POST(request: Request) {
       const file = inspect(dir).icon;
       const data = file ? iconData(dir, file) : null;
       return data ? Response.json({ file, data }) : Response.json({ error: "StackWise didn't find an icon in this project." }, { status: 404 });
+    }
+    case "planfile": {
+      // The project's own plan, when it has one, so opening the folder opens its plan.
+      try {
+        const file = projectPlanFileSchema.parse(JSON.parse(fs.readFileSync(`${dir}/whystack.plan.json`, "utf8")));
+        return Response.json({ id: file.id, plan: file.plan });
+      } catch {
+        return Response.json({ error: "This project has no whystack.plan.json." }, { status: 404 });
+      }
     }
     case "git": {
       const info = await repoInfo(dir);

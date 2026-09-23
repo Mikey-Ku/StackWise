@@ -596,12 +596,15 @@ export function ProjectPanel({ model, pairing, onToast }: { model: PlanModel; pa
 
   const load = useCallback(async (folder: string) => {
     try {
-      setProject(await call<Inspection>({ action: "inspect", path: folder }));
+      const found = await call<Inspection>({ action: "inspect", path: folder });
+      setProject(found);
+      // Keep the full path, so a later `stackwise` in that folder finds this plan.
+      if (found.folder !== folder) dispatch({ type: "setFolder", folder: found.folder });
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't read that folder.");
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (!path) return;
