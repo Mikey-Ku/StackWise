@@ -76,6 +76,10 @@
     "question": "Will people upload photos, videos or files?",
     "why": "Uploads need file storage, which is separate from the database.",
     "keywords": [
+      "-video call*",
+      "-video chat*",
+      "-video meeting*",
+      "-video conferenc*",
       "upload*",
       "photo*",
       "image*",
@@ -99,6 +103,10 @@
     "question": "Will uploads include videos or files bigger than a few megabytes?",
     "why": "Big files can break when they pass through a server with size and time limits.",
     "keywords": [
+      "-video call*",
+      "-video chat*",
+      "-video meeting*",
+      "-video conferenc*",
       "video*",
       "large file*",
       "audio",
