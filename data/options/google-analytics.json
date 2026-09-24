@@ -45,9 +45,9 @@
   },
   "setup": [
     { "step": "Create a Google Analytics 4 property and a web data stream, then copy its Measurement ID, which starts with G-.", "env": [], "source": "https://support.google.com/analytics/answer/9304153" },
-    { "step": "Install the official integration with npm install @next/third-parties@latest next@latest.", "env": [], "source": "https://nextjs.org/docs/app/guides/third-party-libraries" },
-    { "step": "Add the GoogleAnalytics component with your measurement ID to the root layout (app/layout.tsx).", "env": [], "source": "https://nextjs.org/docs/app/guides/third-party-libraries" },
-    { "step": "Turn on Enhanced Measurement for the data stream so client-side route changes in Next.js count as page views.", "env": [], "source": "https://nextjs.org/docs/app/guides/third-party-libraries" }
+    { "step": "Copy the Google tag (gtag.js) snippet for your web stream; it already includes your Measurement ID.", "env": [], "source": "https://developers.google.com/tag-platform/gtagjs" },
+    { "step": "Paste the snippet into the head of every page, usually in your app's shared layout or main HTML template, or use your framework's Google Analytics integration.", "env": [], "source": "https://developers.google.com/tag-platform/gtagjs" },
+    { "step": "Turn on Enhanced Measurement for the data stream so page changes in a single-page app count as page views.", "env": [], "source": "https://support.google.com/analytics/answer/9216061" }
   ],
   "builder_notes": [
     "Never send personal data such as names, emails or exact addresses as event parameters; Google Analytics' terms prohibit sending personally identifiable information.",

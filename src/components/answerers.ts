@@ -16,7 +16,7 @@ export interface Recipient {
   label: string;
   group: "agent" | "api" | "facts";
   /** listening, working, connected or stopped for agents; ready or needs-key for the rest. */
-  state: Presence | "not-connected" | "ready" | "needs-key" | "soon";
+  state: Presence | "not-connected" | "ready" | "needs-key";
   /** For a built-in AI without a key: the variable to add to .env.local. */
   keyName?: string;
 }
@@ -26,12 +26,11 @@ export const DEFAULT_ANSWERER_KEY = "stackwise.answerer";
 export const STATE_TEXT: Record<Recipient["state"], string> = {
   listening: "Listening",
   working: "Working",
-  connected: "Not listening",
+  connected: "Idle",
   stopped: "Stopped listening",
   "not-connected": "Not connected",
   ready: "Ready",
   "needs-key": "Needs a key",
-  soon: "Coming soon",
 };
 
 /** The name to show for a built-in AI's answer. */
@@ -43,6 +42,13 @@ export function providerLabel(ai: AiStatus | null, id: string | undefined): stri
 export function providersOf(ai: AiStatus | null): ProviderInfo[] {
   if (ai?.providers?.length) return ai.providers;
   return [{ id: "claude", label: "Claude", on: Boolean(ai?.ai), model: ai?.model ?? "", keyName: "ANTHROPIC_API_KEY", featured: true }];
+}
+
+/** The built-in AI that reads a description (see /api/prefill): the saved default when it has a key, else the first with one. */
+export function descriptionReader(ai: AiStatus | null, saved: string | null): ProviderInfo | null {
+  const on = providersOf(ai).filter((p) => p.on);
+  const wanted = saved?.startsWith("api:") ? saved.slice("api:".length) : undefined;
+  return on.find((p) => p.id === wanted) ?? on[0] ?? null;
 }
 
 export function recipientsFor(ai: AiStatus | null, pairing: Pick<Pairing, "agents" | "serverNow">): Recipient[] {
@@ -62,7 +68,7 @@ export function recipientsFor(ai: AiStatus | null, pairing: Pick<Pairing, "agent
 }
 
 /** Whether a recipient can answer right now (an agent that isn't listening still gets its messages later). */
-export const usable = (r: Recipient | undefined) => Boolean(r && r.state !== "soon" && r.state !== "needs-key");
+export const usable = (r: Recipient | undefined) => Boolean(r && r.state !== "needs-key");
 /** Whether an AI is actually connected: an agent listening or working, or a built-in AI with a key. StackWise's facts alone don't count. */
 export const live = (r: Recipient | undefined) => Boolean(r && (r.state === "listening" || r.state === "working" || (r.group === "api" && r.state === "ready")));
 

@@ -76,7 +76,7 @@
       "source": "https://huggingface.co/docs/inference-providers/index"
     },
     {
-      "step": "Call chat completions from a server-side route handler, naming the model (for example openai/gpt-oss-120b).",
+      "step": "Call chat completions from a server route, naming the model (for example openai/gpt-oss-120b).",
       "env": [],
       "source": "https://huggingface.co/docs/inference-providers/index"
     }

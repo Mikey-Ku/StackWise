@@ -1,0 +1,244 @@
+/* The applications page (/apps): a plain scrolling page in the planner's look. It reads the theme's
+   tokens (theme-apple.css over mk-ui.css), so light and dark match the rest of StackWise. The
+   planner locks the body for its full-screen canvas; this page scrolls normally. */
+
+html:has(.apps),
+body:has(.apps) {
+  height: auto;
+  overflow: visible;
+}
+
+.apps {
+  --apps-gutter: 32px;
+  min-height: 100vh;
+  background: var(--mk-bg);
+  color: var(--mk-text);
+  overflow-wrap: break-word;
+}
+
+.apps-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 60px;
+  border-bottom: 1px solid var(--ws-glass-line);
+  background: var(--ws-glass);
+  -webkit-backdrop-filter: var(--ws-blur);
+  backdrop-filter: var(--ws-blur);
+}
+.apps-top__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 960px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 var(--apps-gutter);
+}
+.apps-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: inherit;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  text-decoration: none;
+}
+.apps-brand__name {
+  font-size: 16px;
+}
+.apps-brand__sep {
+  color: var(--mk-text-faint);
+  font-weight: 400;
+}
+.apps-brand__page {
+  color: var(--mk-text-muted);
+  font-weight: 500;
+}
+.apps-top__actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+.apps .apps-theme {
+  justify-content: center;
+  width: 30px;
+  padding: 0;
+}
+.apps .apps-back {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.apps-main {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px var(--apps-gutter) 96px;
+}
+.apps-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.apps-title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.apps-h2 {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+.apps-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.apps-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.apps-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 0.5px solid var(--ws-glass-line);
+  border-radius: 16px;
+  background: var(--mk-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow var(--mk-dur-fast) var(--mk-ease), translate var(--mk-dur-fast) var(--mk-ease);
+}
+.apps-card:hover {
+  box-shadow: var(--ws-float-shadow);
+}
+.apps-card__open {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 16px 8px;
+  border: 0;
+  border-radius: 16px 16px 0 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.apps-card__open:focus-visible {
+  outline: 2px solid var(--mk-accent);
+  outline-offset: -2px;
+}
+.apps-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.apps-card__text strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.apps-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--mk-text-faint);
+  font-size: 12px;
+}
+.apps-card__meta .mk-badge {
+  font-size: 11px;
+}
+.apps-card__desc {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 4px;
+  color: var(--mk-text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+.apps-card__tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 4px 10px 10px;
+}
+.apps .apps-danger {
+  color: var(--mk-danger);
+}
+.apps-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--mk-accent), color-mix(in srgb, var(--mk-accent) 55%, #af52de));
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+}
+.apps-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--mk-surface);
+}
+.apps-card--example .apps-icon {
+  background: linear-gradient(135deg, #34c759, #30b0c7);
+}
+
+@media (max-width: 640px) {
+  .apps {
+    --apps-gutter: 16px;
+  }
+  .apps-top {
+    height: 56px;
+  }
+  .apps-brand__sep,
+  .apps-brand__page {
+    display: none;
+  }
+  .apps-main {
+    gap: 32px;
+    padding-top: 28px;
+  }
+  .apps-title {
+    font-size: 26px;
+  }
+  .apps-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 360px) {
+  .apps-back span {
+    display: none;
+  }
+}

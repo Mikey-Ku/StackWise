@@ -66,7 +66,7 @@ export function ConnectPanel({
       </span>
       <span className="ws-conn__text">
         <strong>{r.group === "api" ? r.label.replace(/ \(.*\)$/, "").replace(/ API$/, "") : r.label}</strong>
-        <span>{r.state === "needs-key" ? "Add a key" : r.group === "api" && r.state === "ready" ? r.label.match(/\((.*)\)/)?.[1] ?? "Ready" : STATE_TEXT[r.state]}</span>
+        <span>{r.group === "api" && r.state === "ready" ? r.label.match(/\((.*)\)/)?.[1] ?? "Ready" : STATE_TEXT[r.state]}</span>
       </span>
     </button>
   );
@@ -76,15 +76,13 @@ export function ConnectPanel({
   return (
     <div className="ws-connect-panel">
       <div className="mk-stack mk-gap-2">
-        <h2 className="ws-h2">Connect your AI</h2>
-        <p className="mk-muted">
-          Your AI explains the plan, answers questions and, from your terminal, builds the app. StackWise&apos;s rules still check every connection. You can change this any time from the top bar.
-        </p>
+        <h2 className="ws-h2">Connect an AI (optional)</h2>
+        <p className="mk-muted">An AI answers questions and can build the app from your terminal. It never decides what works: StackWise&apos;s rules do.</p>
       </div>
 
       <section className="ws-conn-group">
         <span className="mk-eyebrow">
-          <Icon name="terminal" size={13} /> A coding agent in your terminal
+          <Icon name="terminal" size={13} /> Terminal agents
         </span>
         <div className="ws-conn-grid">{featured.map(card)}</div>
         {more.length > 0 && (
@@ -97,7 +95,7 @@ export function ConnectPanel({
 
       <section className="ws-conn-group">
         <span className="mk-eyebrow">
-          <Icon name="sparkle" size={13} /> An API key
+          <Icon name="sparkle" size={13} /> AI with a key
         </span>
         <div className="ws-conn-grid">{recipients.filter((r) => r.group === "api").map(card)}</div>
       </section>
@@ -105,7 +103,7 @@ export function ConnectPanel({
       {providersOf(ai).some((p) => p.featured === false && !p.on) && (
         <details className="ws-details ws-conn-more">
           <summary>More models</summary>
-          <p className="mk-hint">StackWise also works with any of these once their variables are in .env.local (then restart pnpm dev). Your key stays on this computer.</p>
+          <p className="mk-hint">Add these to StackWise&apos;s .env.local, then restart StackWise. Keys stay on this computer.</p>
           <ul>
             {providersOf(ai)
               .filter((p) => p.featured === false && !p.on)
@@ -121,7 +119,7 @@ export function ConnectPanel({
       {focused.group === "agent" && !live(focused) && <ConnectCard recipient={focused} pairing={pairing} onToast={onToast} />}
       {focused.group === "agent" && live(focused) && (
         <p className="ws-conn-ok">
-          <span className="ws-status-dot is-on" aria-hidden /> {focused.label} is connected and listening. Write to it from Ask (Cmd+K).
+          <span className="ws-status-dot is-on" aria-hidden /> {focused.label} is listening. Message it from Ask.
         </p>
       )}
       {providerId && focused.keyName && (
@@ -131,7 +129,7 @@ export function ConnectPanel({
       <div className="mk-row mk-gap-3 mk-wrap">
         {onDone && (
           <button type="button" className="mk-btn mk-btn--primary" onClick={onDone}>
-            {live(current) ? "Continue" : "Continue for now"}
+            {live(current) ? "Continue" : "Skip for now"}
           </button>
         )}
       </div>
@@ -228,7 +226,7 @@ function KeyForm({
         )}
       </div>
       <span className="mk-hint">
-        Saved as <code>{keyName}</code> in StackWise&apos;s <code>.env.local</code> on this computer and used right away. It only goes to {name}, and StackWise never shows it again.
+        Stays on this computer and only goes to {name}. StackWise never shows it again.
         {keyPage && (
           <>
             {" "}

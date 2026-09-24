@@ -64,7 +64,7 @@
     { "step": "In a server route, create a Browserbase session, connect Playwright with chromium.connectOverCDP(session.connectUrl), then drive the page as you normally would.", "env": [], "source": "https://docs.browserbase.com/welcome/quickstarts/playwright" }
   ],
   "builder_notes": [
-    "Keep BROWSERBASE_API_KEY server-side; drive sessions from a route handler, server action, or background job, never from client code.",
+    "Keep BROWSERBASE_API_KEY server-side; drive sessions from server code or a background job, never from the browser.",
     "Always close the browser and session when you're done with it, since an open session keeps burning browser-hour billing.",
     "Respect each target site's robots.txt and terms of service before automating it."
   ]

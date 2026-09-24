@@ -1,4 +1,4 @@
-import { buildChecklist } from "./checklist";
+import { buildChecklist, setupGroups } from "./checklist";
 import { costBySize, costLine, money } from "./cost";
 import { needIsOn, optionIn, readFact, worstLevel, type CatalogIndex, type Level } from "./evaluate";
 import type { Recommendation } from "./score";
@@ -8,7 +8,7 @@ import { extraChecklist } from "./extras";
 
 /**
  * At-a-glance numbers for an option and for a whole plan. Every stat is read from a sourced fact
- * or computed from one, and an unverified fact shows as "Not verified", never as a guess. Stats
+ * or computed from one, and a fact nobody has researched shows as "Not researched", never as a guess. Stats
  * come most important first; cards show the first few that are known.
  */
 
@@ -60,7 +60,7 @@ export function optionStats(index: CatalogIndex, option: Option, slot: SlotId, i
     ...(note ? { note } : {}),
     ...(fact ? { fact } : {}),
   });
-  const notVerified = (id: string, label: string): Stat => stat(id, label, "Not verified", "Not verified", "unknown");
+  const notVerified = (id: string, label: string): Stat => stat(id, label, "Not researched", "Not researched", "unknown");
   const flag = (key: string, label: string, yes: [string, string, StatTone], no: [string, string, StatTone], id = key): Stat | null => {
     const fact = known(key);
     if (!fact || typeof fact.value !== "boolean") return null;
@@ -185,7 +185,7 @@ export function optionStats(index: CatalogIndex, option: Option, slot: SlotId, i
           text("scraper_runs", "Runs as", { hosted_api: "Hosted API", hosted_browser: "Hosted browser", your_server: "On your own server" }),
           choice("js_rendering", "Pages built with JavaScript", {
             included: ["Included", "Reads JavaScript pages", "good"],
-            costs_extra: ["Cost extra", "JavaScript pages cost extra", "warn"],
+            costs_extra: ["Costs extra", "JavaScript pages cost extra", "warn"],
             not_supported: ["Not supported", "No JavaScript pages", "warn"],
           }),
           freePlan(),
@@ -263,6 +263,8 @@ export function cardStats(stats: Stat[], count = 3): Stat[] {
 export interface PlanStats {
   parts: number;
   accounts: number;
+  /** The companies behind those accounts, by name: one per account, in the order the plan lists its parts. */
+  accountNames: string[];
   setupSteps: number;
   problems: number;
   worst: Level | "works";
@@ -270,6 +272,25 @@ export interface PlanStats {
   /** The smallest audience size where the plan costs more than it does now. */
   firstIncrease: { size: SizeId; monthlyUsd: number } | null;
   atLargest: PlanStats["now"];
+}
+
+const words = (name: string) => name.replace(/[()]/g, " ").split(/\s+/).filter(Boolean);
+const bare = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/**
+ * The company a person signs up with, from the options StackWise lists for it: the word that names
+ * the provider ("Cloudflare", "Firebase", "AWS"), else the one option's name without its aside
+ * ("Claude API", "ESPN"), else the words its options start with.
+ */
+export function companyName(index: CatalogIndex, provider: string): string {
+  const names = index.catalog.options.filter((o) => o.provider === provider).map((o) => o.name);
+  if (names.length === 0) return provider;
+  const named = names.flatMap(words).find((word) => bare(word) === bare(provider));
+  if (named) return named;
+  if (names.length === 1) return names[0].replace(/\s*\(.*\)\s*$/, "");
+  const [first, ...rest] = names.map(words);
+  const common = first.filter((word, i) => rest.every((w) => w[i] === word));
+  return common.length ? common.join(" ") : names[0];
 }
 
 export function planStats(index: CatalogIndex, input: PlanInput, rec: Recommendation): PlanStats {
@@ -285,6 +306,7 @@ export function planStats(index: CatalogIndex, input: PlanInput, rec: Recommenda
     const option = index.optionsById.get(extra.option);
     if (option && option.provider !== OWN_PROVIDER && !index.catalog.planning.no_account_providers.includes(option.provider)) providers.push(option.provider);
   }
+  const accountProviders = [...new Set(providers)];
 
   const sizes = costBySize(index, rec.selection, input);
   const at = sizes.findIndex((s) => s.size === input.size);
@@ -294,8 +316,9 @@ export function planStats(index: CatalogIndex, input: PlanInput, rec: Recommenda
 
   return {
     parts: filled.length,
-    accounts: new Set(providers).size,
-    setupSteps: buildChecklist(index, rec.selection).setup.length + extraChecklist(index, rec.selection, input.extras).setup.length,
+    accounts: accountProviders.length,
+    accountNames: accountProviders.map((provider) => companyName(index, provider)),
+    setupSteps: setupGroups(index, buildChecklist(index, rec.selection)).reduce((n, group) => n + group.items.length, 0) + extraChecklist(index, rec.selection, input.extras).setup.length,
     problems: rec.results.filter((r) => r.level !== "info").length,
     worst: worstLevel(rec.results),
     now: { size: now.size, monthlyUsd: now.monthlyUsd, yearlyUsd: now.yearlyUsd, oneTimeUsd: now.oneTimeUsd, hasUsage: now.hasUsage, hasUnknown: now.hasUnknown },

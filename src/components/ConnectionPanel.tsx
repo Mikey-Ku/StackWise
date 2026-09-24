@@ -18,7 +18,9 @@ function EnvRow({ variable }: { variable: EnvVar }) {
     <div className={cx("ws-envrow", variable.browser && "is-public")}>
       <div className="mk-row mk-gap-2 mk-wrap">
         <code className="ws-env">{variable.name}</code>
-        <span className={cx("mk-badge", variable.browser ? "mk-badge--warn" : "")}>{variable.browser ? "the browser can read it" : "secret, server only"}</span>
+        <span className={cx("mk-badge", variable.browser ? "mk-badge--warn" : "")} title={variable.browser ? "Anyone who opens the app can read it. Never put a secret here." : "Only your server code reads it."}>
+          {variable.browser ? "Public" : "Secret"}
+        </span>
       </div>
       <p className="mk-muted">{variable.step}</p>
       {variable.source && (
@@ -57,7 +59,7 @@ export function ConnectionPanel({
   if (!connection) {
     return (
       <div className="ws-inspector ws-inspector--empty">
-        <p className="mk-muted">There is nothing in {inSentence(def.label)} yet, so nothing runs between it and your app.</p>
+        <p className="mk-muted">Nothing picked for {inSentence(def.label)} yet.</p>
         <button type="button" className="mk-btn mk-btn--secondary mk-sm ws-self-start" onClick={onShowPart}>
           Open {inSentence(def.label)}
         </button>
@@ -73,7 +75,6 @@ export function ConnectionPanel({
   return (
     <div className="ws-inspector">
       <div className="mk-stack mk-gap-2">
-        <span className="mk-eyebrow">Connection</span>
         <div className="ws-wire">
           <span className="ws-wire__end">
             {framework && <Logo logo={catalog.logos[framework.id]} name={framework.name} size={26} />}
@@ -102,13 +103,13 @@ export function ConnectionPanel({
 
       <section className="mk-stack mk-gap-3">
         <span className="mk-eyebrow">
-          What travels along it{carried.length > 0 ? ` (${carried.length})` : ""}
+          Environment variables{carried.length > 0 ? ` (${carried.length})` : ""}
         </span>
         {carried.length === 0 ? (
           <p className="mk-muted">
             {connection.stepsKnown
-              ? `No environment variable is written down for ${connection.optionName}. Read its setup steps before you build: it may still need one.`
-              : `Nobody has researched ${possessive(connection.optionName)} setup yet, so StackWise can't say what it needs. Follow its own quickstart.`}
+              ? `StackWise lists no variables for ${connection.optionName}. Check its setup steps.`
+              : `${possessive(connection.optionName)} setup isn't researched yet. Follow its quickstart.`}
           </p>
         ) : (
           <>
@@ -122,16 +123,15 @@ export function ConnectionPanel({
                 className="mk-btn mk-btn--secondary mk-sm"
                 onClick={async () => {
                   const text = envFileText(carried, { appName: plan.appName, generatedOn: today });
-                  onToast((await copyText(text)) ? "Copied. Paste into .env.local and fill in the values." : "Couldn't copy to the clipboard.");
+                  onToast((await copyText(text)) ? "Copied. Paste into .env.local and fill in the values." : "Couldn't copy.");
                 }}
               >
                 Copy these for .env.local
               </button>
               <button type="button" className="mk-btn mk-btn--ghost mk-sm" onClick={onOpenChecklist}>
-                Setup steps
+                Open checklist
               </button>
             </div>
-            <p className="mk-hint">Names only. Fill in the values yourself, keep them out of git, and never put a secret in a variable the browser can read.</p>
           </>
         )}
       </section>
@@ -143,7 +143,7 @@ export function ConnectionPanel({
         {results.length === 0 ? (
           <div className="ws-result ws-result--works">
             <VerdictBadge level="works" short />
-            <p>No rule found a problem with your app using {connection.optionName}.</p>
+            <p>No problems found.</p>
           </div>
         ) : (
           results.map((r) => (

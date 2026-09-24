@@ -53,9 +53,9 @@
   "setup": [
     { "step": "Create a Firebase project at the Firebase console.", "env": [], "source": "https://firebase.google.com/docs/web/setup" },
     { "step": "Register a web app in the project to get your Firebase config values.", "env": [], "source": "https://firebase.google.com/docs/web/setup" },
-    { "step": "Install the Firebase SDK in your Next.js app.", "env": [], "source": "https://firebase.google.com/docs/auth/web/start" },
+    { "step": "Install the Firebase SDK with npm install firebase.", "env": [], "source": "https://firebase.google.com/docs/web/setup" },
     { "step": "In the console, open Authentication and enable the sign-in methods you want; all are off by default.", "env": [], "source": "https://firebase.google.com/docs/auth/web/start" },
-    { "step": "Add the Firebase config values to your app. Firebase's docs do not require environment variables, but NEXT_PUBLIC_ names are a common Next.js convention.", "env": [], "source": "https://firebase.google.com/docs/auth/web/start" }
+    { "step": "Add the Firebase config values to your environment file. They are public by design; Firebase security rules protect the data.", "env": [], "source": "https://firebase.google.com/docs/web/setup" }
   ],
   "builder_notes": [
     "Every sign-in provider is off by default and must be explicitly enabled in the Firebase console before users can use it.",

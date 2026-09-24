@@ -52,12 +52,12 @@ export function Palette({
   return (
     <div className="ws-palette">
       <div className="ws-palette__top">
-        <input className="mk-input mk-sm" type="search" placeholder={`Search ${catalog.options.length} options`} value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input className="mk-input mk-sm" type="search" placeholder={`Search ${catalog.options.length} services`} value={query} onChange={(e) => setQuery(e.target.value)} />
         <label className="mk-check">
           <input type="checkbox" checked={onlyNeeded} onChange={(e) => setOnlyNeeded(e.target.checked)} />
           Only parts my plan uses
         </label>
-        <p className="mk-hint">Drag onto the canvas, or press Use. The dot on each logo shows what would happen with the rest of your plan. Costs are for the audience size in your plan.</p>
+        <p className="mk-hint">Drag onto the canvas or press Use. The dot on each logo shows whether it works with your plan.</p>
       </div>
       {slots.map((slot) => {
         const options = catalog.options
@@ -89,7 +89,7 @@ export function Palette({
                   <div className="ws-opt__name">
                     <span>{option.name}</span>
                     {inPlan && <span className="mk-badge mk-badge--accent">In plan</span>}
-                    {option.coverage === "partial" && <span className="mk-badge ws-badge--unknown">Not verified</span>}
+                    {option.coverage === "partial" && <span className="mk-badge ws-badge--unknown">Not researched</span>}
                   </div>
                   <p className="ws-opt__summary">{option.summary}</p>
                   <StatChips stats={stats.get(`${slot.id}:${option.id}`) ?? []} className="ws-opt__stats" />

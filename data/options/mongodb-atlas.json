@@ -65,14 +65,14 @@
     }
   },
   "setup": [
-    { "step": "Create a free MongoDB Atlas account and an M0 cluster.", "env": [], "source": "https://www.mongodb.com/docs/drivers/node-frameworks/next-integration/" },
-    { "step": "Get the cluster's connection string from Atlas under Database, then Connect, then Drivers.", "env": [], "source": "https://www.mongodb.com/docs/drivers/node-frameworks/next-integration/" },
-    { "step": "Install the official MongoDB driver package in your Next.js app.", "env": [], "source": "https://www.mongodb.com/docs/drivers/node-frameworks/next-integration/" },
-    { "step": "Add the connection string to your environment file.", "env": ["MONGODB_URI"], "source": "https://www.mongodb.com/docs/drivers/node-frameworks/next-integration/" },
-    { "step": "Open one MongoClient connection at module scope and reuse it across requests instead of reconnecting each time.", "env": [], "source": "https://www.mongodb.com/docs/drivers/node-frameworks/next-integration/" }
+    { "step": "Create a free MongoDB Atlas account and an M0 cluster.", "env": [], "source": "https://www.mongodb.com/docs/atlas/tutorial/deploy-free-tier-cluster/" },
+    { "step": "Get the cluster's connection string from Atlas under Database, then Connect, then Drivers.", "env": [], "source": "https://www.mongodb.com/docs/atlas/connect-to-database-deployment/" },
+    { "step": "Install the official MongoDB driver, for example with npm install mongodb.", "env": [], "source": "https://www.mongodb.com/docs/drivers/node/current/get-started/" },
+    { "step": "Add the connection string to your environment file.", "env": ["MONGODB_URI"], "source": "https://www.mongodb.com/docs/drivers/node/current/connect/" },
+    { "step": "Open one MongoClient connection at module scope and reuse it across requests instead of reconnecting each time.", "env": [], "source": "https://www.mongodb.com/docs/drivers/node/current/connect/" }
   ],
   "builder_notes": [
-    "Never expose MONGODB_URI or use the driver directly in browser code; keep database access in server components, API routes, or route handlers.",
+    "Never expose MONGODB_URI or use the driver directly in browser code; keep database access in server code.",
     "Cache the MongoClient at module scope so serverless functions reuse one pooled connection instead of exhausting the connection limit.",
     "Free clusters auto-pause after 30 days of no activity; data is kept but you must manually resume the cluster to use it again."
   ]

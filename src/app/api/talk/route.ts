@@ -10,7 +10,7 @@ import { planInput } from "@/engine/planops";
 import { SLOT_IDS } from "@/engine/schema";
 import { recommend } from "@/engine/score";
 import { sharedPlanSchema } from "@/engine/share";
-import { answerFromFacts, talkBrief } from "@/engine/talk";
+import { answerFromFacts, questionFocus, talkBrief } from "@/engine/talk";
 import { readJson, sameOrigin } from "@/mcp/local";
 
 /**
@@ -44,21 +44,24 @@ export async function POST(request: Request) {
   const { plan, slot, question, history, factsOnly, provider } = parsed.data;
 
   const index = indexCatalog(loadCatalog());
-  const brief = talkBrief(index, plan, slot);
+  // A question can name another part or service ("Supabase instead of Firebase for the database?"): answer about that part.
+  const focus = questionFocus(index, plan, slot, question);
+  const about = focus.slot;
+  const brief = talkBrief(index, plan, about, focus.mentioned);
 
   const withVerdict = (optionId: string | undefined) => {
     if (!optionId) return undefined;
     const option = index.optionsById.get(optionId);
     if (!option) return undefined;
     const input = planInput(plan);
-    const selection = { ...recommend(index, input, plan.pinned).selection, [slot]: optionId };
-    const verdict = worstLevel(evaluatePlan(index, selection, input).filter((r) => r.slots.includes(slot)));
+    const selection = { ...recommend(index, input, plan.pinned).selection, [about]: optionId };
+    const verdict = worstLevel(evaluatePlan(index, selection, input).filter((r) => r.slots.includes(about)));
     return { optionId, name: option.name, verdict };
   };
 
   const facts = (note?: string) => {
     const answer = answerFromFacts(brief, question);
-    return NextResponse.json({ by: "facts", reply: answer.reply, proposal: answer.proposal, swap: withVerdict(answer.swap), note });
+    return NextResponse.json({ by: "facts", about, reply: answer.reply, proposal: answer.proposal, swap: withVerdict(answer.swap), note });
   };
 
   if (factsOnly) return facts();
@@ -67,7 +70,7 @@ export async function POST(request: Request) {
   if (!takeAiCall(visitorId())) return facts("You've hit the hourly AI limit, so StackWise answered from its facts.");
   try {
     const answer = chosen.id === "claude" ? await aiTalk(getClient(), brief, history, question) : await providerTalk(chosen, brief, history, question);
-    return NextResponse.json({ by: "ai", provider: chosen.id, reply: answer.reply, proposal: answer.proposal, swap: withVerdict(answer.swap) });
+    return NextResponse.json({ by: "ai", provider: chosen.id, about, reply: answer.reply, proposal: answer.proposal, swap: withVerdict(answer.swap) });
   } catch (error) {
     return facts(describeAiError(error).replace("keywords were used instead", "StackWise answered from its facts"));
   }
