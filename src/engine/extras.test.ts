@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { adaptEnvName, buildChecklist, checklistProgress } from "./checklist";
+import { adaptEnvName, buildChecklist, checklistProgress, setupGroups } from "./checklist";
 import { costBySize } from "./cost";
 import { buildDecisionRecord, slotReasoning } from "./decisions";
+import type { Option, SlotId } from "./schema";
 import { decodeSharedPlan, encodeSharedPlan, type SharedPlan } from "./share";
 import { daysBetween, isStale, staleFacts } from "./staleness";
 import { fixtureCatalog, fixtureIndex, input } from "./test-fixtures";
@@ -52,6 +53,48 @@ describe("checklist", () => {
     const list = buildChecklist(index, selection);
     const checked = { [list.setup[0].id]: true, [list.build[0].id]: true, "setup:gone:0": true };
     expect(checklistProgress(list, checked)).toEqual({ done: 2, total: list.setup.length + list.build.length });
+  });
+});
+
+describe("setup groups", () => {
+  const catalog = fixtureCatalog();
+  const find = (id: string) => catalog.options.find((o) => o.id === id)!;
+  const createProject = { step: "Create an Acme project.", env: ["ACME_PROJECT"], source: "https://example.com/acme" };
+  const acme = (id: string, key: string): Option => ({
+    ...find(id),
+    setup: [createProject, { step: `Connect ${id}.`, env: [key], source: "https://example.com/setup" }, { step: `Tune ${id}.`, env: [], source: "https://example.com/setup" }],
+  });
+  const both: Option = { ...find("email-send"), id: "watch-both", name: "Watch", provider: "watchco", slots: ["analytics", "monitoring"] as SlotId[] };
+  const idx = fixtureIndex({ options: [...catalog.options.filter((o) => o.id !== "db-hosted" && o.id !== "login-acme"), acme("db-hosted", "DB_KEY"), acme("login-acme", "LOGIN_KEY"), both] });
+  const list = buildChecklist(idx, { database: "db-hosted", login: "login-acme", analytics: "watch-both", monitoring: "watch-both" });
+  const groups = setupGroups(idx, list);
+
+  it("lists a service that fills two parts once, naming both parts", () => {
+    const watch = groups.filter((g) => g.optionId === "watch-both");
+    expect(watch).toHaveLength(1);
+    expect(watch[0].slots).toEqual(["analytics", "monitoring"]);
+    const ids = groups.flatMap((g) => g.items.map((i) => i.id));
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("lists a step two services from one company share only the first time", () => {
+    const db = groups.find((g) => g.optionId === "db-hosted")!;
+    const login = groups.find((g) => g.optionId === "login-acme")!;
+    expect(db.items.map((i) => i.text)).toContain("Create an Acme project.");
+    expect(login.items.map((i) => i.text)).not.toContain("Create an Acme project.");
+    expect(login.shared).toEqual({ withName: "db-hosted", count: 1 });
+  });
+
+  it("gives each service one docs link, the page most of its steps use, and keeps the others apart", () => {
+    const db = groups.find((g) => g.optionId === "db-hosted")!;
+    expect(db.docs).toBe("https://example.com/setup");
+    expect(db.moreDocs).toEqual([{ url: "https://example.com/acme", step: 1 }]);
+  });
+
+  it("counts each step once in the progress", () => {
+    const total = groups.reduce((n, g) => n + g.items.length, 0) + list.build.length;
+    expect(checklistProgress(list, {}, idx).total).toBe(total);
+    expect(total).toBeLessThan(list.setup.length + list.build.length);
   });
 });
 
