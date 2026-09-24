@@ -21,7 +21,7 @@ const MAX_PAGE_CHARS = 400_000;
 
 async function readPage(url: string): Promise<{ text: string } | { error: string }> {
   try {
-    const response = await fetch(url, { headers: { "user-agent": "WhyStack source checker (+https://github.com/Mikey-Ku/whystack)" }, redirect: "follow" });
+    const response = await fetch(url, { headers: { "user-agent": "StackWise source checker (+https://github.com/Mikey-Ku/StackWise)" }, redirect: "follow" });
     if (!response.ok) return { error: `HTTP ${response.status}` };
     const text = htmlToText(await response.text());
     if (text.length < 200) return { error: "almost no readable text (the page probably needs JavaScript)" };
