@@ -2,18 +2,18 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import { Icon } from "./icons";
+import { Tip } from "./Tip";
 import { cx } from "./ui";
 
 /**
- * Light, dark, or whatever the computer is set to (the default). The choice is kept in this
- * browser and set as data-theme on <html>, which theme-apple.css reads. THEME_SCRIPT runs before
- * the page paints, so a saved choice never flashes the other theme first.
+ * Light or dark. Until someone picks, StackWise follows the computer's setting; a click switches
+ * to the other one and remembers it in this browser, set as data-theme on <html>, which
+ * theme-apple.css reads. THEME_SCRIPT runs before the page paints, so a saved choice never
+ * flashes the other theme first.
  */
 
 export type Theme = "system" | "light" | "dark";
 const KEY = "stackwise.theme";
-const ORDER: Theme[] = ["system", "light", "dark"];
-const LABEL: Record<Theme, string> = { system: "Match my computer", light: "Light", dark: "Dark" };
 
 export const THEME_SCRIPT = `try{var t=localStorage.getItem("${KEY}")||localStorage.getItem("whystack.theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
 
@@ -36,7 +36,7 @@ function subscribe(listener: () => void) {
   };
 }
 
-/** The chosen theme, and what's showing now once "system" is resolved. */
+/** The saved theme ("system" until someone picks), and what's showing now. */
 export function useTheme(): { theme: Theme; resolved: "light" | "dark"; setTheme: (theme: Theme) => void } {
   const theme = useSyncExternalStore(subscribe, read, () => "system" as Theme);
   const systemDark = useSyncExternalStore(subscribe, () => window.matchMedia("(prefers-color-scheme: dark)").matches, () => false);
@@ -54,19 +54,20 @@ export function useTheme(): { theme: Theme; resolved: "light" | "dark"; setTheme
   return { theme, resolved: theme === "system" ? (systemDark ? "dark" : "light") : theme, setTheme };
 }
 
-/** One button that steps through Match my computer, Light and Dark. */
-export function ThemeSwitch({ className }: { className?: string }) {
-  const { theme, setTheme } = useTheme();
-  const next = ORDER[(ORDER.indexOf(theme) + 1) % ORDER.length];
-  return (
-    <button
-      type="button"
-      className={cx(className)}
-      title={`Theme: ${LABEL[theme]}. Click for ${LABEL[next].toLowerCase()}.`}
-      aria-label={`Theme: ${LABEL[theme]}`}
-      onClick={() => setTheme(next)}
-    >
-      <Icon name={theme === "system" ? "auto" : theme === "light" ? "sun" : "moon"} size={16} />
+/** One button: shows what's on (a sun or a moon) and switches to the other. `tip` adds the dock's tooltip. */
+export function ThemeSwitch({ className, tip = false }: { className?: string; tip?: boolean }) {
+  const { resolved, setTheme } = useTheme();
+  const next = resolved === "dark" ? "light" : "dark";
+  const button = (
+    <button type="button" className={cx(className)} aria-label={`Switch to ${next} mode`} title={tip ? undefined : `Switch to ${next} mode`} onClick={() => setTheme(next)}>
+      <Icon name={resolved === "dark" ? "moon" : "sun"} size={16} />
     </button>
+  );
+  return tip ? (
+    <Tip name={resolved === "dark" ? "Dark mode" : "Light mode"} text={`Switch to ${next} mode. StackWise remembers it.`}>
+      {button}
+    </Tip>
+  ) : (
+    button
   );
 }
