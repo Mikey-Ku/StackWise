@@ -11,7 +11,7 @@ The AI never decides whether two services work together. Rules do, from facts wi
 You need Node 22.9 or newer and pnpm. Claude Code is optional, for working with an agent.
 
 ```bash
-git clone <this repo> stackwise && cd stackwise
+git clone https://github.com/Mikey-Ku/StackWise.git stackwise && cd stackwise
 pnpm install
 pnpm link --global     # adds the `stackwise` command
 stackwise setup        # once: lets Claude Code talk to StackWise
@@ -81,7 +81,7 @@ Claude can check stacks, compare options, estimate costs and change the plan you
 - Every line starts with a mark that says whether it's connected: a check, a warning, a cross, or a question mark when it isn't verified. When a line is made or changes, a pulse runs along it and the mark pops, so you see the change as it happens.
 - Cards stay small: a logo, a name and a dot for its verdict. Click one for Details, double-click to ask about it, right-click for everything else (ask, swap, let StackWise pick, learn, clear). Right-click a line to explain the connection or copy its variable names, and the empty canvas to add parts, show all parts, tidy up, undo or edit your answers.
 - Your app in the middle, with slots for hosting, domain name, database, login, email, file storage, payments, AI, web scraping, background jobs, analytics, error monitoring and a phone app. Optional parts stay hidden until you need them, drag something that fits, or show all parts.
-- Drag options from a palette of 79 (59 fully researched), or press Use. Every option has its logo, a dot for what would happen if you used it, and quick stats at your audience size: cost now, the first paid plan, how far the free plan goes, and the trait that matters for that part (a domain's renewal price, whether a scraper charges extra for JavaScript pages, whether analytics needs cookies, whether a free host falls asleep, download fees, sales tax, whether iPhone builds need a Mac). Dropping something in the wrong slot is refused with a reason.
+- Drag options from a palette of 101 (80 fully researched), or press Use. Every option has its logo, a dot for what would happen if you used it, and quick stats at your audience size: cost now, the first paid plan, how far the free plan goes, and the trait that matters for that part (a domain's renewal price, whether a scraper charges extra for JavaScript pages, whether analytics needs cookies, whether a free host falls asleep, download fees, sales tax, whether iPhone builds need a Mac). Dropping something in the wrong slot is refused with a reason.
 - Drag any part where you want it: the lines follow it as it moves. The layout is saved with the plan, and "Tidy up" puts everything back.
 - Every line between the app and a service says what runs along it: the environment variables your code reads to reach that service. Click a line to see each name, where its value comes from, which ones the browser can read, and the checks on that connection. The line to your host carries every variable in the plan, because the host needs them all.
 - Swap a service without leaving the canvas: right-click any part and "Swap for" lists the others that fit it.
@@ -130,7 +130,7 @@ Claude can check stacks, compare options, estimate costs and change the plan you
 - The free-form expert canvas for queues, caches and multi-service architectures
 - Planning a phone app on its own (a phone app can be added to a web plan today)
 - The eval cases: `evals/prefill-cases.json` is empty on purpose, see [evals/README.md](evals/README.md)
-- Reviewed facts: all 427 are drafts, see [docs/DATA.md](docs/DATA.md)
+- Reviewed facts: all 557 are drafts, see [docs/DATA.md](docs/DATA.md)
 
 ## Where things are
 
@@ -148,7 +148,8 @@ public/logos/         the logo files, committed
 src/engine/           the logic, no React, fully tested
 src/ai/               Claude pre-fill and explanations, optional
 src/components/       the workspace UI
-src/app/api/          status, prefill, explain, talk, mcp, pair and local routes
+src/app/api/          status, prefill, explain, talk, keys, mcp, pair, project and local routes
+src/project/          a linked project folder: run it, its env files, live checks, read-only SQL, git
 src/mcp/              the MCP server, its stdio command, and shared plans in .stackwise/
 scripts/              evals, source checker, option drafter, logo fetcher
 evals/                eval cases (written by a person) and how to run them
@@ -156,3 +157,16 @@ docs/                 DECISIONS.md, LEARNING.md, DATA.md, MCP.md
 ```
 
 Start with [docs/LEARNING.md](docs/LEARNING.md) for how it works, and [docs/DECISIONS.md](docs/DECISIONS.md) for why it's shaped this way.
+
+## Safety
+
+StackWise runs on your computer and can run your app, write project files, save AI keys to its own `.env.local` and read your database, so it only answers you:
+
+- It listens on 127.0.0.1, never on your network.
+- Its API answers only StackWise's own page (checked with the Origin and Sec-Fetch-Site headers) and programs on this computer, like Claude Code. Every POST must be JSON.
+- It never shows a key or env value back to the page, runs your app with a clean environment, and opens databases read-only.
+- Don't put it behind a proxy or on a server: it has no accounts. `STACKWISE_PAIRING=off` turns off pairing and everything that writes files.
+
+## License
+
+The code and data are MIT licensed (see [LICENSE](LICENSE)). Logos belong to their owners and are only used to name each service; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

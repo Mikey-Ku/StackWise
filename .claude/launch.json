@@ -4,7 +4,7 @@
     {
       "name": "stackwise",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev", "-H", "127.0.0.1"],
+      "runtimeArgs": ["dev"],
       "port": 4310
     }
   ]

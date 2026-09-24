@@ -6,6 +6,7 @@ import { chooseProvider, PROVIDER_IDS, type ProviderId } from "@/ai/providers";
 import { takeAiCall, visitorId } from "@/ai/rate-limit";
 import { loadCatalog } from "@/engine/load";
 import { prefillFromKeywords } from "@/engine/prefill";
+import { readJson, sameOrigin } from "@/mcp/local";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,9 @@ export interface PrefillResponse {
 }
 
 export async function POST(request: Request) {
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const blocked = sameOrigin(request);
+  if (blocked) return blocked;
+  const parsed = bodySchema.safeParse(await readJson(request));
   if (!parsed.success) return NextResponse.json({ error: "Send a description between 1 and 5,000 characters." }, { status: 400 });
   const { description, provider } = parsed.data;
   const catalog = loadCatalog();
@@ -34,7 +37,7 @@ export async function POST(request: Request) {
 
   const chosen = chooseProvider(provider) ?? (provider ? chooseProvider(undefined) : null);
   if (!chosen) return NextResponse.json(keywords());
-  if (!takeAiCall(visitorId(request))) return NextResponse.json(keywords("You've hit the hourly AI limit, so keywords were used instead."));
+  if (!takeAiCall(visitorId())) return NextResponse.json(keywords("You've hit the hourly AI limit, so keywords were used instead."));
 
   try {
     const result = chosen.id === "claude" ? await aiPrefill(getClient(), catalog, description) : await providerPrefill(chosen, catalog, description);

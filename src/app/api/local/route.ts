@@ -3,7 +3,7 @@ import { buildProjectPack, envFileText, planEnv, planInput, recommend, type Spec
 import { indexCatalog } from "@/engine/evaluate";
 import { loadCatalog } from "@/engine/load";
 import { sharedPlanSchema } from "@/engine/share";
-import { localOnly } from "@/mcp/local";
+import { localOnly, readJson } from "@/mcp/local";
 import { NEVER_REPLACE } from "@/mcp/localfiles";
 import { writeProjectFolder } from "@/mcp/writeproject";
 import { PLAN_ID } from "@/mcp/registry";
@@ -30,7 +30,7 @@ const bodySchema = z.object({
 export async function POST(request: Request) {
   const blocked = localOnly(request);
   if (blocked) return blocked;
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const parsed = bodySchema.safeParse(await readJson(request));
   if (!parsed.success) return Response.json({ error: "Send { path, id, plan, generatedOn }." }, { status: 400 });
   const { plan, generatedOn, dryRun, replace } = parsed.data;
 

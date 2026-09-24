@@ -4,7 +4,7 @@ import { optionIn, worstLevel, type CatalogIndex, type CheckResult, type Level }
 import { questionsThatMatter } from "./followups";
 import { closeCalls, criterionLabel, recommend, type Recommendation } from "./score";
 import { PRIORITY_IDS, SIZE_IDS, SLOT_IDS, type Answer, type PlanInput, type Selection, type SlotId } from "./schema";
-import { CUSTOM_ID, NOTE_MAX, customPartSchema, sharedPlanSchema, type SharedPlan } from "./share";
+import { CUSTOM_ID, NOTE_MAX, customPartSchema, oneLine, sharedPlanSchema, type SharedPlan } from "./share";
 import { isOwn } from "./own";
 import { pickReason } from "./spec";
 import { planStats } from "./stats";
@@ -21,7 +21,7 @@ const ANSWER_WORDS: Record<Answer, string> = { yes: "yes", no: "no", not_sure: "
 const LEVEL_ORDER: Record<Level, number> = { blocked: 0, missing: 1, warning: 2, unknown: 3, info: 4 };
 
 export const planUpdateSchema = z.object({
-  app_name: z.string().max(200).optional(),
+  app_name: oneLine(200).optional(),
   description: z.string().max(5000).optional(),
   features: z.string().max(5000).optional(),
   answers: z.record(z.string(), z.enum(["yes", "no", "not_sure"])).optional(),
@@ -29,7 +29,7 @@ export const planUpdateSchema = z.object({
   parts: z.partialRecord(z.enum(SLOT_IDS), z.string().max(80).nullable()).optional(),
   size: z.enum(SIZE_IDS).optional(),
   priority: z.enum(PRIORITY_IDS).optional(),
-  builder: z.string().max(40).optional(),
+  builder: z.string().regex(/^[a-z0-9-]*$/).max(40).optional(),
   /** Notes by part id. Text replaces the note; "" removes it. */
   notes: z.partialRecord(z.enum(SLOT_IDS), z.string().max(NOTE_MAX)).optional(),
   /** Parts StackWise doesn't list, by id ("custom-<name>"): an object adds or replaces one, null removes it. Never checked or priced. */

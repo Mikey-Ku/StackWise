@@ -120,8 +120,11 @@ export function connectionLabel(connection: Connection, all: EnvVar[]): string {
  * The body of `.env.local` and `.env.example`: names grouped by service, with the step that gives
  * you each value and a link to the docs. Values are always empty. StackWise never writes a secret.
  */
+/** Text for a `#` comment line: a newline in it would start a line of its own, maybe a VAR=value. */
+const comment = (text: string) => text.replace(/\s*[\r\n]+\s*/g, " ");
+
 export function envFileText(vars: EnvVar[], details: { appName: string; generatedOn: string; custom?: Record<string, CustomPart> }): string {
-  const name = details.appName.trim() || "this app";
+  const name = comment(details.appName.trim() || "this app");
   const lines = [
     `# Environment variables for ${name}`,
     `# Planned with StackWise on ${details.generatedOn}. Names only: fill in the values yourself.`,
@@ -134,11 +137,11 @@ export function envFileText(vars: EnvVar[], details: { appName: string; generate
   }
   for (const optionId of [...new Set(vars.map((v) => v.optionId))]) {
     const group = vars.filter((v) => v.optionId === optionId);
-    lines.push("", `# ${group[0].optionName}`);
+    lines.push("", `# ${comment(group[0].optionName)}`);
     for (const step of [...new Set(group.map((v) => v.step))]) {
       const here = group.filter((v) => v.step === step);
-      lines.push(`# ${step}`);
-      if (here[0].source) lines.push(`# ${here[0].source}`);
+      lines.push(`# ${comment(step)}`);
+      if (here[0].source) lines.push(`# ${comment(here[0].source)}`);
       for (const v of here) lines.push(`${v.name}=`);
     }
   }
@@ -146,7 +149,7 @@ export function envFileText(vars: EnvVar[], details: { appName: string; generate
   for (const part of own) {
     const names = part.env.filter((name) => !written.has(name));
     if (names.length === 0) continue;
-    lines.push("", `# ${part.name} (your own part: StackWise has no facts on it)`, ...(part.url ? [`# ${part.url}`] : []), ...names.map((name) => `${name}=`));
+    lines.push("", `# ${comment(part.name)} (your own part: StackWise has no facts on it)`, ...(part.url ? [`# ${comment(part.url)}`] : []), ...names.map((name) => `${name}=`));
     for (const name of names) written.add(name);
   }
   return `${lines.join("\n")}\n`;

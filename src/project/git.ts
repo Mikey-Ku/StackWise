@@ -34,7 +34,8 @@ export interface Changes {
 
 function git(cwd: string, args: string[]): Promise<{ ok: boolean; out: string; err: string }> {
   return new Promise((resolve) => {
-    execFile("git", args, { cwd, timeout: 20_000, maxBuffer: 4 * 1024 * 1024 }, (error, stdout, stderr) => resolve({ ok: !error, out: stdout.toString(), err: stderr.toString() }));
+    // A linked folder may have come from anywhere: its own hooks and fsmonitor settings never run.
+    execFile("git", ["-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", ...args], { cwd, timeout: 20_000, maxBuffer: 4 * 1024 * 1024 }, (error, stdout, stderr) => resolve({ ok: !error, out: stdout.toString(), err: stderr.toString() }));
   });
 }
 

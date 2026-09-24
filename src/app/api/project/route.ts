@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import os from "node:os";
 import { z } from "zod";
-import { localOnly } from "@/mcp/local";
-import { resolveFolder } from "@/mcp/localfiles";
+import { localOnly, readJson } from "@/mcp/local";
+import { resolveRealFolder } from "@/mcp/writeproject";
 import { projectPlanFileSchema } from "@/mcp/registry";
 import { ENV_NAME } from "@/project/envfile";
 import { iconData, inspect, listRuns, probe, runLog, runSql, startRun, stopRun, writeEnv } from "@/project/local";
@@ -39,10 +39,10 @@ const bodySchema = z.discriminatedUnion("action", [
 export async function POST(request: Request) {
   const blocked = localOnly(request);
   if (blocked) return blocked;
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const parsed = bodySchema.safeParse(await readJson(request));
   if (!parsed.success) return Response.json({ error: "That request wasn't one StackWise understands." }, { status: 400 });
   const body = parsed.data;
-  const folder = resolveFolder(body.path, os.homedir(), process.cwd());
+  const folder = resolveRealFolder(body.path, process.cwd());
   if ("error" in folder) return Response.json({ error: folder.error }, { status: 400 });
   const dir = folder.path;
 
@@ -51,8 +51,12 @@ export async function POST(request: Request) {
       return Response.json({ ...inspect(dir), probes: Object.keys(PROBES), home: os.homedir() });
     case "env": {
       if (!inspect(dir).exists) return Response.json({ error: "That folder doesn't exist." }, { status: 404 });
-      const result = writeEnv(dir, body.name, body.value);
-      return Response.json({ ok: true, ...result, project: { ...inspect(dir), probes: Object.keys(PROBES) } });
+      try {
+        const result = writeEnv(dir, body.name, body.value);
+        return Response.json({ ok: true, ...result, project: { ...inspect(dir), probes: Object.keys(PROBES) } });
+      } catch (error) {
+        return Response.json({ error: error instanceof Error ? error.message : "Couldn't write .env.local." }, { status: 400 });
+      }
     }
     case "probe": {
       const results = await Promise.all(body.ids.map((id) => probe(dir, id, body.healthUrl)));
@@ -61,7 +65,11 @@ export async function POST(request: Request) {
     case "sql":
       return Response.json(await runSql(dir, body.query));
     case "start":
-      return Response.json({ run: startRun(dir, body.command) });
+      try {
+        return Response.json({ run: startRun(dir, body.command) });
+      } catch (error) {
+        return Response.json({ error: error instanceof Error ? error.message : "Couldn't start it." }, { status: 400 });
+      }
     case "stop":
       return Response.json({ run: stopRun(body.id) });
     case "icon": {
