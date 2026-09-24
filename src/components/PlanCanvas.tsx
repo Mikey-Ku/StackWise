@@ -230,7 +230,7 @@ function WireEdge({ id, source, target, data }: EdgeProps<Edge<WireData>>) {
           type="button"
           className={cx("ws-wire-label nodrag nopan", `ws-wire-label--${data.level}`, data.kind === "pair" && "is-pair", data.selected && "is-selected")}
           style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
-          title={`${status.words}: ${data.detail ?? data.label}${data.note ? `. Has a note${data.note === "stale" ? " written for another option" : ""}` : ""}. Right-click for more.`}
+          title={`${status.words}: ${data.detail ?? data.label}${data.note ? `. Has a note${data.note === "stale" ? " written for another option" : ""}` : ""}.`}
           onClick={open}
           onContextMenu={(e) => actions.menu(target_, e)}
         >
@@ -258,13 +258,14 @@ function flowOffset(id: string): number {
 }
 
 /** The mark at the start of every line's label: connected, connected with a warning, broken, missing, or not verified. */
+/** The same words as everywhere else (VERDICT_UI), with a mark for the line's label. */
 const SIGNAL: Record<Verdict, { glyph: string; words: string }> = {
-  works: { glyph: "\u2713", words: "Connected" },
-  info: { glyph: "\u2713", words: "Connected" },
-  warning: { glyph: "!", words: "Connected, with a warning" },
-  unknown: { glyph: "?", words: "Not verified yet" },
-  blocked: { glyph: "\u00d7", words: "Doesn't work" },
-  missing: { glyph: "+", words: "Needs a part" },
+  works: { glyph: "\u2713", words: VERDICT_UI.works.label },
+  info: { glyph: "\u2713", words: VERDICT_UI.info.label },
+  warning: { glyph: "!", words: VERDICT_UI.warning.label },
+  unknown: { glyph: "?", words: VERDICT_UI.unknown.label },
+  blocked: { glyph: "\u00d7", words: VERDICT_UI.blocked.label },
+  missing: { glyph: "+", words: VERDICT_UI.missing.label },
 };
 
 type DropState = "" | "is-over" | "is-bad";
@@ -293,7 +294,7 @@ function AppNode({ data }: NodeProps<Node<AppData>>) {
     <div
       className={cx("ws-node ws-app", data.drop, data.selected && "is-selected")}
       data-slot="framework"
-      title={`${data.appName}${data.frameworkName ? `, built with ${data.frameworkName}` : ""}. Double-click to ask about it, right-click for more.`}
+      title={`${data.appName}${data.frameworkName ? `, built with ${data.frameworkName}` : ""}.`}
       onClick={() => actions.select("framework")}
       onDoubleClick={() => actions.ask("framework")}
     >
@@ -375,7 +376,7 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
         )}
         <span className="ws-node__text">
           <span className="ws-node__kicker">{data.own ? `${data.label}, built by you` : data.label}</span>
-          <span className="ws-node__name">{empty ? (data.needed ? "Choose one" : "Optional") : data.optionName}</span>
+          <span className="ws-node__name">{empty ? (data.needed ? "Pick one" : "Optional") : data.optionName}</span>
         </span>
       </span>
       <span className="ws-node__marks">
@@ -392,7 +393,7 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
             <button type="button" title="Ask about this" aria-label={`Ask about ${data.optionName}`} onClick={() => actions.ask(data.slot)}>
               <Icon name="sparkle" size={13} />
             </button>
-            <button type="button" title="Swap for another" aria-label={`Swap ${data.optionName}`} onClick={() => actions.add(data.slot)}>
+            <button type="button" title="Switch to another" aria-label={`Switch ${data.optionName}`} onClick={() => actions.add(data.slot)}>
               <Icon name="swap" size={13} />
             </button>
             <button type="button" title="Remove (Delete)" aria-label={`Remove ${data.optionName}`} className="is-danger" onClick={() => actions.remove(data.slot)}>
@@ -418,7 +419,7 @@ function CustomNode({ data }: NodeProps<Node<CustomData>>) {
   return (
     <div
       className="ws-node ws-slot ws-custom-node"
-      title={`${data.name}, added by you. StackWise has no facts on it, so it isn't checked or priced. Click to edit, right-click for more.`}
+      title={`${data.name}, added by you. StackWise has no facts on it, so it isn't checked or priced.`}
       onClick={() => actions.editCustom(data.id)}
     >
       <Handles />
@@ -596,7 +597,7 @@ export function PlanCanvas({
       const cardLevel: Verdict = option ? worstLevel(touching(slot, () => true)) : level;
       const facts = option ? optionStats(index, option, slot, input).slice(0, 3) : [];
       const summary = option
-        ? [`${def.label}: ${option.name}. ${VERDICT_UI[cardLevel].label}.`, ...facts.map((s) => `${s.label}: ${s.value}.`), "Double-click to ask, right-click for more."].join("\n")
+        ? [`${def.label}: ${option.name}. ${VERDICT_UI[cardLevel].label}.`, ...facts.map((s) => `${s.label}: ${s.value}.`)].join("\n")
         : needed
           ? `Your answers need ${inSentence(def.label)}. Click to choose one, or drag an option here.`
           : `${def.label} is optional. ${def.empty_hint}.`;

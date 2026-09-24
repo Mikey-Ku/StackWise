@@ -251,9 +251,9 @@ function missingPieces(index: CatalogIndex, selection: Selection, input: PlanInp
       source: "missing" as const,
       level: "missing" as const,
       slots: [slot],
-      title: `Nothing is in ${label}`,
-      explanation: `You said your app has: ${needs.join(", ")}. That needs something in ${label}.`,
-      fix: `Pick a service for ${label}, or change the answer that needs it.`,
+      title: `No ${label.toLowerCase()} service yet`,
+      explanation: `You said: ${needs.join(", ")}. That needs a ${label.toLowerCase()} service.`,
+      fix: `Pick one for ${label}, or change that answer.`,
     };
   });
 }

@@ -184,12 +184,13 @@ export function envFileText(vars: EnvVar[], details: { appName: string; generate
   }
   for (const optionId of [...new Set(vars.map((v) => v.optionId))]) {
     const group = vars.filter((v) => v.optionId === optionId);
-    lines.push("", `# ${comment(group[0].optionName)}`);
+    // One docs link per service, the page most of its variables come from, then each step's names.
+    const sources = group.map((v) => v.source).filter((s): s is string => Boolean(s));
+    const docs = sources.sort((a, b) => sources.filter((s) => s === b).length - sources.filter((s) => s === a).length)[0];
+    lines.push("", `# ${comment(group[0].optionName)}`, ...(docs ? [`# Docs: ${comment(docs)}`] : []));
     for (const step of [...new Set(group.map((v) => v.step))]) {
-      const here = group.filter((v) => v.step === step);
       lines.push(`# ${comment(step)}`);
-      if (here[0].source) lines.push(`# ${comment(here[0].source)}`);
-      for (const v of here) lines.push(`${v.name}=`);
+      for (const v of group.filter((v) => v.step === step)) lines.push(`${v.name}=`);
     }
   }
   const written = new Set(vars.map((v) => v.name));
