@@ -85,7 +85,7 @@ export function CustomPartDialog({
         }}
       >
         <div className="mk-stack mk-gap-1">
-          <span className="mk-eyebrow">{existing ? "Your own part" : "Add a part that isn't listed"}</span>
+          <span className="mk-eyebrow">{existing ? "Not in StackWise" : "Add a part that isn't listed"}</span>
           <h3>{existing ? `Edit ${existing.name}` : "What else does your app use?"}</h3>
           <p className="mk-muted">It goes on the canvas and into the spec. StackWise has no facts on it, so it isn&apos;t checked or priced.</p>
         </div>
@@ -94,7 +94,7 @@ export function CustomPartDialog({
           <input className="mk-input" autoFocus value={name} maxLength={60} placeholder="Pinecone, our billing API, pdf-lib" onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="mk-field">
-          <span className="mk-label">The app ___ it</span>
+          <span className="mk-label">What the app does with it</span>
           <input className="mk-input" value={role} maxLength={80} placeholder="searches documents with" onChange={(e) => setRole(e.target.value)} />
           <span className="mk-hint">Shown on its line, like the other parts.</span>
         </label>
@@ -121,7 +121,7 @@ export function CustomPartDialog({
           </button>
           {existing && edit?.id && (
             <button type="button" className="mk-btn mk-btn--ghost mk-sm ws-custom__remove" onClick={() => onRemove(edit.id!)}>
-              Remove from the plan
+              Remove
             </button>
           )}
         </div>

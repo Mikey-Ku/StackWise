@@ -90,7 +90,7 @@ export function SpecDialog({
       });
       const body = (await response.json()) as LocalReport & { error?: string };
       if (!response.ok || body.error) {
-        setError(body.error ?? `The server said no (${response.status}).`);
+        setError(body.error ?? `Couldn't write the files (${response.status}).`);
         setReport(null);
         return;
       }
@@ -111,7 +111,7 @@ export function SpecDialog({
       <div className="mk-modal__body mk-stack mk-gap-4">
         <div className="mk-row mk-gap-3">
           <div className="mk-grow mk-stack mk-gap-1">
-            <span className="mk-eyebrow">Project pack</span>
+            <span className="mk-eyebrow">Project files</span>
             <h3>Hand this to {builder?.label ?? "your builder"}</h3>
           </div>
           <button type="button" className="mk-btn mk-btn--ghost mk-sm" onClick={onClose}>
@@ -119,8 +119,8 @@ export function SpecDialog({
           </button>
         </div>
         <p className="mk-muted">
-          {files.length} files: the spec, setup steps, an ordered task list and the plan itself
-          {agents ? `, plus ${agents} Claude Code agents, skills like /next-step, and the StackWise MCP server so Claude checks every stack change with StackWise` : ""}. Unzip it as your project folder.
+          {files.length} files: the spec, setup steps, tasks and the plan
+          {agents ? `, plus ${agents} Claude Code agents and StackWise's MCP connection` : ""}. Unzip it as your project folder.
           {builder?.format === "claude-md" && !stackwiseRoot ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
         </p>
         <label className="mk-field ws-spec__pick">
@@ -167,8 +167,7 @@ export function SpecDialog({
           <div className="mk-stack mk-gap-1">
             <span className="mk-eyebrow">Or write it into a folder on this computer</span>
             <p className="mk-muted">
-              The same files, in a folder you can open straight away, plus a <code>.env.local</code> with the names your stack needs and no values. StackWise never writes over an existing{" "}
-              <code>.env.local</code>, and only writes inside your home folder.
+              The same files, plus a <code>.env.local</code> with empty values. StackWise never overwrites an existing <code>.env.local</code>.
             </p>
           </div>
           <div className="mk-row mk-gap-2 mk-wrap ws-local__row">
@@ -177,7 +176,7 @@ export function SpecDialog({
               <input className="mk-input mk-sm" value={where} placeholder={plan.folder ?? beside} onChange={(e) => setWhere(e.target.value)} spellCheck={false} />
             </label>
             <button type="button" className="mk-btn mk-btn--ghost mk-sm" disabled={busy} onClick={() => void send(true)}>
-              {busy ? "Looking" : "Check the folder"}
+              {busy ? "Looking" : "Preview"}
             </button>
             <button type="button" className="mk-btn mk-btn--primary mk-sm" disabled={busy} onClick={() => void send(false)}>
               Write the files
@@ -249,15 +248,15 @@ export function SpecDialog({
 
         <section className="mk-stack mk-gap-3 ws-local">
           <div className="mk-stack mk-gap-1">
-            <span className="mk-eyebrow">The diagram, for slides</span>
-            <p className="mk-muted">A sharp PNG of every part and connection at full size. Leave the background out to drop it onto any slide.</p>
+            <span className="mk-eyebrow">Diagram</span>
+            <p className="mk-muted">A PNG of the canvas, at full size.</p>
           </div>
           <div className="mk-row mk-gap-2 mk-wrap">
             <button type="button" className="mk-btn mk-btn--secondary mk-sm" onClick={() => onSaveImage(false)}>
               Save as PNG
             </button>
             <button type="button" className="mk-btn mk-btn--ghost mk-sm" onClick={() => onSaveImage(true)}>
-              PNG, no background
+              Save as PNG (transparent)
             </button>
           </div>
         </section>

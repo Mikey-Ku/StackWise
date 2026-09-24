@@ -61,10 +61,10 @@
     { "step": "Create a free Firecrawl account and copy your API key from the dashboard at firecrawl.dev/app/api-keys.", "env": [], "source": "https://docs.firecrawl.dev/introduction" },
     { "step": "Install the SDK with npm install firecrawl.", "env": [], "source": "https://docs.firecrawl.dev/introduction" },
     { "step": "Add your key as FIRECRAWL_API_KEY in your environment file.", "env": ["FIRECRAWL_API_KEY"], "source": "https://docs.firecrawl.dev/introduction" },
-    { "step": "In a server route (for example app/api/scrape/route.ts), create a Firecrawl client and call firecrawl.scrape(url, { formats: ['markdown'] }) to get the page back as Markdown.", "env": [], "source": "https://docs.firecrawl.dev/introduction" }
+    { "step": "In a server route, create a Firecrawl client and call firecrawl.scrape(url, { formats: ['markdown'] }) to get the page back as Markdown.", "env": [], "source": "https://docs.firecrawl.dev/introduction" }
   ],
   "builder_notes": [
-    "Keep FIRECRAWL_API_KEY server-side and call the SDK from a route handler or server action, never from client code.",
+    "Keep FIRECRAWL_API_KEY server-side and call the SDK from server code, never from the browser.",
     "Store the Markdown you get back instead of re-scraping the same URL, since every scrape spends a credit.",
     "Check the target site's robots.txt and terms before scraping it; Firecrawl fetches the page but does not decide whether you're allowed to use it."
   ]

@@ -17,7 +17,7 @@ const note = (text: string) => ({ text, updatedAt: DEMO_DATE, by: "you" as const
 export const DEMOS: Demo[] = [
   {
     id: "pitchwell",
-    label: "AI SaaS with subscriptions",
+    label: "Paid AI app with subscriptions",
     plan: {
       v: 1,
       appName: "Pitchwell",

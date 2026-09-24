@@ -1,4 +1,4 @@
-import { BUILD_ORDER, adaptEnvName } from "./checklist";
+import { BUILD_ORDER, buildChecklist, setupGroups } from "./checklist";
 import { costBySize, costOutlook, describeTotal, money } from "./cost";
 import { buildDecisionRecord } from "./decisions";
 import { evaluatePlan, needIsOn, optionIn, type CatalogIndex, type CheckResult } from "./evaluate";
@@ -113,7 +113,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     .split("\n")
     .map((f) => f.replace(/^[-*]\s*/, "").trim())
     .filter(Boolean);
-  const featureLines = features.length ? features.map((f) => `- ${f}`) : ["- (No features listed yet. Add them in the planner before you build.)"];
+  const featureLines = features.length ? features.map((f) => `- ${f}`) : ["- (No features yet. Add them in Overview before you build.)"];
 
   const needLines = catalog.needs
     .filter((n) => !n.only_if || needIsOn(index, input, n.only_if))
@@ -207,10 +207,10 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     ...(linkLines.length ? ["## How the parts talk to each other", "", ...linkLines, ""] : []),
     ...(noteBlocks.length ? ["## Notes on the stack", "", "Written by the person planning the app. Follow them unless they contradict a rule below.", "", ...noteBlocks] : []),
     ...(builtBlocks.length
-      ? ["## Parts you're building yourself", "", "These are the person's own code, not services. StackWise has no facts on them, so nothing that touches them was checked or priced.", "", ...builtBlocks]
+      ? ["## Your own code", "", "These are the person's own code, not services. StackWise has no facts on them, so nothing that touches them was checked or priced.", "", ...builtBlocks]
       : []),
     ...(ownBlocks.length
-      ? ["## Parts added by hand", "", "StackWise has no facts on these, so nothing here was checked or priced. Read their docs before relying on them.", "", ...ownBlocks]
+      ? ["## Not in StackWise", "", "StackWise has no facts on these, so nothing here was checked or priced. Read their docs before relying on them.", "", ...ownBlocks]
       : []),
     "## Rules for whoever builds it",
     "",
@@ -244,13 +244,18 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "",
   ].join("\n");
 
-  const setupSections = filled.flatMap(({ def, option }, i) => {
-    const steps = option.setup.map((s) => {
-      const names = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${adaptEnvName(e, selection.framework)}\``).join(", ")}.` : "";
-      const source = /^https?:\/\//.test(s.source) ? ` ([docs](${s.source}))` : "";
-      return `- [ ] ${s.step}${names}${source}`;
-    });
-    return [`## ${i + 1}. ${option.name} (${def.label})`, "", ...(steps.length ? steps : ["- [ ] Setup steps not researched yet. Follow the provider's quickstart."]), ""];
+  // One section per service, its steps once, with one docs link for the service instead of one per step.
+  const setupSections = setupGroups(index, buildChecklist(index, selection)).flatMap((group, i) => {
+    const parts = group.slots.map((slot) => index.slotsById.get(slot)?.label ?? slot).join(", ");
+    const steps = group.items.map((item) => `- [ ] ${item.text}${item.env.length ? ` Environment variables: ${item.env.map((e) => `\`${e}\``).join(", ")}.` : ""}`);
+    return [
+      `## ${i + 1}. ${group.optionName} (${parts})`,
+      "",
+      ...(group.docs ? [`Docs: ${group.docs}`, ...group.moreDocs.map((d) => `More docs (step ${d.step}): ${d.url}`), ""] : []),
+      ...(group.shared ? [`Uses the ${group.shared.withName} setup above for ${group.shared.count === 1 ? "one step" : `${group.shared.count} steps`}.`, ""] : []),
+      ...steps,
+      "",
+    ];
   });
 
   const extraSetupSections = Object.entries(input.extras ?? {}).flatMap(([id, extra], i) => {
@@ -290,7 +295,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "## Stack",
     "",
     ...stackList,
-    ...ownParts.map((part) => `- ${part.name} (added by hand, not checked by StackWise)${part.role ? `: the app ${part.role} it` : ""}`),
+    ...ownParts.map((part) => `- ${part.name} (not in StackWise, so not checked)${part.role ? `: the app ${part.role} it` : ""}`),
     "",
     ...(noteBullets.length ? ["## Notes on the stack", "", ...noteBullets, ""] : []),
     "## Rules",
@@ -318,7 +323,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
   ].join("\n");
 
   const prompt = [
-    `Build a web app called ${name}.`,
+    `Build an app called ${name}.`,
     "",
     details.description.trim(),
     "",

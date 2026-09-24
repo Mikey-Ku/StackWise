@@ -31,6 +31,17 @@ describe("keyword pre-fill", () => {
     });
   });
 
+  it("doesn't read a video call as uploading videos", () => {
+    const guesses = prefillFromKeywords("A tutoring app where students book a video call with a tutor and pay per lesson.", needs);
+    expect(guesses.uploads).toBeUndefined();
+    expect(guesses.large_uploads).toBeUndefined();
+    expect(guesses.users_pay).toBe("pay");
+    // A real video upload still counts, and the words it quotes come from the description.
+    const upload = prefillFromKeywords("Students join a video chat, then upload a video of their homework.", needs);
+    expect(upload.uploads).toBe("upload");
+    expect(upload.large_uploads).toBe("video");
+  });
+
   it("never guesses no", () => {
     const guesses = prefillFromKeywords("A simple landing page.", needs);
     expect(Object.values(guesses).every((v) => typeof v === "string")).toBe(true);

@@ -64,7 +64,7 @@
       "source": "https://replicate.com/docs/get-started/nodejs"
     },
     {
-      "step": "Import Replicate and call replicate.run with a model name from a server-side route handler.",
+      "step": "Import Replicate and call replicate.run with a model name from a server route.",
       "env": [],
       "source": "https://replicate.com/docs/get-started/nodejs"
     }

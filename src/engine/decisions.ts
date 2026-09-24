@@ -12,9 +12,9 @@ import type { PlanInput, Selection, SlotId } from "./schema";
 const LEVEL_WORDS: Record<string, string> = {
   works: "works",
   info: "works",
-  warning: "works with a warning",
+  warning: "works, with a warning",
   unknown: "not verified yet",
-  missing: "missing a piece",
+  missing: "missing a service",
   blocked: "doesn't work",
 };
 

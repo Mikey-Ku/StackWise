@@ -44,10 +44,10 @@
     }
   },
   "setup": [
-    { "step": "Sign up for Plausible and add your site to start the 30-day free trial.", "env": [], "source": "https://plausible.io/docs/nextjs-integration" },
-    { "step": "Install next-plausible with npm install next-plausible.", "env": [], "source": "https://plausible.io/docs/nextjs-integration" },
-    { "step": "Wrap your app in PlausibleProvider, pointing it at the script src shown on your site's Plausible dashboard.", "env": [], "source": "https://plausible.io/docs/nextjs-integration" },
-    { "step": "Use the usePlausible hook to send custom events beyond the automatic page view tracking.", "env": [], "source": "https://plausible.io/docs/nextjs-integration" }
+    { "step": "Sign up for Plausible and add your site to start the 30-day free trial.", "env": [], "source": "https://plausible.io/docs/add-website" },
+    { "step": "Copy your site's tracking snippet from its settings in Plausible, under Site installation.", "env": [], "source": "https://plausible.io/docs/plausible-script" },
+    { "step": "Paste the snippet into the head of every page, usually in your app's shared layout or main HTML template.", "env": [], "source": "https://plausible.io/docs/plausible-script" },
+    { "step": "Call plausible() from your page code to send custom events beyond the automatic page view tracking.", "env": [], "source": "https://plausible.io/docs/custom-event-goals" }
   ],
   "builder_notes": [
     "Plausible never sets cookies, so do not add a cookie consent banner just for this tool.",

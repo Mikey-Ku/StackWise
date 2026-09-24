@@ -76,7 +76,7 @@
       "source": "https://docs.fireworks.ai/getting-started/quickstart"
     },
     {
-      "step": "Call chat completions from a server-side route handler with a model id like accounts/fireworks/models/glm-5p3-flash.",
+      "step": "Call chat completions from a server route with a model id like accounts/fireworks/models/glm-5p3-flash.",
       "env": [],
       "source": "https://docs.fireworks.ai/getting-started/quickstart"
     }

@@ -115,7 +115,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
     "",
     "`stackwise.plan.json` is the record of this stack and why each part was picked. The StackWise MCP server" +
       (mcpReady ? " (in `.mcp.json`)" : "") +
-      " runs the same checks as the StackWise planner, from sourced facts.",
+      " runs the same checks as StackWise itself, from sourced facts.",
     "",
     "- Don't decide from memory whether services work together, what they cost or what their limits are. Before adding, removing or swapping a hosted service, SDK or host, use the `stack-guard` agent, or call `check_stack` yourself.",
     "- After the stack changes, call `update_plan` with a one-line note saying why, then add the decision to DECISIONS.md.",
@@ -209,10 +209,14 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
           "## Setup it needs",
           "",
           ...(option.setup.length
-            ? option.setup.map((s) => {
-                const env = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${adaptEnvName(e, selection.framework)}\``).join(", ")}.` : "";
-                return `- ${s.step}${env}${/^https?:\/\//.test(s.source) ? ` Docs: ${s.source}` : ""}`;
-              })
+            ? [
+                ...option.setup.map((s) => {
+                  const env = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${adaptEnvName(e, selection.framework)}\``).join(", ")}.` : "";
+                  return `- ${s.step}${env}`;
+                }),
+                // The docs once, not on every step.
+                ...[...new Set(option.setup.map((s) => s.source).filter((url) => /^https?:\/\//.test(url)))].map((url, i) => `${i ? "More docs" : "Docs"}: ${url}`),
+              ]
             : isOwn(option.id)
               ? ["- It's the person's own code, not a service. Ask them how the app reaches it (an address, credentials) and keep those in environment variables."]
               : ["- Setup steps haven't been researched. Follow the official quickstart and call `setup_steps`."]),

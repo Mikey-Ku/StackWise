@@ -64,7 +64,7 @@
     { "step": "In a server route, create a ScrapingBeeClient with your key and call client.get({ url, params }) to fetch a page.", "env": [], "source": "https://www.scrapingbee.com/documentation/" }
   ],
   "builder_notes": [
-    "Keep SCRAPINGBEE_API_KEY server-side and call the API from a route handler or server action, never from client code.",
+    "Keep SCRAPINGBEE_API_KEY server-side and call the API from server code, never from the browser.",
     "Only turn on JavaScript rendering or premium/stealth proxies when a page actually needs them, since each one multiplies the credit cost.",
     "Respect each target site's robots.txt and terms of service before scraping it."
   ]

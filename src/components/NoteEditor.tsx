@@ -46,7 +46,7 @@ export function NoteEditor({ model, slot }: { model: PlanModel; slot: SlotId }) 
         <span className="mk-eyebrow">Note</span>
         {note && (
           <span className="mk-hint">
-            {note.by === "claude" ? "Written by Claude" : "Saved"}, {ago(note.updatedAt)}
+            {note.by === "claude" ? "Written by AI" : "Saved"}, {ago(note.updatedAt)}
           </span>
         )}
       </div>

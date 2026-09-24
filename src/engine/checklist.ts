@@ -79,7 +79,79 @@ export function buildChecklist(index: CatalogIndex, selection: Selection): Check
   return { setup, build };
 }
 
-export function checklistProgress(list: Checklist, checked: Record<string, boolean>): { done: number; total: number } {
-  const items = [...list.setup, ...list.build];
+/**
+ * One service's setup, as a person reads it: its steps once, however many parts it fills, with
+ * one docs link for the service and any other pages it uses kept apart. Steps a service shares
+ * with an earlier one from the same company (Firebase's "Create a Firebase project" for both
+ * Firestore and Firebase Auth) are listed only the first time.
+ */
+export interface SetupGroup {
+  optionId: string;
+  optionName: string;
+  /** Every part this service fills, in build order. */
+  slots: SlotId[];
+  items: ChecklistItem[];
+  /** The docs page most of its steps come from. */
+  docs?: string;
+  /** Any other docs pages, with the step (1 based) that first uses each. */
+  moreDocs: { url: string; step: number }[];
+  /** Steps left out because an earlier service from the same company already lists them. */
+  shared?: { withName: string; count: number };
+}
+
+/** The docs page used most, first one on a tie, and the rest in order of first use. */
+function docsOf(items: ChecklistItem[]): Pick<SetupGroup, "docs" | "moreDocs"> {
+  const counts = new Map<string, number>();
+  for (const item of items) if (item.source) counts.set(item.source, (counts.get(item.source) ?? 0) + 1);
+  if (counts.size === 0) return { moreDocs: [] };
+  const docs = [...counts.entries()].reduce((best, entry) => (entry[1] > best[1] ? entry : best))[0];
+  const moreDocs = [...counts.keys()].filter((url) => url !== docs).map((url) => ({ url, step: items.findIndex((i) => i.source === url) + 1 }));
+  return { docs, moreDocs };
+}
+
+export function setupGroups(index: CatalogIndex, list: Checklist): SetupGroup[] {
+  const groups = new Map<string, SetupGroup>();
+  /** The first item with each step text, per company, so a shared step shows once. */
+  const seen = new Map<string, { item: ChecklistItem; groupName: string }>();
+  for (const item of list.setup) {
+    const existing = groups.get(item.optionId);
+    if (existing) {
+      // The same service in a second part: its steps are already listed.
+      if (!existing.slots.includes(item.slot)) existing.slots.push(item.slot);
+      continue;
+    }
+    const provider = index.optionsById.get(item.optionId)?.provider ?? item.optionId;
+    const steps = list.setup.filter((i) => i.optionId === item.optionId && i.slot === item.slot);
+    const items: ChecklistItem[] = [];
+    const sharedWith: string[] = [];
+    for (const step of steps) {
+      const key = `${provider}\n${step.text.trim().toLowerCase()}`;
+      const first = seen.get(key);
+      if (first && first.item.optionId !== step.optionId) {
+        // Keep every variable the shared step names, from both services.
+        for (const name of step.env) if (!first.item.env.includes(name)) first.item.env.push(name);
+        sharedWith.push(first.groupName);
+        continue;
+      }
+      const copy = { ...step, env: [...step.env] };
+      seen.set(key, { item: copy, groupName: item.optionName });
+      items.push(copy);
+    }
+    groups.set(item.optionId, {
+      optionId: item.optionId,
+      optionName: item.optionName,
+      slots: [item.slot],
+      items,
+      ...docsOf(items),
+      ...(sharedWith.length ? { shared: { withName: sharedWith[0], count: sharedWith.length } } : {}),
+    });
+  }
+  return [...groups.values()];
+}
+
+/** Each step counts once, even when its service fills two parts or shares it with another service. */
+export function checklistProgress(list: Checklist, checked: Record<string, boolean>, index?: CatalogIndex): { done: number; total: number } {
+  const setup = index ? setupGroups(index, list).flatMap((g) => g.items) : [...new Map(list.setup.map((i) => [i.id, i])).values()];
+  const items = [...setup, ...list.build];
   return { done: items.filter((item) => checked[item.id]).length, total: items.length };
 }

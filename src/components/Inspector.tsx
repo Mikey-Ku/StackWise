@@ -26,9 +26,6 @@ function ResultCard({ result }: { result: CheckResult }) {
           ))}
         </p>
       )}
-      <p className="mk-hint">
-        {result.source === "product" ? "Product rule" : result.source === "capability" ? "Capability rule" : "Plan check"}: {result.ruleId}
-      </p>
     </div>
   );
 }
@@ -94,8 +91,10 @@ export function Inspector({
         </div>
         {option && (
           <div className="mk-row mk-gap-2 mk-wrap">
-            <span className="mk-badge">{own ? "Built by you" : rec.autoPicked.includes(slot) ? "Picked for you" : "Your choice"}</span>
-            <span className={cx("mk-badge", option.coverage === "full" ? "" : "ws-badge--unknown")}>{option.coverage === "full" ? "Researched, draft facts" : own ? "Not checked" : "Not verified yet"}</span>
+            <span className="mk-badge" title={own ? "Your own code. StackWise can't check or price it." : rec.autoPicked.includes(slot) ? "StackWise picked this from your answers and priority. It changes if they change." : "You picked this. StackWise won't change it."}>
+              {own ? "Your own code" : rec.autoPicked.includes(slot) ? "Picked by StackWise" : "Picked by you"}
+            </span>
+            {option.coverage !== "full" && !own && <span className="mk-badge ws-badge--unknown">Not researched</span>}
             {option.website && (
               <a className="ws-small-link" href={option.website} target="_blank" rel="noreferrer">
                 Website
@@ -104,7 +103,7 @@ export function Inspector({
           </div>
         )}
         <p className="mk-muted">{option ? option.summary : def.empty_hint}</p>
-        {own && <p className="ws-own-hint">Say what it is in the note below: what you&apos;re building, and how the app reaches it. The note goes into the spec for whoever builds the app.</p>}
+        {own && <p className="ws-own-hint">Describe it in the note below: what it is and how the app reaches it. Whoever builds the app reads it.</p>}
         <div className="mk-row mk-gap-2 mk-wrap mk-sm">
           <button type="button" className="mk-btn mk-btn--primary" onClick={() => onAsk(slot)}>
             <Icon name="sparkle" size={14} /> Ask about {option && !own ? option.name : "this"}
@@ -116,7 +115,7 @@ export function Inspector({
               title={`Use your own code for ${inSentence(def.label)} instead of a service`}
               onClick={() => {
                 model.place(ownId(slot), slot);
-                onToast(`${def.label} is now yours to build. Describe it in the note; StackWise won't check or price it.`);
+                onToast(`${def.label} is now your own code. Describe it in its note. StackWise won't check or price it.`);
               }}
             >
               Build it yourself
@@ -128,10 +127,10 @@ export function Inspector({
               className="mk-btn mk-btn--secondary"
               onClick={async () => {
                 const text = slotReasoning(index, input, rec.selection, slot);
-                onToast(text && (await copyText(text)) ? "Reasoning copied. Paste it into a doc or pull request." : "Couldn't copy to the clipboard.");
+                onToast(text && (await copyText(text)) ? "Copied why StackWise picked it." : "Couldn't copy.");
               }}
             >
-              Copy the reasoning
+              Copy why
             </button>
           )}
         </div>
@@ -142,7 +141,7 @@ export function Inspector({
 
       {learn && (
         <details className="ws-details ws-learn-inline">
-          <summary>What is {inSentence(def.label)}?</summary>
+          <summary>About {inSentence(def.label)}</summary>
           <div className="mk-stack mk-gap-2">
             <p>{learn.what}</p>
             <p className="mk-muted">{learn.why}</p>
@@ -158,7 +157,7 @@ export function Inspector({
         {results.length === 0 ? (
           <div className="ws-result ws-result--works">
             <VerdictBadge level="works" short />
-            <p>{option ? "No rule found a problem with this part of your plan." : "No checks run on an empty slot."}</p>
+            <p>{option ? "No problems found." : "Nothing to check yet."}</p>
           </div>
         ) : (
           results.map((r) => <ResultCard key={r.key} result={r} />)
@@ -267,9 +266,9 @@ export function Inspector({
 
       {option && (
         <details className="ws-details mk-stack mk-gap-3">
-          <summary>Facts behind it ({Object.keys(option.facts).length})</summary>
+          <summary>Facts ({Object.keys(option.facts).length})</summary>
           {Object.keys(option.facts).length === 0 ? (
-            <p className="mk-muted">No facts researched yet. Anyone can add them with a pull request to data/options/{option.id}.json.</p>
+            <p className="mk-muted">Not researched yet.</p>
           ) : (
             <dl className="ws-facts">
               {Object.entries(option.facts).map(([key, fact]) => {
@@ -284,7 +283,7 @@ export function Inspector({
                         <a href={fact.source} target="_blank" rel="noreferrer">
                           Source
                         </a>
-                        , {fact.retrieved}, {fact.status}
+                        , checked {fact.retrieved}
                         {isStale(fact, today) && <span className="mk-badge mk-badge--warn ws-stale">may be out of date</span>}
                       </span>
                     </dd>
