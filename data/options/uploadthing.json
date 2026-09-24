@@ -47,31 +47,31 @@
     {
       "step": "Sign up at uploadthing.com and create an app to get an API token.",
       "env": [],
-      "source": "https://docs.uploadthing.com/getting-started/appdir"
+      "source": "https://docs.uploadthing.com/"
     },
     {
-      "step": "Install the packages with npm install uploadthing @uploadthing/react.",
+      "step": "Install uploadthing and the UploadThing package for your framework, for example @uploadthing/react, @uploadthing/svelte or @uploadthing/vue.",
       "env": [],
-      "source": "https://docs.uploadthing.com/getting-started/appdir"
+      "source": "https://docs.uploadthing.com/"
     },
     {
       "step": "Set your UploadThing token as an environment variable.",
       "env": ["UPLOADTHING_TOKEN"],
-      "source": "https://docs.uploadthing.com/getting-started/appdir"
+      "source": "https://docs.uploadthing.com/"
     },
     {
-      "step": "Define a FileRouter in app/api/uploadthing/core.ts with upload rules and auth middleware, then export the route handlers.",
+      "step": "Define a FileRouter on the server with upload rules and auth middleware, then serve it from a server route.",
       "env": [],
-      "source": "https://docs.uploadthing.com/getting-started/appdir"
+      "source": "https://docs.uploadthing.com/"
     },
     {
       "step": "Add the generated UploadButton or UploadDropzone component to a page.",
       "env": [],
-      "source": "https://docs.uploadthing.com/getting-started/appdir"
+      "source": "https://docs.uploadthing.com/"
     }
   ],
   "builder_notes": [
-    "Put file size, type limits, and auth checks in the server-side FileRouter middleware, not only in the client component.",
+    "Put file size, type limits, and auth checks in the server-side FileRouter middleware, not only in the upload component on the page.",
     "Use the prebuilt UploadButton or UploadDropzone components instead of building a custom uploader from scratch."
   ]
 }

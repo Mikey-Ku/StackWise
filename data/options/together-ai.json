@@ -81,7 +81,7 @@
       "source": "https://docs.together.ai/docs/quickstart"
     },
     {
-      "step": "Call chat completions from a server-side route handler.",
+      "step": "Call chat completions from a server route.",
       "env": [],
       "source": "https://docs.together.ai/docs/quickstart"
     }

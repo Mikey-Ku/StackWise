@@ -44,10 +44,10 @@
     }
   },
   "setup": [
-    { "step": "Start a free trial at Fathom and create a site to get your Site ID.", "env": [], "source": "https://usefathom.com/docs/integrations/next" },
-    { "step": "Install the client with npm install fathom-client.", "env": [], "source": "https://usefathom.com/docs/integrations/next" },
-    { "step": "Create a client component that calls load('YOUR-SITE-ID', { auto: false }) once and trackPageview() on every path change, using usePathname and useSearchParams.", "env": [], "source": "https://usefathom.com/docs/integrations/next" },
-    { "step": "Render that component in the root layout (app/layout.tsx) so it loads on every route.", "env": [], "source": "https://usefathom.com/docs/integrations/next" }
+    { "step": "Start a free trial at Fathom and create a site to get your Site ID.", "env": [], "source": "https://usefathom.com/docs/start/create" },
+    { "step": "Copy your site's embed code from the Fathom dashboard; it is one script tag that carries your Site ID.", "env": [], "source": "https://usefathom.com/docs/script/embed" },
+    { "step": "Paste the script into the head of every page, usually in your app's shared layout or main HTML template.", "env": [], "source": "https://usefathom.com/docs/script/embed" },
+    { "step": "In a single-page app, use your framework's Fathom integration or Fathom's SPA mode so page changes count as page views.", "env": [], "source": "https://usefathom.com/docs/script/script-advanced" }
   ],
   "builder_notes": [
     "Fathom never sets cookies, so it needs no cookie consent banner.",

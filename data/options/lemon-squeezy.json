@@ -68,31 +68,31 @@
     {
       "step": "Create a Lemon Squeezy account and a store.",
       "env": [],
-      "source": "https://docs.lemonsqueezy.com/guides/tutorials/webhooks-nextjs"
+      "source": "https://docs.lemonsqueezy.com/guides/developer-guide"
     },
     {
       "step": "Create an API key from your account's API settings page.",
       "env": [],
-      "source": "https://docs.lemonsqueezy.com/guides/tutorials/webhooks-nextjs"
+      "source": "https://docs.lemonsqueezy.com/guides/developer-guide/getting-started"
     },
     {
       "step": "Install the official SDK with npm install @lemonsqueezy/lemonsqueezy.js.",
       "env": [],
-      "source": "https://docs.lemonsqueezy.com/guides/tutorials/webhooks-nextjs"
+      "source": "https://docs.lemonsqueezy.com/api"
     },
     {
-      "step": "Set your API key and store ID as environment variables, without a NEXT_PUBLIC_ prefix.",
+      "step": "Set your API key and store ID as environment variables that only the server can read.",
       "env": ["LEMONSQUEEZY_API_KEY", "LEMONSQUEEZY_STORE_ID"],
-      "source": "https://docs.lemonsqueezy.com/guides/tutorials/webhooks-nextjs"
+      "source": "https://docs.lemonsqueezy.com/guides/developer-guide/getting-started"
     },
     {
-      "step": "Create a webhook pointed at your app's /api/webhook route, set a signing secret, and verify the X-Signature header on incoming events.",
+      "step": "Create a webhook pointed at a webhook route in your app, set a signing secret, and verify the X-Signature header on incoming events.",
       "env": ["LEMONSQUEEZY_WEBHOOK_SECRET"],
-      "source": "https://docs.lemonsqueezy.com/guides/tutorials/webhooks-nextjs"
+      "source": "https://docs.lemonsqueezy.com/help/webhooks"
     }
   ],
   "builder_notes": [
-    "Keep LEMONSQUEEZY_API_KEY on the server only; never prefix it with NEXT_PUBLIC_.",
+    "Keep LEMONSQUEEZY_API_KEY on the server only; never give it a prefix that makes it readable in the browser.",
     "Verify the X-Signature header on every webhook before trusting it.",
     "Stripe acquired Lemon Squeezy and is steering users to Stripe Managed Payments; confirm it is still actively onboarding new stores before committing to it."
   ]

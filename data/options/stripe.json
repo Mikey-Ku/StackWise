@@ -81,7 +81,7 @@
       "source": "https://docs.stripe.com/checkout/quickstart"
     },
     {
-      "step": "Create a Checkout Session in a server route handler and redirect the customer to its URL.",
+      "step": "Create a Checkout Session in a server route and redirect the customer to its URL.",
       "env": [],
       "source": "https://docs.stripe.com/checkout/quickstart"
     },

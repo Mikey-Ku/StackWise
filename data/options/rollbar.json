@@ -44,13 +44,13 @@
     }
   },
   "setup": [
-    { "step": "Create a free Rollbar account and a new project to get its client and server access tokens.", "env": [], "source": "https://docs.rollbar.com/docs/nextjs" },
-    { "step": "Install the SDK with npm install rollbar @rollbar/react.", "env": [], "source": "https://docs.rollbar.com/docs/nextjs" },
-    { "step": "Add both tokens to your environment file; only the client token is meant to be public.", "env": ["NEXT_PUBLIC_ROLLBAR_CLIENT_TOKEN", "ROLLBAR_SERVER_TOKEN"], "source": "https://docs.rollbar.com/docs/nextjs" },
-    { "step": "Create a shared Rollbar config, wrap the App Router root layout in RollbarProvider (or wrap _app with a Provider and ErrorBoundary in the Pages Router), and add error.tsx and global-error.tsx handlers that use the useRollbar() hook.", "env": [], "source": "https://docs.rollbar.com/docs/nextjs" }
+    { "step": "Create a free Rollbar account and a new project to get its client and server access tokens.", "env": [], "source": "https://docs.rollbar.com/docs/javascript" },
+    { "step": "Install the SDK with npm install rollbar (add @rollbar/react in a React app).", "env": [], "source": "https://docs.rollbar.com/docs/javascript" },
+    { "step": "Add both tokens to your environment file; only the client token is meant to be public.", "env": ["NEXT_PUBLIC_ROLLBAR_CLIENT_TOKEN", "ROLLBAR_SERVER_TOKEN"], "source": "https://docs.rollbar.com/docs/javascript" },
+    { "step": "Create one shared Rollbar config, start Rollbar in server code and in the browser, and hook it into your framework's error handling so uncaught errors get reported.", "env": [], "source": "https://docs.rollbar.com/docs/javascript" }
   ],
   "builder_notes": [
-    "Keep ROLLBAR_SERVER_TOKEN out of client code; only the client token, prefixed NEXT_PUBLIC_, is meant for the browser.",
+    "Keep ROLLBAR_SERVER_TOKEN out of client code; only the client token, with your framework's public prefix, is meant for the browser.",
     "Upload source maps after each build, with a matching code_version, using the CLI or a bundler plugin such as rollbar-sourcemap-webpack-plugin, or stack traces stay minified.",
     "Turn on scrubTelemetryInputs and set maskTextSelector and blockSelector for session replay before recording any page with personal data."
   ]

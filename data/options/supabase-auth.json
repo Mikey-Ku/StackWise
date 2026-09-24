@@ -51,11 +51,11 @@
     }
   },
   "setup": [
-    { "step": "Create a free Supabase account and a new project at supabase.com.", "env": [], "source": "https://supabase.com/docs/guides/auth/quickstarts/nextjs" },
-    { "step": "Scaffold a Next.js app using the official Supabase starter template, which includes working sign-up and login pages.", "env": [], "source": "https://supabase.com/docs/guides/auth/quickstarts/nextjs" },
-    { "step": "Copy the Project URL and publishable key from the project's Connect panel in the dashboard.", "env": [], "source": "https://supabase.com/docs/guides/auth/quickstarts/nextjs" },
-    { "step": "Add the URL and key to your environment file.", "env": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"], "source": "https://supabase.com/docs/guides/auth/quickstarts/nextjs" },
-    { "step": "Optionally add polished sign-in and sign-up screens from the official Supabase UI Library.", "env": [], "source": "https://supabase.com/ui/docs/react/password-based-auth" }
+    { "step": "Create a free Supabase account and a new project at supabase.com.", "env": [], "source": "https://supabase.com/docs/guides/getting-started" },
+    { "step": "Install the Supabase client with npm install @supabase/supabase-js (add @supabase/ssr if your framework renders pages on the server).", "env": [], "source": "https://supabase.com/docs/reference/javascript/installing" },
+    { "step": "Copy the Project URL and publishable key from the project's Connect panel in the dashboard.", "env": [], "source": "https://supabase.com/docs/guides/getting-started/api-keys" },
+    { "step": "Add the URL and key to your environment file.", "env": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"], "source": "https://supabase.com/docs/guides/getting-started/api-keys" },
+    { "step": "Optionally add ready-made sign-in and sign-up screens from the official Supabase UI Library, if it supports your framework.", "env": [], "source": "https://supabase.com/library/docs/getting-started/introduction" }
   ],
   "builder_notes": [
     "Never expose the secret key to the browser; only the publishable key belongs in client-side code.",
