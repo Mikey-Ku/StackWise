@@ -5,6 +5,7 @@ import { detectProject, type Detected } from "./detect";
 import { envValues, gitignoreCovers, parseEnv, setEnv, springEnvRefs } from "./envfile";
 import { buildProbe, PROBES, safeBody } from "./probes";
 import { checkReadOnly, postgresFrom, ROW_LIMIT, sqliteFrom, TIMEOUT_MS } from "./sql";
+import { LEGACY_PLAN_FILE, PLAN_FILE } from "@/engine/names";
 
 /**
  * Node-only. A project folder on this computer, linked to a plan: what it is, its env files,
@@ -142,7 +143,7 @@ export function inspect(folder: string): Inspection {
     } else issues.push(`This project needs Java ${detected.javaVersion}, and StackWise couldn't find it on this Mac. Install it with: brew install openjdk@${detected.javaVersion}`);
   }
   if (rows.size && !envIgnored && has(WRITE_TO)) issues.push("Git doesn't ignore .env.local, so your keys could be committed. Add .env.local to .gitignore.");
-  return { ...detected, commands, folder, exists, env: [...rows.values()], configRefs: [...new Set(configRefs)], envIgnored, planFile: has("whystack.plan.json"), issues, icon: exists ? findIcon(folder) : null, readme: exists ? readmeSummary(read(folder, "README.md") ?? read(folder, "readme.md")) : null };
+  return { ...detected, commands, folder, exists, env: [...rows.values()], configRefs: [...new Set(configRefs)], envIgnored, planFile: has(PLAN_FILE) || has(LEGACY_PLAN_FILE), issues, icon: exists ? findIcon(folder) : null, readme: exists ? readmeSummary(read(folder, "README.md") ?? read(folder, "readme.md")) : null };
 }
 
 /** Every value the project's env files set, later files winning, the way most frameworks load them. */
@@ -253,7 +254,7 @@ export async function runSql(folder: string, query: string): Promise<SqlResult |
       db.close();
     }
   }
-  return { error: "StackWise found no Postgres URL (DATABASE_URL or SPRING_DATASOURCE_URL) or SQLite file in this project's env files. A database that lives inside the app, like Wheelhouse's local H2 file, can only be read by the app itself." };
+  return { error: "StackWise found no Postgres URL (DATABASE_URL or SPRING_DATASOURCE_URL) or SQLite file in this project's env files. A database that lives inside the app, like an H2 file inside the app, can only be read by the app itself." };
 }
 
 /* ---------- processes StackWise runs ---------- */

@@ -215,7 +215,7 @@ export function planReport(index: CatalogIndex, plan: SharedPlan, rec: Recommend
     size: plan.size,
     priority: plan.priority,
     builder: plan.builderId,
-    stack: stackReport(index, rec.selection).map((part) => ({ ...part, picked_by: rec.autoPicked.includes(part.part) ? "whystack" : "you" })),
+    stack: stackReport(index, rec.selection).map((part) => ({ ...part, picked_by: rec.autoPicked.includes(part.part) ? "stackwise" : "you" })),
     // Parts added by hand: StackWise has no facts on them, so they're listed, never checked or priced.
     ...(Object.keys(plan.custom ?? {}).length
       ? { custom_parts: Object.entries(plan.custom ?? {}).map(([id, part]) => ({ id, name: part.name, ...(part.role ? { role: part.role } : {}), ...(part.env.length ? { env: part.env } : {}), ...(full && part.url ? { url: part.url } : {}), ...(full && part.note ? { note: part.note } : {}) })) }

@@ -21,21 +21,21 @@ describe("writing a project into a folder", () => {
     const folder = path.join(home, "code", "app");
     fs.mkdirSync(folder, { recursive: true });
     fs.writeFileSync(path.join(folder, ".env.local"), "OTHER=1\n");
-    const first = writeProjectFolder(folder, files, { whystackRoot: "/opt/whystack", envNames: ["STRIPE_SECRET_KEY"], home });
+    const first = writeProjectFolder(folder, files, { stackwiseRoot: "/opt/stackwise", envNames: ["STRIPE_SECRET_KEY"], home });
     expect(first).toMatchObject({ wrote: ["SPEC.md", ".claude/agents/a.md"], missingEnv: ["STRIPE_SECRET_KEY"] });
     expect(fs.readFileSync(path.join(folder, ".env.local"), "utf8")).toBe("OTHER=1\n");
 
     fs.writeFileSync(path.join(folder, "SPEC.md"), "mine\n");
-    expect(writeProjectFolder(folder, files, { whystackRoot: "/opt/whystack", envNames: [], home })).toMatchObject({ wrote: [], keep: expect.arrayContaining([expect.objectContaining({ name: "SPEC.md" })]) });
+    expect(writeProjectFolder(folder, files, { stackwiseRoot: "/opt/stackwise", envNames: [], home })).toMatchObject({ wrote: [], keep: expect.arrayContaining([expect.objectContaining({ name: "SPEC.md" })]) });
     expect(fs.readFileSync(path.join(folder, "SPEC.md"), "utf8")).toBe("mine\n");
-    expect(writeProjectFolder(folder, files, { whystackRoot: "/opt/whystack", envNames: [], home, replace: true })).toMatchObject({ wrote: ["SPEC.md", ".claude/agents/a.md"] });
+    expect(writeProjectFolder(folder, files, { stackwiseRoot: "/opt/stackwise", envNames: [], home, replace: true })).toMatchObject({ wrote: ["SPEC.md", ".claude/agents/a.md"] });
     expect(fs.readFileSync(path.join(folder, ".env.local"), "utf8")).toBe("OTHER=1\n");
   });
 
   it("creates .env.local readable only by you, and refuses folders outside home", () => {
     const folder = path.join(home, "fresh");
-    writeProjectFolder(folder, files, { whystackRoot: "/opt/whystack", envNames: [], home });
+    writeProjectFolder(folder, files, { stackwiseRoot: "/opt/stackwise", envNames: [], home });
     expect(fs.statSync(path.join(folder, ".env.local")).mode & 0o777).toBe(0o600);
-    expect(writeProjectFolder("/tmp/elsewhere", files, { whystackRoot: "/opt/whystack", envNames: [], home })).toHaveProperty("error");
+    expect(writeProjectFolder("/tmp/elsewhere", files, { stackwiseRoot: "/opt/stackwise", envNames: [], home })).toHaveProperty("error");
   });
 });

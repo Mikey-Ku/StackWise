@@ -37,7 +37,7 @@ interface SharedRecord {
   agents?: Record<string, AgentState>;
 }
 
-const PAIRING_KEY = "whystack.pairing";
+const PAIRING_KEY = "stackwise.pairing";
 const POLL_MS = 1500;
 
 export function usePairing({

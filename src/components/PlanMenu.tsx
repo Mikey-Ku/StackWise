@@ -26,14 +26,14 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
   const exportFile = () => {
     close();
     const slug = (plan.appName.trim() || "plan").toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    downloadText(`${slug}.whystack.json`, JSON.stringify({ whystack: "plan", ...toSharedPlan(plan) }, null, 2), "application/json");
+    downloadText(`${slug}.stackwise.json`, JSON.stringify({ stackwise: "plan", ...toSharedPlan(plan) }, null, 2), "application/json");
   };
 
   const importFile = async (file: File) => {
     try {
-      const raw = JSON.parse(await file.text()) as { whystack?: unknown; id?: unknown; plan?: unknown };
-      // A project's whystack.plan.json keeps its plan id, so importing it reconnects to that plan.
-      if (raw.whystack === 1 && raw.plan && typeof raw.id === "string") {
+      const raw = JSON.parse(await file.text()) as { stackwise?: unknown; whystack?: unknown; id?: unknown; plan?: unknown };
+      // A project's stackwise.plan.json keeps its plan id, so importing it reconnects to that plan.
+      if ((raw.stackwise === 1 || raw.whystack === 1) && raw.plan && typeof raw.id === "string") {
         const parsed = sharedPlanSchema.safeParse(raw.plan);
         if (!parsed.success) throw new Error("not a plan");
         if (store.plans[raw.id]) {

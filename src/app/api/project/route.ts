@@ -8,6 +8,7 @@ import { ENV_NAME } from "@/project/envfile";
 import { iconData, inspect, listRuns, probe, runLog, runSql, startRun, stopRun, writeEnv } from "@/project/local";
 import { addWorktree, changes, mergeBranch, removeWorktree, repoInfo } from "@/project/git";
 import { PROBES } from "@/project/probes";
+import { LEGACY_PLAN_FILE, PLAN_FILE } from "@/engine/names";
 
 /**
  * A plan's linked project folder: what's in it, its env variables, live checks, the read-only SQL
@@ -71,10 +72,11 @@ export async function POST(request: Request) {
     case "planfile": {
       // The project's own plan, when it has one, so opening the folder opens its plan.
       try {
-        const file = projectPlanFileSchema.parse(JSON.parse(fs.readFileSync(`${dir}/whystack.plan.json`, "utf8")));
+        const name = [PLAN_FILE, LEGACY_PLAN_FILE].find((candidate) => fs.existsSync(`${dir}/${candidate}`)) ?? PLAN_FILE;
+        const file = projectPlanFileSchema.parse(JSON.parse(fs.readFileSync(`${dir}/${name}`, "utf8")));
         return Response.json({ id: file.id, plan: file.plan });
       } catch {
-        return Response.json({ error: "This project has no whystack.plan.json." }, { status: 404 });
+        return Response.json({ error: "This project has no stackwise.plan.json." }, { status: 404 });
       }
     }
     case "git": {

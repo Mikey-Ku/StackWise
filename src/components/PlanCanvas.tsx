@@ -713,7 +713,7 @@ export function PlanCanvas({
         }}
         onDrop={(e) => {
           e.preventDefault();
-          const optionId = e.dataTransfer.getData("application/x-whystack-option") || dragging;
+          const optionId = e.dataTransfer.getData("application/x-stackwise-option") || dragging;
           setOver(null);
           onDropped();
           if (!optionId) return;

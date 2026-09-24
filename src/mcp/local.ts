@@ -1,3 +1,5 @@
+import { setting } from "@/engine/names";
+
 /**
  * The MCP endpoint and pairing API change plans on disk, so they only answer this computer. The
  * Host check stops DNS rebinding (a website pointing its own name at 127.0.0.1), and the Origin
@@ -16,8 +18,8 @@ function hostname(value: string): string | null {
 }
 
 export function localOnly(request: Request): Response | null {
-  if (process.env.WHYSTACK_PAIRING === "off") {
-    return Response.json({ error: "Claude pairing is turned off on this server (WHYSTACK_PAIRING=off)." }, { status: 404 });
+  if (setting("PAIRING") === "off") {
+    return Response.json({ error: "Agent pairing is off on this server (STACKWISE_PAIRING=off)." }, { status: 404 });
   }
   const host = hostname(`http://${request.headers.get("host") ?? ""}`);
   const origin = request.headers.get("origin");

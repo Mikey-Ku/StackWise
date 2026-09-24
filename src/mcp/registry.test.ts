@@ -8,7 +8,7 @@ import { createRegistry } from "./registry";
 const plan: SharedPlan = { v: 1, appName: "Fade", description: "", features: "", answers: {}, size: "up_to_100", priority: "spend_zero", builderId: "claude-code", pinned: {}, notes: {} };
 const dirs: string[] = [];
 const fresh = () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "whystack-registry-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stackwise-registry-"));
   dirs.push(dir);
   return createRegistry(dir);
 };

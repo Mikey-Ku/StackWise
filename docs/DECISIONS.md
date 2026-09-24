@@ -1,12 +1,12 @@
 # Decisions
 
-This is the record of the grilling session on 2026-09-14 and 2026-09-15 that turned the "Vibe Architect" brainstorm (`Documents/ChatGPT/Project brainstorm/BRIEF.md` and `DESIGN.md`) into WhyStack.
+This is the record of the grilling session on 2026-09-14 and 2026-09-15 that turned the "Vibe Architect" brainstorm into StackWise. StackWise was called WhyStack until September 2026; the record uses the current name except where the name itself was decided.
 
-Each decision says who made it: **Michael** (his answer) or **Claude, accepted** (a recommendation Michael took with "do your recommendations for the rest"). The "In your words" lines are left blank on purpose. Michael's rule is that he writes the first draft of every project decision, and a decision isn't his to defend in an interview until he can explain it without notes.
+Each decision says who made it: **Michael** (his answer) or **Claude, accepted** (a recommendation Michael took with "do your recommendations for the rest"). The "In your words" lines are left blank on purpose. Michael's rule is that he writes the first draft of every project decision.
 
 ---
 
-## 1. What WhyStack is for
+## 1. What StackWise is for
 
 **Michael:** It's for everyone. The goal is to make people their own project manager: understand the components and the tradeoffs, have real research behind why you'd pick one host or backend over another, run spec-driven development for real, and set up the AI build process instead of just telling the agent to go.
 
@@ -52,7 +52,7 @@ Implication, from Claude: in free-form mode every arrow still needs a type ("sto
 
 ## 7. What a beginner walks away with
 
-**Michael:** A spec pack plus an ordered setup checklist. WhyStack never deploys. That also settled "AI deployment process": it means setting up the build and the services, not pushing to production.
+**Michael:** A spec pack plus an ordered setup checklist. StackWise never deploys. That also settled "AI deployment process": it means setting up the build and the services, not pushing to production.
 
 **In your words:**
 
@@ -90,13 +90,13 @@ Claude's rule for the follow-ups, not objected to: only ask a question if its an
 
 ## 13. Name
 
-**Claude, accepted:** WhyStack, because the "why" is the product. A quick web search found no software product with that name; the closest was WhatStack, a mobile SDK lookup app. **Open, Michael's:** a USPTO search before getting attached (the Wheelhouse trademark lesson).
+**Claude, accepted:** WhyStack, because the "why" is the product. A quick web search found no software product with that name; the closest was WhatStack, a mobile SDK lookup app. **Open, Michael's:** a trademark search before getting attached. The product was renamed StackWise in September 2026.
 
 ## 14. Tech stack
 
 **Claude, accepted:** a Next.js 16 web app with React Flow for the canvas, a TypeScript rules engine with no AI in it, JSON data in git validated by Zod, Vitest, and mk-ui for styling.
 
-Why, briefly: beginners don't live in terminals, so the desktop app and embedded terminal from the brainstorm went away. The same stack already runs hub and Repro. mk-ui keeps the portfolio visually consistent.
+Why, briefly: beginners don't live in terminals, so the desktop app and embedded terminal from the brainstorm went away. mk-ui is Michael's own design system, shared across his projects.
 
 **In your words:**
 
@@ -148,7 +148,7 @@ Michael asked for a repo and "as many features that I discussed" as possible. Wh
 
 ## 22. Evals are built, the cases are yours
 
-**Claude, following hard rule 1.** `eval:prefill` grades AI pre-fill against the keyword baseline (accuracy, yes precision and recall, opposite answers). `eval:plain-llm` counts how often a plain LLM picks a stack that breaks a rule, compared with WhyStack's plan. The grader is tested; `evals/prefill-cases.json` is empty until you write the cases.
+**Claude, following hard rule 1.** `eval:prefill` grades AI pre-fill against the keyword baseline (accuracy, yes precision and recall, opposite answers). `eval:plain-llm` counts how often a plain LLM picks a stack that breaks a rule, compared with StackWise's plan. The grader is tested; `evals/prefill-cases.json` is empty until you write the cases.
 
 ## 23. The source checker opens pull requests
 
@@ -172,19 +172,19 @@ Michael asked for a repo and "as many features that I discussed" as possible. Wh
 
 ## 26. Payment services ranked by their fee
 
-**Claude, fixing a tie found while testing.** Once PayPal was fully researched, it tied Stripe on everything WhyStack scored and won on alphabetical order despite higher fees. Payment services are now ranked on what they keep from a typical $20 sale.
+**Claude, fixing a tie found while testing.** Once PayPal was fully researched, it tied Stripe on everything StackWise scored and won on alphabetical order despite higher fees. Payment services are now ranked on what they keep from a typical $20 sale.
 
 **In your words:**
 
 ## 27. Pairing with Claude, all three ways
 
-**Michael:** All three. Claude as an advisor that asks WhyStack's rules, a shared plan Claude can change, and a project handoff for Claude Code. Claude had recommended the advisor and the handoff first, with the shared plan later.
+**Michael:** All three. Claude as an advisor that asks StackWise's rules, a shared plan Claude can change, and a project handoff for Claude Code. Claude had recommended the advisor and the handoff first, with the shared plan later.
 
 **In your words:**
 
 ## 28. How Claude connects
 
-**Michael:** Both. The running app serves MCP over HTTP for pairing, and exported projects start the server as a command, so they work when WhyStack isn't running.
+**Michael:** Both. The running app serves MCP over HTTP for pairing, and exported projects start the server as a command, so they work when StackWise isn't running.
 
 **In your words:**
 
@@ -196,11 +196,11 @@ Michael asked for a repo and "as many features that I discussed" as possible. Wh
 
 ## 30. What exporting writes for Claude Code
 
-**Michael:** Everything recommended (the plan file, the MCP config, rules for Claude, and letting Claude update the plan), plus an agentic coding structure with agents to run. Built as: `TASKS.md`, a `build-<part>` agent for every part, `stack-guard`, `setup-guide` and `spec-reviewer` agents, `/next-step` and `/check-stack` skills, and settings that allow WhyStack's tools. See `docs/MCP.md`.
+**Michael:** Everything recommended (the plan file, the MCP config, rules for Claude, and letting Claude update the plan), plus an agentic coding structure with agents to run. Built as: `TASKS.md`, a `build-<part>` agent for every part, `stack-guard`, `setup-guide` and `spec-reviewer` agents, `/next-step` and `/check-stack` skills, and settings that allow StackWise's tools. See `docs/MCP.md`.
 
 **In your words:**
 
-## 31. The offline server runs from WhyStack's folder
+## 31. The offline server runs from StackWise's folder
 
 **Michael:** A path to this folder, for now. Publishing it to npm would publish the engine and data, so that waits for the public or private decision.
 
@@ -210,7 +210,7 @@ Michael asked for a repo and "as many features that I discussed" as possible. Wh
 
 ## 32. Parts move, and the canvas remembers
 
-**Michael:** Make the components movable, like n8n. Built as: any part can be dragged anywhere, the layout is saved with the plan in the browser, and "Tidy up" puts everything back on WhyStack's ellipse. Moving is not undoable, so Undo stays about the plan, and the layout is not in the shared plan, so Claude can't rearrange your canvas.
+**Michael:** Make the components movable, like n8n. Built as: any part can be dragged anywhere, the layout is saved with the plan in the browser, and "Tidy up" puts everything back on StackWise's ellipse. Moving is not undoable, so Undo stays about the plan, and the layout is not in the shared plan, so Claude can't rearrange your canvas.
 
 **In your words:**
 
@@ -228,9 +228,9 @@ An option with setup steps but no variable recorded says so, instead of claiming
 
 **In your words:**
 
-## 35. WhyStack writes the project into a folder on this computer
+## 35. StackWise writes the project into a folder on this computer
 
-**Michael:** Tie this locally. Built as: the export dialog writes the same files straight into a folder, plus `.env.local` with names and no values, and gives you the `cd ... && claude` line. The rules: only inside your home folder, never WhyStack's own folder, no hidden or system folders, nothing replaced unless you tick the box, and an existing `.env.local` is never touched. WhyStack has no copy of any value, so it can only ever write names.
+**Michael:** Tie this locally. Built as: the export dialog writes the same files straight into a folder, plus `.env.local` with names and no values, and gives you the `cd ... && claude` line. The rules: only inside your home folder, never StackWise's own folder, no hidden or system folders, nothing replaced unless you tick the box, and an existing `.env.local` is never touched. StackWise has no copy of any value, so it can only ever write names.
 
 **In your words:**
 
@@ -250,7 +250,7 @@ An option with setup steps but no variable recorded says so, instead of claiming
 
 ## 38. Claude helps inside the plan, and still never decides
 
-**Michael:** Have AI help and edit those parts, and be able to talk more about it. Built as: a conversation on each part. Claude answers from a brief WhyStack computes for that part, and can suggest a note or a switch; a switch can only name an option the rules passed, and the page shows the rules' verdict for it. Nothing applies until accepted, as one undoable step. Without an API key, WhyStack answers the common questions from its facts and drafts notes itself. Claude Code can read and write notes through pairing.
+**Michael:** Have AI help and edit those parts, and be able to talk more about it. Built as: a conversation on each part. Claude answers from a brief StackWise computes for that part, and can suggest a note or a switch; a switch can only name an option the rules passed, and the page shows the rules' verdict for it. Nothing applies until accepted, as one undoable step. Without an API key, StackWise answers the common questions from its facts and drafts notes itself. Claude Code can read and write notes through pairing.
 
 **In your words:**
 
@@ -264,7 +264,6 @@ An option with setup steps but no variable recorded says so, instead of claiming
 
 ## Still open
 
-- **The interviewer question from Q1**, which was skipped: after a three-minute demo, what should an interviewer believe about you? Michael's to write.
 - **Definition of done for the first release.** Claude's proposal, not yet agreed:
   1. A beginner goes from a description to an exported spec pack in under ten minutes, without help.
   2. Every fact on the fully researched options has been reviewed by Michael (status `verified`).
@@ -272,14 +271,14 @@ An option with setup steps but no variable recorded says so, instead of claiming
   4. A second eval: how often a plain LLM recommends a stack that breaks a rule, compared with the rule-grounded plan.
   5. Public repo, CI green, data checks passing.
 - **The eval set.** App descriptions with known right answers. Michael writes every case.
-- **Accounts.** Which login provider and database WhyStack itself should use, if plans should sync across devices.
+- **Accounts.** Which login provider and database StackWise itself should use, if plans should sync across devices.
 - **Public or private repo.** The repo was created private.
 - **Publishing the MCP server to npm**, so exported projects work on other machines. Waits for public or private.
-- **Timing.** The Wheelhouse friends beta was planned for 2026-09-17.
+- **Timing.** A first beta with friends was planned for 2026-09-17.
 
 ## What changed from the brainstorm design
 
-| Brainstorm (Vibe Architect) | WhyStack |
+| Brainstorm (Vibe Architect) | StackWise |
 |---|---|
 | Solo founders and startup teams | Beginners first, experienced users second |
 | Desktop app with an embedded terminal | Web app, no terminal |

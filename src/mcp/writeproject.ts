@@ -22,9 +22,9 @@ export interface WriteReport {
 export function writeProjectFolder(
   input: string,
   files: SpecFile[],
-  options: { whystackRoot: string; envNames: string[]; replace?: boolean; dryRun?: boolean; home?: string },
+  options: { stackwiseRoot: string; envNames: string[]; replace?: boolean; dryRun?: boolean; home?: string },
 ): WriteReport | { error: string } {
-  const folder = resolveFolder(input, options.home ?? os.homedir(), options.whystackRoot);
+  const folder = resolveFolder(input, options.home ?? os.homedir(), options.stackwiseRoot);
   if ("error" in folder) return folder;
   const exists = (name: string) => fs.existsSync(path.join(folder.path, name));
   const { write, keep } = planWrites(files, exists, options.replace ?? false);

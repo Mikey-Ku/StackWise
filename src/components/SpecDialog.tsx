@@ -21,14 +21,14 @@ interface LocalReport {
 export function SpecDialog({
   model,
   generatedOn,
-  whystackRoot,
+  stackwiseRoot,
   onClose,
   onToast,
   onSaveImage,
 }: {
   model: PlanModel;
   generatedOn: string | null;
-  whystackRoot: string | undefined;
+  stackwiseRoot: string | undefined;
   onClose: () => void;
   onToast: (message: string) => void;
   /** Saves the diagram as a PNG, with the page's background or none. */
@@ -68,16 +68,16 @@ export function SpecDialog({
               planId: plan.id,
               plan: toSharedPlan(plan),
             },
-            { whystackRoot },
+            { stackwiseRoot },
           )
         : [],
-    [generatedOn, index, input, rec.selection, plan, whystackRoot],
+    [generatedOn, index, input, rec.selection, plan, stackwiseRoot],
   );
   const file = files.find((f) => f.name === active) ?? files[0];
   const builder = model.catalog.planning.builders.find((b) => b.id === plan.builderId);
   const folder = (plan.appName.trim() || "my-app").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "my-app";
   const agents = files.filter((f) => f.name.startsWith(".claude/agents/")).length;
-  const beside = whystackRoot ? `${whystackRoot.split("/").slice(0, -1).join("/")}/${folder}` : `~/${folder}`;
+  const beside = stackwiseRoot ? `${stackwiseRoot.split("/").slice(0, -1).join("/")}/${folder}` : `~/${folder}`;
 
   const send = async (dryRun: boolean) => {
     setBusy(true);
@@ -121,7 +121,7 @@ export function SpecDialog({
         <p className="mk-muted">
           {files.length} files: the spec, setup steps, an ordered task list and the plan itself
           {agents ? `, plus ${agents} Claude Code agents, skills like /next-step, and the StackWise MCP server so Claude checks every stack change with StackWise` : ""}. Unzip it as your project folder.
-          {builder?.format === "claude-md" && !whystackRoot ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
+          {builder?.format === "claude-md" && !stackwiseRoot ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
         </p>
         <label className="mk-field ws-spec__pick">
           <span className="mk-label">File</span>

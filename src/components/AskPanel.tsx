@@ -240,10 +240,10 @@ function ActivityRow({ activity }: { activity: ClaudeActivity }) {
 
 /** The one-line command that adds StackWise's MCP server, for agents whose CLI has one. The rest get the address. */
 const ADD_COMMANDS: Record<string, (url: string) => string> = {
-  "claude-code": (url) => `claude mcp add --transport http --scope user whystack ${url}`,
-  codex: (url) => `codex mcp add whystack --url ${url}`,
-  "gemini-cli": (url) => `gemini mcp add --transport http --scope user whystack ${url}`,
-  "qwen-code": (url) => `qwen mcp add --transport http --scope user whystack ${url}`,
+  "claude-code": (url) => `claude mcp add --transport http --scope user stackwise ${url}`,
+  codex: (url) => `codex mcp add stackwise --url ${url}`,
+  "gemini-cli": (url) => `gemini mcp add --transport http --scope user stackwise ${url}`,
+  "qwen-code": (url) => `qwen mcp add --transport http --scope user stackwise ${url}`,
 };
 
 /** How to get an agent listening, shown when the picked agent isn't. */
@@ -277,8 +277,8 @@ export function ConnectCard({ recipient, pairing, onToast }: { recipient: Recipi
         <li>
           <span>{claude ? "In Claude Code, run the pair command:" : `Paste the pairing instructions into ${recipient.label}:`}</span>
           {claude ? (
-            <button type="button" className="ws-agent__cmd" onClick={() => void copy("/mcp__whystack__pair", "Copied. Paste it into Claude Code.")}>
-              <code>/mcp__whystack__pair</code>
+            <button type="button" className="ws-agent__cmd" onClick={() => void copy("/mcp__stackwise__pair", "Copied. Paste it into Claude Code.")}>
+              <code>/mcp__stackwise__pair</code>
               <span className="mk-hint">Copy</span>
             </button>
           ) : (

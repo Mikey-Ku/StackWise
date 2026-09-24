@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "whystack",
+      "name": "stackwise",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev"],
+      "runtimeArgs": ["dev", "-H", "127.0.0.1"],
       "port": 4310
     }
   ]

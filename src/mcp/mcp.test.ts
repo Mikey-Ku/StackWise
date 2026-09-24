@@ -38,14 +38,14 @@ async function connect(planId: string | null, pair = { waitMs: 400, pollMs: 20, 
     projectDir,
     writeProject: (folder, files, options) => {
       writes.push({ folder, files: files.map((f) => f.name), replace: options.replace });
-      if (folder.includes("whystack")) return { error: "That's StackWise's own folder. Pick somewhere else for your project." };
+      if (folder.includes("stackwise")) return { error: "That's StackWise's own folder. Pick somewhere else for your project." };
       return { path: folder, folderExists: true, write: files.map((f) => f.name), keep: [], missingEnv: [], wrote: files.filter((f) => f.name !== "SPEC.md").map((f) => f.name) };
     },
     index: () => index,
     registry,
     planId: () => planId,
     afterSave: (record) => saved.push(record.id),
-    whystackRoot: "/opt/whystack",
+    stackwiseRoot: "/opt/stackwise",
     where: "app",
     pair,
   });
@@ -61,7 +61,7 @@ async function call(name: string, args: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "whystack-mcp-"));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "stackwise-mcp-"));
   registry = createRegistry(dir);
   saved = [];
 });
@@ -290,7 +290,7 @@ describe("MCP server", () => {
     const other = await call("export_project", { folder: "/Users/me/code/other", replace: true });
     expect(writes.at(-1)).toMatchObject({ folder: "/Users/me/code/other", replace: true });
     expect(other.data.folder).toBe("/Users/me/code/other");
-    expect((await call("export_project", { folder: "/opt/whystack/app" })).isError).toBe(true);
+    expect((await call("export_project", { folder: "/opt/stackwise/app" })).isError).toBe(true);
   });
 
   it("asks for a folder when it doesn't know where the project is", async () => {
@@ -304,11 +304,11 @@ describe("MCP server", () => {
   it("exports the project files, with an MCP config that points back at StackWise", async () => {
     registry.savePlan("p1", basePlan, "browser");
     await connect("p1");
-    const { data } = await call("export_project", { paths: ["SPEC.md", "SETUP.md", "TASKS.md", "CLAUDE.md", "DECISIONS.md", "whystack.plan.json", ".mcp.json", ".claude/settings.json", ".claude/agents/stack-guard.md", ".claude/skills/next-step/SKILL.md"] });
+    const { data } = await call("export_project", { paths: ["SPEC.md", "SETUP.md", "TASKS.md", "CLAUDE.md", "DECISIONS.md", "stackwise.plan.json", ".mcp.json", ".claude/settings.json", ".claude/agents/stack-guard.md", ".claude/skills/next-step/SKILL.md"] });
     const paths = data.files.map((f: { path: string }) => f.path);
-    expect(paths).toEqual(expect.arrayContaining(["SPEC.md", "SETUP.md", "TASKS.md", "CLAUDE.md", "DECISIONS.md", "whystack.plan.json", ".mcp.json", ".claude/settings.json", ".claude/agents/stack-guard.md", ".claude/skills/next-step/SKILL.md"]));
+    expect(paths).toEqual(expect.arrayContaining(["SPEC.md", "SETUP.md", "TASKS.md", "CLAUDE.md", "DECISIONS.md", "stackwise.plan.json", ".mcp.json", ".claude/settings.json", ".claude/agents/stack-guard.md", ".claude/skills/next-step/SKILL.md"]));
     const mcp = JSON.parse(data.files.find((f: { path: string }) => f.path === ".mcp.json").content);
-    expect(mcp.mcpServers.whystack).toEqual({ command: "pnpm", args: ["--silent", "--dir", "/opt/whystack", "mcp"] });
+    expect(mcp.mcpServers.stackwise).toEqual({ command: "pnpm", args: ["--silent", "--dir", "/opt/stackwise", "mcp"] });
   });
 });
 
