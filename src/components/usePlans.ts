@@ -16,27 +16,10 @@ import {
   type PlanInput,
   type SlotId,
 } from "@/engine";
-import { initialStore, migrate, reduce, type Guess, type History, type StoreAction } from "./store";
+import { loadHistory, newId, saveStore } from "./savedStore";
+import { reduce, type Guess, type History, type StoreAction } from "./store";
 
-const STORE_KEY = "stackwise.store.v2";
-const OLD_KEY = "stackwise.plan.v1";
-
-export function newId(): string {
-  return crypto.randomUUID().slice(0, 8);
-}
-
-function loadHistory(): History {
-  const now = new Date().toISOString();
-  const id = newId();
-  try {
-    const saved = window.localStorage.getItem(STORE_KEY) ?? window.localStorage.getItem(OLD_KEY);
-    const store = saved ? migrate(JSON.parse(saved), id, now) : null;
-    if (store) return { store, past: [], future: [] };
-  } catch {
-    // Unreadable or blocked storage: start fresh.
-  }
-  return { store: initialStore(id, now), past: [], future: [] };
-}
+export { newId };
 
 export interface PrefillStatus {
   loading: boolean;
@@ -51,14 +34,7 @@ export function usePlans(catalog: Catalog) {
   const plan = store.plans[store.activeId];
   const index = useMemo(() => indexCatalog(catalog), [catalog]);
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORE_KEY, JSON.stringify(store));
-      window.localStorage.removeItem(OLD_KEY);
-    } catch {
-      // Private windows and blocked storage: plans still work, they just won't survive a reload.
-    }
-  }, [store]);
+  useEffect(() => saveStore(store), [store]);
 
   const input: PlanInput = useMemo(() => ({ answers: plan.answers, size: plan.size, priority: plan.priority }), [plan.answers, plan.size, plan.priority]);
   const rec = useMemo(() => recommend(index, input, plan.pinned), [index, input, plan.pinned]);
