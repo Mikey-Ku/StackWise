@@ -20,10 +20,10 @@ const plan: SharedPlan = {
 const post = (body: unknown) => POST(new Request("http://localhost:4310/api/talk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));
 
 beforeEach(() => {
-  process.env.WHYSTACK_AI = "off";
+  process.env.STACKWISE_AI = "off";
 });
 afterEach(() => {
-  delete process.env.WHYSTACK_AI;
+  delete process.env.STACKWISE_AI;
 });
 
 describe("POST /api/talk", () => {

@@ -11,11 +11,11 @@ import { cx } from "./ui";
  */
 
 export type Theme = "system" | "light" | "dark";
-const KEY = "whystack.theme";
+const KEY = "stackwise.theme";
 const ORDER: Theme[] = ["system", "light", "dark"];
 const LABEL: Record<Theme, string> = { system: "Match my computer", light: "Light", dark: "Dark" };
 
-export const THEME_SCRIPT = `try{var t=localStorage.getItem("${KEY}");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
+export const THEME_SCRIPT = `try{var t=localStorage.getItem("${KEY}")||localStorage.getItem("whystack.theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
 
 const listeners = new Set<() => void>();
 function read(): Theme {

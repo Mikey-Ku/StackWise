@@ -7,8 +7,8 @@ import { createStackWiseServer } from "@/mcp/server";
 
 /**
  * StackWise's MCP server over HTTP, for Claude to pair on the plan open in StackWise:
- *   claude mcp add --transport http --scope user whystack http://localhost:4310/api/mcp
- * Stateless: each request gets a fresh server, and the shared plan lives in .whystack/.
+ *   claude mcp add --transport http --scope user stackwise http://localhost:4310/api/mcp
+ * Stateless: each request gets a fresh server, and the shared plan lives in .stackwise/.
  */
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ async function handle(request: Request): Promise<Response> {
     index: () => indexCatalog(loadCatalog()),
     registry,
     planId: () => registry.activeId(),
-    whystackRoot: root,
+    stackwiseRoot: root,
     where: "app",
   });
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });

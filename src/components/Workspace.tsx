@@ -29,6 +29,7 @@ import { SpecDialog } from "./SpecDialog";
 import { usePairing, type ClaudeActivity } from "./usePairing";
 import { newId, usePlans } from "./usePlans";
 import { Logo, copyText, cx } from "./ui";
+import { migrateLegacyStorage } from "./storage";
 
 /**
  * The workspace is the canvas, full screen, with everything else floating over it:
@@ -53,11 +54,14 @@ const PANELS: { id: Panel; label: string; icon: IconName; hint: string }[] = [
   { id: "project", label: "Project", icon: "terminal", hint: "Your project folder: run it, fill in its keys, check each service" },
 ];
 
+// Saved data from before StackWise's rename moves to its new keys before anything reads it.
+if (typeof window !== "undefined") migrateLegacyStorage();
+
 /** The side panels' widths until someone drags their edge (PanelEdge). */
 const LEFT_WIDTH = 360;
 const RIGHT_WIDTH = 380;
 
-const CONNECT_SEEN_KEY = "whystack.connect-seen";
+const CONNECT_SEEN_KEY = "stackwise.connect-seen";
 const readFlag = (key: string) => {
   try {
     return window.localStorage.getItem(key) === "yes";
@@ -202,7 +206,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           dispatch({ type: "applyRemote", id, plan: shared });
         } else dispatch({ type: "importPlan", id, now: new Date().toISOString(), plan: shared });
         dispatch({ type: "setFolder", folder: project.body.folder });
-        setToast(`Opened ${shared.appName || name} from its whystack.plan.json.`);
+        setToast(`Opened ${shared.appName || name} from its stackwise.plan.json.`);
       } else if (linked) {
         dispatch({ type: "switchPlan", id: linked.id });
         setToast(`Opened ${linked.appName || name}, already linked to ${folder}.`);
@@ -724,7 +728,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         </div>
       )}
 
-      <SpecDialog model={model} generatedOn={specDate} whystackRoot={ai?.root} onClose={() => setSpecDate(null)} onToast={setToast} onSaveImage={saveImage} />
+      <SpecDialog model={model} generatedOn={specDate} stackwiseRoot={ai?.root} onClose={() => setSpecDate(null)} onToast={setToast} onSaveImage={saveImage} />
       <CompareDialog model={model} request={compare} today={today} onClose={() => setCompare(null)} onToast={setToast} />
     </div>
   );

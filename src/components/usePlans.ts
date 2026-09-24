@@ -18,8 +18,8 @@ import {
 } from "@/engine";
 import { initialStore, migrate, reduce, type Guess, type History, type StoreAction } from "./store";
 
-const STORE_KEY = "whystack.store.v2";
-const OLD_KEY = "whystack.plan.v1";
+const STORE_KEY = "stackwise.store.v2";
+const OLD_KEY = "stackwise.plan.v1";
 
 export function newId(): string {
   return crypto.randomUUID().slice(0, 8);
@@ -113,7 +113,7 @@ export type PlanModel = ReturnType<typeof usePlans>;
 /** The built-in AI picked as the default answerer ("api:openai" and so on), if one was. */
 function savedProvider(): string | undefined {
   try {
-    const saved = window.localStorage.getItem("whystack.answerer");
+    const saved = window.localStorage.getItem("stackwise.answerer");
     return saved?.startsWith("api:") ? saved.slice(4) : undefined;
   } catch {
     return undefined;

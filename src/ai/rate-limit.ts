@@ -1,3 +1,5 @@
+import { setting } from "@/engine/names";
+
 /**
  * A small in-memory limit on AI calls per visitor, so a public deployment can't run up the API
  * bill. It resets when the server restarts, which is fine for a single instance.
@@ -7,7 +9,7 @@ const WINDOW_MS = 60 * 60 * 1000;
 const hits = new Map<string, number[]>();
 
 export function aiLimitPerHour(): number {
-  const parsed = Number(process.env.WHYSTACK_AI_LIMIT_PER_HOUR);
+  const parsed = Number(setting("AI_LIMIT_PER_HOUR"));
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 30;
 }
 

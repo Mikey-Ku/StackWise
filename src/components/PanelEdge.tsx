@@ -12,7 +12,7 @@ const maxWidth = () => Math.max(MIN, Math.min(760, Math.round(window.innerWidth 
 const clamp = (width: number) => Math.round(Math.min(maxWidth(), Math.max(MIN, width)));
 
 export function usePanelWidth(key: string, fallback: number): [number, (width: number) => void] {
-  const storageKey = `whystack.width.${key}`;
+  const storageKey = `stackwise.width.${key}`;
   // The workspace only renders in the browser (ClientRoot), so the saved width can be read at once.
   const [width, setWidth] = useState(() => {
     try {

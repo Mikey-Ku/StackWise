@@ -6,19 +6,26 @@ import { loadCatalog } from "@/engine/load";
 import { mergePlans } from "@/engine/merge";
 import { createRegistry, projectPlanFileSchema, toProjectPlanFile, type PlanRecord } from "./registry";
 import { createStackWiseServer } from "./server";
+import { LEGACY_PLAN_FILE, PLAN_FILE } from "@/engine/names";
 
 /**
  * StackWise's MCP server as a command, for projects exported from StackWise. The project's
  * .mcp.json runs `pnpm --silent --dir <StackWise> mcp`, so this process starts in StackWise's folder,
  * and Claude Code passes the project folder in CLAUDE_PROJECT_DIR. The project's
- * whystack.plan.json and StackWise's shared copy are kept in step, so changes Claude makes here
+ * stackwise.plan.json and StackWise's shared copy are kept in step, so changes Claude makes here
  * show up in the StackWise tab whenever it's open, and StackWise doesn't need to be running.
  * Only JSON-RPC may go to stdout; anything else goes to stderr.
  */
 
 const root = process.cwd();
 const projectDir = process.env.CLAUDE_PROJECT_DIR ?? process.env.INIT_CWD ?? root;
-const planPath = path.join(projectDir, "whystack.plan.json");
+const planPath = path.join(projectDir, PLAN_FILE);
+// A project exported while StackWise was called WhyStack: its plan file takes the new name.
+const legacyPlanPath = path.join(projectDir, LEGACY_PLAN_FILE);
+if (!fs.existsSync(planPath) && fs.existsSync(legacyPlanPath)) {
+  fs.renameSync(legacyPlanPath, planPath);
+  console.error(`Renamed ${LEGACY_PLAN_FILE} to ${PLAN_FILE}.`);
+}
 const registry = createRegistry(root);
 
 function readProjectPlan() {
@@ -60,7 +67,7 @@ function syncedPlanId(): string | null {
   const { plan, conflicts } = mergePlans(base, file.plan, record.plan, fileNewer);
   const saved = registry.savePlan(file.id, plan, "claude", {
     tool: "sync_plan_file",
-    summary: conflicts.length ? `Merged whystack.plan.json with StackWise's copy. Both changed ${conflicts.join(", ")}, and the newer one was kept.` : "Merged whystack.plan.json with StackWise's copy.",
+    summary: conflicts.length ? `Merged stackwise.plan.json with StackWise's copy. Both changed ${conflicts.join(", ")}, and the newer one was kept.` : "Merged stackwise.plan.json with StackWise's copy.",
     changes: [],
   });
   registry.setSynced(file.id, saved.plan);
@@ -76,7 +83,7 @@ async function main() {
     afterSave: (record) => {
       if (fs.existsSync(planPath)) writeProjectPlan(record);
     },
-    whystackRoot: root,
+    stackwiseRoot: root,
     projectDir,
     where: fs.existsSync(planPath) ? "project" : "app",
   });

@@ -441,7 +441,7 @@ function Agents({ path, pairing, onToast }: { path: string; pairing: Pairing; on
             const listening = state ? presence(state, pairing.serverNow) : "not-connected";
             const changed = w.changes ? [...new Set([...w.changes.committed, ...w.changes.uncommitted])] : [];
             const claude = w.agent!.startsWith("claude-code");
-            const start = claude ? `cd ${w.path} && claude "/mcp__whystack__pair ${w.agent}"` : `cd ${w.path}`;
+            const start = claude ? `cd ${w.path} && claude "/mcp__stackwise__pair ${w.agent}"` : `cd ${w.path}`;
             return (
               <div key={w.path} className="ws-proj__agent">
                 <div className="ws-proj__envtop">

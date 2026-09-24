@@ -52,10 +52,10 @@ export interface McpContext {
   registry: Registry;
   /** The plan the plan tools use when no plan_id is given. */
   planId: () => string | null;
-  /** Runs after Claude saves a plan, for example to update a project's whystack.plan.json. */
+  /** Runs after Claude saves a plan, for example to update a project's stackwise.plan.json. */
   afterSave?: (record: PlanRecord) => void;
   /** Where StackWise lives, for the .mcp.json an exported project uses. */
-  whystackRoot: string;
+  stackwiseRoot: string;
   where: "app" | "project";
   /** How long wait_for_message waits and when an idle agent stops listening. Tests shorten these. */
   pair?: PairSettings;
@@ -67,7 +67,7 @@ export interface McpContext {
 
 export const SERVER_INSTRUCTIONS =
   "StackWise plans app stacks and decides from sourced facts and rules whether services work together. Never decide compatibility, prices or limits from memory; call its tools and pass on the reasons and sources. " +
-  "With a plan shared from StackWise (or this project's whystack.plan.json), leave out stack and the tools use the plan. update_plan changes it live in StackWise; give each change a short note saying why. " +
+  "With a plan shared from StackWise (or this project's stackwise.plan.json), leave out stack and the tools use the plan. update_plan changes it live in StackWise; give each change a short note saying why. " +
   "The person can write to you from StackWise: use the pair prompt, or wait_for_message and send_message.";
 
 const stackSchema = z.partialRecord(z.enum(SLOT_IDS), z.string().max(80)).describe('Part id to option id, like {"hosting":"vercel"}.');
@@ -102,14 +102,14 @@ interface Basis {
 }
 
 export function createStackWiseServer(ctx: McpContext): McpServer {
-  const server = new McpServer({ name: "whystack", version: "0.4.0" }, { instructions: SERVER_INSTRUCTIONS });
+  const server = new McpServer({ name: "stackwise", version: "0.4.0" }, { instructions: SERVER_INSTRUCTIONS });
 
   const sharedPlan = (planId: string | undefined): PlanRecord | string => {
     const id = planId ?? ctx.planId();
     if (!id) {
       return ctx.where === "app"
         ? "No plan is shared yet. In StackWise (http://localhost:4310), open the plan, open Ask, pick your agent and turn on sharing."
-        : "This project has no whystack.plan.json. Export the project from StackWise to create one.";
+        : "This project has no stackwise.plan.json. Export the project from StackWise to create one.";
     }
     return ctx.registry.read(id) ?? `There's no shared plan "${id}". In StackWise, open that plan and turn on sharing in Ask.`;
   };
@@ -442,7 +442,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
     {
       title: "Write the project files",
       description:
-        "Writes the files for building the shared plan (SPEC.md, SETUP.md, TASKS.md, DECISIONS.md, whystack.plan.json, .env.local with names only and, for Claude Code, CLAUDE.md, .mcp.json and .claude agents and skills) straight into the project folder and returns only what it wrote. " +
+        "Writes the files for building the shared plan (SPEC.md, SETUP.md, TASKS.md, DECISIONS.md, stackwise.plan.json, .env.local with names only and, for Claude Code, CLAUDE.md, .mcp.json and .claude agents and skills) straight into the project folder and returns only what it wrote. " +
         "Never replaces .env.local; replaces other existing files only with replace. To read a file instead, pass paths; list_only shows names and sizes.",
       inputSchema: {
         plan_id: planIdSchema,
@@ -471,7 +471,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
           planId: record.id,
           plan: record.plan,
         },
-        { whystackRoot: ctx.whystackRoot },
+        { stackwiseRoot: ctx.stackwiseRoot },
       );
       if (list_only) return json({ files: files.map((f) => ({ path: f.name, chars: f.content.length })) });
       if (paths) {
@@ -487,7 +487,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       if (!target) return fail("Pass folder: the project's absolute path. StackWise writes the files there and returns their names.");
       const env = planEnv(index, rec.selection);
       const pack = [...files, { name: NEVER_REPLACE, content: envFileText(env, { appName: record.plan.appName, generatedOn: new Date().toISOString().slice(0, 10), custom: record.plan.custom }) }];
-      const result = (ctx.writeProject ?? writeProjectFolder)(target, pack, { whystackRoot: ctx.whystackRoot, envNames: env.map((v) => v.name), replace });
+      const result = (ctx.writeProject ?? writeProjectFolder)(target, pack, { stackwiseRoot: ctx.stackwiseRoot, envNames: env.map((v) => v.name), replace });
       if ("error" in result) return fail(result.error);
       log("export_project", `Wrote ${result.wrote.length} project files to ${result.path}`, undefined, record.id);
       return json({

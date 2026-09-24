@@ -79,7 +79,7 @@ export function Palette({
                   className={cx("ws-opt", inPlan && "is-in-plan")}
                   draggable
                   onDragStart={(e) => {
-                    e.dataTransfer.setData("application/x-whystack-option", option.id);
+                    e.dataTransfer.setData("application/x-stackwise-option", option.id);
                     e.dataTransfer.effectAllowed = "move";
                     onDragStart(option.id);
                   }}

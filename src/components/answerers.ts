@@ -21,7 +21,7 @@ export interface Recipient {
   keyName?: string;
 }
 
-export const DEFAULT_ANSWERER_KEY = "whystack.answerer";
+export const DEFAULT_ANSWERER_KEY = "stackwise.answerer";
 
 export const STATE_TEXT: Record<Recipient["state"], string> = {
   listening: "Listening",

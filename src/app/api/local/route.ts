@@ -46,12 +46,12 @@ export async function POST(request: Request) {
       input,
       selection,
       { appName: plan.appName, description: plan.description, features: plan.features, builderId: plan.builderId, generatedOn, planId: parsed.data.id, plan },
-      { whystackRoot: root },
+      { stackwiseRoot: root },
     ),
     { name: NEVER_REPLACE, content: envFileText(env, { appName: plan.appName, generatedOn, custom: plan.custom }) },
   ];
 
-  const result = writeProjectFolder(parsed.data.path, files, { whystackRoot: root, envNames: env.map((v) => v.name), replace, dryRun });
+  const result = writeProjectFolder(parsed.data.path, files, { stackwiseRoot: root, envNames: env.map((v) => v.name), replace, dryRun });
   if ("error" in result) return Response.json({ error: result.error }, { status: 400 });
   return Response.json({ ...result, command: `cd ${result.path.includes(" ") ? `"${result.path}"` : result.path}` });
 }

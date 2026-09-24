@@ -1,3 +1,5 @@
+import { setting } from "@/engine/names";
+
 /**
  * Chatting with a coding agent that runs in a terminal (Claude Code, Codex, Gemini CLI, anything
  * that speaks MCP). The person writes in StackWise; the message waits in the shared plan's inbox,
@@ -80,9 +82,9 @@ const seconds = (value: string | undefined, fallback: number, max: number) => {
 
 export function pairSettings(env: Record<string, string | undefined> = process.env): PairSettings {
   return {
-    waitMs: seconds(env.WHYSTACK_PAIR_WAIT_S, 240, 240) * 1000,
+    waitMs: seconds(setting("PAIR_WAIT_S", env), 240, 240) * 1000,
     pollMs: 1000,
-    idleMs: seconds(env.WHYSTACK_PAIR_IDLE_MIN, 30, 24 * 60) * 60_000,
+    idleMs: seconds(setting("PAIR_IDLE_MIN", env), 30, 24 * 60) * 60_000,
   };
 }
 

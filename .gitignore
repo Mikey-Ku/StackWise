@@ -26,4 +26,11 @@ npm-debug.log*
 .pnpm-debug.log*
 
 # shared plans between the StackWise tab and Claude (see docs/MCP.md)
+/.stackwise
+# its name before the rename
 /.whystack
+
+# personal agent notes and local Claude Code state
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees/

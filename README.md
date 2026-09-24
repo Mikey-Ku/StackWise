@@ -23,9 +23,9 @@ Then, in any project folder:
 stackwise
 ```
 
-StackWise starts in the background (on http://localhost:4310) and opens your browser on that project. If the folder has a `whystack.plan.json`, that plan opens; if you've opened the folder before, its plan comes back; otherwise a new plan starts, named after the folder, with its README as the description and its framework recognized. `stackwise stop` stops it.
+StackWise starts in the background (on http://localhost:4310) and opens your browser on that project. If the folder has a `stackwise.plan.json`, that plan opens; if you've opened the folder before, its plan comes back; otherwise a new plan starts, named after the folder, with its README as the description and its framework recognized. `stackwise stop` stops it.
 
-To build with an agent, open Claude Code in the same folder and run `/mcp__whystack__pair`. Write to it from **Ask** in StackWise (Cmd+K); it works in your repo and answers there.
+To build with an agent, open Claude Code in the same folder and run `/mcp__stackwise__pair`. Write to it from **Ask** in StackWise (Cmd+K); it works in your repo and answers there.
 
 Or just run the app: `pnpm dev` and open http://localhost:4310.
 
@@ -56,10 +56,10 @@ pnpm mcp              # StackWise's MCP server over stdio (exported projects sta
 
 ## Pair with a coding agent
 
-StackWise is also an MCP server, so your coding agent uses its rules instead of guessing. Open **Ask** (Cmd+K), pick your agent in the Answering menu, then add StackWise to Claude Code once (any agent that speaks MCP can connect to the same address) and run `/mcp__whystack__pair` so you can write to it from StackWise:
+StackWise is also an MCP server, so your coding agent uses its rules instead of guessing. Open **Ask** (Cmd+K), pick your agent in the Answering menu, then add StackWise to Claude Code once (any agent that speaks MCP can connect to the same address) and run `/mcp__stackwise__pair` so you can write to it from StackWise:
 
 ```bash
-claude mcp add --transport http --scope user whystack http://localhost:4310/api/mcp
+claude mcp add --transport http --scope user stackwise http://localhost:4310/api/mcp
 ```
 
 Claude can check stacks, compare options, estimate costs and change the plan you share; its changes appear on the canvas with its reasons, and Undo reverses them. **Export project** gives Claude Code a ready project: tasks, an agent per part, `/next-step`, and an `.mcp.json` that starts StackWise's server. See [docs/MCP.md](docs/MCP.md).
@@ -114,7 +114,7 @@ Claude can check stacks, compare options, estimate costs and change the plan you
 **Leaving with a plan**
 - Project pack, as a zip: SPEC.md, SETUP.md, TASKS.md, DECISIONS.md with the reasoning for every part, the plan file, `.env.example` with every variable name grouped by service, a `.gitignore` that keeps the values out of git, and PROMPT.txt, AGENTS.md or CLAUDE.md for your builder. For Claude Code it adds `.mcp.json`, a build agent per part, a stack guard, a setup guide, a reviewer and a `/next-step` skill. Environment variable names follow your framework.
 - Or write the same files straight into a folder on this computer, plus a `.env.local` with the names and no values, ready to open with `claude`. StackWise only writes inside your home folder, never writes over an existing `.env.local`, and tells you which names yours is missing.
-- Pair a coding agent through StackWise's MCP server: 13 tools, a shared plan, and two-way chat. Run `/mcp__whystack__pair` in Claude Code, write to it from StackWise, and it works in your project and answers in the Ask panel, with the files it changed.
+- Pair a coding agent through StackWise's MCP server: 13 tools, a shared plan, and two-way chat. Run `/mcp__stackwise__pair` in Claude Code, write to it from StackWise, and it works in your project and answers in the Ask panel, with the files it changed.
 - Build checklist: every account, key and build step in order, checked off as you go.
 - Copy the reasoning for one part, to paste into a proposal or pull request.
 - Several saved plans, share links (the whole plan lives in the link, no account needed), and plan files to export and import.
@@ -149,7 +149,7 @@ src/engine/           the logic, no React, fully tested
 src/ai/               Claude pre-fill and explanations, optional
 src/components/       the workspace UI
 src/app/api/          status, prefill, explain, talk, mcp, pair and local routes
-src/mcp/              the MCP server, its stdio command, and shared plans in .whystack/
+src/mcp/              the MCP server, its stdio command, and shared plans in .stackwise/
 scripts/              evals, source checker, option drafter, logo fetcher
 evals/                eval cases (written by a person) and how to run them
 docs/                 DECISIONS.md, LEARNING.md, DATA.md, MCP.md

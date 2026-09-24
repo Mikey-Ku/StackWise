@@ -1,18 +1,19 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { setting } from "@/engine/names";
 
 /**
  * Node-only. AI is optional everywhere in StackWise: with no key configured, the planner uses
  * keyword guesses and a template summary, and nothing else changes.
  */
 
-export const AI_MODEL = process.env.WHYSTACK_MODEL || "claude-opus-5";
-export const AI_EFFORT = (process.env.WHYSTACK_EFFORT as "low" | "medium" | "high" | undefined) || "low";
+export const AI_MODEL = setting("MODEL") || "claude-opus-5";
+export const AI_EFFORT = (setting("EFFORT") as "low" | "medium" | "high" | undefined) || "low";
 
 /** Server-side refusal fallback: routes a declined request to Anthropic's recommended model. */
 export const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 
 export function aiEnabled(): boolean {
-  if (process.env.WHYSTACK_AI === "off") return false;
+  if (setting("AI") === "off") return false;
   return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 }
 

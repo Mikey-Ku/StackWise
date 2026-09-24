@@ -23,10 +23,10 @@ const plan: SharedPlan = {
 const post = (body: unknown, headers: Record<string, string> = {}) =>
   POST(new Request("http://localhost:4310/api/local", { method: "POST", headers: { host: "localhost:4310", "content-type": "application/json", ...headers }, body: JSON.stringify(body) }));
 
-const target = path.join(os.homedir(), "whystack-route-test");
+const target = path.join(os.homedir(), "stackwise-route-test");
 
 afterEach(() => {
-  delete process.env.WHYSTACK_PAIRING;
+  delete process.env.STACKWISE_PAIRING;
 });
 
 describe("POST /api/local", () => {
@@ -36,13 +36,13 @@ describe("POST /api/local", () => {
     expect(response.status).toBe(200);
     expect(body.path).toBe(target);
     expect(body.folderExists).toBe(false);
-    expect(body.write).toEqual(expect.arrayContaining(["SPEC.md", "SETUP.md", ".env.example", ".gitignore", "whystack.plan.json", ".env.local"]));
+    expect(body.write).toEqual(expect.arrayContaining(["SPEC.md", "SETUP.md", ".env.example", ".gitignore", "stackwise.plan.json", ".env.local"]));
     expect(body.wrote).toEqual([]);
     expect(fs.existsSync(target)).toBe(false);
   });
 
   it("refuses a folder outside the home folder", async () => {
-    const response = await post({ path: "/etc/whystack", id: "p1", plan, generatedOn: "2026-09-15", dryRun: true });
+    const response = await post({ path: "/etc/stackwise", id: "p1", plan, generatedOn: "2026-09-15", dryRun: true });
     expect(response.status).toBe(400);
     expect((await response.json()).error).toContain("only writes inside your home folder");
   });
@@ -53,7 +53,7 @@ describe("POST /api/local", () => {
   });
 
   it("can be turned off with the rest of pairing", async () => {
-    process.env.WHYSTACK_PAIRING = "off";
+    process.env.STACKWISE_PAIRING = "off";
     expect((await post({ path: target, id: "p1", plan, generatedOn: "2026-09-15", dryRun: true })).status).toBe(404);
   });
 });

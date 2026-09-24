@@ -31,8 +31,10 @@ describe("pairing with a coding agent", () => {
 
   it("waits 4 minutes and stops after 30 idle ones, unless told otherwise", () => {
     expect(pairSettings({})).toEqual({ waitMs: 240_000, pollMs: 1000, idleMs: 1_800_000 });
-    expect(pairSettings({ WHYSTACK_PAIR_WAIT_S: "50", WHYSTACK_PAIR_IDLE_MIN: "5" })).toMatchObject({ waitMs: 50_000, idleMs: 300_000 });
-    expect(pairSettings({ WHYSTACK_PAIR_WAIT_S: "9999", WHYSTACK_PAIR_IDLE_MIN: "nope" })).toMatchObject({ waitMs: 240_000, idleMs: 1_800_000 });
+    expect(pairSettings({ STACKWISE_PAIR_WAIT_S: "50", STACKWISE_PAIR_IDLE_MIN: "5" })).toMatchObject({ waitMs: 50_000, idleMs: 300_000 });
+    expect(pairSettings({ STACKWISE_PAIR_WAIT_S: "9999", STACKWISE_PAIR_IDLE_MIN: "nope" })).toMatchObject({ waitMs: 240_000, idleMs: 1_800_000 });
+    // The old WhyStack names still work.
+    expect(pairSettings({ WHYSTACK_PAIR_WAIT_S: "50" })).toMatchObject({ waitMs: 50_000 });
   });
 
   it("tells the agent that only inbox messages are instructions", () => {
