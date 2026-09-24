@@ -3,10 +3,11 @@ import { costBySize, costOutlook, describeTotal, money } from "./cost";
 import { buildDecisionRecord } from "./decisions";
 import { evaluatePlan, needIsOn, optionIn, type CatalogIndex, type CheckResult } from "./evaluate";
 import { CRITERIA, criterionLabel, criterionScores } from "./score";
-import type { Answer, PlanInput, Selection } from "./schema";
+import type { Answer, Option, PlanInput, Selection, SlotId } from "./schema";
 import type { SharedPlan } from "./share";
-import { SIZE_PHRASE } from "./text";
+import { SIZE_PHRASE, inSentence } from "./text";
 import { envFileText, planEnv } from "./wiring";
+import { buildTask, isOwn } from "./own";
 
 /**
  * The spec pack: what the beginner walks away with. SPEC.md explains the plan, SETUP.md is the
@@ -22,6 +23,8 @@ export interface SpecDetails {
   generatedOn: string;
   /** The person's notes on each part. Left out, a pack has none. */
   notes?: SharedPlan["notes"];
+  /** Parts the person added that StackWise has no facts on. */
+  custom?: SharedPlan["custom"];
 }
 
 export interface SpecFile {
@@ -68,6 +71,21 @@ function resultLine(r: CheckResult): string {
   return `- **${r.title}.** ${r.explanation}${r.fix ? ` Fix: ${r.fix}` : ""}${sources}`;
 }
 
+/** Why an option suits its part, in a few words: its strong scores and the perks it gets from the rest of the stack. */
+export function pickReason(index: CatalogIndex, input: PlanInput, results: CheckResult[], slot: SlotId, option: Option): string {
+  const scores = criterionScores(index, option, slot, input);
+  // Payments and AI are paid per use, so "free at your size" and plan prices don't describe them.
+  // A payment service's price score compares its fee per sale, so that one stays.
+  const perUse = slot === "payments" || slot === "ai";
+  const noMonthlyFee = option.facts.first_paid_usd_month?.value === null && option.coverage === "full";
+  const strengths = CRITERIA.filter((c) => scores[c] >= 0.75)
+    .filter((c) => !(perUse && (c === "cost" || (c === "price" && slot === "ai"))))
+    .map((c) => (c === "price" && noMonthlyFee && slot !== "domain" ? "no monthly fee" : criterionLabel(c, slot)));
+  if (perUse && noMonthlyFee) strengths.unshift("no monthly fee, pay per use");
+  const perks = results.filter((r) => r.source === "product" && r.level === "info" && r.slots.includes(slot)).map((r) => r.title.toLowerCase());
+  return unique([...strengths, ...perks]).join("; ") || option.summary;
+}
+
 export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: Selection, details: SpecDetails): SpecFile[] {
   const { catalog } = index;
   const results = evaluatePlan(index, selection, input);
@@ -80,20 +98,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     return option && def ? [{ slot, option, def }] : [];
   });
 
-  const stackRows = filled.map(({ slot, option, def }) => {
-    const scores = criterionScores(index, option, slot, input);
-    // Payments and AI are paid per use, so "free at your size" and plan prices don't describe them.
-    // A payment service's price score compares its fee per sale, so that one stays.
-    const perUse = slot === "payments" || slot === "ai";
-    const noMonthlyFee = option.facts.first_paid_usd_month?.value === null && option.coverage === "full";
-    const strengths = CRITERIA.filter((c) => scores[c] >= 0.75)
-      .filter((c) => !(perUse && (c === "cost" || (c === "price" && slot === "ai"))))
-      .map((c) => (c === "price" && noMonthlyFee && slot !== "domain" ? "no monthly fee" : criterionLabel(c, slot)));
-    if (perUse && noMonthlyFee) strengths.unshift("no monthly fee, pay per use");
-    const perks = results.filter((r) => r.source === "product" && r.level === "info" && r.slots.includes(slot)).map((r) => r.title.toLowerCase());
-    const why = unique([...strengths, ...perks]).join("; ") || option.summary;
-    return { def, option, why };
-  });
+  const stackRows = filled.map(({ slot, option, def }) => ({ def, option, why: pickReason(index, input, results, slot, option) }));
 
   const features = details.features
     .split("\n")
@@ -113,7 +118,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
 
   const problems = results.filter((r) => PROBLEM_LEVELS.has(r.level));
   const notes = results.filter((r) => r.level === "info");
-  const tasks = filled.map(({ def, option }, i) => `${i + 1}. ${def.build_task.replace("{option}", option.name)}`);
+  const tasks = filled.map(({ def, option }, i) => `${i + 1}. ${buildTask(def, option)}`);
 
   const outlook = costOutlook(index, selection, input);
   const costLines = [
@@ -136,6 +141,29 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     return [{ heading: `${def.label}: ${option.name}`, text: note.text.trim(), writtenFor }];
   });
   const noteBlocks = personNotes.flatMap((n) => [`### ${n.heading}`, "", ...(n.writtenFor ? [`_Written when this part was ${n.writtenFor}. Check that it still applies._`, ""] : []), n.text, ""]);
+  // Parts the person builds themselves: what each has to handle, from StackWise's guide to that part.
+  const builtBlocks = filled
+    .filter(({ option }) => isOwn(option.id))
+    .flatMap(({ slot, def, option }) => {
+      const guide = catalog.learn.slots[slot];
+      return [
+        `### ${option.name}`,
+        "",
+        ...(details.notes?.[slot]?.text.trim() ? [`What it is: ${details.notes[slot]!.text.trim().replace(/\s*\n\s*/g, " ")}`, ""] : [`Ask the person what it is and how the app reaches it; there's no note on ${inSentence(def.label)} yet.`, ""]),
+        ...(guide?.choosing.length ? ["What it has to handle:", "", ...guide.choosing.map((line) => `- ${line}`), ""] : []),
+        ...(guide?.watch_for.length ? ["Where people slip:", "", ...guide.watch_for.map((line) => `- ${line}`), ""] : []),
+      ];
+    });
+  // The person's own parts: in the spec so the builder wires them, marked as unchecked.
+  const ownParts = Object.values(details.custom ?? {});
+  const ownBlocks = ownParts.flatMap((part) => [
+    `### ${part.name}${part.role ? `: the app ${part.role} it` : ""}`,
+    "",
+    ...(part.url ? [`Docs: ${part.url}`, ""] : []),
+    ...(part.env.length ? [`Environment variables: ${part.env.map((e) => `\`${e}\``).join(", ")}`, ""] : []),
+    ...(part.note.trim() ? [part.note.trim(), ""] : []),
+  ]);
+  const ownNames = unique(ownParts.flatMap((part) => part.env)).filter((name) => !env.some((v) => v.name === name));
   const noteBullets = personNotes.map((n) => `- ${n.heading}${n.writtenFor ? ` (written for ${n.writtenFor})` : ""}: ${n.text.replace(/\s*\n\s*/g, " ")}`);
 
   const spec = [
@@ -162,6 +190,12 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     ...stackRows.map(({ def, option, why }) => `| ${def.label} | ${option.name} | ${why} |`),
     "",
     ...(noteBlocks.length ? ["## Notes on the stack", "", "Written by the person planning the app. Follow them unless they contradict a rule below.", "", ...noteBlocks] : []),
+    ...(builtBlocks.length
+      ? ["## Parts you're building yourself", "", "These are the person's own code, not services. StackWise has no facts on them, so nothing that touches them was checked or priced.", "", ...builtBlocks]
+      : []),
+    ...(ownBlocks.length
+      ? ["## Parts added by hand", "", "StackWise has no facts on these, so nothing here was checked or priced. Read their docs before relying on them.", "", ...ownBlocks]
+      : []),
     "## Rules for whoever builds it",
     "",
     ...rules.map((r) => `- ${r}`),
@@ -214,7 +248,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "Copy `.env.example` to `.env.local` and fill in the values. `.env.local` never goes into git.",
     "",
     "```",
-    ...(envNames.length ? envNames.map((e) => `${e}=`) : ["# none needed yet"]),
+    ...(envNames.length || ownNames.length ? [...envNames, ...ownNames].map((e) => `${e}=`) : ["# none needed yet"]),
     "```",
     "",
   ].join("\n");
@@ -227,6 +261,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "## Stack",
     "",
     ...stackList,
+    ...ownParts.map((part) => `- ${part.name} (added by hand, not checked by StackWise)${part.role ? `: the app ${part.role} it` : ""}`),
     "",
     ...(noteBullets.length ? ["## Notes on the stack", "", ...noteBullets, ""] : []),
     "## Rules",
@@ -286,7 +321,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
   return [
     { name: "SPEC.md", content: spec },
     { name: "SETUP.md", content: setup },
-    { name: ".env.example", content: envFileText(env, { appName: name, generatedOn: details.generatedOn }) },
+    { name: ".env.example", content: envFileText(env, { appName: name, generatedOn: details.generatedOn, custom: details.custom }) },
     { name: ".gitignore", content: GITIGNORE },
     builderFile,
     { name: "DECISIONS.md", content: decisions },

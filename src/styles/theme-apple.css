@@ -57,8 +57,12 @@
   color-scheme: light dark;
 }
 
+/*
+ * Dark mode follows the system unless the person picks Light or Dark in StackWise, which sets
+ * data-theme on <html> (see ThemeSwitch.tsx). The same dark values apply either way.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper: #1c1c1e;
     --paper-sunk: #2c2c2e;
     --ink: #f5f5f7;
@@ -91,6 +95,45 @@
     --ws-node-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
     --ws-node-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 30px rgba(0, 0, 0, 0.45);
   }
+}
+:root[data-theme="dark"] {
+  --paper: #1c1c1e;
+  --paper-sunk: #2c2c2e;
+  --ink: #f5f5f7;
+  --ink-soft: #aeaeb2;
+  --ink-faint: #8e8e93;
+  --line: #38383a;
+  --line-strong: #48484a;
+  --accent: #0a84ff;
+  --accent-deep: #409cff;
+
+  --mk-bg: #111113;
+  --mk-surface-2: #2c2c2e;
+  --mk-accent-ink: #ffffff;
+  --mk-ok: #30d158;
+  --mk-ok-soft: rgba(48, 209, 88, 0.16);
+  --mk-warn: #ff9f0a;
+  --mk-warn-soft: rgba(255, 159, 10, 0.16);
+  --mk-danger: #ff453a;
+  --mk-danger-soft: rgba(255, 69, 58, 0.16);
+  --mk-shadow-2: 0 12px 32px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+
+  --ws-glass: rgba(36, 36, 38, 0.72);
+  --ws-glass-strong: rgba(36, 36, 38, 0.92);
+  --ws-glass-line: rgba(255, 255, 255, 0.1);
+  --ws-float-shadow: 0 18px 48px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --ws-fill: rgba(118, 118, 128, 0.24);
+  --ws-fill-hover: rgba(118, 118, 128, 0.32);
+  --ws-canvas-dot: rgba(255, 255, 255, 0.1);
+  --ws-seg-on: #636366;
+  --ws-node-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
+  --ws-node-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {

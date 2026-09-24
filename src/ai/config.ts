@@ -23,6 +23,11 @@ export function getClient(): Anthropic {
   return client;
 }
 
+/** After a key is saved from the Connect screen: the next call builds a client with the new key. */
+export function resetClient(): void {
+  client = null;
+}
+
 export class AiError extends Error {
   constructor(
     message: string,

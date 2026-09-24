@@ -77,6 +77,7 @@ async function main() {
       if (fs.existsSync(planPath)) writeProjectPlan(record);
     },
     whystackRoot: root,
+    projectDir,
     where: fs.existsSync(planPath) ? "project" : "app",
   });
   await server.connect(new StdioServerTransport());

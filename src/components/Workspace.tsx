@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { connectionsOf, decodeSharedPlan, envFileText, planEnv, staleFacts, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
+import { connectionsOf, decodeSharedPlan, envFileText, isOwn, ownId, planEnv, staleFacts, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
 import { presence } from "@/mcp/pairing";
 import { AddPart } from "./AddPart";
 import { BrandMark } from "./BrandMark";
@@ -14,8 +15,11 @@ import { CompareDialog, type CompareRequest } from "./CompareDialog";
 import { ConnectionPanel } from "./ConnectionPanel";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
 import { Icon, type IconName } from "./icons";
+import { CustomPartDialog, type CustomEdit } from "./CustomPartDialog";
+import type { ImageRequest } from "./DiagramImage";
 import { Inspector } from "./Inspector";
-import { LearnPanel } from "./LearnPanel";
+import { PanelEdge, usePanelWidth } from "./PanelEdge";
+import { ThemeSwitch } from "./ThemeSwitch";
 import { Palette } from "./Palette";
 import { HIDEABLE_PARTS, PlanCanvas, tidySpots, visibleParts, type CanvasTarget } from "./PlanCanvas";
 import { PlanMenu } from "./PlanMenu";
@@ -37,14 +41,21 @@ import { Logo, copyText, cx } from "./ui";
  * behind it as the answers change.
  */
 
-type Panel = "overview" | "project" | "options" | "checklist" | "learn";
-const PANELS: { id: Panel; label: string; icon: IconName }[] = [
-  { id: "overview", label: "Overview", icon: "overview" },
-  { id: "project", label: "Project", icon: "terminal" },
-  { id: "options", label: "Parts", icon: "parts" },
-  { id: "checklist", label: "Checklist", icon: "checklist" },
-  { id: "learn", label: "Learn", icon: "learn" },
+type Panel = "overview" | "project" | "options" | "checklist";
+/**
+ * The dock, in the order the work happens: see how the plan stands, change its parts, set them up,
+ * then run the real project. Learn (its own page) and the canvas tools come after.
+ */
+const PANELS: { id: Panel; label: string; icon: IconName; hint: string }[] = [
+  { id: "overview", label: "Overview", icon: "overview", hint: "What to look at, close calls and cost" },
+  { id: "options", label: "Parts", icon: "parts", hint: "Every service by part; drag one onto the canvas" },
+  { id: "checklist", label: "Checklist", icon: "checklist", hint: "Accounts, keys and the build order, checked off as you go" },
+  { id: "project", label: "Project", icon: "terminal", hint: "Your project folder: run it, fill in its keys, check each service" },
 ];
+
+/** The side panels' widths until someone drags their edge (PanelEdge). */
+const LEFT_WIDTH = 360;
+const RIGHT_WIDTH = 380;
 
 const CONNECT_SEEN_KEY = "whystack.connect-seen";
 const readFlag = (key: string) => {
@@ -59,17 +70,21 @@ const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(n
 
 export default function Workspace({ catalog, problems }: { catalog: Catalog; problems: string[] }) {
   const model = usePlans(catalog);
+  const router = useRouter();
+  /** Learn is its own page; a part opens at its section there. The plan waits in this browser. */
+  const openLearn = useCallback((slot?: SlotId | null) => router.push(`/learn${slot ? `#part-${slot}` : ""}`), [router]);
   const { plan, dispatch, history, rec, index } = model;
   const [selectedSlot, setSelectedSlot] = useState<SlotId | null>(null);
   /** The part at the far end of the connection being looked at, when one is. */
   const [connection, setConnection] = useState<SlotId | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
-  const [learnFocus, setLearnFocus] = useState<SlotId | null>(null);
   const [ask, setAsk] = useState<{ open: boolean; slot: SlotId; request: AskRequest | null }>({ open: false, slot: "framework", request: null });
   const [menu, setMenu] = useState<MenuRequest | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [fitNonce, setFitNonce] = useState(0);
+  const [image, setImage] = useState<ImageRequest | null>(null);
+  const saveImage = useCallback((transparent: boolean) => setImage((prev) => ({ nonce: (prev?.nonce ?? 0) + 1, transparent })), []);
   const [toast, setToast] = useState<string | null>(null);
   const [specDate, setSpecDate] = useState<string | null>(null);
   const [compare, setCompare] = useState<CompareRequest | null>(null);
@@ -83,6 +98,9 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const [connectAgain, setConnectAgain] = useState(false);
   /** The add-a-part picker, and the part it opened for, if any. */
   const [adding, setAdding] = useState<{ focus: SlotId | null } | null>(null);
+  const [customEdit, setCustomEdit] = useState<CustomEdit | null>(null);
+  const [leftWidth, setLeftWidth] = usePanelWidth("left", LEFT_WIDTH);
+  const [rightWidth, setRightWidth] = usePanelWidth("right", RIGHT_WIDTH);
 
   const onClaudeChange = useCallback((appName: string, change: ClaudeActivity | undefined) => {
     const what = change ? `${change.summary}${change.changes.length ? `: ${change.changes.slice(0, 2).join("; ")}${change.changes.length > 2 ? ` (+${change.changes.length - 2})` : ""}` : ""}` : "updated the plan";
@@ -141,6 +159,9 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     const timer = window.setTimeout(() => setToast(null), 3600);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  /** A key saved from Connect: new providers, keeping what else the server said (its folder, the limit). */
+  const updateAi = useCallback((next: AiStatus) => setAi((prev) => ({ ...prev, ...next })), []);
 
   useEffect(() => {
     fetch("/api/status")
@@ -339,6 +360,18 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               },
             })),
           },
+          ...(slot !== "framework" && !isOwn(current)
+            ? [
+                {
+                  label: "Build it yourself",
+                  icon: "terminal" as const,
+                  onSelect: () => {
+                    model.place(ownId(slot), slot);
+                    setToast(`${def.label} is now yours to build. Describe it in its note; StackWise won't check or price it.`);
+                  },
+                },
+              ]
+            : []),
           ...(slot !== "framework" && needed && !rec.autoPicked.includes(slot) ? [{ label: "Let StackWise pick", icon: "wand" as const, onSelect: () => dispatch({ type: "autoPick", slot }) }] : []),
           ...(slot === "framework"
             ? [{ label: plan.icon ? "Change the app's logo" : "Add a logo for this app", icon: "pin" as const, onSelect: () => setPanel("project") }]
@@ -346,10 +379,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           {
             label: `${def.label} in Learn`,
             icon: "learn",
-            onSelect: () => {
-              setLearnFocus(slot);
-              setPanel("learn");
-            },
+            onSelect: () => openLearn(slot),
           },
           ...(slot !== "framework" && current
             ? [
@@ -378,6 +408,22 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           { kind: "separator" },
           { label: `${nameOf(slot)} details`, icon: "info", onSelect: () => select(slot) },
         ];
+      } else if (target.kind === "custom") {
+        const part = plan.custom[target.id];
+        if (!part) return;
+        items = [
+          { kind: "header", label: `${part.name}, added by you` },
+          { label: "Edit", icon: "note", onSelect: () => setCustomEdit({ id: target.id }) },
+          {
+            label: "Remove from the plan",
+            icon: "trash",
+            danger: true,
+            onSelect: () => {
+              dispatch({ type: "removeCustom", id: target.id });
+              setToast(`Removed ${part.name}. Undo brings it back.`);
+            },
+          },
+        ];
       } else if (target.kind === "pair") {
         const { slot, other } = target;
         items = [
@@ -394,6 +440,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           { label: "Explain my plan", icon: "overview", disabled: !building, onSelect: () => openAsk("framework", "Explain my plan") },
           { kind: "separator" },
           { label: "Add a part", icon: "plus", hint: "A", onSelect: () => openAdd() },
+          { label: "Add a part that isn't listed", icon: "plus", onSelect: () => setCustomEdit({ id: null }) },
           { label: showAll ? "Hide optional parts" : `Show all ${HIDEABLE_PARTS} parts`, icon: "parts", checked: showAll, onSelect: () => setShowAll((v) => !v) },
           {
             label: "Fit to screen",
@@ -405,7 +452,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             icon: "fit",
             disabled: !moved,
             onSelect: () => {
-              dispatch({ type: "moveNodes", spots: tidySpots(visibleParts(rec.selection, rec.needed, showAll), plan.layout) });
+              dispatch({ type: "moveNodes", spots: tidySpots(visibleParts(rec.selection, rec.needed, showAll), plan.layout, Object.keys(plan.custom)) });
               setFitNonce((n) => n + 1);
             },
           },
@@ -414,11 +461,13 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           { kind: "separator" },
           { label: "Edit answers", icon: "checklist", onSelect: () => dispatch({ type: "goTo", step: "confirm" }) },
           { label: "Export project", icon: "export", disabled: !building, onSelect: () => setSpecDate(todayIso()) },
+          { label: "Save diagram as PNG", icon: "export", disabled: !building, onSelect: () => saveImage(false) },
+          { label: "Save as PNG, no background", icon: "export", disabled: !building, onSelect: () => saveImage(true) },
         ];
       }
       setMenu({ x, y, items });
     },
-    [mod, history, dispatch, index, rec, catalog, nameOf, openAsk, openAdd, removePart, select, selectConnection, model, plan.appName, plan.layout, plan.icon, today, building, showAll],
+    [mod, history, dispatch, index, rec, catalog, nameOf, openAsk, openAdd, openLearn, saveImage, removePart, select, selectConnection, model, plan.appName, plan.layout, plan.icon, plan.custom, today, building, showAll],
   );
 
   const researched = catalog.options.filter((o) => o.coverage === "full").length;
@@ -435,6 +484,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           dragging={dragging}
           showAll={showAll}
           fitNonce={fitNonce}
+          image={image}
           onDropped={() => setDragging(null)}
           onSelect={select}
           onSelectConnection={selectConnection}
@@ -443,6 +493,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           onMenu={openMenu}
           onAdd={openAdd}
           onRemove={removePart}
+          onEditCustom={(id) => setCustomEdit({ id })}
           onToast={setToast}
         />
       </ReactFlowProvider>
@@ -494,11 +545,16 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           </button>
           <span className="ws-dock__sep" aria-hidden />
           {PANELS.map((p) => (
-            <button key={p.id} type="button" className={cx("ws-dock__btn", panel === p.id && "is-on")} aria-pressed={panel === p.id} onClick={() => togglePanel(p.id)}>
+            <button key={p.id} type="button" className={cx("ws-dock__btn", panel === p.id && "is-on")} aria-pressed={panel === p.id} title={p.hint} onClick={() => togglePanel(p.id)}>
               <Icon name={p.icon} size={16} />
               <span>{p.label}</span>
             </button>
           ))}
+          <span className="ws-dock__sep" aria-hidden />
+          <a className="ws-dock__btn" href="/learn" title="How each part of an app works, on its own page">
+            <Icon name="learn" size={16} />
+            <span>Learn</span>
+          </a>
           <span className="ws-dock__sep" aria-hidden />
           <button type="button" className="ws-dock__btn ws-dock__btn--icon" disabled={history.past.length === 0} title={`Undo (${mod}Z)`} aria-label="Undo" onClick={() => dispatch({ type: "undo" })}>
             <Icon name="undo" size={16} />
@@ -509,11 +565,13 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           <button type="button" className="ws-dock__btn ws-dock__btn--icon" title="Fit to screen" aria-label="Fit to screen" onClick={() => setFitNonce((n) => n + 1)}>
             <Icon name="fit" size={16} />
           </button>
+          <ThemeSwitch className="ws-dock__btn ws-dock__btn--icon" />
         </nav>
       )}
 
       {building && panel && (
-        <aside className="ws-float ws-float--left" aria-label={PANELS.find((p) => p.id === panel)?.label}>
+        <aside className="ws-float ws-float--left" style={{ "--ws-panel-w": `${leftWidth}px` } as CSSProperties} aria-label={PANELS.find((p) => p.id === panel)?.label}>
+          <PanelEdge side="left" width={leftWidth} fallback={LEFT_WIDTH} onResize={setLeftWidth} />
           <div className="ws-float__head">
             <h2>{PANELS.find((p) => p.id === panel)?.label}</h2>
             <button type="button" className="ws-iconbtn" aria-label="Close" onClick={() => setPanel(null)}>
@@ -531,14 +589,14 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             )}
             {panel === "project" && <ProjectPanel model={model} pairing={pairing} onToast={setToast} />}
             {panel === "options" && <Palette model={model} selectedSlot={selectedSlot} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onToast={setToast} />}
-            {panel === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} />}
-            {panel === "learn" && <LearnPanel catalog={catalog} focus={learnFocus ?? selectedSlot} />}
+            {panel === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} onOpenProject={() => setPanel("project")} />}
           </div>
         </aside>
       )}
 
       {selectedSlot && (
-        <aside className="ws-float ws-float--right" aria-label={connection ? "Connection" : "Details"}>
+        <aside className="ws-float ws-float--right" style={{ "--ws-panel-w": `${rightWidth}px` } as CSSProperties} aria-label={connection ? "Connection" : "Details"}>
+          <PanelEdge side="right" width={rightWidth} fallback={RIGHT_WIDTH} onResize={setRightWidth} />
           <div className="ws-float__head">
             <h2>{connection ? "Connection" : "Details"}</h2>
             <button type="button" className="ws-iconbtn" aria-label="Close" title="Close (Esc)" onClick={deselect}>
@@ -564,10 +622,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
                 onAsk={openAsk}
                 onToast={setToast}
                 onCompare={(slot, optionIds) => setCompare({ slot, optionIds })}
-                onLearn={() => {
-                  setLearnFocus(selectedSlot);
-                  setPanel("learn");
-                }}
+                onLearn={() => openLearn(selectedSlot)}
               />
             )}
           </div>
@@ -583,7 +638,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             </button>
           </div>
           <div className="ws-float__body">
-            <ConnectPanel ai={ai} pairing={pairing} savedDefault={savedDefault} onChoose={chooseAnswerer} onToast={setToast} />
+            <ConnectPanel ai={ai} pairing={pairing} savedDefault={savedDefault} onChoose={chooseAnswerer} onKeysChanged={updateAi} onToast={setToast} />
           </div>
         </aside>
       )}
@@ -600,7 +655,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               ))}
             </nav>
             {showConnect ? (
-              <ConnectPanel ai={ai} pairing={pairing} savedDefault={savedDefault} onChoose={chooseAnswerer} onDone={finishConnect} onToast={setToast} />
+              <ConnectPanel ai={ai} pairing={pairing} savedDefault={savedDefault} onChoose={chooseAnswerer} onKeysChanged={updateAi} onDone={finishConnect} onToast={setToast} />
             ) : (
               <Planner model={model} ai={ai} />
             )}
@@ -628,11 +683,40 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           model={model}
           focus={adding.focus}
           onClose={() => setAdding(null)}
-          onAdded={(slot, name, error) => setToast(error ?? `Added ${name} to ${index.slotsById.get(slot)?.label.toLowerCase()}. Its line shows whether it works with the rest.`)}
+          onAddOwn={(name) => {
+            setAdding(null);
+            setCustomEdit({ id: null, name });
+          }}
+          onAdded={(slot, name, error) =>
+            setToast(
+              error ??
+                (name.startsWith("your own")
+                  ? `${index.slotsById.get(slot)?.label} is now yours to build. Describe it in its note; StackWise won't check or price it.`
+                  : `Added ${name} to ${index.slotsById.get(slot)?.label.toLowerCase()}. Its line shows whether it works with the rest.`),
+            )
+          }
         />
       )}
 
       <ContextMenu request={menu} onClose={() => setMenu(null)} />
+
+      <CustomPartDialog
+        edit={customEdit}
+        custom={plan.custom}
+        onClose={() => setCustomEdit(null)}
+        onSave={(id, part) => {
+          const isNew = !plan.custom[id];
+          dispatch({ type: "setCustom", id, part });
+          setCustomEdit(null);
+          setToast(isNew ? `Added ${part.name}. StackWise has no facts on it, so its line shows "not checked".` : `Saved ${part.name}.`);
+        }}
+        onRemove={(id) => {
+          const name = plan.custom[id]?.name ?? "the part";
+          dispatch({ type: "removeCustom", id });
+          setCustomEdit(null);
+          setToast(`Removed ${name}. Undo brings it back.`);
+        }}
+      />
 
       {toast && (
         <div className="ws-toast" role="status">
@@ -640,7 +724,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         </div>
       )}
 
-      <SpecDialog model={model} generatedOn={specDate} whystackRoot={ai?.root} onClose={() => setSpecDate(null)} onToast={setToast} />
+      <SpecDialog model={model} generatedOn={specDate} whystackRoot={ai?.root} onClose={() => setSpecDate(null)} onToast={setToast} onSaveImage={saveImage} />
       <CompareDialog model={model} request={compare} today={today} onClose={() => setCompare(null)} onToast={setToast} />
     </div>
   );

@@ -60,6 +60,14 @@ export const TEMPLATES: Template[] = [
     answers: { saves_data: "yes", login: "yes", ai_features: "yes", users_pay: "not_sure" },
   },
   {
+    id: "saas",
+    label: "AI SaaS",
+    blurb: "Subscriptions, AI, background jobs",
+    icon: "sparkle",
+    description: "A subscription web app where people log in, upload files and generate work with AI. Long jobs run in the background, it sends emails on a schedule, and it lives on its own web address with analytics and error alerts.",
+    answers: { saves_data: "yes", login: "yes", users_pay: "yes", uploads: "yes", ai_features: "yes", long_jobs: "yes", scheduled_tasks: "yes", sends_email: "yes", own_domain: "yes", tracks_usage: "yes", error_alerts: "yes" },
+  },
+  {
     id: "store",
     label: "Online store",
     blurb: "Products, checkout, receipts",

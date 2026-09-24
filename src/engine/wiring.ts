@@ -1,6 +1,7 @@
 import { BUILD_ORDER, adaptEnvName } from "./checklist";
 import { optionIn, type CatalogIndex } from "./evaluate";
 import type { Selection, SlotId } from "./schema";
+import type { CustomPart } from "./share";
 import { possessive } from "./text";
 
 /**
@@ -119,14 +120,15 @@ export function connectionLabel(connection: Connection, all: EnvVar[]): string {
  * The body of `.env.local` and `.env.example`: names grouped by service, with the step that gives
  * you each value and a link to the docs. Values are always empty. StackWise never writes a secret.
  */
-export function envFileText(vars: EnvVar[], details: { appName: string; generatedOn: string }): string {
+export function envFileText(vars: EnvVar[], details: { appName: string; generatedOn: string; custom?: Record<string, CustomPart> }): string {
   const name = details.appName.trim() || "this app";
   const lines = [
     `# Environment variables for ${name}`,
     `# Planned with StackWise on ${details.generatedOn}. Names only: fill in the values yourself.`,
     "# Keep this file out of git. Anything with a public prefix is readable by everyone who opens the app.",
   ];
-  if (vars.length === 0) {
+  const own = Object.values(details.custom ?? {}).filter((part) => part.env.length > 0);
+  if (vars.length === 0 && own.length === 0) {
     lines.push("", "# No service in this plan needs a variable yet.");
     return `${lines.join("\n")}\n`;
   }
@@ -139,6 +141,13 @@ export function envFileText(vars: EnvVar[], details: { appName: string; generate
       if (here[0].source) lines.push(`# ${here[0].source}`);
       for (const v of here) lines.push(`${v.name}=`);
     }
+  }
+  const written = new Set(vars.map((v) => v.name));
+  for (const part of own) {
+    const names = part.env.filter((name) => !written.has(name));
+    if (names.length === 0) continue;
+    lines.push("", `# ${part.name} (your own part: StackWise has no facts on it)`, ...(part.url ? [`# ${part.url}`] : []), ...names.map((name) => `${name}=`));
+    for (const name of names) written.add(name);
   }
   return `${lines.join("\n")}\n`;
 }

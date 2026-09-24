@@ -129,6 +129,19 @@ describe("alternatives and close calls", () => {
     expect(login?.margin).toBeCloseTo(0.1, 9);
   });
 
+  it("starts a part with planning.json's starting pick, and says when another option scores higher", () => {
+    const withStart = fixtureIndex({ planning: { ...index.catalog.planning, starting_picks: { login: "login-acme" } } });
+    const plan = input({ login: "yes" });
+    const rec = recommend(withStart, plan, { hosting: "host-server", database: "db-file" });
+    expect(rec.selection.login).toBe("login-acme");
+    expect(rec.startedWith).toEqual(["login"]);
+    expect(rec.autoPicked).toContain("login");
+    const login = closeCalls(withStart, plan, rec).find((c) => c.slot === "login");
+    expect(login).toMatchObject({ decidedBy: "starting_pick", runnerUp: expect.objectContaining({ id: "login-cheap" }) });
+    // Choosing a part yourself always wins over the starting pick.
+    expect(recommend(withStart, plan, { login: "login-solo" }).selection.login).toBe("login-solo");
+  });
+
   it("calls an exact tie a tie", () => {
     const withoutCheap = fixtureIndex({ options: index.catalog.options.filter((o) => o.id !== "login-cheap") });
     const plan = input({ login: "yes" });

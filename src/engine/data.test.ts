@@ -44,6 +44,13 @@ describe("data", () => {
     expect(rec.selection.framework).toBe("nextjs");
   });
 
+  it("starts an AI app with Claude, a product decision in planning.json's starting_picks", () => {
+    const index = indexCatalog(catalog);
+    const rec = recommend(index, { answers: { saves_data: "yes", login: "yes", ai_features: "yes" }, size: "up_to_100", priority: "spend_zero" });
+    expect(rec.selection.ai).toBe("anthropic");
+    expect(index.optionsById.get("anthropic")?.name).toBe("Claude API");
+  });
+
   it("has a logo file on disk for every option", () => {
     const missing = catalog.options.filter((o) => !fs.existsSync(path.join(__dirname, "..", "..", "public", "logos", catalog.logos[o.id]?.file ?? "none")));
     expect(missing.map((o) => o.id)).toEqual([]);
@@ -52,5 +59,20 @@ describe("data", () => {
   it("has teaching content for every part and every term it uses", () => {
     for (const slot of catalog.slots) expect(catalog.learn.slots[slot.id], slot.id).toBeDefined();
     expect(Object.keys(catalog.learn.terms).length).toBeGreaterThanOrEqual(30);
+  });
+
+  it("gives every part 2 to 4 further-reading links, all over https", () => {
+    for (const slot of catalog.slots) {
+      const links = catalog.learn.slots[slot.id]?.read_more ?? [];
+      expect(links.length, slot.id).toBeGreaterThanOrEqual(2);
+      expect(links.length, slot.id).toBeLessThanOrEqual(4);
+    }
+    const all = [
+      ...(catalog.learn.start_here?.read_more ?? []),
+      ...Object.values(catalog.learn.slots).flatMap((entry) => entry?.read_more ?? []),
+      ...Object.values(catalog.learn.terms).flatMap((term) => term.read_more),
+    ];
+    expect(all.length).toBeGreaterThan(0);
+    expect(all.filter((link) => !link.url.startsWith("https://")).map((link) => link.url)).toEqual([]);
   });
 });

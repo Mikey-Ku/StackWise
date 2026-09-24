@@ -3,6 +3,7 @@ import { Geist_Mono, Inter } from "next/font/google";
 import "../styles/mk-ui.css";
 import "../styles/theme-apple.css";
 import "./globals.css";
+import { THEME_SCRIPT } from "@/components/ThemeSwitch";
 
 // San Francisco comes from the system on Apple devices; Inter and Geist Mono stand in everywhere else.
 const body = Inter({ subsets: ["latin"], variable: "--font-body" });
@@ -15,7 +16,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${body.variable} ${mono.variable}`}>
+    // data-theme is set before React loads (THEME_SCRIPT), so React shouldn't expect to match it.
+    <html lang="en" className={`${body.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>{children}</body>
     </html>
   );

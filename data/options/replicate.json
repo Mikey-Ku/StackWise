@@ -1,0 +1,77 @@
+{
+  "id": "replicate",
+  "name": "Replicate",
+  "provider": "replicate",
+  "slots": [
+    "ai"
+  ],
+  "summary": "Replicate runs thousands of open-source and hosted models, for text, images, video and speech, behind one API.",
+  "website": "https://replicate.com",
+  "coverage": "partial",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Only a trial: select models can be run for free for a while, then Replicate asks you to set up billing.",
+      "source": "https://replicate.com/docs/topics/billing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan; you pay for what you use, billed by hardware time or by input and output tokens depending on the model.",
+      "source": "https://replicate.com/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "medium",
+      "note": "Uses its own predictions API and client libraries rather than a common request format, though many of its models are open and can be run elsewhere.",
+      "source": "https://replicate.com/docs/get-started/nodejs",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "free_tier": {
+      "value": false,
+      "note": "No ongoing free tier; free runs on select models are a trial before billing must be set up.",
+      "source": "https://replicate.com/docs/topics/billing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "Official JavaScript client is published as the \"replicate\" npm package.",
+      "source": "https://replicate.com/docs/get-started/nodejs",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a Replicate account and set up billing; free runs on select models only last a short while.",
+      "env": [],
+      "source": "https://replicate.com/docs/topics/billing"
+    },
+    {
+      "step": "Create an API token and set it as an environment variable.",
+      "env": [
+        "REPLICATE_API_TOKEN"
+      ],
+      "source": "https://replicate.com/docs/get-started/nodejs"
+    },
+    {
+      "step": "Install the client with npm install replicate.",
+      "env": [],
+      "source": "https://replicate.com/docs/get-started/nodejs"
+    },
+    {
+      "step": "Import Replicate and call replicate.run with a model name from a server-side route handler.",
+      "env": [],
+      "source": "https://replicate.com/docs/get-started/nodejs"
+    }
+  ],
+  "builder_notes": [
+    "Keep REPLICATE_API_TOKEN on the server only; never call Replicate from client-side code.",
+    "Check each model's page for its price: some bill per token and others per second of hardware time.",
+    "Replicate is strongest for image, video and speech models; compare token prices before using it for plain chat."
+  ]
+}

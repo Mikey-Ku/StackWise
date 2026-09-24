@@ -1,5 +1,6 @@
 import { optionIn, type CatalogIndex } from "./evaluate";
 import type { Selection, SlotId } from "./schema";
+import { buildTask, isOwn } from "./own";
 
 /**
  * The order things get set up and built in: the app first, the pieces it depends on next, and
@@ -66,12 +67,14 @@ export function buildChecklist(index: CatalogIndex, selection: Selection): Check
         slot,
         optionId: option.id,
         optionName: option.name,
-        text: `Follow ${option.name}'s official quickstart. Its setup steps haven't been researched yet.`,
+        text: isOwn(option.id)
+          ? `Get your own ${def.label.toLowerCase()} running, and put how the app reaches it (an address, a key) in environment variables.`
+          : `Follow ${option.name}'s official quickstart. Its setup steps haven't been researched yet.`,
         env: [],
-        source: option.website,
+        source: option.website || undefined,
       });
     }
-    build.push({ id: `build:${slot}:${option.id}`, slot, optionId: option.id, optionName: option.name, text: def.build_task.replace("{option}", option.name), env: [] });
+    build.push({ id: `build:${slot}:${option.id}`, slot, optionId: option.id, optionName: option.name, text: buildTask(def, option), env: [] });
   }
   return { setup, build };
 }

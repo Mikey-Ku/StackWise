@@ -144,7 +144,8 @@ export const fixtureProductRules: ProductRule[] = [
 ];
 
 export function fixtureCatalog(overrides: Partial<Catalog> = {}): Catalog {
-  return { ...realCatalog, options: fixtureOptions, productRules: fixtureProductRules, ...overrides };
+  // Starting picks name real options, so fixture plans pick by score alone unless a test sets one.
+  return { ...realCatalog, planning: { ...realCatalog.planning, starting_picks: {} }, options: fixtureOptions, productRules: fixtureProductRules, ...overrides };
 }
 
 export function fixtureIndex(overrides: Partial<Catalog> = {}): CatalogIndex {
