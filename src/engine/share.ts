@@ -23,6 +23,23 @@ export const noteSchema = z.object({
 });
 export type Note = z.infer<typeof noteSchema>;
 
+/**
+ * A part StackWise has no facts on, added by the person (or their AI): a vector database, an
+ * internal API, a library. It sits on the canvas with a line to the app and goes into the spec,
+ * but no rule checks it and nothing prices it, so it's never "works", only "not checked".
+ */
+export const CUSTOM_ID = /^custom-[a-z0-9-]{1,40}$/;
+export const customPartSchema = z.object({
+  name: z.string().trim().min(1).max(60),
+  /** What it does for the app, read as "the app ___ it": "searches documents with". */
+  role: z.string().max(80).default(""),
+  url: z.string().max(300).default(""),
+  /** Environment variable names the code reads for it. Names only, never values. */
+  env: z.array(z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/).max(120)).max(20).default([]),
+  note: z.string().max(NOTE_MAX).default(""),
+});
+export type CustomPart = z.infer<typeof customPartSchema>;
+
 export const sharedPlanSchema = z.object({
   v: z.literal(1),
   appName: z.string().max(200),
@@ -35,6 +52,8 @@ export const sharedPlanSchema = z.object({
   pinned: z.partialRecord(z.enum(SLOT_IDS), z.string().max(80)),
   /** Added after the first release, so links and plan files without notes still open. */
   notes: z.partialRecord(z.enum(SLOT_IDS), noteSchema).default({}),
+  /** The person's own parts, by id. Left out by older links and plan files. */
+  custom: z.record(z.string().regex(CUSTOM_ID), customPartSchema).optional(),
 });
 export type SharedPlan = z.infer<typeof sharedPlanSchema>;
 

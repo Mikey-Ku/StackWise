@@ -60,21 +60,23 @@ Other builders get the spec, setup, tasks, decisions and plan file, without the 
 
 ## Tools
 
+With a plan shared, `check_stack`, `compare_options`, `estimate_costs` and `setup_steps` use its stack, answers and size when `stack` is left out. Results are compact JSON, and the big ones (`get_plan`, `update_plan`, `export_project`) return a short form unless asked for more, because an agent pays for every character it reads.
+
 | Tool | What it does | Changes anything |
 |---|---|---|
 | `list_parts` | Every part of an app, what it's for, and the question ids that add it | No |
 | `search_options` | Options by part or words, with quick stats at a size | No |
 | `get_option` | An option's facts with notes, sources and dates, setup steps and builder rules | No |
-| `check_stack` | Every verdict for a set of choices, with reasons, fixes, sources and cost | No |
+| `check_stack` | Every verdict for a set of choices, with reasons, fixes, sources and cost. `swap` checks a change to the shared plan without sending the whole stack | No |
 | `recommend_stack` | StackWise's best stack for answers, size and priority | No |
-| `compare_options` | Two to five options for one part, each swapped into the stack | No |
+| `compare_options` | Options for one part, each swapped into the stack; without `option_ids`, the best 5 ranked | No |
 | `estimate_costs` | Monthly, yearly and one-time cost, part by part and at every size | No |
-| `setup_steps` | Ordered setup steps, what runs between the app and each service, and every environment variable with where to get it | No |
-| `get_plan` | The shared plan: stack, checks, close calls, costs, connections, the person's notes, questions | No |
-| `update_plan` | Change answers, parts, size, priority, builder, text or the notes on each part, with a note saying why | Yes |
-| `export_project` | Every project file above, for Claude to write | No |
+| `setup_steps` | Setup part by part: ordered steps, environment variables, docs, what runs between the app and the service, and the build order; `part` for one | No |
+| `get_plan` | The shared plan as a short text digest: the diagram, each part with why it was picked and what it beat or tied, cost, notes, parts added by hand, and problems with fixes. `detail: "summary"` returns JSON with ids, answers and checks; `"full"` adds cost details, connections and every question | No |
+| `update_plan` | Change answers, parts, size, priority, builder, text or the notes on each part, with a note saying why. Returns what changed (parts, new and resolved checks, verdict, cost), not the whole plan | Yes |
+| `export_project` | Writes every project file above straight into the project folder (the one the agent runs in, or `folder`) and returns only their names. Same rules as the Export dialog: inside your home folder, nothing replaced without `replace`, `.env.local` never replaced. `paths` returns chosen files' text instead; `list_only` lists them | Yes |
 | `wait_for_message` | Waits up to 4 minutes for the person to write to this agent from StackWise | Marks messages picked up |
-| `send_message` | Answers the person in StackWise, with the files it changed and a status | Adds to the conversation |
+| `send_message` | Answers the person in StackWise, with the files it changed and a status; `then_wait` also waits for the next message | Adds to the conversation |
 
 And one prompt, `pair`, which tells the agent how to listen and what counts as an instruction.
 

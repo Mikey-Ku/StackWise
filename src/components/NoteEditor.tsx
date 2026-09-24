@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { inSentence, type SlotId } from "@/engine";
+import { inSentence, isOwn, type SlotId } from "@/engine";
 import type { PlanModel } from "./usePlans";
 
 /**
@@ -31,7 +31,8 @@ export function NoteEditor({ model, slot }: { model: PlanModel; slot: SlotId }) 
   const option = optionId ? index.optionsById.get(optionId) : undefined;
   const writtenFor = note?.optionId && optionId && note.optionId !== optionId ? (index.optionsById.get(note.optionId)?.name ?? note.optionId) : undefined;
   const value = draft ?? saved;
-  const subject = option ? option.name : inSentence(index.slotsById.get(slot)?.label ?? slot);
+  const own = isOwn(option?.id);
+  const subject = option && !own ? option.name : own ? `your own ${(index.slotsById.get(slot)?.label ?? slot).toLowerCase()}` : inSentence(index.slotsById.get(slot)?.label ?? slot);
 
   useEffect(() => {
     if (draft === null || draft === saved) return;
@@ -64,7 +65,7 @@ export function NoteEditor({ model, slot }: { model: PlanModel; slot: SlotId }) 
         aria-label={`Note on ${subject}`}
         value={value}
         rows={Math.min(10, Math.max(3, value.split("\n").length + 1))}
-        placeholder={`How should ${subject} work in your app? Whoever builds it reads this.`}
+        placeholder={own ? `What is ${subject}, and how does the app reach it? Whoever builds it reads this.` : `How should ${subject} work in your app? Whoever builds it reads this.`}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => {
           if (draft !== null && draft !== saved) dispatch({ type: "editNote", slot, text: draft, optionId, at: now() });

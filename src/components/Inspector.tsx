@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { alternativesFor, costLine, CRITERIA, criterionLabel, formatFactValue, inSentence, isStale, optionStats, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
+import { alternativesFor, costLine, CRITERIA, criterionLabel, formatFactValue, inSentence, isOwn, isStale, optionStats, ownId, slotReasoning, weightsFor, type CheckResult, type SlotId } from "@/engine";
 import { Icon } from "./icons";
 import { NoteEditor } from "./NoteEditor";
 import type { PlanModel } from "./usePlans";
@@ -66,12 +66,14 @@ export function Inspector({
   const learn = catalog.learn.slots[slot];
   const optionId = rec.selection[slot];
   const option = optionId ? index.optionsById.get(optionId) : undefined;
+  const own = isOwn(optionId);
   const results = rec.results.filter((r) => r.slots.includes(slot));
   const weights = weightsFor(index, input.priority);
   const priority = catalog.planning.priorities.find((p) => p.id === input.priority);
   const scores = rec.score.perSlot[slot]?.scores;
   const cost = option ? costLine(index, option, slot, input) : undefined;
-  const stats = option ? optionStats(index, option, slot, input) : [];
+  // Your own code has no facts, so its stats would all read "not verified".
+  const stats = option && !isOwn(option.id) ? optionStats(index, option, slot, input) : [];
   const pickedHere = picked.filter((id) => alternatives.some((a) => a.option.id === id));
 
   const togglePick = (id: string) => setPicked((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current.filter((x) => alternatives.some((a) => a.option.id === x)), id].slice(-3)));
@@ -81,24 +83,46 @@ export function Inspector({
       <div className="mk-stack mk-gap-2">
         <span className="mk-eyebrow">{def.label}</span>
         <div className="ws-inspector__title">
-          {option && <Logo logo={catalog.logos[option.id]} name={option.name} size={40} />}
+          {option && own ? (
+            <span className="ws-own-logo" aria-hidden>
+              <Icon name="terminal" size={20} />
+            </span>
+          ) : (
+            option && <Logo logo={catalog.logos[option.id]} name={option.name} size={40} />
+          )}
           <h3 className="ws-h3">{option ? option.name : `Nothing in ${def.label} yet`}</h3>
         </div>
         {option && (
           <div className="mk-row mk-gap-2 mk-wrap">
-            <span className="mk-badge">{rec.autoPicked.includes(slot) ? "Picked for you" : "Your choice"}</span>
-            <span className={cx("mk-badge", option.coverage === "full" ? "" : "ws-badge--unknown")}>{option.coverage === "full" ? "Researched, draft facts" : "Not verified yet"}</span>
-            <a className="ws-small-link" href={option.website} target="_blank" rel="noreferrer">
-              Website
-            </a>
+            <span className="mk-badge">{own ? "Built by you" : rec.autoPicked.includes(slot) ? "Picked for you" : "Your choice"}</span>
+            <span className={cx("mk-badge", option.coverage === "full" ? "" : "ws-badge--unknown")}>{option.coverage === "full" ? "Researched, draft facts" : own ? "Not checked" : "Not verified yet"}</span>
+            {option.website && (
+              <a className="ws-small-link" href={option.website} target="_blank" rel="noreferrer">
+                Website
+              </a>
+            )}
           </div>
         )}
         <p className="mk-muted">{option ? option.summary : def.empty_hint}</p>
+        {own && <p className="ws-own-hint">Say what it is in the note below: what you&apos;re building, and how the app reaches it. The note goes into the spec for whoever builds the app.</p>}
         <div className="mk-row mk-gap-2 mk-wrap mk-sm">
           <button type="button" className="mk-btn mk-btn--primary" onClick={() => onAsk(slot)}>
-            <Icon name="sparkle" size={14} /> Ask about {option ? option.name : "this"}
+            <Icon name="sparkle" size={14} /> Ask about {option && !own ? option.name : "this"}
           </button>
-          {option && (
+          {slot !== "framework" && !own && (
+            <button
+              type="button"
+              className="mk-btn mk-btn--ghost"
+              title={`Use your own code for ${inSentence(def.label)} instead of a service`}
+              onClick={() => {
+                model.place(ownId(slot), slot);
+                onToast(`${def.label} is now yours to build. Describe it in the note; StackWise won't check or price it.`);
+              }}
+            >
+              Build it yourself
+            </button>
+          )}
+          {option && !own && (
             <button
               type="button"
               className="mk-btn mk-btn--secondary"

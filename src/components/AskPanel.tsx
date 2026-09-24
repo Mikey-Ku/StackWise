@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { answerFromFacts, evaluatePlan, inSentence, planInput, talkBrief, worstLevel, type SlotId } from "@/engine";
 import { agentName, pairInstructions } from "@/mcp/pairing";
+import { AnswererMark } from "./AnswererMark";
 import { answererLogo, providerLabel, recipientsFor, pickDefault, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
 import { Icon } from "./icons";
@@ -237,12 +238,21 @@ function ActivityRow({ activity }: { activity: ClaudeActivity }) {
   );
 }
 
+/** The one-line command that adds StackWise's MCP server, for agents whose CLI has one. The rest get the address. */
+const ADD_COMMANDS: Record<string, (url: string) => string> = {
+  "claude-code": (url) => `claude mcp add --transport http --scope user whystack ${url}`,
+  codex: (url) => `codex mcp add whystack --url ${url}`,
+  "gemini-cli": (url) => `gemini mcp add --transport http --scope user whystack ${url}`,
+  "qwen-code": (url) => `qwen mcp add --transport http --scope user whystack ${url}`,
+};
+
 /** How to get an agent listening, shown when the picked agent isn't. */
 export function ConnectCard({ recipient, pairing, onToast }: { recipient: Recipient; pairing: Pairing; onToast: (message: string) => void }) {
   const id = recipient.id.slice("agent:".length);
   const url = `${window.location.origin}/api/mcp`;
   const claude = id === "claude-code";
-  const add = claude ? `claude mcp add --transport http --scope user whystack ${url}` : url;
+  const command = ADD_COMMANDS[id]?.(url);
+  const add = command ?? url;
   const copy = async (text: string, done: string) => onToast((await copyText(text)) ? done : text);
   const title =
     recipient.state === "stopped"
@@ -257,8 +267,8 @@ export function ConnectCard({ recipient, pairing, onToast }: { recipient: Recipi
       <ol>
         {recipient.state === "not-connected" && (
           <li>
-            <span>{claude ? "Add StackWise to Claude Code once:" : `Add StackWise's MCP server to ${recipient.label} once, at this address:`}</span>
-            <button type="button" className="ws-agent__cmd" onClick={() => void copy(add, claude ? "Copied. Run it in a terminal." : "Copied the MCP address.")}>
+            <span>{command ? `Add StackWise to ${recipient.label} once, in a terminal:` : `Add StackWise's MCP server to ${recipient.label} once, at this address:`}</span>
+            <button type="button" className="ws-agent__cmd" onClick={() => void copy(add, command ? "Copied. Run it in a terminal." : "Copied the MCP address.")}>
               <code>{add}</code>
               <span className="mk-hint">Copy</span>
             </button>
@@ -461,8 +471,7 @@ export function AskPanel({
     const entry = (r: Recipient): MenuItem => ({
       label: r.label,
       lead: answererLogo(r.id) ? (
-        // eslint-disable-next-line @next/next/no-img-element -- a committed brand icon
-        <img className="ws-menu-logo" src={answererLogo(r.id)!} alt="" />
+        <AnswererMark id={r.id} className="ws-menu-logo" />
       ) : (
         <StateDot state={r.state} />
       ),
@@ -524,8 +533,7 @@ export function AskPanel({
         <button type="button" className="ws-answerer" aria-haspopup="menu" onClick={openMenu} title="Who answers">
           <StateDot state={recipient.state} />
           {answererLogo(recipient.id) ? (
-            // eslint-disable-next-line @next/next/no-img-element -- a committed brand icon
-            <img className="ws-menu-logo" src={answererLogo(recipient.id)!} alt="" />
+            <AnswererMark id={recipient.id} className="ws-menu-logo" />
           ) : recipient.group === "agent" ? (
             <Icon name="terminal" size={13} />
           ) : (

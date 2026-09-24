@@ -3,6 +3,7 @@ import { evaluatePlan, optionIn, type CatalogIndex, type CheckResult } from "./e
 import type { PlanInput, Selection, SlotId } from "./schema";
 import type { SharedPlan } from "./share";
 import { buildSpecPack, type SpecDetails, type SpecFile } from "./spec";
+import { buildTask, isOwn } from "./own";
 
 /**
  * The project pack: the spec pack plus what an AI builder needs to work through it on its own.
@@ -37,7 +38,7 @@ function resultLine(r: CheckResult): string {
 }
 
 export function buildProjectPack(index: CatalogIndex, input: PlanInput, selection: Selection, details: ProjectDetails, options: ProjectOptions = {}): SpecFile[] {
-  const spec = buildSpecPack(index, input, selection, { ...details, notes: details.notes ?? details.plan.notes });
+  const spec = buildSpecPack(index, input, selection, { ...details, notes: details.notes ?? details.plan.notes, custom: details.custom ?? details.plan.custom });
   const name = details.appName.trim() || "My app";
   const builder = index.catalog.planning.builders.find((b) => b.id === details.builderId);
   const results = evaluatePlan(index, selection, input);
@@ -80,7 +81,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
       ...parts.flatMap(({ slot, option, def, agent }, i) => [
         `## ${i + 1}. ${def.label}: ${option.name}`,
         "",
-        `- [ ] ${def.build_task.replace("{option}", option.name)} Agent: \`${agent}\``,
+        `- [ ] ${buildTask(def, option)} Agent: \`${agent}\``,
         "",
         "Done when:",
         "",
@@ -131,9 +132,9 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
         "For any proposed change:",
         "",
         "1. Call `get_plan` to see the current stack, its checks and its costs.",
-        "2. Call `check_stack` with the stack as it would be after the change. When choosing between options, call `compare_options`.",
+        "2. To choose an option for a part, call `compare_options` with just the part: it ranks the best options within the plan. To check one change, call `check_stack` with only `swap`, like `{ \"email\": \"postmark\" }`.",
         "3. Explain the result in plain words: what works, each warning with its fix, and how the monthly cost changes.",
-        "4. If the person agrees, call `update_plan` with the new part and a one-line note saying why, then add a short entry to DECISIONS.md.",
+        "4. If the person agrees, call `update_plan` with the new part and a one-line note saying why. It returns the new checks and cost, so you don't need `get_plan` again. Then add a short entry to DECISIONS.md.",
         "",
         "Never change the stack in code until the checks pass or the person has accepted the warnings.",
       ],
@@ -187,7 +188,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
           "",
           "## The task",
           "",
-          def.build_task.replace("{option}", option.name),
+          buildTask(def, option),
           "",
           "## Setup it needs",
           "",
@@ -196,7 +197,9 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
                 const env = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${adaptEnvName(e, selection.framework)}\``).join(", ")}.` : "";
                 return `- ${s.step}${env}${/^https?:\/\//.test(s.source) ? ` Docs: ${s.source}` : ""}`;
               })
-            : ["- Setup steps haven't been researched. Follow the official quickstart and call `setup_steps`."]),
+            : isOwn(option.id)
+              ? ["- It's the person's own code, not a service. Ask them how the app reaches it (an address, credentials) and keep those in environment variables."]
+              : ["- Setup steps haven't been researched. Follow the official quickstart and call `setup_steps`."]),
           "",
           "## Rules",
           "",

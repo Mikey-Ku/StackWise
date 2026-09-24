@@ -3,6 +3,7 @@ import { costBySize, costLine, money } from "./cost";
 import { needIsOn, optionIn, readFact, worstLevel, type CatalogIndex, type Level } from "./evaluate";
 import type { Recommendation } from "./score";
 import { SLOT_IDS, type FactValue, type Option, type PlanInput, type SizeId, type SlotId } from "./schema";
+import { OWN_PROVIDER } from "./own";
 
 /**
  * At-a-glance numbers for an option and for a whole plan. Every stat is read from a sourced fact
@@ -276,7 +277,7 @@ export function planStats(index: CatalogIndex, input: PlanInput, rec: Recommenda
     return option ? [{ slot, option }] : [];
   });
   const providers = filled
-    .filter(({ slot, option }) => slot !== "framework" && !index.catalog.planning.no_account_providers.includes(option.provider))
+    .filter(({ slot, option }) => slot !== "framework" && option.provider !== OWN_PROVIDER && !index.catalog.planning.no_account_providers.includes(option.provider))
     .map(({ option }) => option.provider);
 
   const sizes = costBySize(index, rec.selection, input);

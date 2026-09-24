@@ -1,6 +1,6 @@
 {
   "id": "anthropic",
-  "name": "Anthropic API (Claude)",
+  "name": "Claude API",
   "provider": "anthropic",
   "slots": ["ai"],
   "summary": "Anthropic's API lets your app call Claude models to generate text, reason through tasks, and power AI features.",

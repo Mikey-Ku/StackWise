@@ -151,5 +151,8 @@
       "aspnet-core",
       "go-net-http"
     ]
+  },
+  "starting_picks": {
+    "ai": "anthropic"
   }
 }

@@ -13,6 +13,7 @@ import {
   type SlotId,
 } from "./schema";
 import { inSentence, possessive as withApostrophe } from "./text";
+import { isOwn, ownOptions } from "./own";
 
 /**
  * The connection logic. Given which option sits in each slot and what the beginner answered,
@@ -49,7 +50,8 @@ export interface CatalogIndex {
 export function indexCatalog(catalog: Catalog): CatalogIndex {
   return {
     catalog,
-    optionsById: new Map(catalog.options.map((o) => [o.id, o])),
+    // The data's options, plus a "your own" option for each part (own.ts), which only a person can pick.
+    optionsById: new Map([...catalog.options, ...ownOptions(catalog.slots)].map((o) => [o.id, o])),
     needsById: new Map(catalog.needs.map((n) => [n.id, n])),
     slotsById: new Map(catalog.slots.map((s) => [s.id, s])),
   };
@@ -265,8 +267,15 @@ function coverageNotes(index: CatalogIndex, selection: Selection): CheckResult[]
       source: "coverage",
       level: "unknown",
       slots: [slot],
-      title: `${option.name} isn't verified yet`,
-      explanation: `${option.name}'s facts haven't been researched, so its connections and costs can't be checked. You can still plan with it; every check it touches is marked "not verified yet".`,
+      ...(isOwn(option.id)
+        ? {
+            title: `${option.name} isn't checked`,
+            explanation: `It's your own code, so StackWise has no facts to check how it connects to the rest or what it costs. Every check that touches it is marked "not verified yet".`,
+          }
+        : {
+            title: `${option.name} isn't verified yet`,
+            explanation: `${option.name}'s facts haven't been researched, so its connections and costs can't be checked. You can still plan with it; every check it touches is marked "not verified yet".`,
+          }),
     });
   }
   return results;

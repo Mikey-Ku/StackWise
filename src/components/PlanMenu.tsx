@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { encodeSharedPlan, sharedPlanSchema } from "@/engine";
+import { DEMOS } from "./demos";
 import { toSharedPlan } from "./store";
 import { newId, type PlanModel } from "./usePlans";
 import { copyText, cx, downloadText } from "./ui";
@@ -70,7 +71,7 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
         </span>
       </summary>
       <div className="ws-menu__panel">
-        <span className="mk-eyebrow">Your plans</span>
+        <span className="mk-eyebrow">Your applications</span>
         <div className="ws-menu__list">
           {store.order.map((id) => (
             <button
@@ -91,10 +92,25 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
         </div>
         <div className="ws-menu__actions">
           <button type="button" className="ws-menu__item" onClick={() => (dispatch({ type: "newPlan", id: newId(), now: now() }), close())}>
-            New plan
+            New application
           </button>
+          {DEMOS.map((demo) => (
+            <button
+              key={demo.id}
+              type="button"
+              className="ws-menu__item"
+              onClick={() => {
+                close();
+                dispatch({ type: "importPlan", id: newId(), now: now(), plan: structuredClone(demo.plan) });
+                onToast(`Opened the ${demo.plan.appName} demo.`);
+              }}
+            >
+              <span>Open a demo</span>
+              <span className="mk-hint">{demo.plan.appName}, an {demo.label}</span>
+            </button>
+          ))}
           <button type="button" className="ws-menu__item" onClick={() => (dispatch({ type: "duplicatePlan", id: newId(), now: now() }), close())}>
-            Duplicate this plan
+            Duplicate this application
           </button>
           <button type="button" className="ws-menu__item" onClick={shareLink}>
             Copy share link
@@ -113,7 +129,7 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
               if (window.confirm(`Delete "${nameOf(store.activeId)}"? This can't be undone.`)) dispatch({ type: "deletePlan", now: now(), fallbackId: newId() });
             }}
           >
-            Delete this plan
+            Delete this application
           </button>
         </div>
         <input

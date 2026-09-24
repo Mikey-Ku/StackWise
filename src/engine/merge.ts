@@ -4,12 +4,12 @@ import type { SharedPlan } from "./share";
  * Merging two copies of a plan that both changed since they last agreed: the project's
  * whystack.plan.json (an agent working in a terminal) and StackWise's shared copy (the browser, or
  * an agent paired over HTTP). A three-way merge against the last copy both had, so a note written
- * in the browser and a part swapped in the terminal both survive. Answers, parts and notes merge
+ * in the browser and a part swapped in the terminal both survive. Answers, parts, notes and custom parts merge
  * key by key; only when both sides changed the same key differently does the newer side win, and
  * those keys are reported so the person can see what was decided for them.
  */
 
-const MAP_FIELDS = ["answers", "pinned", "notes"] as const;
+const MAP_FIELDS = ["answers", "pinned", "notes", "custom"] as const;
 const SCALAR_FIELDS = ["appName", "description", "features", "size", "priority", "builderId"] as const;
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);

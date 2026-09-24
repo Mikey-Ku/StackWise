@@ -17,7 +17,10 @@ export function Logo({ logo, name, size = 20, status }: { logo: LogoFile | undef
   return (
     <span className="ws-logo-wrap" style={style}>
       <span className={cx("ws-logo", file ? `ws-logo--${logo!.from}` : "ws-logo--letter")} aria-hidden>
-        {file ? (
+        {file && logo!.dark ? (
+          // A near-black mark is drawn in the text color, so it doesn't vanish in dark mode.
+          <span className="ws-logo__mono" style={{ maskImage: `url(/logos/${file})`, WebkitMaskImage: `url(/logos/${file})` }} />
+        ) : file ? (
           // eslint-disable-next-line @next/next/no-img-element -- tiny static icons; next/image's resizing adds nothing here
           <img src={`/logos/${file}`} alt="" loading="lazy" decoding="async" draggable={false} onError={() => setBroken(file)} />
         ) : (

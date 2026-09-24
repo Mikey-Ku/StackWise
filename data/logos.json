@@ -7,9 +7,9 @@
   },
   "anthropic": {
     "from": "simple-icons",
-    "slug": "anthropic",
+    "slug": "claude",
     "file": "anthropic.svg",
-    "source": "https://simpleicons.org/?q=anthropic"
+    "source": "https://simpleicons.org/?q=claude"
   },
   "appwrite": {
     "from": "simple-icons",
@@ -580,5 +580,29 @@
     "url": "https://openweathermap.org",
     "file": "openweather.svg",
     "source": "https://openweathermap.org/icon.svg?icon.12sbjawem7k1w.svg"
+  },
+  "huggingface": {
+    "from": "simple-icons",
+    "slug": "huggingface",
+    "file": "huggingface.svg",
+    "source": "https://simpleicons.org/?q=huggingface"
+  },
+  "replicate": {
+    "from": "simple-icons",
+    "slug": "replicate",
+    "file": "replicate.svg",
+    "source": "https://simpleicons.org/?q=replicate"
+  },
+  "together-ai": {
+    "from": "site",
+    "url": "https://www.together.ai",
+    "file": "together-ai.png",
+    "source": "https://cdn.prod.website-files.com/69654e88dce9154b5f1206dd/69a59cff65ed0f267dd2fbe8_touchicon.png"
+  },
+  "fireworks-ai": {
+    "from": "site",
+    "url": "https://fireworks.ai",
+    "file": "fireworks-ai.png",
+    "source": "https://fireworks.ai/apple-icon.png?851b7c333784c47b"
   }
 }

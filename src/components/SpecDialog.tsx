@@ -24,12 +24,15 @@ export function SpecDialog({
   whystackRoot,
   onClose,
   onToast,
+  onSaveImage,
 }: {
   model: PlanModel;
   generatedOn: string | null;
   whystackRoot: string | undefined;
   onClose: () => void;
   onToast: (message: string) => void;
+  /** Saves the diagram as a PNG, with the page's background or none. */
+  onSaveImage: (transparent: boolean) => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [active, setActive] = useState("SPEC.md");
@@ -242,6 +245,21 @@ export function SpecDialog({
               )}
             </div>
           )}
+        </section>
+
+        <section className="mk-stack mk-gap-3 ws-local">
+          <div className="mk-stack mk-gap-1">
+            <span className="mk-eyebrow">The diagram, for slides</span>
+            <p className="mk-muted">A sharp PNG of every part and connection at full size. Leave the background out to drop it onto any slide.</p>
+          </div>
+          <div className="mk-row mk-gap-2 mk-wrap">
+            <button type="button" className="mk-btn mk-btn--secondary mk-sm" onClick={() => onSaveImage(false)}>
+              Save as PNG
+            </button>
+            <button type="button" className="mk-btn mk-btn--ghost mk-sm" onClick={() => onSaveImage(true)}>
+              PNG, no background
+            </button>
+          </div>
         </section>
       </div>
     </dialog>

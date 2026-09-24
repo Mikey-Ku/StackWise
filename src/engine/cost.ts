@@ -2,6 +2,7 @@ import { needIsOn, optionIn, readFact, type CatalogIndex } from "./evaluate";
 import { inSentence } from "./text";
 import { freePlanFits, nextSize } from "./score";
 import { SIZE_IDS, SLOT_IDS, type Fee, type Option, type PlanInput, type Selection, type SizeId, type SlotId } from "./schema";
+import { isOwn } from "./own";
 
 /**
  * Cost at the level a beginner needs: is it free at my size, and what is the first bill when it
@@ -47,6 +48,7 @@ export function money(usd: number): string {
 }
 
 export function costLine(index: CatalogIndex, option: Option, slot: SlotId, input: PlanInput): CostLine {
+  if (isOwn(option.id)) return unknown(slot, option, "Yours to run, not priced");
   if (slot === "framework") {
     return option.coverage === "full"
       ? { slot, option, kind: "free", monthlyUsd: 0, yearlyUsd: 0, headline: "Free and open source", ...withFact(option, "free_plan_covers") }

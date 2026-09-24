@@ -224,7 +224,9 @@ function closeCallText(model: PlanModel, call: CloseCall): string {
   const label = inSentence(model.index.slotsById.get(call.slot)?.label ?? call.slot);
   const lead = `${call.chosen.name} edges out ${call.runnerUp.name} for ${label}`;
   const base =
-    call.decidedBy === "tie"
+    call.decidedBy === "starting_pick"
+      ? `StackWise starts with ${call.chosen.name} for ${label}. ${call.runnerUp.name} scores higher on what StackWise measures, so switch if that matters more to you.`
+      : call.decidedBy === "tie"
       ? `${call.chosen.name} and ${call.runnerUp.name} tie on everything StackWise measures for ${label}, so either is a fine pick.`
       : call.decidedBy === "accounts"
         ? `${lead} because it shares an account with another part of your stack.`
@@ -427,7 +429,7 @@ export function SummaryPill({ model, onOpen }: { model: PlanModel; onOpen: () =>
   const title = [
     `${money(stats.now.monthlyUsd)} a month for ${SIZE_PHRASE[stats.now.size]}${stats.now.hasUsage ? ", plus usage" : ""}${extra ? `, plus ${extra}` : ""}.`,
     jump ? `${money(jump.monthlyUsd)} a month at ${SIZE_PHRASE[jump.size]}.` : "No price jump as you grow.",
-    `${stats.accounts} accounts to sign up for, ${stats.setupSteps} setup steps.`,
+    `${stats.accounts} service${stats.accounts === 1 ? "" : "s"} to sign up for (one shared account counts once), ${stats.setupSteps} setup steps.`,
     stats.problems === 0 ? "Every connection checks out." : `${stats.problems} thing${stats.problems === 1 ? "" : "s"} to look at.`,
   ].join("\n");
   return (
@@ -438,7 +440,7 @@ export function SummaryPill({ model, onOpen }: { model: PlanModel; onOpen: () =>
       </strong>
       <span className="ws-summary__sep" aria-hidden />
       <span>
-        {stats.accounts} account{stats.accounts === 1 ? "" : "s"}
+        {stats.accounts} sign-up{stats.accounts === 1 ? "" : "s"}
       </span>
       <span className="ws-summary__sep" aria-hidden />
       <span className={cx("ws-summary__checks", `ws-summary__checks--${level}`)}>
