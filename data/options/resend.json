@@ -38,12 +38,12 @@
   },
   "setup": [
     { "step": "Create a free Resend account and add and verify a sending domain in the dashboard.", "env": [], "source": "https://resend.com/docs/dashboard/domains/introduction" },
-    { "step": "Install the SDK with npm install resend.", "env": [], "source": "https://resend.com/docs/send-with-nextjs" },
-    { "step": "Create an API key in the dashboard and add it to your environment file.", "env": ["RESEND_API_KEY"], "source": "https://resend.com/docs/send-with-nextjs" },
-    { "step": "Import Resend in a server route (for example app/api/send/route.ts) and call resend.emails.send() with an address on your verified domain.", "env": [], "source": "https://resend.com/docs/send-with-nextjs" }
+    { "step": "Install the SDK with npm install resend.", "env": [], "source": "https://resend.com/docs/send-with-nodejs" },
+    { "step": "Create an API key in the dashboard and add it to your environment file.", "env": ["RESEND_API_KEY"], "source": "https://resend.com/docs/send-with-nodejs" },
+    { "step": "In a server route, create a Resend client and call resend.emails.send() with an address on your verified domain.", "env": [], "source": "https://resend.com/docs/send-with-nodejs" }
   ],
   "builder_notes": [
     "Only send from an address on a verified domain; an unverified domain can only send test emails to the account owner.",
-    "Keep RESEND_API_KEY server-side; call resend.emails.send() from a route handler or server action, never from client code."
+    "Keep RESEND_API_KEY server-side; call resend.emails.send() from server code, never from the browser."
   ]
 }

@@ -65,15 +65,15 @@
     }
   },
   "setup": [
-    { "step": "Create a free Neon account and a new project in the Neon Console.", "env": [], "source": "https://neon.com/docs/guides/nextjs" },
-    { "step": "Install the Neon serverless driver package in your Next.js app.", "env": [], "source": "https://neon.com/docs/guides/nextjs" },
+    { "step": "Create a free Neon account and a new project in the Neon Console.", "env": [], "source": "https://neon.com/docs/get-started/signing-up" },
+    { "step": "Install the Neon serverless driver with npm install @neondatabase/serverless, or use any standard Postgres driver.", "env": [], "source": "https://neon.com/docs/serverless/serverless-driver" },
     { "step": "On the project dashboard, click Connect and copy the pooled connection string.", "env": [], "source": "https://neon.com/docs/connect/connection-pooling" },
-    { "step": "Add the connection string to your environment file.", "env": ["DATABASE_URL"], "source": "https://neon.com/docs/guides/nextjs" },
-    { "step": "Import the driver, connect using the environment variable, and run queries.", "env": [], "source": "https://neon.com/docs/guides/nextjs" }
+    { "step": "Add the connection string to your environment file.", "env": ["DATABASE_URL"], "source": "https://neon.com/docs/connect/connect-from-any-app" },
+    { "step": "Import the driver, connect using the environment variable, and run queries.", "env": [], "source": "https://neon.com/docs/serverless/serverless-driver" }
   ],
   "builder_notes": [
     "Use the pooled connection string (the '-pooler' host) in serverless or edge functions; use the direct string only for migrations.",
-    "Never expose DATABASE_URL in client-side code or a NEXT_PUBLIC_ variable, since it contains the database password.",
+    "Never expose DATABASE_URL in client-side code or in a variable the browser can read, since it contains the database password.",
     "Use the @neondatabase/serverless package for edge-friendly HTTP queries, or a standard pg client in a long-running Node server."
   ]
 }

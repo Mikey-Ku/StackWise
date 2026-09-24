@@ -64,7 +64,7 @@
     { "step": "In a server route, fetch https://r.jina.ai/<the target URL> with an Authorization: Bearer header carrying your key, and read the response back as Markdown.", "env": [], "source": "https://jina.ai/reader" }
   ],
   "builder_notes": [
-    "Keep JINA_API_KEY server-side and call Reader from a route handler, server action, or background job, not from client code.",
+    "Keep JINA_API_KEY server-side and call Reader from server code or a background job, not from the browser.",
     "Cache the Markdown you get back instead of re-fetching the same URL on every request, since Reader still spends tokens or throughput per call.",
     "Respect each target site's robots.txt and terms of service; Reader will fetch whatever URL you give it."
   ]

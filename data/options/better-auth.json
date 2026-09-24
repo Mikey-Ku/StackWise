@@ -51,11 +51,11 @@
     }
   },
   "setup": [
-    { "step": "Install the better-auth package in your Next.js project.", "env": [], "source": "https://www.better-auth.com/docs/installation" },
+    { "step": "Install Better Auth with npm install better-auth.", "env": [], "source": "https://www.better-auth.com/docs/installation" },
     { "step": "Create a server-side auth config file that connects Better Auth to your own database.", "env": [], "source": "https://www.better-auth.com/docs/installation" },
     { "step": "Set a random secret and your app's URL in your environment file, alongside your own database connection variable.", "env": ["BETTER_AUTH_SECRET", "BETTER_AUTH_URL"], "source": "https://www.better-auth.com/docs/installation" },
     { "step": "Run Better Auth's CLI to create the needed tables in your database.", "env": [], "source": "https://www.better-auth.com/docs/installation" },
-    { "step": "Add the Next.js route handler and create a client for use in your components.", "env": [], "source": "https://www.better-auth.com/docs/integrations/next" }
+    { "step": "Mount Better Auth's handler on a server route using your framework's integration, and create a client for your pages.", "env": [], "source": "https://better-auth.com/docs/installation" }
   ],
   "builder_notes": [
     "BETTER_AUTH_SECRET is required; without a strong random value, authentication will not work correctly.",

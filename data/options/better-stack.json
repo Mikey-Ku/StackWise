@@ -44,9 +44,9 @@
     }
   },
   "setup": [
-    { "step": "Create a free Better Stack account, then create an Errors application for your Next.js app to get an application token and ingesting host.", "env": [], "source": "https://betterstack.com/docs/errors/collecting-errors/sentry-sdk/" },
-    { "step": "Install the SDK with npm install @sentry/nextjs, the same package Sentry itself uses.", "env": [], "source": "https://betterstack.com/docs/errors/collecting-errors/sentry-sdk/" },
-    { "step": "Build a DSN from the Ingest tab in the form https://APPLICATION_TOKEN@INGESTING_HOST/APPLICATION_ID and set it as the dsn in sentry.client.config.js, sentry.server.config.js and sentry.edge.config.js.", "env": ["SENTRY_DSN"], "source": "https://betterstack.com/docs/errors/collecting-errors/sentry-sdk/" },
+    { "step": "Create a free Better Stack account, then create an Errors application for your app to get an application token and ingesting host.", "env": [], "source": "https://betterstack.com/docs/errors/collecting-errors/sentry-sdk/" },
+    { "step": "Install Sentry's SDK for your framework; Better Stack accepts the same SDK Sentry itself uses.", "env": [], "source": "https://betterstack.com/docs/errors/collecting-errors/sentry-sdk/" },
+    { "step": "Build a DSN from the Ingest tab in the form https://APPLICATION_TOKEN@INGESTING_HOST/APPLICATION_ID and set it as the dsn wherever the SDK starts, on the server and in the browser.", "env": ["SENTRY_DSN"], "source": "https://betterstack.com/docs/errors/collecting-errors/sentry-sdk/" },
     { "step": "Add your Telemetry API token so source maps upload on every build, using the org, project and endpoint from the application's Advanced settings tab.", "env": ["SENTRY_AUTH_TOKEN", "SENTRY_ORG", "SENTRY_PROJECT", "SENTRY_URL"], "source": "https://betterstack.com/docs/errors/collecting-errors/upload-source-maps/" }
   ],
   "builder_notes": [

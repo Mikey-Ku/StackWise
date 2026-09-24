@@ -67,9 +67,9 @@
   "setup": [
     { "step": "Create a Firebase project at the Firebase console.", "env": [], "source": "https://firebase.google.com/docs/web/setup" },
     { "step": "Register a web app in the project to get your Firebase config values.", "env": [], "source": "https://firebase.google.com/docs/web/setup" },
-    { "step": "Install the Firebase SDK in your Next.js app.", "env": [], "source": "https://firebase.google.com/docs/firestore/quickstart" },
+    { "step": "Install the Firebase SDK with npm install firebase.", "env": [], "source": "https://firebase.google.com/docs/web/setup" },
     { "step": "In the console, create a Firestore database and choose a starting security mode.", "env": [], "source": "https://firebase.google.com/docs/firestore/quickstart" },
-    { "step": "Add the Firebase config values to your app. Firebase's docs do not require environment variables, but NEXT_PUBLIC_ names are a common Next.js convention.", "env": [], "source": "https://firebase.google.com/docs/firestore/quickstart" }
+    { "step": "Add the Firebase config values to your environment file. They are public by design; Firebase security rules protect the data.", "env": [], "source": "https://firebase.google.com/docs/web/setup" }
   ],
   "builder_notes": [
     "New databases start open to everyone or closed to everyone; write real Firestore Security Rules before shipping.",

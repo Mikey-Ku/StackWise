@@ -46,11 +46,11 @@
   "setup": [
     { "step": "Create a free Umami Cloud account and add your website to get its tracking code.", "env": [], "source": "https://docs.umami.is/docs/add-a-website" },
     { "step": "Open the website's Tracking code section and copy the script tag shown there.", "env": [], "source": "https://docs.umami.is/docs/collect-data" },
-    { "step": "Insert it with the next/script component, instead of a plain script tag, in your root layout so it loads on every route.", "env": [], "source": "https://docs.umami.is/docs/collect-data" },
+    { "step": "Paste it into the head of every page, usually in your app's shared layout or main HTML template.", "env": [], "source": "https://docs.umami.is/docs/collect-data" },
     { "step": "Visit your site; Umami tracks page views immediately, including client-side navigations, with no extra configuration.", "env": [], "source": "https://docs.umami.is/docs/collect-data" }
   ],
   "builder_notes": [
     "Umami never sets cookies or collects personal data, so it needs no cookie consent banner.",
-    "Load the tracking script once in the root layout, not on every page, so client-side navigations are not double-counted."
+    "Load the tracking script once in the shared layout or template, not separately in each page, so client-side navigations are not double-counted."
   ]
 }

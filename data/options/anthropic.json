@@ -72,7 +72,7 @@
       "source": "https://platform.claude.com/docs/en/get-started"
     },
     {
-      "step": "Import Anthropic and call client.messages.create from a server-side route handler.",
+      "step": "Import Anthropic and call client.messages.create from a server route.",
       "env": [],
       "source": "https://platform.claude.com/docs/en/get-started"
     }

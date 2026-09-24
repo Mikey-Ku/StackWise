@@ -44,15 +44,15 @@
     }
   },
   "setup": [
-    { "step": "Create a free Honeybadger account and a new project to get its API key.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/integration/nextjs/" },
-    { "step": "Install the SDK with npm add @honeybadger-io/react @honeybadger-io/nextjs.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/integration/nextjs/" },
-    { "step": "Run npx honeybadger-copy-config-files to generate honeybadger.server.config.js, honeybadger.client.config.js and honeybadger.edge.config.js.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/integration/nextjs/" },
-    { "step": "Add your API key, deploy revision and assets URL to your environment file.", "env": ["NEXT_PUBLIC_HONEYBADGER_API_KEY", "NEXT_PUBLIC_HONEYBADGER_REVISION", "NEXT_PUBLIC_HONEYBADGER_ASSETS_URL"], "source": "https://docs.honeybadger.io/lib/javascript/integration/nextjs/" },
-    { "step": "Wrap next.config.js with setupHoneybadger so source maps upload on build, and wrap your root component in HoneybadgerErrorBoundary.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/integration/nextjs/" }
+    { "step": "Create a free Honeybadger account and a new project to get its API key.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/" },
+    { "step": "Install Honeybadger's SDK for your framework (@honeybadger-io/js covers plain JavaScript and Node).", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/" },
+    { "step": "Configure Honeybadger once where your app starts, in server code and in the browser, reading its settings from your environment.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/" },
+    { "step": "Add your API key, deploy revision and assets URL to your environment file.", "env": ["NEXT_PUBLIC_HONEYBADGER_API_KEY", "NEXT_PUBLIC_HONEYBADGER_REVISION", "NEXT_PUBLIC_HONEYBADGER_ASSETS_URL"], "source": "https://docs.honeybadger.io/lib/javascript/" },
+    { "step": "Upload source maps on every build with Honeybadger's bundler plugin, and add its error boundary or error handler around your app so crashes get reported.", "env": [], "source": "https://docs.honeybadger.io/lib/javascript/errors/using-source-maps/" }
   ],
   "builder_notes": [
     "The Honeybadger API key is write-only and meant to be public in browser code, unlike a typical secret key; it can only send error reports in, not read data out.",
-    "Let setupHoneybadger wrap next.config.js so it uploads source maps and sets the revision on every build, or stack traces won't map cleanly back to your source.",
+    "Upload source maps and set the revision on every build, or stack traces won't map cleanly back to your source.",
     "There's no session replay, so pair Honeybadger with a separate tool if you need to see what a user did before an error, not just the stack trace."
   ]
 }

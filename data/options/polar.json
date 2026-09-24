@@ -75,17 +75,17 @@
     {
       "step": "Generate an Organization Access Token from Settings > Developers and set it as an environment variable.",
       "env": ["POLAR_ACCESS_TOKEN"],
-      "source": "https://polar.sh/docs/integrate/sdk/adapters/nextjs"
+      "source": "https://polar.sh/docs/integrate/oat"
     },
     {
-      "step": "Install the SDK with npm install zod @polar-sh/nextjs.",
+      "step": "Install Polar's SDK with npm install @polar-sh/sdk, or Polar's adapter for your framework if it has one.",
       "env": [],
-      "source": "https://polar.sh/docs/integrate/sdk/adapters/nextjs"
+      "source": "https://polar.sh/docs/integrate/sdk/typescript"
     },
     {
-      "step": "Create a checkout route handler using Checkout from @polar-sh/nextjs with server set to sandbox, and a webhook route handler using Webhooks verified against a signing secret.",
+      "step": "Create a checkout route that uses the sandbox server, and a webhook route that verifies each event against your webhook signing secret.",
       "env": ["POLAR_WEBHOOK_SECRET"],
-      "source": "https://polar.sh/docs/integrate/sdk/adapters/nextjs"
+      "source": "https://polar.sh/docs/integrate/webhooks/endpoints"
     },
     {
       "step": "Visit your checkout route and complete a test payment with a Stripe test card number inside the sandbox.",
@@ -94,7 +94,7 @@
     }
   ],
   "builder_notes": [
-    "Keep POLAR_ACCESS_TOKEN and POLAR_WEBHOOK_SECRET server-only and never prefix them with NEXT_PUBLIC_.",
+    "Keep POLAR_ACCESS_TOKEN and POLAR_WEBHOOK_SECRET server-only and never expose them to the browser.",
     "Build and test against server: \"sandbox\" and the sandbox.polar.sh dashboard, and only point at production once you are ready to take real payments.",
     "Verify the POLAR_WEBHOOK_SECRET signature inside the webhook handler before granting access, instead of trusting the client-side checkout redirect alone."
   ]

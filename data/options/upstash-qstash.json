@@ -51,13 +51,13 @@
     }
   },
   "setup": [
-    { "step": "Create a free Upstash account and open the QStash tab to get your credentials.", "env": [], "source": "https://upstash.com/docs/qstash/quickstarts/vercel-nextjs" },
-    { "step": "Install the SDK with npm install @upstash/qstash.", "env": [], "source": "https://upstash.com/docs/qstash/quickstarts/vercel-nextjs" },
-    { "step": "Copy the token and both signing keys from the QStash dashboard into your environment file.", "env": ["QSTASH_TOKEN", "QSTASH_CURRENT_SIGNING_KEY", "QSTASH_NEXT_SIGNING_KEY"], "source": "https://upstash.com/docs/qstash/quickstarts/vercel-nextjs" },
-    { "step": "Publish a message to your own API route with the QStash client, and verify each incoming request with verifySignatureAppRouter.", "env": [], "source": "https://upstash.com/docs/qstash/quickstarts/vercel-nextjs" }
+    { "step": "Create a free Upstash account and open the QStash tab to get your credentials.", "env": [], "source": "https://upstash.com/docs/qstash/overall/getstarted" },
+    { "step": "Install the SDK with npm install @upstash/qstash.", "env": [], "source": "https://upstash.com/docs/qstash/overall/getstarted" },
+    { "step": "Copy the token and both signing keys from the QStash dashboard into your environment file.", "env": ["QSTASH_TOKEN", "QSTASH_CURRENT_SIGNING_KEY", "QSTASH_NEXT_SIGNING_KEY"], "source": "https://upstash.com/docs/qstash/overall/getstarted" },
+    { "step": "Publish a message to a server route in your app with the QStash client, and verify each incoming request's signature with the SDK's Receiver.", "env": [], "source": "https://upstash.com/docs/qstash/howto/signature" }
   ],
   "builder_notes": [
-    "Verify the QStash signature on every incoming request with verifySignatureAppRouter before trusting the payload.",
+    "Verify the QStash signature on every incoming request, with the SDK's Receiver, before trusting the payload.",
     "QStash calls your endpoint over plain HTTP, so keep handlers inside your host's own request timeout, or split long work into multiple scheduled steps.",
     "Use the Upstash-Cron header, or the schedules API, to repeat a job instead of building your own cron runner."
   ]

@@ -44,14 +44,14 @@
     }
   },
   "setup": [
-    { "step": "Create a free Sentry account and a new project for your Next.js app.", "env": [], "source": "https://docs.sentry.io/platforms/javascript/guides/nextjs/" },
-    { "step": "Run the install wizard with npx @sentry/wizard@latest -i nextjs, and choose Error Monitoring, Tracing and Session Replay when it asks.", "env": [], "source": "https://docs.sentry.io/platforms/javascript/guides/nextjs/" },
-    { "step": "The wizard writes SENTRY_AUTH_TOKEN to .env.sentry-build-plugin (already gitignored) for uploading source maps, and sets your DSN for the client to report to.", "env": ["SENTRY_AUTH_TOKEN", "NEXT_PUBLIC_SENTRY_DSN"], "source": "https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/" },
-    { "step": "Start your dev server and open /sentry-example-page to trigger a test error, then confirm it shows up in Sentry.", "env": [], "source": "https://docs.sentry.io/platforms/javascript/guides/nextjs/" }
+    { "step": "Create a free Sentry account and a new project, choosing your framework as the platform.", "env": [], "source": "https://docs.sentry.io/platforms/javascript/" },
+    { "step": "Install Sentry's SDK for your framework, or run npx @sentry/wizard@latest to set it up, and turn on Error Monitoring, Tracing and Session Replay.", "env": [], "source": "https://docs.sentry.io/platforms/javascript/" },
+    { "step": "Set your project's DSN so the app knows where to report, and put SENTRY_AUTH_TOKEN only in your build environment for uploading source maps.", "env": ["SENTRY_AUTH_TOKEN", "NEXT_PUBLIC_SENTRY_DSN"], "source": "https://docs.sentry.io/platforms/javascript/sourcemaps/" },
+    { "step": "Start your app, trigger a test error, and confirm it shows up in Sentry.", "env": [], "source": "https://docs.sentry.io/platforms/javascript/" }
   ],
   "builder_notes": [
     "Keep SENTRY_AUTH_TOKEN out of client code and version control; it only belongs in the build environment for uploading source maps, unlike the DSN which is safe to ship to the browser.",
-    "Leave the wizard's withSentryConfig wrapper on next.config.ts so source maps upload automatically on every build, or stack traces will show minified code instead of your own.",
+    "Keep source map uploads on in your build (the wizard or Sentry's bundler plugin sets them up), or stack traces will show minified code instead of your own.",
     "Session replay masks all text, inputs and media by default; only turn that off for parts of the app you're sure never show personal data."
   ]
 }

@@ -51,9 +51,9 @@
     }
   },
   "setup": [
-    { "step": "Create a free Inngest account at inngest.com.", "env": [], "source": "https://www.inngest.com/docs/getting-started/nextjs-quick-start" },
-    { "step": "Install the SDK with npm install inngest and add an API route handler that calls serve().", "env": [], "source": "https://www.inngest.com/docs/getting-started/nextjs-quick-start" },
-    { "step": "Run the local Inngest Dev Server alongside next dev to test functions before deploying.", "env": ["INNGEST_DEV"], "source": "https://www.inngest.com/docs/getting-started/nextjs-quick-start" },
+    { "step": "Create a free Inngest account at inngest.com.", "env": [], "source": "https://www.inngest.com/docs/getting-started/nodejs-quick-start" },
+    { "step": "Install the SDK with npm install inngest and add a server route that calls serve() with your functions.", "env": [], "source": "https://www.inngest.com/docs/getting-started/nodejs-quick-start" },
+    { "step": "Run the local Inngest Dev Server alongside your app's dev server to test functions before deploying.", "env": ["INNGEST_DEV"], "source": "https://www.inngest.com/docs/local-development" },
     { "step": "Before going live, create a production Event Key and Signing Key in the dashboard and add them to your environment file.", "env": ["INNGEST_EVENT_KEY", "INNGEST_SIGNING_KEY"], "source": "https://www.inngest.com/docs/sdk/environment-variables" }
   ],
   "builder_notes": [
