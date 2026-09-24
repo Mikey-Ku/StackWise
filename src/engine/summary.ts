@@ -23,8 +23,8 @@ export interface PlanBrief {
 
 const STATUS: Record<string, string> = {
   blocked: "doesn't work",
-  missing: "missing",
-  warning: "works with a warning",
+  missing: "missing a service",
+  warning: "works, with a warning",
   unknown: "not verified yet",
 };
 

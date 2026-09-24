@@ -149,7 +149,7 @@ describe("decision record", () => {
   it("explains one part with checks, alternatives and what would change it", () => {
     const text = slotReasoning(index, plan, selection, "hosting")!;
     expect(text).toContain("## Hosting: host-serverless");
-    expect(text).toContain("**Status:** works with a warning.");
+    expect(text).toContain("**Status:** works, with a warning.");
     expect(text).toContain("free plan doesn't allow charging customers");
     expect(text).toContain("| host-server |");
     expect(text).toContain("https://example.com/fixture");

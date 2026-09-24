@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SharedPlan } from "./share";
-import { answerFromFacts, draftNote, swappable, talkBrief } from "./talk";
+import { answerFromFacts, draftNote, questionFocus, swappable, talkBrief } from "./talk";
 import { fixtureIndex } from "./test-fixtures";
 
 const index = fixtureIndex();
@@ -36,7 +36,7 @@ describe("talkBrief", () => {
   it("carries the rest of the stack and every problem the rules flag, so a question can be answered in context", () => {
     expect(brief.stack.map((p) => p.part)).toEqual(expect.arrayContaining(["Framework", "Hosting", "Database"]));
     expect(brief.stack.every((p) => typeof p.verdict === "string")).toBe(true);
-    const order = ["doesn't work", "missing a piece", "works with a warning", "not verified yet"];
+    const order = ["doesn't work", "missing a service", "works, with a warning", "not verified yet"];
     const ranks = brief.plan_problems.map((p) => order.indexOf(p.verdict));
     expect(ranks.length).toBeGreaterThan(0);
     expect(ranks).not.toContain(-1);
@@ -86,9 +86,10 @@ describe("answerFromFacts", () => {
     expect(ask("What could go wrong?").reply).toContain("- Your data would disappear.");
   });
 
-  it("suggests a swap only to an option the rules pass and that scores higher", () => {
+  it("suggests a swap only to an option the rules pass and that ranks higher", () => {
     const answer = ask("What else could I use instead?");
-    expect(answer.reply).toMatch(/- db-hosted: works, .+, scores [\d.]+ higher for your priority/);
+    expect(answer.reply).toMatch(/- db-hosted: works\. .+\. ranks higher for your priority\./);
+    expect(answer.reply).not.toMatch(/\d\.\d/);
     expect(answer.swap).toBe("db-hosted");
   });
 
@@ -103,5 +104,27 @@ describe("answerFromFacts", () => {
     expect(answer.reply).toContain("ask about setup, keys, cost, problems or alternatives");
     expect(answer.swap).toBeUndefined();
     for (const q of ["keys", "set up", "cost", "instead", "problems", "note", "what is it", "hello"]) noEmDash(ask(q).reply);
+  });
+});
+
+describe("questionFocus", () => {
+  it("answers about the part a question names, not the one selected", () => {
+    const question = "Can I use db-hosted instead of db-file for the database?";
+    const focus = questionFocus(index, plan, "framework", question);
+    expect(focus).toEqual({ slot: "database", mentioned: ["db-hosted"] });
+    const answer = answerFromFacts(talkBrief(index, plan, focus.slot, focus.mentioned), question);
+    expect(answer.reply).toMatch(/^db-hosted instead of db-file, checked against the rest of your plan:/);
+    expect(answer.reply).toContain("- db-hosted: works.");
+    expect(answer.swap).toBe("db-hosted");
+  });
+
+  it("finds the part from a service's name when no part is named", () => {
+    expect(questionFocus(index, plan, "framework", "Is pay-card a good choice?").slot).toBe("payments");
+  });
+
+  it("stays on the selected part when the question names it or what fills it", () => {
+    expect(questionFocus(index, plan, "database", "Does the database work with host-server?")).toEqual({ slot: "database", mentioned: [] });
+    expect(questionFocus(index, plan, "payments", "How do I deploy pay-card webhooks?").slot).toBe("payments");
+    expect(questionFocus(index, plan, "database", "How do I set this up?").slot).toBe("database");
   });
 });
