@@ -1,27 +1,23 @@
 "use client";
 
-import { checklistProgress, envFileText, planEnv, type ChecklistItem } from "@/engine";
+import { checklistProgress, envFileText, planEnv, setupGroups, type ChecklistItem, type SetupGroup } from "@/engine";
 import type { PlanModel } from "./usePlans";
 import { Logo, copyText, cx } from "./ui";
 
+/** A step and the variable names it gives you. Docs live once, on the service's heading. */
 function Item({ item, done, onToggle }: { item: ChecklistItem; done: boolean; onToggle: () => void }) {
   return (
     <label className={cx("ws-check-item", done && "is-done")}>
       <input type="checkbox" checked={done} onChange={onToggle} />
       <span className="mk-stack mk-gap-1 ws-check-item__body">
         <span>{item.text}</span>
-        {(item.env.length > 0 || item.source) && (
+        {item.env.length > 0 && (
           <span className="mk-hint ws-check-item__meta">
             {item.env.map((e) => (
               <code key={e} className="ws-env">
                 {e}
               </code>
             ))}
-            {item.source && (
-              <a href={item.source} target="_blank" rel="noreferrer">
-                docs
-              </a>
-            )}
           </span>
         )}
       </span>
@@ -29,22 +25,68 @@ function Item({ item, done, onToggle }: { item: ChecklistItem; done: boolean; on
   );
 }
 
-/** Spec-driven development, tracked: the setup steps and build order from the plan, checked off as you go. */
-/** `onOpenProject` opens the Project panel, where the values go into the project's .env.local. */
+/** A host name and path, short enough to read in a list. */
+const shortUrl = (url: string) => url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+
+function Group({ model, group }: { model: PlanModel; group: SetupGroup }) {
+  const { plan, dispatch, catalog, index } = model;
+  const parts = group.slots.map((slot) => index.slotsById.get(slot)?.label ?? slot).join(", ");
+  return (
+    <div className="mk-stack mk-gap-2">
+      <div className="ws-checkgroup">
+        <Logo logo={catalog.logos[group.optionId]} name={group.optionName} size={20} />
+        <span className="ws-checkgroup__name">
+          <strong>{group.optionName}</strong>
+          <span className="mk-hint">{parts}</span>
+        </span>
+        {group.docs && (
+          <a className="ws-checkgroup__docs" href={group.docs} target="_blank" rel="noreferrer">
+            Docs
+          </a>
+        )}
+      </div>
+      {group.shared && (
+        <p className="mk-hint">
+          Uses the {group.shared.withName} setup above for {group.shared.count === 1 ? "one step" : `${group.shared.count} steps`}.
+        </p>
+      )}
+      {group.items.map((item) => (
+        <Item key={item.id} item={item} done={Boolean(plan.checked[item.id])} onToggle={() => dispatch({ type: "toggleCheck", itemId: item.id })} />
+      ))}
+      {group.moreDocs.length > 0 && (
+        <details className="ws-details ws-moredocs">
+          <summary>More docs ({group.moreDocs.length})</summary>
+          <ul>
+            {group.moreDocs.map((doc) => (
+              <li key={doc.url}>
+                <span className="mk-hint">Step {doc.step}: </span>
+                <a href={doc.url} target="_blank" rel="noreferrer">
+                  {shortUrl(doc.url)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
+  );
+}
+
+/** The setup steps and build order from the plan, checked off as you go. `onOpenProject` opens the Project panel. */
 export function ChecklistPanel({ model, today, onToast, onOpenProject }: { model: PlanModel; today: string; onToast: (message: string) => void; onOpenProject: () => void }) {
-  const { checklist, plan, dispatch, catalog, index, rec } = model;
-  const progress = checklistProgress(checklist, plan.checked);
+  const { checklist, plan, dispatch, index, rec } = model;
+  const progress = checklistProgress(checklist, plan.checked, index);
   const env = planEnv(index, rec.selection);
   const browserCount = env.filter((v) => v.browser).length;
   // Names from the person's own parts that no listed service already asks for.
   const own = Object.values(plan.custom).flatMap((part) => part.env.filter((name) => !env.some((v) => v.name === name)).map((name) => ({ name, partName: part.name })));
   const count = env.length + own.length;
-  const groups = [...new Map(checklist.setup.map((i) => [i.optionId, i.optionName])).entries()];
+  const groups = setupGroups(index, checklist);
 
   if (plan.step !== "plan") {
     return (
       <div className="ws-inspector ws-inspector--empty">
-        <p className="mk-muted">Build your plan first. The checklist fills in with every account to create, key to copy and build step, in order.</p>
+        <p className="mk-muted">Build your plan first. The checklist then lists every account to create, key to copy and build step, in order.</p>
       </div>
     );
   }
@@ -52,7 +94,6 @@ export function ChecklistPanel({ model, today, onToast, onOpenProject }: { model
   return (
     <div className="ws-inspector">
       <div className="mk-stack mk-gap-2">
-        <span className="mk-eyebrow">Build checklist</span>
         <p>
           <strong>
             {progress.done} of {progress.total} done
@@ -61,23 +102,12 @@ export function ChecklistPanel({ model, today, onToast, onOpenProject }: { model
         <div className="mk-meter mk-meter--ok">
           <div className="mk-meter__fill" style={{ width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%` }} />
         </div>
-        <p className="mk-hint">Saved in this browser with the plan. Swapping a part adds its steps and keeps what you already checked.</p>
       </div>
 
-      <section className="mk-stack mk-gap-3">
+      <section className="mk-stack mk-gap-4">
         <span className="mk-eyebrow">1. Set up accounts and keys</span>
-        {groups.map(([optionId, name]) => (
-          <div key={optionId} className="mk-stack mk-gap-2">
-            <p className="mk-label ws-checkgroup">
-              <Logo logo={catalog.logos[optionId]} name={name} size={20} />
-              {name}
-            </p>
-            {checklist.setup
-              .filter((i) => i.optionId === optionId)
-              .map((item) => (
-                <Item key={item.id} item={item} done={Boolean(plan.checked[item.id])} onToggle={() => dispatch({ type: "toggleCheck", itemId: item.id })} />
-              ))}
-          </div>
+        {groups.map((group) => (
+          <Group key={group.optionId} model={model} group={group} />
         ))}
       </section>
 
@@ -85,7 +115,7 @@ export function ChecklistPanel({ model, today, onToast, onOpenProject }: { model
         <section className="mk-stack mk-gap-2">
           <span className="mk-eyebrow">Environment variables</span>
           <p className="mk-hint">
-            {count} name{count === 1 ? "" : "s"} your code reads. Each one belongs to the part it came from, and the value is yours to fill in.
+            {count} name{count === 1 ? "" : "s"} your code reads.
           </p>
           <ul className="ws-envlist">
             {env.map((variable) => (
@@ -93,7 +123,7 @@ export function ChecklistPanel({ model, today, onToast, onOpenProject }: { model
                 <code className="ws-env">{variable.name}</code>
                 <span className="mk-hint">
                   {variable.optionName}
-                  {variable.browser ? ", the browser can read it" : ""}
+                  {variable.browser ? ", public" : ""}
                 </span>
               </li>
             ))}
@@ -123,8 +153,8 @@ export function ChecklistPanel({ model, today, onToast, onOpenProject }: { model
             </button>
           </div>
           <p className="mk-hint">
-            Values you fill in go straight into your project&apos;s .env.local on this computer; StackWise never shows them again. Never commit them.
-            {browserCount > 0 ? ` ${browserCount} of them are read by the browser, so nothing secret can go in those.` : ""}
+            Values go into your project&apos;s .env.local and never come back to this page.
+            {browserCount > 0 ? ` ${browserCount} ${browserCount === 1 ? "is" : "are"} public: anyone who opens the app can read ${browserCount === 1 ? "it" : "them"}, so no secrets there.` : ""}
           </p>
         </section>
       )}

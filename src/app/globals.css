@@ -711,6 +711,37 @@ body {
   align-items: center;
   gap: var(--mk-2);
 }
+.ws-checkgroup__name {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.ws-checkgroup__docs {
+  flex: none;
+  font-size: 12px;
+  font-weight: 500;
+}
+.ws-moredocs {
+  padding-top: 8px;
+}
+.ws-moredocs > summary {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mk-text-muted);
+}
+.ws-moredocs ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
 
 .ws-costlines {
   display: flex;

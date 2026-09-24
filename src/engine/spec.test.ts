@@ -50,6 +50,9 @@ describe("spec pack", () => {
     expect(spec.content.indexOf("Create the fw-server app")).toBeLessThan(spec.content.indexOf("Deploy to host-server"));
     expect(setup.content).toContain("HOST_SERVER_KEY=");
     expect(setup.content).toContain("PAY_CARD_KEY=");
+    // One docs link per service, never one on every step.
+    expect(setup.content).toContain("Docs: https://example.com/setup");
+    expect(setup.content).not.toContain("([docs](");
   });
 
   it("describes pay-per-use parts honestly in the stack table", () => {

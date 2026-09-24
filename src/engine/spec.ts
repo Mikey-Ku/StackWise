@@ -1,4 +1,4 @@
-import { BUILD_ORDER, adaptEnvName } from "./checklist";
+import { BUILD_ORDER, buildChecklist, setupGroups } from "./checklist";
 import { costBySize, costOutlook, describeTotal, money } from "./cost";
 import { buildDecisionRecord } from "./decisions";
 import { evaluatePlan, needIsOn, optionIn, type CatalogIndex, type CheckResult } from "./evaluate";
@@ -228,13 +228,18 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "",
   ].join("\n");
 
-  const setupSections = filled.flatMap(({ def, option }, i) => {
-    const steps = option.setup.map((s) => {
-      const names = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${adaptEnvName(e, selection.framework)}\``).join(", ")}.` : "";
-      const source = /^https?:\/\//.test(s.source) ? ` ([docs](${s.source}))` : "";
-      return `- [ ] ${s.step}${names}${source}`;
-    });
-    return [`## ${i + 1}. ${option.name} (${def.label})`, "", ...(steps.length ? steps : ["- [ ] Setup steps not researched yet. Follow the provider's quickstart."]), ""];
+  // One section per service, its steps once, with one docs link for the service instead of one per step.
+  const setupSections = setupGroups(index, buildChecklist(index, selection)).flatMap((group, i) => {
+    const parts = group.slots.map((slot) => index.slotsById.get(slot)?.label ?? slot).join(", ");
+    const steps = group.items.map((item) => `- [ ] ${item.text}${item.env.length ? ` Environment variables: ${item.env.map((e) => `\`${e}\``).join(", ")}.` : ""}`);
+    return [
+      `## ${i + 1}. ${group.optionName} (${parts})`,
+      "",
+      ...(group.docs ? [`Docs: ${group.docs}`, ...group.moreDocs.map((d) => `More docs (step ${d.step}): ${d.url}`), ""] : []),
+      ...(group.shared ? [`Uses the ${group.shared.withName} setup above for ${group.shared.count === 1 ? "one step" : `${group.shared.count} steps`}.`, ""] : []),
+      ...steps,
+      "",
+    ];
   });
 
   const setup = [
