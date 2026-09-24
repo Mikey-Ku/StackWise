@@ -38,7 +38,7 @@ describe("building a part yourself", () => {
     expect(list.build.find((i) => i.optionId === "own-database")?.text).toBe("Build your own database and connect the app to it. SPEC.md lists what it has to handle.");
     const details = { appName: "Fade", description: "d", features: "", builderId: "claude-code", generatedOn: "2026-09-24", notes: { database: { text: "Postgres on our office server.", updatedAt: "2026-09-24", by: "you" as const } } };
     const spec = buildSpecPack(index, plan, selection, details)[0].content;
-    expect(spec).toContain("## Parts you're building yourself");
+    expect(spec).toContain("## Your own code");
     expect(spec).toContain("What it is: Postgres on our office server.");
     expect(spec).toContain("What it has to handle:");
   });

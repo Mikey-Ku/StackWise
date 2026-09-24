@@ -32,7 +32,7 @@ describe("spec pack", () => {
   it("includes the cost at every audience size", () => {
     const [spec] = buildSpecPack(index, plan, selection, details);
     expect(spec.content).toContain("| Monthly users | Estimated monthly cost |");
-    expect(spec.content).toContain("| More |");
+    expect(spec.content).toContain("| More than 1,000 |");
   });
 
   it("turns warnings into rules the builder must follow", () => {

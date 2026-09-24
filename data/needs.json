@@ -261,8 +261,8 @@
   },
   {
     "id": "might_go_mobile",
-    "label": "Phone app later",
-    "question": "Might you want a phone app in the App Store later?",
+    "label": "Phone app, now or later",
+    "question": "Will there be an iPhone or Android app, now or later?",
     "why": "Some services work in phone apps and some do not, so choosing now avoids a rebuild.",
     "keywords": [
       "mobile app*",
