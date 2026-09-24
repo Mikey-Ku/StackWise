@@ -16,12 +16,13 @@ import { connectionsOf } from "./wiring";
 
 export type BriefVerdict = Level | "works";
 
-const VERDICT_WORDS: Record<BriefVerdict, string> = {
+/** The same words the page uses for each verdict (VERDICT_UI in ui.tsx), in lowercase for a sentence. */
+export const VERDICT_WORDS: Record<BriefVerdict, string> = {
   works: "works",
   info: "works, with a note",
-  warning: "works with a warning",
+  warning: "works, with a warning",
   unknown: "not verified yet",
-  missing: "missing a piece",
+  missing: "missing a service",
   blocked: "doesn't work",
 };
 
@@ -35,7 +36,9 @@ export interface TalkBrief {
   checks: { verdict: string; title: string; explanation: string; fix?: string }[];
   cost: { headline: string; detail?: string; source?: string } | null;
   facts: { fact: string; value: string; note: string; source: string; checked_on: string }[];
-  alternatives: { id: string; name: string; verdict: string; score_change: number; cost: string; researched: boolean }[];
+  alternatives: { id: string; name: string; verdict: string; score_change: number; cost: string; researched: boolean; problems: string[] }[];
+  /** Options the question named for this part, by id. Each is in alternatives. */
+  asked_about?: string[];
   note: { text: string; written_by: "you" | "claude"; written_for?: string; may_be_out_of_date: boolean } | null;
   /** The rest of the plan, so a question can be answered in context: every part and what fills it. */
   stack: { part: string; option: string | null; verdict: string }[];
@@ -48,7 +51,73 @@ const SEVERITY = ["blocked", "missing", "warning", "unknown"] as const;
 /** How many other options a brief carries. The best ones come first. */
 const ALTERNATIVES = 6;
 
-export function talkBrief(index: CatalogIndex, plan: SharedPlan, slot: SlotId): TalkBrief {
+/**
+ * Which part a question is about, and which options it names for that part. "Can I use Supabase
+ * instead of Firebase for the database?" asked while the app is selected is about the database.
+ * A question that names the part already selected, or its option, stays there; otherwise the first
+ * part it names wins, then the part of the first option it names, preferring parts in the plan.
+ */
+export function questionFocus(index: CatalogIndex, plan: SharedPlan, slot: SlotId, question: string): { slot: SlotId; mentioned: string[] } {
+  const rec = recommend(index, planInput(plan), plan.pinned);
+  const at = (term: string, caseSensitive = false): number => {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = new RegExp(`(^|[^\\w])${escaped}(?=$|[^\\w])`, caseSensitive ? "" : "i").exec(question);
+    return match ? match.index + match[1].length : -1;
+  };
+  const partAt = (id: SlotId) => Math.min(...[index.slotsById.get(id)?.label ?? id, ...(PART_WORDS[id] ?? [])].map((t) => at(t)).map((i) => (i < 0 ? Infinity : i)));
+  const optionAt = (id: string) => {
+    const option = index.optionsById.get(id);
+    if (!option || option.provider === "you") return Infinity;
+    return Math.min(...optionAliases(option.name).map((alias) => (COMMON_WORDS.has(alias.toLowerCase()) ? at(alias, true) : at(alias))).map((i) => (i <= 0 && COMMON_WORDS.has(option.name.toLowerCase()) ? Infinity : i < 0 ? Infinity : i)));
+  };
+  const named = index.catalog.options.map((o) => ({ option: o, at: optionAt(o.id) })).filter((n) => Number.isFinite(n.at)).sort((a, b) => a.at - b.at);
+  const current = rec.selection[slot];
+  const inPlan = (id: SlotId) => Boolean(rec.selection[id]) || rec.needed.includes(id);
+
+  let focus = slot;
+  const currentNamed = Number.isFinite(partAt(slot)) || (current !== undefined && named.some((n) => n.option.id === current));
+  if (!currentNamed) {
+    const parts = index.catalog.slots.map((s) => ({ id: s.id, at: partAt(s.id) })).filter((p) => Number.isFinite(p.at)).sort((a, b) => a.at - b.at);
+    if (parts.length) focus = parts[0].id;
+    else {
+      const slots = named.flatMap((n) => n.option.slots);
+      focus = slots.find(inPlan) ?? slots[0] ?? slot;
+    }
+  }
+  const mentioned = named.filter((n) => n.option.slots.includes(focus) && n.option.id !== rec.selection[focus]).map((n) => n.option.id);
+  return { slot: focus, mentioned: [...new Set(mentioned)] };
+}
+
+/** Other ways people name a part, beyond its label. */
+const PART_WORDS: Partial<Record<SlotId, string[]>> = {
+  framework: ["framework"],
+  hosting: ["host", "hosting", "deploy"],
+  domain: ["domain"],
+  database: ["database", "db"],
+  login: ["login", "log in", "sign in", "sign-in", "auth", "authentication"],
+  files: ["file storage", "storage", "uploads"],
+  payments: ["payment", "payments", "checkout"],
+  scraping: ["scraping", "scraper"],
+  jobs: ["background job", "background jobs", "queue", "cron"],
+  email: ["email", "emails"],
+  analytics: ["analytics"],
+  monitoring: ["error monitoring", "monitoring", "error alerts"],
+  mobile: ["phone app", "mobile app", "ios", "android"],
+  automations: ["automation", "automations"],
+  data_apis: ["outside data"],
+};
+
+/** Option names that are everyday words: only a capitalized mention past the first word counts. */
+const COMMON_WORDS = new Set(["make", "render", "resend", "temporal", "convex", "polar", "railway", "neon", "expo", "groq", "turso"]);
+
+/** "Firestore (Firebase)" is named as Firestore, Firebase or the whole thing. */
+function optionAliases(name: string): string[] {
+  const aside = name.match(/\(([^)]+)\)/)?.[1];
+  const bare = name.replace(/\s*\([^)]*\)\s*/g, " ").trim();
+  return [...new Set([name, bare, ...(aside && !/unofficial|react native|swift/i.test(aside) ? [aside] : [])])].filter((alias) => alias.length >= 3);
+}
+
+export function talkBrief(index: CatalogIndex, plan: SharedPlan, slot: SlotId, mentioned: string[] = []): TalkBrief {
   const input = planInput(plan);
   const rec = recommend(index, input, plan.pinned);
   const def = index.slotsById.get(slot)!;
@@ -98,9 +167,11 @@ export function talkBrief(index: CatalogIndex, plan: SharedPlan, slot: SlotId): 
           checked_on: fact.retrieved,
         }))
       : [],
-    alternatives: alternativesFor(index, input, rec.selection, slot)
-      .filter((a) => a.option.id !== option?.id)
-      .slice(0, ALTERNATIVES)
+    alternatives: (() => {
+      const all = alternativesFor(index, input, rec.selection, slot).filter((a) => a.option.id !== option?.id);
+      // The best few, plus any option the question named.
+      return [...all.slice(0, ALTERNATIVES), ...all.slice(ALTERNATIVES).filter((a) => mentioned.includes(a.option.id))];
+    })()
       .map((a) => ({
         id: a.option.id,
         name: a.option.name,
@@ -108,7 +179,9 @@ export function talkBrief(index: CatalogIndex, plan: SharedPlan, slot: SlotId): 
         score_change: Number(a.delta.toFixed(2)),
         cost: costLine(index, a.option, slot, input).headline,
         researched: a.option.coverage === "full",
+        problems: a.results.filter((r) => r.level !== "info").map((r) => r.title),
       })),
+    ...(mentioned.some((id) => id !== option?.id) ? { asked_about: mentioned.filter((id) => id !== option?.id) } : {}),
     note: note ? { text: note.text, written_by: note.by, ...(writtenFor ? { written_for: writtenFor } : {}), may_be_out_of_date: Boolean(writtenFor) } : null,
   };
 }
@@ -166,7 +239,7 @@ const INTENTS: { id: "note" | "keys" | "setup" | "cost" | "swap" | "problems" | 
  */
 export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer {
   const name = brief.option?.name;
-  if (!name) return { reply: `Nothing is in ${inSentence(brief.part.label)} yet. Drag an option onto it, or use "Pick one for me", and then ask again.` };
+  if (!name) return { reply: `Nothing is picked for ${inSentence(brief.part.label)} yet. Pick a service for it in Parts, then ask again.` };
   const intent = INTENTS.find((i) => i.words.test(question))?.id;
   const vars = brief.connection?.variables ?? [];
 
@@ -193,16 +266,22 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
       };
     }
     case "swap": {
-      const options = brief.alternatives.slice(0, 4);
-      if (!options.length) return { reply: `StackWise has no other options for ${inSentence(brief.part.label)}.` };
-      const best = swappable(brief).find((a) => a.score_change > 0 && a.researched);
+      const asked = (brief.asked_about ?? []).flatMap((id) => brief.alternatives.filter((a) => a.id === id));
+      const others = brief.alternatives.filter((a) => !asked.includes(a)).slice(0, asked.length ? 3 : 4);
+      if (!asked.length && !others.length) return { reply: `StackWise has no other options for ${inSentence(brief.part.label)}.` };
+      const rank = (a: TalkBrief["alternatives"][number]) => (a.score_change === 0 ? "ranks the same" : a.score_change > 0 ? "ranks higher" : "ranks lower");
+      const line = (a: TalkBrief["alternatives"][number]) => `- ${a.name}: ${a.verdict}${a.problems.length ? ` (${a.problems.join("; ")})` : ""}. ${a.cost}. ${rank(a)} for your priority.`;
+      const fits = swappable(brief).filter((a) => a.researched);
+      const pick = asked.find((a) => fits.includes(a)) ?? fits.find((a) => a.score_change > 0);
       return {
         reply: [
-          `What else could fill ${inSentence(brief.part.label)}, checked against the rest of your plan:`,
-          ...options.map((a) => `- ${a.name}: ${a.verdict}, ${a.cost}, ${a.score_change === 0 ? "scores the same" : `scores ${Math.abs(a.score_change)} ${a.score_change > 0 ? "higher" : "lower"}`} for your priority`),
-          best ? `${best.name} scores higher for your priority.` : `${name} still scores best for your priority.`,
+          ...(asked.length
+            ? [`${asked.map((a) => a.name).join(" or ")} instead of ${name}, checked against the rest of your plan:`, ...asked.map(line), ...(others.length ? ["", "Other options:"] : [])]
+            : [`What else could fill ${inSentence(brief.part.label)}, checked against the rest of your plan:`]),
+          ...others.map(line),
+          pick ? (asked.includes(pick) ? `${pick.name} works with the rest of your plan.` : `${pick.name} ranks higher for your priority.`) : `${name} still ranks best for your priority.`,
         ].join("\n"),
-        ...(best ? { swap: best.id } : {}),
+        ...(pick ? { swap: pick.id } : {}),
       };
     }
     case "problems": {
@@ -214,7 +293,7 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
       return { reply: `${brief.part.what} ${name}: ${brief.option!.summary}` };
     default:
       return {
-        reply: `Your app ${brief.part.verb} ${name}. ${brief.option!.summary} Claude isn't on, so StackWise answers from its own facts: ask about setup, keys, cost, problems or alternatives, or ask for a note.`,
+        reply: `Your app ${brief.part.verb} ${name}. ${brief.option!.summary} This answer comes from StackWise's facts: ask about setup, keys, cost, problems or alternatives, or ask for a note.`,
       };
   }
 }
