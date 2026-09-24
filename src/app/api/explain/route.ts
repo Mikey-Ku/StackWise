@@ -9,6 +9,7 @@ import { loadCatalog } from "@/engine/load";
 import { PRIORITY_IDS, SIZE_IDS, SLOT_IDS } from "@/engine/schema";
 import { recommend } from "@/engine/score";
 import { planBrief, templateSummary } from "@/engine/summary";
+import { readJson, sameOrigin } from "@/mcp/local";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const blocked = sameOrigin(request);
+  if (blocked) return blocked;
+  const parsed = bodySchema.safeParse(await readJson(request));
   if (!parsed.success) return NextResponse.json({ error: "That plan couldn't be read." }, { status: 400 });
   const { appName, description, answers, size, priority, pinned, factsOnly, provider } = parsed.data;
 
@@ -37,7 +40,7 @@ export async function POST(request: Request) {
 
   const chosen = factsOnly ? null : chooseProvider(provider);
   if (!chosen) return template();
-  if (!takeAiCall(visitorId(request))) return template("You've hit the hourly AI limit, so the standard summary is shown.");
+  if (!takeAiCall(visitorId())) return template("You've hit the hourly AI limit, so the standard summary is shown.");
   try {
     const text = chosen.id === "claude" ? await aiExplain(getClient(), brief) : await providerExplain(chosen, brief);
     return NextResponse.json({ by: "ai", provider: chosen.id, text });

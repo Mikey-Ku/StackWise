@@ -17,8 +17,12 @@ function stripComments(sql: string): string {
 export function checkReadOnly(sql: string): string | null {
   const text = stripComments(sql).trim().replace(/;\s*$/, "");
   if (!text) return "Type a query, like SELECT * FROM users LIMIT 10.";
-  // A semicolon outside quotes means a second statement.
-  const outsideQuotes = text.replace(/'(?:[^']|'')*'|"(?:[^"]|"")*"/g, "''");
+  // A semicolon outside quotes means a second statement. Postgres also has E'...' strings, where a
+  // backslash escapes a quote, and $tag$...$tag$ strings; both are stripped before looking.
+  const outsideQuotes = text
+    .replace(/\$([A-Za-z_]*)\$[\s\S]*?\$\1\$/g, "''")
+    .replace(/[Ee]'(?:[^'\\]|\\.|'')*'/g, "''")
+    .replace(/'(?:[^']|'')*'|"(?:[^"]|"")*"/g, "''");
   if (outsideQuotes.includes(";")) return "Run one statement at a time.";
   const first = text.split(/\s+/)[0].toLowerCase();
   if (!READS.has(first)) return `Only reading is on for this database, and ${first.toUpperCase()} changes it. Queries that start with SELECT, WITH, SHOW or EXPLAIN work.`;

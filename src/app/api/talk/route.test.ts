@@ -17,7 +17,7 @@ const plan: SharedPlan = {
   notes: {},
 };
 
-const post = (body: unknown) => POST(new Request("http://localhost:4310/api/talk", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));
+const post = (body: unknown) => POST(new Request("http://localhost:4310/api/talk", { method: "POST", headers: { host: "localhost:4310", "content-type": "application/json" }, body: JSON.stringify(body) }));
 
 beforeEach(() => {
   process.env.STACKWISE_AI = "off";

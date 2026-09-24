@@ -11,6 +11,7 @@ import { SLOT_IDS } from "@/engine/schema";
 import { recommend } from "@/engine/score";
 import { sharedPlanSchema } from "@/engine/share";
 import { answerFromFacts, talkBrief } from "@/engine/talk";
+import { readJson, sameOrigin } from "@/mcp/local";
 
 /**
  * Talking one part of the plan through. The browser sends the plan, the part, the conversation
@@ -36,7 +37,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const blocked = sameOrigin(request);
+  if (blocked) return blocked;
+  const parsed = bodySchema.safeParse(await readJson(request));
   if (!parsed.success) return NextResponse.json({ error: "Send { plan, slot, question } with a valid plan." }, { status: 400 });
   const { plan, slot, question, history, factsOnly, provider } = parsed.data;
 
@@ -61,7 +64,7 @@ export async function POST(request: Request) {
   if (factsOnly) return facts();
   const chosen = chooseProvider(provider);
   if (!chosen) return facts(provider ? `${provider} isn't set up in .env.local, so StackWise answered from its facts.` : undefined);
-  if (!takeAiCall(visitorId(request))) return facts("You've hit the hourly AI limit, so StackWise answered from its facts.");
+  if (!takeAiCall(visitorId())) return facts("You've hit the hourly AI limit, so StackWise answered from its facts.");
   try {
     const answer = chosen.id === "claude" ? await aiTalk(getClient(), brief, history, question) : await providerTalk(chosen, brief, history, question);
     return NextResponse.json({ by: "ai", provider: chosen.id, reply: answer.reply, proposal: answer.proposal, swap: withVerdict(answer.swap) });

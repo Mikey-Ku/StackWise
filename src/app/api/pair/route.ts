@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { sharedPlanSchema } from "@/engine/share";
-import { localOnly } from "@/mcp/local";
+import { localOnly, readJson } from "@/mcp/local";
 import { SLOT_IDS } from "@/engine/schema";
 import { AGENT_ID } from "@/mcp/pairing";
 import { createRegistry, MESSAGE_MAX, PLAN_ID } from "@/mcp/registry";
@@ -36,7 +36,7 @@ export function GET(request: Request) {
 export async function PUT(request: Request) {
   const blocked = localOnly(request);
   if (blocked) return blocked;
-  const parsed = putSchema.safeParse(await request.json().catch(() => null));
+  const parsed = putSchema.safeParse(await readJson(request));
   if (!parsed.success) return Response.json({ error: "Send { id, plan, baseVersion } with a valid plan." }, { status: 400 });
   const { id, plan, baseVersion } = parsed.data;
   const registry = createRegistry(process.cwd());
@@ -54,7 +54,7 @@ export async function PUT(request: Request) {
 export async function POST(request: Request) {
   const blocked = localOnly(request);
   if (blocked) return blocked;
-  const parsed = postSchema.safeParse(await request.json().catch(() => null));
+  const parsed = postSchema.safeParse(await readJson(request));
   if (!parsed.success) return Response.json({ error: "Send { id, agent, text } for a shared plan." }, { status: 400 });
   const { id, ...message } = parsed.data;
   const saved = createRegistry(process.cwd()).postMessage(id, message);

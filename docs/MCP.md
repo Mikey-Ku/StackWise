@@ -95,7 +95,8 @@ Notes are how Claude helps with a part without touching the stack: `update_plan`
 
 ## Security
 
-- `/api/mcp` and `/api/pair` only answer requests addressed to `localhost`, `127.0.0.1` or `[::1]`, and refuse requests from pages on other sites (their `Origin` header). That stops DNS rebinding and a website posting to your local server. See `src/mcp/local.ts`.
+- StackWise listens on 127.0.0.1 only, so nothing on your network reaches it.
+- Every API route answers only requests addressed to `localhost`, `127.0.0.1` or `[::1]` (which stops DNS rebinding), and from a browser only StackWise's own page: the same host and port in `Origin`, and `same-origin` in `Sec-Fetch-Site`. Another app on `localhost:5173` counts as a different site. A POST must be JSON, so no page can send one without the browser asking StackWise first. Programs like Claude Code send no `Origin` and are let through. See `src/mcp/local.ts`.
 - `STACKWISE_PAIRING=off` turns both off, for example on a public deployment. A hosted StackWise would need accounts before pairing could be on.
 - Plans never leave the computer through these routes. When Claude calls a tool, the result goes to Claude like any other tool result.
 

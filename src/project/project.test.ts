@@ -1,7 +1,11 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { detectProject } from "./detect";
 import { envValues, gitignoreCovers, mask, parseEnv, setEnv, springEnvRefs } from "./envfile";
 import { buildProbe, PROBES, safeBody } from "./probes";
+import { runSql } from "./local";
 import { checkReadOnly, postgresFrom, sqliteFrom } from "./sql";
 
 describe("env files", () => {
@@ -79,7 +83,29 @@ describe("the read-only SQL console", () => {
     expect(checkReadOnly("SELECT 1; DROP TABLE entries")).toBe("Run one statement at a time.");
     expect(checkReadOnly("PRAGMA journal_mode = WAL")).toContain("changes the database");
     expect(checkReadOnly("   ")).toContain("Type a query");
+    // Postgres escape strings and dollar quotes can't hide a second statement.
+    expect(checkReadOnly("SELECT E'\\'' ; COMMIT; DELETE FROM t; SELECT 'x'")).toBe("Run one statement at a time.");
+    expect(checkReadOnly("SELECT $$;$$ AS body")).toBeNull();
+    expect(checkReadOnly("SELECT $q$ x $q$; DROP TABLE t")).toBe("Run one statement at a time.");
   });
+
+  it("runs SQLite in a worker that gives up on a query that never ends", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stackwise-sqlite-"));
+    try {
+      const { DatabaseSync } = await import("node:sqlite");
+      const db = new DatabaseSync(path.join(dir, "dev.db"));
+      db.exec("CREATE TABLE entries (id INTEGER, name TEXT); INSERT INTO entries VALUES (1, 'a'), (2, 'b');");
+      db.close();
+      fs.writeFileSync(path.join(dir, ".env"), "DATABASE_URL=file:./dev.db\n");
+      expect(await runSql(dir, "SELECT * FROM entries")).toMatchObject({ columns: ["id", "name"], rows: [[1, "a"], [2, "b"]], truncated: false });
+      const endless = await runSql(dir, "WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT count(*) FROM c");
+      expect(endless).toEqual({ error: "The query took longer than 5 seconds, so it was stopped." });
+      fs.writeFileSync(path.join(dir, ".env"), "DATABASE_URL=file:../outside.db\n");
+      expect(await runSql(dir, "SELECT 1")).toEqual({ error: "That database file is outside the project." });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }, 15_000);
 
   it("builds a Postgres connection from a URL or from Spring's JDBC settings, and finds SQLite files", () => {
     expect(postgresFrom({ DATABASE_URL: "postgres://u:p@h/db" })).toEqual({ config: { connectionString: "postgres://u:p@h/db" }, from: "DATABASE_URL" });

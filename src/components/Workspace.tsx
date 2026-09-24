@@ -227,7 +227,8 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   // before decoding, and the token is remembered, because development mode runs effects twice.
   const importedToken = useRef<string | null>(null);
   useEffect(() => {
-    // A link can also name the project folder on this computer (&folder=~/Projects/app), so opening it links the project too.
+    // A link can also name a project folder on this computer (&folder=~/Projects/app). Linking one lets StackWise run and write
+    // files there, so a link from someone else only links it after the person says yes.
     const match = window.location.hash.match(/^#plan=([A-Za-z0-9_-]+)(?:&folder=([^&]+))?$/);
     if (!match || importedToken.current === match[1]) return;
     const folder = match[2] ? decodeURIComponent(match[2]) : null;
@@ -239,7 +240,9 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         return;
       }
       dispatch({ type: "importPlan", id: newId(), now: new Date().toISOString(), plan: shared });
-      if (folder) dispatch({ type: "setFolder", folder });
+      if (folder && window.confirm(`This link also points at a folder on this computer:\n\n${folder}\n\nLink "${shared.appName || "this plan"}" to it? StackWise only runs or writes files there when you ask it to.`)) {
+        dispatch({ type: "setFolder", folder });
+      }
       setToast(`Opened "${shared.appName || "a shared plan"}". It's saved as a new plan in this browser.`);
     });
   }, [dispatch]);

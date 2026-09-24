@@ -20,7 +20,8 @@ export function expandHome(input: string, home: string): string {
 }
 
 /** The folder StackWise will write into, or the reason it won't. */
-export function resolveFolder(input: string, home: string, stackwiseRoot: string): { path: string } | { error: string } {
+export function resolveFolder(input: string, home: string, stackwiseRoot: string | string[]): { path: string } | { error: string } {
+  const roots = Array.isArray(stackwiseRoot) ? stackwiseRoot : [stackwiseRoot];
   if (!input.trim()) return { error: "Type a folder, like ~/code/my-app." };
   if (input.includes("\0")) return { error: "That isn't a folder name." };
   const expanded = expandHome(input, home);
@@ -32,7 +33,7 @@ export function resolveFolder(input: string, home: string, stackwiseRoot: string
   };
   if (target === home) return { error: "Pick a folder inside your home folder, not the home folder itself." };
   if (!inside(home)) return { error: `StackWise only writes inside your home folder (${home}).` };
-  if (target === stackwiseRoot || inside(stackwiseRoot)) return { error: "That's StackWise's own folder. Pick somewhere else for your project." };
+  if (roots.some((root) => target === root || inside(root))) return { error: "That's StackWise's own folder. Pick somewhere else for your project." };
   const segments = path.relative(home, target).split(path.sep);
   const bad = segments.find((segment) => OFF_LIMITS.has(segment) || segment.startsWith("."));
   if (bad) return { error: `"${bad}" isn't a place for a project. Pick a plain folder, like ~/code/my-app.` };

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { resetClient } from "@/ai/config";
 import { PROVIDER_KEY_NAMES, providerStatus } from "@/ai/providers";
-import { localOnly } from "@/mcp/local";
+import { localOnly, readJson } from "@/mcp/local";
 import { writeEnv } from "@/project/local";
 
 /**
@@ -23,7 +23,7 @@ const bodySchema = z.object({
 export async function POST(request: Request) {
   const blocked = localOnly(request);
   if (blocked) return blocked;
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const parsed = bodySchema.safeParse(await readJson(request));
   if (!parsed.success) return Response.json({ error: "Send { name, value }." }, { status: 400 });
   const { name } = parsed.data;
   const value = parsed.data.value.trim();

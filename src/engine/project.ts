@@ -25,8 +25,18 @@ export interface ProjectOptions {
 
 const PROBLEM_LEVELS = new Set(["blocked", "missing", "warning", "unknown"]);
 
+/**
+ * A YAML value that can't break out of its line: newlines become spaces, and anything YAML would
+ * read as syntax is quoted. Agent files are read by Claude Code, and their frontmatter sets what
+ * an agent is allowed to do, so text from a plan (the app's name, a custom part) must stay text.
+ */
+export function yamlValue(value: string): string {
+  const flat = value.replace(/\s*[\r\n]+\s*/g, " ").trim();
+  return /^[\w(]/.test(flat) && !/: |\s#|["'`{}[\]|>&*!%@]/.test(flat) ? flat : JSON.stringify(flat);
+}
+
 function frontmatter(fields: Record<string, string>): string {
-  return ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${v}`), "---", ""].join("\n");
+  return ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${yamlValue(v)}`), "---", ""].join("\n");
 }
 
 function unique(items: string[]): string[] {
