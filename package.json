@@ -1,5 +1,5 @@
 {
-  "name": "whystack",
+  "name": "stackwise",
   "version": "0.1.0",
   "private": true,
   "description": "Plan a web app stack you understand: a sourced rules engine checks every connection, then hands your AI builder a spec.",
