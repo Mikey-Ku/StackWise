@@ -54,7 +54,7 @@ function resultLine(r: CheckResult): string {
 }
 
 export function buildProjectPack(index: CatalogIndex, input: PlanInput, selection: Selection, details: ProjectDetails, options: ProjectOptions = {}): SpecFile[] {
-  const spec = buildSpecPack(index, input, selection, { ...details, notes: details.notes ?? details.plan.notes, custom: details.custom ?? details.plan.custom });
+  const spec = buildSpecPack(index, input, selection, { ...details, notes: details.notes ?? details.plan.notes, custom: details.custom ?? details.plan.custom, links: details.links ?? details.plan.links });
   const name = details.appName.trim() || "My app";
   const builder = index.catalog.planning.builders.find((b) => b.id === details.builderId);
   const results = evaluatePlan(index, selection, input);

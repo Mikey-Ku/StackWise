@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PRIORITY_IDS, SIZE_IDS, SLOT_IDS } from "./schema";
+import { EXTRA_ID, extraSlot, LINK_KINDS } from "./extras";
 
 /**
  * Share links. The whole plan fits in the link itself (compressed, then base64url), so sharing
@@ -53,6 +54,23 @@ export const customPartSchema = z.object({
 });
 export type CustomPart = z.infer<typeof customPartSchema>;
 
+/** A second (third…) service in a part, by id "<part>.<name>". See extras.ts. */
+export const extraSchema = z.object({
+  slot: z.enum(SLOT_IDS),
+  option: optionIdSchema.min(1),
+  role: oneLine(40).default(""),
+  note: z.string().max(NOTE_MAX).optional(),
+});
+
+/** A line the person or their agent drew between two things in the plan. See extras.ts. */
+export const linkSchema = z.object({
+  from: z.string().max(80),
+  to: z.string().max(80),
+  kind: z.enum(LINK_KINDS),
+  what: oneLine(120).optional(),
+});
+export type PlanLink = z.infer<typeof linkSchema>;
+
 export const sharedPlanSchema = z.object({
   v: z.literal(1),
   appName: oneLine(200),
@@ -69,6 +87,17 @@ export const sharedPlanSchema = z.object({
   custom: z
     .record(z.string().regex(CUSTOM_ID), customPartSchema)
     .refine((parts) => Object.keys(parts).length <= 40, "too many parts")
+    .optional(),
+  /** Extra services, by "<part>.<name>". Left out by older links and plan files. */
+  extras: z
+    .record(z.string().regex(EXTRA_ID), extraSchema)
+    .refine((extras) => Object.keys(extras).length <= 20, "too many extras")
+    .refine((extras) => Object.entries(extras).every(([id, extra]) => extraSlot(id) === extra.slot), "an extra's id starts with its part")
+    .optional(),
+  /** Lines between things in the plan, by "<from>><to>". */
+  links: z
+    .record(z.string().max(170), linkSchema)
+    .refine((links) => Object.keys(links).length <= 60, "too many links")
     .optional(),
 });
 export type SharedPlan = z.infer<typeof sharedPlanSchema>;

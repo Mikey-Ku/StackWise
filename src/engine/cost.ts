@@ -24,6 +24,8 @@ export interface CostLine {
   detail?: string;
   source?: string;
   retrieved?: string;
+  /** Set on an extra service's line ("database.cache"). */
+  instance?: string;
 }
 
 const COVERS_LABEL: Record<string, string> = {
@@ -142,6 +144,14 @@ export function costSummary(index: CatalogIndex, selection: Selection, input: Pl
     const option = optionIn(index, selection, slot);
     return option ? [costLine(index, option, slot, input)] : [];
   });
+  // Extras cost like any other service. A second copy of a service already in the plan (two
+  // databases on one account) depends on that plan's limits, which StackWise doesn't know.
+  for (const [id, extra] of Object.entries(input.extras ?? {})) {
+    const option = index.optionsById.get(extra.option);
+    if (!option) continue;
+    const twin = lines.some((line) => line.option.id === option.id);
+    lines.push({ ...(twin ? unknown(extra.slot, option, "A second one: check its plan's limits") : costLine(index, option, extra.slot, input)), instance: id });
+  }
 
   // One subscription can cover several parts: the same option in two slots, or a provider whose
   // single plan covers everything it fills. Count that plan once, on the first part that needs it.

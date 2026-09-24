@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { connectionsOf, decodeSharedPlan, envFileText, isOwn, ownId, planEnv, staleFacts, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
+import { connectionsOf, decodeSharedPlan, envFileText, isOwn, LINK_WORDS, linkId, ownId, planEnv, SLOT_IDS, staleFacts, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
 import { presence } from "@/mcp/pairing";
 import { AddPart } from "./AddPart";
 import { BrandMark } from "./BrandMark";
@@ -16,6 +16,8 @@ import { ConnectionPanel } from "./ConnectionPanel";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
 import { Icon, type IconName } from "./icons";
 import { CustomPartDialog, type CustomEdit } from "./CustomPartDialog";
+import { ExtraDialog, type ExtraEdit } from "./ExtraDialog";
+import { LinkDialog, type LinkEdit } from "./LinkDialog";
 import type { ImageRequest } from "./DiagramImage";
 import { Inspector } from "./Inspector";
 import { PanelEdge, usePanelWidth } from "./PanelEdge";
@@ -103,6 +105,8 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   /** The add-a-part picker, and the part it opened for, if any. */
   const [adding, setAdding] = useState<{ focus: SlotId | null } | null>(null);
   const [customEdit, setCustomEdit] = useState<CustomEdit | null>(null);
+  const [extraEdit, setExtraEdit] = useState<ExtraEdit | null>(null);
+  const [linkEdit, setLinkEdit] = useState<LinkEdit | null>(null);
   const [leftWidth, setLeftWidth] = usePanelWidth("left", LEFT_WIDTH);
   const [rightWidth, setRightWidth] = usePanelWidth("right", RIGHT_WIDTH);
 
@@ -329,6 +333,39 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     [rec.selection, index, plan.appName],
   );
 
+  /** A readable name for anything a line can join: the app, a part, an extra, a part added by hand. */
+  const endName = useCallback(
+    (end: string) => {
+      if (end === "app") return plan.appName.trim() || "the app";
+      const extra = plan.extras[end];
+      if (extra) return `${index.optionsById.get(extra.option)?.name ?? extra.option} (${extra.role || end})`;
+      if (plan.custom[end]) return plan.custom[end].name;
+      return nameOf(end as SlotId);
+    },
+    [plan.appName, plan.extras, plan.custom, index, nameOf],
+  );
+
+  /** "Draw a line to…": every other thing on the canvas a line from `from` could reach. */
+  const drawLineMenu = useCallback(
+    (from: string): MenuItem => {
+      const ends = ["app", ...SLOT_IDS.filter((slot) => slot !== "framework" && rec.selection[slot]), ...Object.keys(plan.extras), ...Object.keys(plan.custom)].filter((end) => end !== from);
+      return {
+        kind: "submenu",
+        label: "Draw a line to",
+        icon: "link",
+        disabled: ends.length === 0,
+        items: ends.map((end) => ({
+          label: endName(end),
+          // The part each one fills, so PostHog for analytics and PostHog for monitoring can be told apart.
+          hint: index.slotsById.get(end as SlotId)?.label,
+          checked: Boolean(plan.links[linkId(from, end)]),
+          onSelect: () => setLinkEdit({ from, to: end, saved: Boolean(plan.links[linkId(from, end)]) }),
+        })),
+      };
+    },
+    [rec.selection, plan.extras, plan.custom, plan.links, endName, index],
+  );
+
   /** Right-click menus, built here because they reach every panel and action in the workspace. */
   const openMenu = useCallback(
     (target: CanvasTarget, x: number, y: number) => {
@@ -380,6 +417,9 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               ]
             : []),
           ...(slot !== "framework" && needed && !rec.autoPicked.includes(slot) ? [{ label: "Let StackWise pick", icon: "wand" as const, onSelect: () => dispatch({ type: "autoPick", slot }) }] : []),
+          // A second service in this part (a cache next to the database), and lines to other parts.
+          ...(slot !== "framework" && current ? [{ label: `Add another service for ${def.label.toLowerCase()}`, icon: "plus" as const, onSelect: () => setExtraEdit({ id: null, slot }) }] : []),
+          ...(current ? [drawLineMenu(slot === "framework" ? "app" : slot)] : []),
           ...(slot === "framework"
             ? [{ label: plan.icon ? "Change the app's logo" : "Add a logo for this app", icon: "pin" as const, onSelect: () => setPanel("project") }]
             : []),
@@ -414,6 +454,44 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           },
           { kind: "separator" },
           { label: `${nameOf(slot)} details`, icon: "info", onSelect: () => select(slot) },
+          // Lines the person drew between the app and this part ride on this line; they're edited here.
+          ...Object.values(plan.links)
+            .filter((link) => (link.from === "app" && link.to === slot) || (link.to === "app" && link.from === slot))
+            .map((link) => ({ label: `Edit: ${endName(link.from)} ${LINK_WORDS[link.kind]} ${endName(link.to)}`, icon: "link" as const, onSelect: () => setLinkEdit({ from: link.from, to: link.to, saved: true }) })),
+        ];
+      } else if (target.kind === "extra") {
+        const extra = plan.extras[target.id];
+        if (!extra) return;
+        items = [
+          { kind: "header", label: endName(target.id) },
+          { label: "Edit", icon: "note", onSelect: () => setExtraEdit({ id: target.id, slot: extra.slot }) },
+          drawLineMenu(target.id),
+          { kind: "separator" },
+          {
+            label: "Remove",
+            icon: "trash",
+            danger: true,
+            onSelect: () => {
+              dispatch({ type: "removeExtra", id: target.id });
+              setToast(`Removed ${endName(target.id)}. Undo brings it back.`);
+            },
+          },
+        ];
+      } else if (target.kind === "link") {
+        const link = plan.links[target.id];
+        if (!link) return;
+        items = [
+          { kind: "header", label: `${endName(link.from)} ${LINK_WORDS[link.kind]} ${endName(link.to)}` },
+          { label: "Edit the line", icon: "note", onSelect: () => setLinkEdit({ from: link.from, to: link.to, saved: true }) },
+          {
+            label: "Remove the line",
+            icon: "trash",
+            danger: true,
+            onSelect: () => {
+              dispatch({ type: "removeLink", id: target.id });
+              setToast("Removed the line. Undo brings it back.");
+            },
+          },
         ];
       } else if (target.kind === "custom") {
         const part = plan.custom[target.id];
@@ -421,6 +499,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         items = [
           { kind: "header", label: `${part.name}, added by you` },
           { label: "Edit", icon: "note", onSelect: () => setCustomEdit({ id: target.id }) },
+          drawLineMenu(target.id),
           {
             label: "Remove from the plan",
             icon: "trash",
@@ -459,7 +538,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             icon: "fit",
             disabled: !moved,
             onSelect: () => {
-              dispatch({ type: "moveNodes", spots: tidySpots(visibleParts(rec.selection, rec.needed, showAll), plan.layout, Object.keys(plan.custom)) });
+              dispatch({ type: "moveNodes", spots: tidySpots(visibleParts(rec.selection, rec.needed, showAll), plan.layout, [...Object.keys(plan.extras).map((id) => `extra-${id}`), ...Object.keys(plan.custom)]) });
               setFitNonce((n) => n + 1);
             },
           },
@@ -474,7 +553,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
       }
       setMenu({ x, y, items });
     },
-    [mod, history, dispatch, index, rec, catalog, nameOf, openAsk, openAdd, openLearn, saveImage, removePart, select, selectConnection, model, plan.appName, plan.layout, plan.icon, plan.custom, today, building, showAll],
+    [mod, history, dispatch, index, rec, catalog, nameOf, openAsk, openAdd, openLearn, saveImage, removePart, select, selectConnection, model, plan.appName, plan.layout, plan.icon, plan.custom, plan.extras, plan.links, drawLineMenu, endName, today, building, showAll],
   );
 
   const researched = catalog.options.filter((o) => o.coverage === "full").length;
@@ -501,6 +580,11 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           onAdd={openAdd}
           onRemove={removePart}
           onEditCustom={(id) => setCustomEdit({ id })}
+          onEditExtra={(id) => setExtraEdit({ id, slot: plan.extras[id]?.slot ?? "database" })}
+          onEditLink={(id) => {
+            const link = plan.links[id];
+            if (link) setLinkEdit({ from: link.from, to: link.to, saved: true });
+          }}
           onToast={setToast}
         />
       </ReactFlowProvider>
@@ -706,6 +790,41 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
       )}
 
       <ContextMenu request={menu} onClose={() => setMenu(null)} />
+
+      <ExtraDialog
+        edit={extraEdit}
+        model={model}
+        onClose={() => setExtraEdit(null)}
+        onSave={(id, extra, previousId) => {
+          dispatch({ type: "setExtra", id, extra });
+          setExtraEdit(null);
+          setToast(previousId ? `Saved ${endName(id)}.` : `Added ${endName(id)}. StackWise checks it and adds its cost like any other part.`);
+        }}
+        onRemove={(id) => {
+          dispatch({ type: "removeExtra", id });
+          setExtraEdit(null);
+          setToast("Removed it. Undo brings it back.");
+        }}
+      />
+
+      <LinkDialog
+        edit={linkEdit}
+        model={model}
+        nameOf={endName}
+        onClose={() => setLinkEdit(null)}
+        onSave={(previousId, link) => {
+          const id = linkId(link.from, link.to);
+          if (previousId && previousId !== id) dispatch({ type: "removeLink", id: previousId });
+          dispatch({ type: "setLink", id, link });
+          setLinkEdit(null);
+          setToast(`${endName(link.from)} ${LINK_WORDS[link.kind]} ${endName(link.to)}.`);
+        }}
+        onRemove={(id) => {
+          dispatch({ type: "removeLink", id });
+          setLinkEdit(null);
+          setToast("Removed the line. Undo brings it back.");
+        }}
+      />
 
       <CustomPartDialog
         edit={customEdit}

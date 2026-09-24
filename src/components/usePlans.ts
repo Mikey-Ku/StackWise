@@ -1,21 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
-import {
-  buildChecklist,
-  closeCalls,
-  costBySize,
-  costOutlook,
-  headsUps,
-  indexCatalog,
-  planStats,
-  prefillFromKeywords,
-  questionsThatMatter,
-  recommend,
-  type Catalog,
-  type PlanInput,
-  type SlotId,
-} from "@/engine";
+import { closeCalls, costBySize, costOutlook, fullChecklist, headsUps, indexCatalog, planStats, prefillFromKeywords, questionsThatMatter, recommend, type Catalog, type PlanInput, type SlotId } from "@/engine";
 import { initialStore, migrate, reduce, type Guess, type History, type StoreAction } from "./store";
 
 const STORE_KEY = "stackwise.store.v2";
@@ -60,14 +46,17 @@ export function usePlans(catalog: Catalog) {
     }
   }, [store]);
 
-  const input: PlanInput = useMemo(() => ({ answers: plan.answers, size: plan.size, priority: plan.priority }), [plan.answers, plan.size, plan.priority]);
+  const input: PlanInput = useMemo(
+    () => ({ answers: plan.answers, size: plan.size, priority: plan.priority, ...(Object.keys(plan.extras).length ? { extras: plan.extras } : {}) }),
+    [plan.answers, plan.size, plan.priority, plan.extras],
+  );
   const rec = useMemo(() => recommend(index, input, plan.pinned), [index, input, plan.pinned]);
   const calls = useMemo(() => closeCalls(index, input, rec), [index, input, rec]);
   const followups = useMemo(() => questionsThatMatter(index, input, plan.pinned), [index, input, plan.pinned]);
   const notSure = useMemo(() => headsUps(index, input, plan.pinned), [index, input, plan.pinned]);
   const cost = useMemo(() => costOutlook(index, rec.selection, input), [index, rec.selection, input]);
   const costSizes = useMemo(() => costBySize(index, rec.selection, input), [index, rec.selection, input]);
-  const checklist = useMemo(() => buildChecklist(index, rec.selection), [index, rec.selection]);
+  const checklist = useMemo(() => fullChecklist(index, rec.selection, input.extras), [index, rec.selection, input.extras]);
   const stats = useMemo(() => planStats(index, input, rec), [index, input, rec]);
 
   /** Put an option on the canvas. Returns a reason when it doesn't fit the slot it was dropped on. */

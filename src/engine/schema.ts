@@ -239,10 +239,21 @@ export interface Catalog {
 export type Answer = "yes" | "no" | "not_sure";
 
 /** What the beginner told the planner. */
+/** A second (third…) service in a part, by id "<part>.<name>" (see extras.ts). */
+export interface Extra {
+  slot: SlotId;
+  option: string;
+  /** What this one is for, in a word or two: "cache", "embeddings", "analytics warehouse". */
+  role: string;
+  note?: string;
+}
+
 export interface PlanInput {
   answers: Record<string, Answer>;
   size: SizeId;
   priority: PriorityId;
+  /** Extra services the person added; checked, priced and wired like the rest, never searched. */
+  extras?: Record<string, Extra>;
 }
 
 /** Which option sits in each slot. An empty string means the person cleared that slot on purpose. */

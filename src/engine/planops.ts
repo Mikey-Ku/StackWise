@@ -10,6 +10,7 @@ import { pickReason } from "./spec";
 import { planStats } from "./stats";
 import { connectionsOf } from "./wiring";
 import { SIZE_PHRASE, inSentence } from "./text";
+import { endOption, EXTRA_ID, extraSlot, LINK_KINDS, LINK_WORDS, linkEnd, linkId, linkVerdict } from "./extras";
 
 /**
  * Plans as something another program can read and change: what the MCP server gives Claude.
@@ -53,6 +54,15 @@ export function nearest(input: string, ids: string[], max = 3): string[] {
     .map((c) => c.id);
 }
 
+/** One line to draw (or, with remove, to take away) between two things in the plan. */
+const linkUpdateSchema = z.object({
+  from: z.string().max(80).describe('"app", a part id, an extra id like "database.cache", or a custom part id.'),
+  to: z.string().max(80),
+  kind: z.enum(LINK_KINDS).default("calls"),
+  what: oneLine(120).optional().describe("What travels, in a few words."),
+  remove: z.boolean().optional(),
+});
+
 export const planUpdateSchema = z.object({
   app_name: oneLine(200).optional(),
   description: z.string().max(5000).optional(),
@@ -70,13 +80,22 @@ export const planUpdateSchema = z.object({
   custom: z
     .record(z.string().regex(CUSTOM_ID, "Custom part ids look like custom-redis: custom- then lowercase letters, digits and dashes."), customPatchSchema.nullable())
     .optional(),
+  /** A second (third…) service in a part, by "<part>.<name>": option id and what it's for, or null to remove it. Checked and priced like the rest. */
+  extras: z
+    .record(
+      z.string().regex(EXTRA_ID, "Extra ids look like database.cache: the part id, a dot, then a short name."),
+      z.object({ option: z.string().max(80), role: oneLine(40).optional(), note: z.string().max(NOTE_MAX).optional() }).nullable(),
+    )
+    .optional(),
+  /** Lines between two things: the app, parts, extras, custom parts. */
+  links: z.array(linkUpdateSchema).max(20).optional(),
 });
 export type PlanUpdate = z.infer<typeof planUpdateSchema>;
 
 export class PlanUpdateError extends Error {}
 
 export function planInput(plan: SharedPlan): PlanInput {
-  return { answers: plan.answers, size: plan.size, priority: plan.priority };
+  return { answers: plan.answers, size: plan.size, priority: plan.priority, ...(plan.extras && Object.keys(plan.extras).length ? { extras: plan.extras } : {}) };
 }
 
 /** Apply a change the way the planner would, or throw with every reason it can't be applied. */
@@ -203,6 +222,63 @@ export function applyPlanUpdate(index: CatalogIndex, plan: SharedPlan, update: P
     changes.push(current ? `Updated ${part.name}: ${changed.join(", ")}` : `Added ${part.name} as a part StackWise doesn't check`);
   }
 
+  for (const [id, value] of Object.entries(update.extras ?? {})) {
+    const slot = extraSlot(id);
+    const current = plan.extras?.[id];
+    if (!slot) {
+      problems.push(`There's no part "${id.split(".")[0]}". Part ids: ${SLOT_IDS.join(", ")}.`);
+      continue;
+    }
+    if (value === null) {
+      if (!current) continue;
+      delete next.extras![id];
+      next.links = Object.fromEntries(Object.entries(next.links ?? {}).filter(([, link]) => link.from !== id && link.to !== id));
+      changes.push(`Removed ${index.optionsById.get(current.option)?.name ?? current.option} (${current.role || id}) from ${partLabel(slot)}`);
+      continue;
+    }
+    if (slot === "framework") {
+      problems.push("An app has one framework, so it can't have an extra one.");
+      continue;
+    }
+    const option = index.optionsById.get(value.option);
+    if (!option || !option.slots.includes(slot)) {
+      const guesses = nearest(value.option, index.catalog.options.filter((o) => o.slots.includes(slot)).map((o) => o.id));
+      problems.push(`"${value.option}" isn't a ${partLabel(slot)} option.${guesses.length ? ` Did you mean ${guesses.map((g) => `"${g}"`).join(" or ")}?` : ""}`);
+      continue;
+    }
+    const extra = { slot, option: option.id, role: value.role ?? current?.role ?? id.split(".")[1], ...(value.note ?? current?.note ? { note: value.note ?? current?.note } : {}) };
+    if (JSON.stringify(current) === JSON.stringify(extra)) continue;
+    next.extras = { ...next.extras, [id]: extra };
+    changes.push(current ? `Changed ${id} to ${option.name} (${extra.role})` : `Added ${option.name} to ${partLabel(slot)} as ${extra.role}`);
+  }
+
+  // Links go after parts and extras, so a line can point at something added in the same update.
+  const nextInput = planInput(next);
+  const nextSelection = update.links?.length ? recommend(index, nextInput, next.pinned).selection : {};
+  const endName = (end: string) => (end === "app" ? "the app" : endOption(index, end, nextSelection, nextInput)?.name ?? next.custom?.[end]?.name ?? end);
+  for (const link of update.links ?? []) {
+    const id = linkId(link.from, link.to);
+    if (link.remove) {
+      if (!next.links?.[id]) continue;
+      delete next.links[id];
+      changes.push(`Removed the line from ${endName(link.from)} to ${endName(link.to)}`);
+      continue;
+    }
+    const missing = [link.from, link.to].filter((end) => !linkEnd(end, nextSelection, nextInput, next.custom ?? {}).exists);
+    if (missing.length) {
+      problems.push(`${missing.map((end) => `"${end}"`).join(" and ")} ${missing.length === 1 ? "isn't" : "aren't"} in the plan. A line joins "app", a filled part id, an extra id like "database.cache", or a custom part id.`);
+      continue;
+    }
+    if (link.from === link.to) {
+      problems.push("A line needs two different ends.");
+      continue;
+    }
+    const drawn = { from: link.from, to: link.to, kind: link.kind, ...(link.what ? { what: link.what } : {}) };
+    if (JSON.stringify(next.links?.[id]) === JSON.stringify(drawn)) continue;
+    next.links = { ...next.links, [id]: drawn };
+    changes.push(`${endName(link.from)} ${LINK_WORDS[link.kind]} ${endName(link.to)}${link.what ? `: ${link.what}` : ""}`);
+  }
+
   if (problems.length) throw new PlanUpdateError(problems.join(" "));
   return { plan: sharedPlanSchema.parse(next), changes };
 }
@@ -223,6 +299,7 @@ export function checkReport(index: CatalogIndex, results: CheckResult[]) {
       explanation: r.explanation,
       ...(r.fix ? { fix: r.fix } : {}),
       parts: r.slots,
+      ...(r.instance ? { extra: r.instance } : {}),
       ...(r.sources?.length ? { sources: r.sources } : {}),
       rule: r.ruleId,
     }));
@@ -243,13 +320,13 @@ export function costReport(index: CatalogIndex, selection: Selection, input: Pla
     // One line per part, e.g. "payments (Stripe): Pay per sale: 2.9% + 30¢". estimate_costs has the details and every size.
     return {
       ...total,
-      lines: [...outlook.now.lines.map((l) => `${l.slot} (${l.option.name}): ${l.headline}`), ...outlook.now.fees.map((f) => `${f.slot} (${f.label}): $${f.usd} ${f.per === "year" ? "a year" : "once"}`)],
+      lines: [...outlook.now.lines.map((l) => `${l.instance ?? l.slot} (${l.option.name}): ${l.headline}`), ...outlook.now.fees.map((f) => `${f.slot} (${f.label}): $${f.usd} ${f.per === "year" ? "a year" : "once"}`)],
     };
   }
   return {
     ...total,
     lines: [
-      ...outlook.now.lines.map((l) => ({ part: l.slot, option: l.option.name, cost: l.headline, ...(l.detail ? { detail: l.detail } : {}) })),
+      ...outlook.now.lines.map((l) => ({ part: l.instance ?? l.slot, option: l.option.name, cost: l.headline, ...(l.detail ? { detail: l.detail } : {}) })),
       ...outlook.now.fees.map((f) => ({ part: f.slot, option: f.label, cost: `$${f.usd} ${f.per === "year" ? "a year" : "once"}`, detail: f.source })),
     ],
     by_size: costBySize(index, selection, input).map((s) => ({ size: SIZE_PHRASE[s.size], monthly: describeTotal(s, { monthlyOnly: true }) })),
@@ -277,6 +354,26 @@ export function planReport(index: CatalogIndex, plan: SharedPlan, rec: Recommend
     // Parts added by hand: StackWise has no facts on them, so they're listed, never checked or priced.
     ...(Object.keys(plan.custom ?? {}).length
       ? { custom_parts: Object.entries(plan.custom ?? {}).map(([id, part]) => ({ id, name: part.name, ...(part.role ? { role: part.role } : {}), ...(part.env.length ? { env: part.env } : {}), ...(full && part.url ? { url: part.url } : {}), ...(full && part.note ? { note: part.note } : {}) })) }
+      : {}),
+    ...(Object.keys(plan.extras ?? {}).length
+      ? {
+          extras: Object.entries(plan.extras ?? {}).map(([id, extra]) => ({
+            id,
+            option_id: extra.option,
+            option: index.optionsById.get(extra.option)?.name ?? extra.option,
+            role: extra.role,
+            verdict: worstLevel(rec.results.filter((r) => r.instance === id)),
+            ...(extra.note ? { note: extra.note } : {}),
+          })),
+        }
+      : {}),
+    ...(Object.keys(plan.links ?? {}).length
+      ? {
+          links: Object.values(plan.links ?? {}).map((link) => {
+            const verdict = linkVerdict(index, rec.results, link, rec.selection, input);
+            return { from: link.from, to: link.to, kind: link.kind, ...(link.what ? { what: link.what } : {}), verdict: verdict.checked ? verdict.level : "not checked" };
+          }),
+        }
       : {}),
     empty_parts_you_cleared: SLOT_IDS.filter((s) => plan.pinned[s] === ""),
     verdict: worstLevel(rec.results),
@@ -316,7 +413,7 @@ export function planReport(index: CatalogIndex, plan: SharedPlan, rec: Recommend
   }
   return {
     ...report,
-    connections: connectionsOf(index, rec.selection).map((c) => ({ part: c.slot, option: c.optionName, what_travels: c.what, environment_variables: c.env.map((v) => v.name) })),
+    connections: connectionsOf(index, rec.selection, input.extras).map((c) => ({ part: c.instance ?? c.slot, option: c.optionName, what_travels: c.what, environment_variables: c.env.map((v) => v.name) })),
     questions: index.catalog.needs.map((n) => ({
       id: n.id,
       question: n.question,
@@ -353,14 +450,22 @@ export function planDiff(index: CatalogIndex, before: { plan: SharedPlan; rec: R
     ...(before.rec.results.some((r) => !afterKeys.has(r.key)) ? { resolved_checks: before.rec.results.filter((r) => !afterKeys.has(r.key)).map((r) => r.title) } : {}),
     cost: costBefore === costAfter ? costAfter : { before: costBefore, after: costAfter },
     ...(staleNotes.length ? { notes_to_review: staleNotes } : {}),
+    ...changedKeys(before.plan.extras, after.plan.extras, "extras_changed"),
+    ...changedKeys(before.plan.links, after.plan.links, "links_changed"),
   };
 }
 
+/** Which ids were added, changed or removed between two records, for the diff. */
+function changedKeys<T>(before: Record<string, T> | undefined, after: Record<string, T> | undefined, name: string) {
+  const ids = [...new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})])].filter((id) => JSON.stringify(before?.[id]) !== JSON.stringify(after?.[id]));
+  return ids.length ? { [name]: ids.map((id) => ({ id, change: !before?.[id] ? "added" : !after?.[id] ? "removed" : "changed" })) } : {};
+}
+
 /**
- * The plan as a coding agent should hold it: the diagram (the app in the middle, one line to each
- * part, lines between two parts only where a check found a problem) and the reasoning behind every
- * pick, in a few hundred tokens of plain text. Everything in it comes from the rules and facts; an
- * agent that needs a value's source calls get_option.
+ * The plan as a coding agent should hold it: the diagram (the app in the middle with a line to
+ * each part and extra, lines people drew between things, and relationships the rules found) and
+ * the reasoning behind every pick, in a few hundred tokens of plain text. Everything in it comes
+ * from the rules and facts; an agent that needs a value's source calls get_option.
  */
 export function planDigest(index: CatalogIndex, plan: SharedPlan, rec: Recommendation = recommend(index, planInput(plan), plan.pinned)): string {
   const input = planInput(plan);
@@ -370,44 +475,72 @@ export function planDigest(index: CatalogIndex, plan: SharedPlan, rec: Recommend
     return flat.length > max ? `${flat.slice(0, max - 3)}...` : flat;
   };
   const outlook = costOutlook(index, rec.selection, input);
-  const costOf = new Map(outlook.now.lines.map((l) => [l.slot, l.headline]));
+  const costOf = new Map(outlook.now.lines.map((l) => [l.instance ?? l.slot, l.headline]));
   const calls = new Map(closeCalls(index, input, rec).map((c) => [c.slot, c]));
   const framework = optionIn(index, rec.selection, "framework");
+  const own = rec.results.filter((r) => !r.instance);
+  const unchecked = [
+    ...SLOT_IDS.filter((slot) => isOwn(rec.selection[slot])),
+    ...Object.keys(plan.custom ?? {}),
+  ];
 
   const lines = [
-    `${plan.appName || "Untitled app"}: ${framework?.name ?? "no framework yet"}, for ${SIZE_PHRASE[plan.size]}, priority ${plan.priority}. Verdict: ${worstLevel(rec.results)}. ${describeTotal(outlook.now)}.`,
-    "Diagram: the app in the middle with one line to each part (the app uses it). A line between two parts means a problem between them.",
+    `${plan.appName || "Untitled app"}: ${framework?.name ?? "no framework yet"}, for ${SIZE_PHRASE[plan.size]}, priority ${plan.priority}. Verdict: ${worstLevel(rec.results)}${unchecked.length ? ` (not checked: ${unchecked.join(", ")})` : ""}. ${describeTotal(outlook.now)}.`,
+    "Diagram: the app in the middle with a line to each part and extra (the app uses it), plus the lines under Lines.",
     "Parts (part: option [verdict] picked by: why | cost | note):",
   ];
   for (const slot of SLOT_IDS) {
     const option = optionIn(index, rec.selection, slot);
+    const note = plan.notes[slot]?.text;
     if (!option) {
-      if (rec.needed.includes(slot) && plan.pinned[slot] !== "") lines.push(`- ${slot}: EMPTY, the answers need ${inSentence(label(slot))}`);
+      const needed = rec.needed.includes(slot) && plan.pinned[slot] !== "";
+      // A note on an empty part still says what the person wants there.
+      if (needed || note) lines.push(`- ${slot}: EMPTY${needed ? `, the answers need ${inSentence(label(slot))}` : ""}${note ? ` | note: ${clip(note, 120)}` : ""}`);
       continue;
     }
-    const verdict = worstLevel(rec.results.filter((r) => r.slots.includes(slot)));
+    const verdict = worstLevel(own.filter((r) => r.slots.includes(slot)));
     const call = calls.get(slot);
     const by = !rec.autoPicked.includes(slot) ? "you" : rec.startedWith.includes(slot) ? "starting pick" : "score";
     const edge = (c: NonNullable<typeof call>) =>
       c.decidedBy === "accounts" ? "shares an account" : c.decidedBy === "fewer_problems" ? "fewer warnings" : c.decidedBy === "perks" ? `pairs well: ${c.perk}` : c.decidedBy === "checks" ? "fits the rest better" : criterionLabel(c.decidedBy as Parameters<typeof criterionLabel>[0], slot);
     const alt = !call ? "" : call.decidedBy === "starting_pick" ? ` (${call.runnerUp.name} scores higher)` : call.decidedBy === "tie" ? ` (ties ${call.runnerUp.name})` : ` (beats ${call.runnerUp.name}: ${edge(call)})`;
-    const note = plan.notes[slot]?.text;
     lines.push(
-      `- ${slot}: ${option.id} [${verdict}] ${by}: ${pickReason(index, input, rec.results, slot, option)}${alt}${costOf.has(slot) ? ` | ${costOf.get(slot)}` : ""}${option.coverage === "full" ? "" : isOwn(option.id) ? " | built by the person, never checked" : " | not fully researched"}${note ? ` | note: ${clip(note, 120)}` : ""}`,
+      `- ${slot}: ${option.id} [${verdict}] ${by}: ${pickReason(index, input, own, slot, option)}${alt}${costOf.has(slot) ? ` | ${costOf.get(slot)}` : ""}${option.coverage === "full" ? "" : isOwn(option.id) ? " | built by the person, never checked" : " | not fully researched"}${note ? ` | note: ${clip(note, 120)}` : ""}`,
     );
+    for (const [id, extra] of Object.entries(plan.extras ?? {}).filter(([, e]) => e.slot === slot)) {
+      const extraOption = index.optionsById.get(extra.option);
+      lines.push(`  - ${id}: ${extra.option} [${worstLevel(rec.results.filter((r) => r.instance === id))}] you, for ${extra.role || id}${extraOption && costOf.has(id) ? ` | ${costOf.get(id)}` : ""}${extra.note ? ` | note: ${clip(extra.note, 100)}` : ""}`);
+    }
   }
   const custom = Object.entries(plan.custom ?? {});
   if (custom.length) {
     lines.push("Added by hand (no facts, never checked or priced):");
     for (const [id, part] of custom) lines.push(`- ${id}: ${part.name}${part.role ? `, the app ${part.role} it` : ""}${part.env.length ? ` | env ${part.env.join(", ")}` : ""}${part.note ? ` | note: ${clip(part.note, 120)}` : ""}`);
   }
+
+  // What travels on each line from the app, then the lines people drew, then pairs the rules know about.
+  lines.push("Lines (from -> to: what travels):");
+  for (const connection of connectionsOf(index, rec.selection, input.extras)) {
+    const names = connection.everything ? "every variable in the plan" : connection.env.map((v) => v.name).join(", ");
+    lines.push(`- app -> ${connection.instance ?? connection.slot} (${connection.label}): ${names || "no variables listed"}`);
+  }
+  for (const link of Object.values(plan.links ?? {})) {
+    const verdict = linkVerdict(index, rec.results, link, rec.selection, input);
+    lines.push(`- ${link.from} -> ${link.to} (${LINK_WORDS[link.kind]}${link.what ? `: ${link.what}` : ""}) [${verdict.checked ? verdict.level : "not checked"}]`);
+  }
+  const between = rec.results.filter((r) => r.slots.length === 2 && !r.slots.includes("framework") && r.level === "info");
+  if (between.length) {
+    lines.push("Between parts (from the rules):");
+    for (const r of between) lines.push(`- ${r.slots.join("+")}${r.instance ? ` (${r.instance})` : ""}: ${r.title}`);
+  }
+
   const problems = [...rec.results].filter((r) => r.level !== "info").sort((a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]);
   if (problems.length) {
     lines.push("Problems:");
-    for (const r of problems) lines.push(`- ${r.level} ${r.slots.join("+")}: ${r.title}.${r.fix ? ` Fix: ${clip(r.fix, 160)}` : ""}`);
+    for (const r of problems) lines.push(`- ${r.level} ${r.instance ?? r.slots.join("+")}: ${r.title}.${r.fix ? ` Fix: ${clip(r.fix, 160)}` : ""}`);
   }
   const matters = questionsThatMatter(index, input, plan.pinned, 3);
   if (matters.length) lines.push(`Answers that would change the plan: ${matters.join(", ")}.`);
-  lines.push("Facts are sourced drafts; get_option <id> has values and source URLs. update_plan to change anything.");
+  lines.push("Facts are sourced drafts; get_option <id> has values and source URLs. update_plan changes parts, extras (\"database.cache\") and lines.");
   return lines.join("\n");
 }

@@ -9,7 +9,7 @@ import type { SharedPlan } from "./share";
  * those keys are reported so the person can see what was decided for them.
  */
 
-const MAP_FIELDS = ["answers", "pinned", "notes", "custom"] as const;
+const MAP_FIELDS = ["answers", "pinned", "notes", "custom", "extras", "links"] as const;
 const SCALAR_FIELDS = ["appName", "description", "features", "size", "priority", "builderId"] as const;
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
