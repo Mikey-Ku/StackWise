@@ -251,7 +251,7 @@ function missingPieces(index: CatalogIndex, selection: Selection, input: PlanInp
       slots: [slot],
       title: `Nothing is in ${label}`,
       explanation: `You said your app has: ${needs.join(", ")}. That needs something in ${label}.`,
-      fix: `Drag an option into ${label}, or change your answer if you don't need it.`,
+      fix: `Pick a service for ${label}, or change the answer that needs it.`,
     };
   });
 }

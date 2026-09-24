@@ -148,6 +148,25 @@ describe("MCP server", () => {
     expect(data.digest.length).toBeLessThan(JSON.stringify(summary.data).length);
   });
 
+  it("changes only the fields given for a part added by hand, and says which", async () => {
+    registry.savePlan("p1", { ...basePlan, custom: { "custom-redis": { name: "Upstash Redis", role: "caches with", url: "https://upstash.com", env: ["REDIS_URL"], note: "" } } }, "browser");
+    await connect("p1");
+    const result = await call("update_plan", { note: "Add a note", custom: { "custom-redis": { note: "Sessions expire after a day." } } });
+    expect(result.data.changes).toEqual(["Updated Upstash Redis: note"]);
+    expect(registry.read("p1")!.plan.custom?.["custom-redis"]).toEqual({ name: "Upstash Redis", role: "caches with", url: "https://upstash.com", env: ["REDIS_URL"], note: "Sessions expire after a day." });
+    expect((await call("update_plan", { note: "New one", custom: { "custom-vector": { role: "searches with" } } })).text).toContain("needs a name");
+  });
+
+  it("answers a mistake with what to do instead", async () => {
+    registry.savePlan("p1", basePlan, "browser");
+    await connect("p1");
+    expect((await call("update_plan", { note: "Typo", parts: { payments: "pay-cardd" } })).text).toContain("Did you mean \"pay-card\"");
+    expect((await call("update_plan", { note: "Wrong part", parts: { framework: "own-framework" } })).text).toContain("can't be your own code");
+    expect((await call("update_plan", { note: "Wrong key", notes: { "custom-redis": "hi" } })).text).toContain('goes in custom: {"custom-redis"');
+    expect((await call("update_plan", { note: "Unknown question", answers: { nope: "yes" } })).text).toContain("Question ids: ");
+    expect((await call("compare_options", { part: "database", plan_id: "missing-plan" })).isError).toBe(true);
+  });
+
   it("adds and removes a part StackWise doesn't list, without checking it", async () => {
     registry.savePlan("p1", basePlan, "browser");
     await connect("p1");
@@ -285,6 +304,8 @@ describe("MCP server", () => {
     expect(writes).toEqual([expect.objectContaining({ folder: "/Users/me/code/fade", files: expect.arrayContaining(["SPEC.md", ".env.local", ".mcp.json"]) })]);
     expect(data.folder).toBe("/Users/me/code/fade");
     expect(data.wrote).toEqual(expect.arrayContaining(["TASKS.md", ".env.local"]));
+    // The plan file and StackWise's copy agree now, so the first sync merges from here and loses nothing.
+    expect(registry.read("p1")!.synced).toEqual(registry.read("p1")!.plan);
     // Names only: no file text comes back, so the call stays small.
     expect(text.length).toBeLessThan(1500);
     const other = await call("export_project", { folder: "/Users/me/code/other", replace: true });
@@ -361,8 +382,20 @@ describe("chatting with a coding agent", () => {
     const newer = call("wait_for_message", { agent: "claude-code", wait_seconds: 5 });
     await new Promise((r) => setTimeout(r, 40));
     registry.postMessage("p1", { agent: "claude-code", text: "Hello" });
-    expect((await older).data.messages).toEqual([]);
+    const olderResult = (await older).data;
+    expect(olderResult).toMatchObject({ messages: [], superseded: true });
     expect((await newer).data.messages).toEqual([expect.objectContaining({ text: "Hello" })]);
+  });
+
+  it("starts a new session listening after a long gap, instead of telling it that it stopped", async () => {
+    registry.savePlan("p1", basePlan, "browser");
+    await connect("p1", { waitMs: 60, pollMs: 10, idleMs: 100 });
+    await call("wait_for_message", { agent: "codex" });
+    const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
+    registry.updateAgent("p1", "codex", (a) => ({ ...a, lastSeenAt: hourAgo, activeAt: hourAgo }), hourAgo);
+    const next = await call("wait_for_message", { agent: "codex" });
+    expect(next.data.stopped).toBeUndefined();
+    expect(next.data.messages).toEqual([]);
   });
 
   it("saves the agent's answers with the files it changed and what it's doing", async () => {
