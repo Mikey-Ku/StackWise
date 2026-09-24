@@ -1,4 +1,5 @@
 import { OWN_PROVIDER } from "./own";
+import { extraResults } from "./extras";
 import {
   evaluateCapabilityRule,
   evaluatePlan,
@@ -332,7 +333,8 @@ function search(index: CatalogIndex, input: PlanInput, pinned: Selection, starts
     selection[slot] = best.choice[i]?.id;
   });
 
-  const results = evaluatePlan(index, selection, input);
+  // Extras are the person's own additions: checked with the rest, never part of the search.
+  const results = [...evaluatePlan(index, selection, input), ...extraResults(index, selection, input)];
   return {
     selection,
     results,

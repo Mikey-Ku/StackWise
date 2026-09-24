@@ -11,6 +11,12 @@ It works two ways:
 | Plan it works on | The plan you have open, once sharing is on in Ask, Agent | The project's `stackwise.plan.json` |
 | Needs StackWise running | Yes | No. Changes reach the StackWise tab whenever it's open |
 
+## More than one service, and lines between parts
+
+A part can hold more than one service: a cache next to the main database, an embeddings model next to the main AI. Each extra has an id made of the part and a short name (`database.cache`). StackWise checks it exactly as if it filled the part, adds its cost and account, and gives a clashing variable the extra's name as a prefix (`CACHE_DATABASE_URL`). StackWise never adds one itself.
+
+A link is a line between two things in the plan: the app, a part, an extra or a part added by hand, with a kind (`calls`, `webhook`, `reads`, `writes`, `sends_events`, `dns`) and what travels. When a rule reads both parts, the link gets that rule's verdict; otherwise it says "not checked". `get_plan`'s digest lists every line with what travels on it.
+
 ## Pair on a plan
 
 1. Run `pnpm dev` and open http://localhost:4310.
@@ -73,7 +79,7 @@ With a plan shared, `check_stack`, `compare_options`, `estimate_costs` and `setu
 | `estimate_costs` | Monthly, yearly and one-time cost, part by part and at every size | No |
 | `setup_steps` | Setup part by part: ordered steps, environment variables, docs, what runs between the app and the service, and the build order; `part` for one | No |
 | `get_plan` | The shared plan as a short text digest: the diagram, each part with why it was picked and what it beat or tied, cost, notes, parts added by hand, and problems with fixes. `detail: "summary"` returns JSON with ids, answers and checks; `"full"` adds cost details, connections and every question | No |
-| `update_plan` | Change answers, parts, size, priority, builder, text or the notes on each part, with a note saying why. Returns what changed (parts, new and resolved checks, verdict, cost), not the whole plan | Yes |
+| `update_plan` | Change answers, parts, size, priority, builder, text or the notes on each part; add a service StackWise doesn't list (`custom`), a second service in a part (`extras`, like `{"database.cache": {"option": "turso", "role": "cache"}}`) or a line between two things (`links`, like `[{"from": "payments", "to": "app", "kind": "webhook"}]`), with a note saying why. Returns only what changed | Yes |
 | `export_project` | Writes every project file above straight into the project folder (the one the agent runs in, or `folder`) and returns only their names. Same rules as the Export dialog: inside your home folder, nothing replaced without `replace`, `.env.local` never replaced. `paths` returns chosen files' text instead; `list_only` lists them | Yes |
 | `wait_for_message` | Waits up to 4 minutes for the person to write to this agent from StackWise | Marks messages picked up |
 | `send_message` | Answers the person in StackWise, with the files it changed and a status; `then_wait` also waits for the next message | Adds to the conversation |

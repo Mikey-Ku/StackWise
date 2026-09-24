@@ -1,126 +1,91 @@
 import { describe, expect, it } from "vitest";
-import { adaptEnvName, buildChecklist, checklistProgress } from "./checklist";
-import { costBySize } from "./cost";
-import { buildDecisionRecord, slotReasoning } from "./decisions";
-import { decodeSharedPlan, encodeSharedPlan, type SharedPlan } from "./share";
-import { daysBetween, isStale, staleFacts } from "./staleness";
-import { fixtureCatalog, fixtureIndex, input } from "./test-fixtures";
+import { costSummary } from "./cost";
+import { extraChecklist, extraResults, linkVerdict } from "./extras";
+import { mergePlans } from "./merge";
+import { applyPlanUpdate, planDigest, planInput, PlanUpdateError } from "./planops";
+import type { PlanInput, Selection } from "./schema";
+import { recommend } from "./score";
+import { sharedPlanSchema, type SharedPlan } from "./share";
+import { planStats } from "./stats";
+import { fixtureIndex, input } from "./test-fixtures";
+import { connectionsOf, planEnv } from "./wiring";
 
 const index = fixtureIndex();
+const stack: Selection = { framework: "fw-server", hosting: "host-serverless", database: "db-hosted", login: "login-acme" };
+const withCache = (option: string): PlanInput => ({ ...input({ saves_data: "yes", login: "yes" }), extras: { "database.cache": { slot: "database", option, role: "cache" } } });
 
-describe("staleness", () => {
-  it("counts days and flags facts older than the limit", () => {
-    expect(daysBetween("2026-01-01", "2026-01-31")).toBe(30);
-    const fact = { value: true, note: "n", source: "https://example.com", retrieved: "2026-01-01", status: "draft" as const };
-    expect(isStale(fact, "2026-04-01")).toBe(false);
-    expect(isStale(fact, "2026-06-01")).toBe(true);
+describe("extra services in a part", () => {
+  it("checks an extra as if it filled the part, and says which extra each result is about", () => {
+    const results = extraResults(index, stack, withCache("db-file"));
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every((r) => r.instance === "database.cache" && r.slots.includes("database"))).toBe(true);
+    // A local file on serverless hosting is blocked, for the cache exactly as for a main database.
+    expect(results.some((r) => r.level === "blocked" && r.slots.includes("hosting"))).toBe(true);
+    // The part's first service is untouched.
+    const rec = recommend(index, withCache("db-file"), stack);
+    expect(rec.selection.database).toBe("db-hosted");
+    expect(rec.results.filter((r) => !r.instance).some((r) => r.level === "blocked")).toBe(false);
   });
 
-  it("lists every stale fact in the catalog", () => {
-    expect(staleFacts(fixtureCatalog(), "2026-09-16")).toEqual([]);
-    const stale = staleFacts(fixtureCatalog(), "2027-03-01");
-    expect(stale.length).toBeGreaterThan(0);
-    expect(stale[0]).toMatchObject({ retrieved: "2026-09-15" });
-  });
-});
-
-describe("checklist", () => {
-  const selection = { framework: "fw-server", hosting: "host-server", database: "db-hosted", jobs: "jobs-durable" };
-
-  it("orders setup and build tasks with hosting last", () => {
-    const list = buildChecklist(index, selection);
-    expect(list.build.map((i) => i.slot)).toEqual(["framework", "database", "jobs", "hosting"]);
-    expect(list.setup[0]).toMatchObject({ id: "setup:fw-server:0", env: ["FW_SERVER_KEY"] });
+  it("prices an extra, counts its account, and marks a second copy of the same service as depending on its limits", () => {
+    const other = costSummary(index, stack, withCache("db-file"));
+    expect(other.lines.find((l) => l.instance === "database.cache")).toMatchObject({ kind: "free" });
+    const twin = costSummary(index, stack, withCache("db-hosted"));
+    expect(twin.lines.find((l) => l.instance === "database.cache")).toMatchObject({ kind: "unknown", headline: "A second one: check its plan's limits" });
+    const plain = planStats(index, withCache("db-hosted"), recommend(index, { ...withCache("db-hosted"), extras: undefined }, stack));
+    const extra = planStats(index, withCache("db-file"), recommend(index, withCache("db-file"), stack));
+    expect(extra.accounts).toBe(plain.accounts);
   });
 
-  it("gives an unresearched option a quickstart step instead of nothing", () => {
-    const list = buildChecklist(index, { hosting: "host-partial" });
-    expect(list.setup[0].text).toContain("official quickstart");
-  });
-
-  it("renames browser-visible variables for the plan's framework", () => {
-    expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "sveltekit")).toBe("PUBLIC_SUPABASE_URL");
-    expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "react-vite")).toBe("VITE_SUPABASE_URL");
-    // A server-rendered app has no browser-visible variables: the value is read on the server.
-    expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "spring-boot")).toBe("SUPABASE_URL");
-    expect(adaptEnvName("STRIPE_SECRET_KEY", "django")).toBe("STRIPE_SECRET_KEY");
-    expect(adaptEnvName("NEXT_PUBLIC_SUPABASE_URL", "nextjs")).toBe("NEXT_PUBLIC_SUPABASE_URL");
-    expect(adaptEnvName("STRIPE_SECRET_KEY", "sveltekit")).toBe("STRIPE_SECRET_KEY");
-  });
-
-  it("counts progress from checked ids", () => {
-    const list = buildChecklist(index, selection);
-    const checked = { [list.setup[0].id]: true, [list.build[0].id]: true, "setup:gone:0": true };
-    expect(checklistProgress(list, checked)).toEqual({ done: 2, total: list.setup.length + list.build.length });
+  it("names a clashing variable after the extra's role, and gives the extra its own line and steps", () => {
+    const vars = planEnv(index, stack, withCache("db-hosted").extras);
+    expect(vars.map((v) => v.name)).toEqual(expect.arrayContaining(["DB_HOSTED_KEY", "CACHE_DB_HOSTED_KEY"]));
+    const line = connectionsOf(index, stack, withCache("db-hosted").extras).find((c) => c.instance === "database.cache");
+    expect(line).toMatchObject({ slot: "database", label: "cache", env: [expect.objectContaining({ name: "CACHE_DB_HOSTED_KEY" })] });
+    const steps = extraChecklist(index, stack, withCache("db-hosted").extras);
+    expect(steps.setup).toEqual([expect.objectContaining({ id: "setup:database.cache:0", env: ["CACHE_DB_HOSTED_KEY"] })]);
   });
 });
 
-describe("cost by size", () => {
-  it("prices the plan at every audience size", () => {
-    const sizes = costBySize(index, { hosting: "host-server", database: "db-hosted" }, input());
-    expect(sizes.map((s) => s.size)).toEqual(["just_me", "up_to_100", "up_to_1000", "more"]);
-    expect(sizes.map((s) => s.monthlyUsd)).toEqual([0, 7, 7, 32]);
-  });
-});
+describe("lines between parts", () => {
+  const plan = (extra: Partial<SharedPlan> = {}): SharedPlan =>
+    sharedPlanSchema.parse({ v: 1, appName: "Fade", description: "", features: "", answers: { saves_data: "yes", login: "yes" }, size: "up_to_100", priority: "spend_zero", builderId: "claude-code", pinned: stack, notes: {}, ...extra });
 
-describe("share links", () => {
-  const plan: SharedPlan = {
-    v: 1,
-    appName: "Fade",
-    description: "A booking app for a barber shop, with deposits and reminders.",
-    features: "Pick a time\nPay a deposit",
-    answers: { saves_data: "yes", users_pay: "yes", live_updates: "not_sure" },
-    size: "up_to_100",
-    priority: "launch_fast",
-    builderId: "claude-code",
-    pinned: { hosting: "host-server", login: "" },
-    notes: { hosting: { text: "Set the region to Frankfurt.", optionId: "host-server", updatedAt: "2026-09-16T10:00:00.000Z", by: "you" } },
-  };
-
-  it("round-trips a plan through a compact, URL-safe token", async () => {
-    const token = await encodeSharedPlan(plan);
-    expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
-    expect(await decodeSharedPlan(token)).toEqual(plan);
+  it("is not checked when no rule reads the two parts, and takes the rules' verdict when one does", () => {
+    const p = plan();
+    const rec = recommend(index, planInput(p), p.pinned);
+    expect(linkVerdict(index, rec.results, { from: "payments", to: "app", kind: "webhook" }, rec.selection, planInput(p))).toMatchObject({ checked: false, level: "unknown" });
+    const serverless = linkVerdict(index, rec.results, { from: "hosting", to: "database", kind: "calls" }, rec.selection, planInput(p));
+    expect(serverless.checked).toBe(true);
   });
 
-  it("still opens a link made before notes existed", async () => {
-    const older: Partial<SharedPlan> = { ...plan };
-    delete older.notes;
-    // Encoded by hand, the way the first release did, so no schema fills the notes in first.
-    const piped = new Blob([new TextEncoder().encode(JSON.stringify(older))]).stream().pipeThrough(new CompressionStream("deflate-raw"));
-    const token = Buffer.from(await new Response(piped).arrayBuffer()).toString("base64url");
-    expect(await decodeSharedPlan(token)).toEqual({ ...older, notes: {} });
+  it("adds extras and lines through update_plan, refuses ends that aren't there, and shows them in the digest", () => {
+    const { plan: next, changes } = applyPlanUpdate(index, plan(), {
+      extras: { "database.cache": { option: "db-file", role: "cache" } },
+      links: [
+        { from: "login", to: "database", kind: "writes", what: "user rows" },
+        { from: "database.cache", to: "app", kind: "calls" },
+      ],
+    });
+    expect(changes).toEqual(expect.arrayContaining(["Added db-file to Database as cache", "login-acme writes to db-hosted: user rows"]));
+    expect(Object.keys(next.links ?? {})).toEqual(["login>database", "database.cache>app"]);
+    const digest = planDigest(index, next);
+    expect(digest).toContain("  - database.cache: db-file [blocked] you, for cache");
+    expect(digest).toContain("- login -> database (writes to: user rows)");
+    expect(() => applyPlanUpdate(index, plan(), { links: [{ from: "jobs", to: "database", kind: "reads" }] })).toThrow(PlanUpdateError);
+    expect(() => applyPlanUpdate(index, plan(), { extras: { "framework.second": { option: "fw-browser" } } })).toThrow("one framework");
+    // Removing an extra takes its lines with it.
+    const removed = applyPlanUpdate(index, next, { extras: { "database.cache": null } }).plan;
+    expect(Object.keys(removed.links ?? {})).toEqual(["login>database"]);
   });
 
-  it("rejects tokens that aren't plans instead of throwing", async () => {
-    expect(await decodeSharedPlan("not-a-plan")).toBeNull();
-    const tampered = await encodeSharedPlan({ ...plan, appName: "x" });
-    expect(await decodeSharedPlan(tampered.slice(0, -4))).toBeNull();
-  });
-});
-
-describe("decision record", () => {
-  const plan = input({ saves_data: "yes", users_pay: "yes" }, { priority: "spend_zero" });
-  const selection = { framework: "fw-server", hosting: "host-serverless", database: "db-hosted", payments: "pay-card" };
-
-  it("explains one part with checks, alternatives and what would change it", () => {
-    const text = slotReasoning(index, plan, selection, "hosting")!;
-    expect(text).toContain("## Hosting: host-serverless");
-    expect(text).toContain("**Status:** works with a warning.");
-    expect(text).toContain("free plan doesn't allow charging customers");
-    expect(text).toContain("| host-server |");
-    expect(text).toContain("https://example.com/fixture");
-  });
-
-  it("covers every filled slot in build order and never writes an em dash", () => {
-    const record = buildDecisionRecord(index, plan, selection, { appName: "Fade", generatedOn: "2026-09-15" });
-    const order = ["## Framework", "## Database", "## Payments", "## Hosting"].map((h) => record.indexOf(h));
-    expect(order.every((i) => i >= 0)).toBe(true);
-    expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(record).not.toContain("\u2014");
-  });
-
-  it("returns nothing for an empty slot", () => {
-    expect(slotReasoning(index, plan, selection, "ai")).toBeNull();
+  it("merges extras and lines key by key between the browser and an agent", () => {
+    const base = plan();
+    const ours = plan({ extras: { "database.cache": { slot: "database", option: "db-file", role: "cache" } } });
+    const theirs = plan({ links: { "login>database": { from: "login", to: "database", kind: "writes" } } });
+    const { plan: merged, conflicts } = mergePlans(base, ours, theirs, true);
+    expect(conflicts).toEqual([]);
+    expect(Object.keys(merged.extras ?? {})).toEqual(["database.cache"]);
+    expect(Object.keys(merged.links ?? {})).toEqual(["login>database"]);
   });
 });

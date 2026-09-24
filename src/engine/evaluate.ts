@@ -32,6 +32,8 @@ export interface CheckResult {
   level: Level;
   /** The one or two slots this verdict is about. */
   slots: SlotId[];
+  /** Set when the verdict is about an extra service in that part ("database.cache"), not its first one. */
+  instance?: string;
   title: string;
   explanation: string;
   fix?: string;

@@ -8,6 +8,7 @@ import type { SharedPlan } from "./share";
 import { SIZE_PHRASE, inSentence } from "./text";
 import { envFileText, planEnv } from "./wiring";
 import { buildTask, isOwn } from "./own";
+import { endOption, extraResults, LINK_WORDS, linkVerdict } from "./extras";
 
 /**
  * The spec pack: what the beginner walks away with. SPEC.md explains the plan, SETUP.md is the
@@ -25,6 +26,8 @@ export interface SpecDetails {
   notes?: SharedPlan["notes"];
   /** Parts the person added that StackWise has no facts on. */
   custom?: SharedPlan["custom"];
+  /** Lines the person drew between things in the plan. */
+  links?: SharedPlan["links"];
 }
 
 export interface SpecFile {
@@ -88,7 +91,7 @@ export function pickReason(index: CatalogIndex, input: PlanInput, results: Check
 
 export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: Selection, details: SpecDetails): SpecFile[] {
   const { catalog } = index;
-  const results = evaluatePlan(index, selection, input);
+  const results = [...evaluatePlan(index, selection, input), ...extraResults(index, selection, input)];
   const name = details.appName.trim() || "My app";
   const builder = catalog.planning.builders.find((b) => b.id === details.builderId) ?? catalog.planning.builders[catalog.planning.builders.length - 1];
 
@@ -98,7 +101,13 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     return option && def ? [{ slot, option, def }] : [];
   });
 
-  const stackRows = filled.map(({ slot, option, def }) => ({ def, option, why: pickReason(index, input, results, slot, option) }));
+  // Extra services sit in the table under their part, labelled with what they're for.
+  const extraRows = Object.entries(input.extras ?? {}).flatMap(([id, extra]) => {
+    const option = index.optionsById.get(extra.option);
+    const def = index.slotsById.get(extra.slot);
+    return option && def ? [{ def: { ...def, label: `${def.label} (${extra.role || id})` }, option, why: pickReason(index, input, results.filter((r) => r.instance === id), extra.slot, option) }] : [];
+  });
+  const stackRows = [...filled.map(({ slot, option, def }) => ({ def, option, why: pickReason(index, input, results.filter((r) => !r.instance), slot, option) })), ...extraRows];
 
   const features = details.features
     .split("\n")
@@ -129,9 +138,15 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     ...outlook.now.fees.map((f) => `- **${f.label}:** $${f.usd} ${f.per === "year" ? "a year" : "one time"}. Source: ${f.source}`),
   ];
 
-  const env = planEnv(index, selection);
+  const env = planEnv(index, selection, input.extras);
   const envNames = unique(env.map((v) => v.name));
-  const stackList = filled.map(({ def, option }) => `- ${def.label}: ${option.name}`);
+  const stackList = stackRows.map(({ def, option }) => `- ${def.label}: ${option.name}`);
+  // The lines the person drew: how parts talk to each other, each with the rules' word on it.
+  const linkLines = Object.values(details.links ?? {}).map((link) => {
+    const label = (end: string) => (end === "app" ? "the app" : endOption(index, end, selection, input)?.name ?? details.custom?.[end]?.name ?? end);
+    const verdict = linkVerdict(index, results, link, selection, input);
+    return `- ${label(link.from)} ${LINK_WORDS[link.kind]} ${label(link.to)}${link.what ? `: ${link.what}` : ""}. ${verdict.checked ? `Checked: ${verdict.level === "works" ? "works" : verdict.level}.` : "Not checked by StackWise."}`;
+  });
 
   // The person's notes, kept word for word. A note written for another option says so.
   const personNotes = filled.flatMap(({ slot, def, option }) => {
@@ -189,6 +204,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "|---|---|---|",
     ...stackRows.map(({ def, option, why }) => `| ${def.label} | ${option.name} | ${why} |`),
     "",
+    ...(linkLines.length ? ["## How the parts talk to each other", "", ...linkLines, ""] : []),
     ...(noteBlocks.length ? ["## Notes on the stack", "", "Written by the person planning the app. Follow them unless they contradict a rule below.", "", ...noteBlocks] : []),
     ...(builtBlocks.length
       ? ["## Parts you're building yourself", "", "These are the person's own code, not services. StackWise has no facts on them, so nothing that touches them was checked or priced.", "", ...builtBlocks]
@@ -237,12 +253,25 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     return [`## ${i + 1}. ${option.name} (${def.label})`, "", ...(steps.length ? steps : ["- [ ] Setup steps not researched yet. Follow the provider's quickstart."]), ""];
   });
 
+  const extraSetupSections = Object.entries(input.extras ?? {}).flatMap(([id, extra], i) => {
+    const option = index.optionsById.get(extra.option);
+    const def = index.slotsById.get(extra.slot);
+    if (!option || !def) return [];
+    const mine = env.filter((v) => v.instance === id);
+    const steps = option.setup.map((s) => {
+      const names = mine.filter((v) => v.step === s.step).map((v) => `\`${v.name}\``);
+      return `- [ ] ${s.step}${names.length ? ` Environment variables: ${names.join(", ")}.` : ""}`;
+    });
+    return [`## ${setupSections.filter((line) => line.startsWith("## ")).length + i + 1}. ${option.name} (${def.label}, ${extra.role || id})`, "", ...(steps.length ? steps : ["- [ ] Follow its quickstart."]), ""];
+  });
+
   const setup = [
     `# Setup checklist for ${name}`,
     "",
     "Do these in order. Put secret values in `.env.local` or your host's environment settings, never in the code.",
     "",
     ...setupSections,
+    ...extraSetupSections,
     "## Environment variables",
     "",
     "Copy `.env.example` to `.env.local` and fill in the values. `.env.local` never goes into git.",

@@ -4,6 +4,7 @@ import { needIsOn, optionIn, readFact, worstLevel, type CatalogIndex, type Level
 import type { Recommendation } from "./score";
 import { SLOT_IDS, type FactValue, type Option, type PlanInput, type SizeId, type SlotId } from "./schema";
 import { OWN_PROVIDER } from "./own";
+import { extraChecklist } from "./extras";
 
 /**
  * At-a-glance numbers for an option and for a whole plan. Every stat is read from a sourced fact
@@ -279,6 +280,11 @@ export function planStats(index: CatalogIndex, input: PlanInput, rec: Recommenda
   const providers = filled
     .filter(({ slot, option }) => slot !== "framework" && option.provider !== OWN_PROVIDER && !index.catalog.planning.no_account_providers.includes(option.provider))
     .map(({ option }) => option.provider);
+  // Extras need accounts too; one from a company already in the plan shares its account.
+  for (const extra of Object.values(input.extras ?? {})) {
+    const option = index.optionsById.get(extra.option);
+    if (option && option.provider !== OWN_PROVIDER && !index.catalog.planning.no_account_providers.includes(option.provider)) providers.push(option.provider);
+  }
 
   const sizes = costBySize(index, rec.selection, input);
   const at = sizes.findIndex((s) => s.size === input.size);
@@ -289,7 +295,7 @@ export function planStats(index: CatalogIndex, input: PlanInput, rec: Recommenda
   return {
     parts: filled.length,
     accounts: new Set(providers).size,
-    setupSteps: buildChecklist(index, rec.selection).setup.length,
+    setupSteps: buildChecklist(index, rec.selection).setup.length + extraChecklist(index, rec.selection, input.extras).setup.length,
     problems: rec.results.filter((r) => r.level !== "info").length,
     worst: worstLevel(rec.results),
     now: { size: now.size, monthlyUsd: now.monthlyUsd, yearlyUsd: now.yearlyUsd, oneTimeUsd: now.oneTimeUsd, hasUsage: now.hasUsage, hasUnknown: now.hasUnknown },

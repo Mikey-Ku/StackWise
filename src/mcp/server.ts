@@ -7,7 +7,7 @@ import {
   alternativesFor,
   connectionsOf,
   applyPlanUpdate,
-  buildChecklist,
+  fullChecklist,
   buildProjectPack,
   checkReport,
   costReport,
@@ -359,18 +359,22 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const selection = basis.stack;
       const problems = checkStackIds(index, selection);
       if (problems.length) return fail(problems.join(" "));
-      const checklist = buildChecklist(index, selection);
+      const extras = "input" in basis ? basis.input.extras : undefined;
+      const checklist = fullChecklist(index, selection, extras);
       const wanted = (slot: SlotId) => !part || slot === part;
-      const connections = new Map(connectionsOf(index, selection).map((c) => [c.slot, c]));
-      const browser = new Set(planEnv(index, selection).filter((v) => v.browser).map((v) => v.name));
+      // An extra's steps are keyed by its id ("database.cache"), the part's by the part.
+      const keyOf = (id: string, slot: SlotId) => (id.split(":")[1]?.includes(".") ? id.split(":")[1] : slot);
+      const connections = new Map(connectionsOf(index, selection, extras).map((c) => [c.instance ?? c.slot, c]));
+      const browser = new Set(planEnv(index, selection, extras).filter((v) => v.browser).map((v) => v.name));
       // One entry per part: its steps, then the variables and docs once instead of on every step.
-      const parts = new Map<SlotId, { part: SlotId; option: string; steps: string[]; env: string[]; docs: string[]; what_travels?: string }>();
+      const parts = new Map<string, { part: string; option: string; steps: string[]; env: string[]; docs: string[]; what_travels?: string }>();
       for (const item of checklist.setup.filter((i) => wanted(i.slot))) {
-        const entry = parts.get(item.slot) ?? { part: item.slot, option: item.optionName, steps: [], env: [], docs: [] };
+        const key = keyOf(item.id, item.slot);
+        const entry = parts.get(key) ?? { part: key, option: item.optionName, steps: [], env: [], docs: [] };
         entry.steps.push(item.text);
         for (const name of item.env.map((e) => adaptEnvName(e, selection.framework))) if (!entry.env.includes(name)) entry.env.push(name);
         if (item.source && !entry.docs.includes(item.source)) entry.docs.push(item.source);
-        parts.set(item.slot, entry);
+        parts.set(key, entry);
       }
       for (const entry of parts.values()) {
         const connection = connections.get(entry.part);
@@ -409,7 +413,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
     {
       title: "Change the shared plan",
       description:
-        "Change the shared plan: answers, parts (option id; \"own-<part>\" when the person builds it; \"\" empties; null lets StackWise pick), size, priority, builder, text, each part's note (\"\" removes), or custom parts StackWise doesn't list (null removes; never checked). Shows in StackWise right away and can be undone there. " +
+        "Change the shared plan: answers, parts (option id; \"own-<part>\" when the person builds it; \"\" empties; null lets StackWise pick), size, priority, builder, text, each part's note (\"\" removes), custom parts StackWise doesn't list (null removes; never checked), extras (a second service in a part, id \"database.cache\") and links (lines between the app, parts, extras and custom parts). Shows in StackWise right away and can be undone there. " +
         "Returns what changed: parts, new and resolved checks, verdict and cost. Only rewrite a person's note when asked; otherwise add to it.",
       inputSchema: {
         plan_id: planIdSchema,
