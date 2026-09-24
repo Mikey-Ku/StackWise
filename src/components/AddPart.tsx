@@ -167,8 +167,8 @@ export function AddPart({
                 <Icon name="plus" size={14} />
               </span>
               <span className="ws-add__text">
-                <strong>{query.trim() ? `Add \u201c${query.trim()}\u201d as your own part` : "Add a part that isn't listed"}</strong>
-                <span>A library, an internal API, any service. It goes on the canvas and into the spec, marked not checked.</span>
+                <strong>{query.trim() ? `Add \u201c${query.trim()}\u201d (not in StackWise)` : "Add a part that isn't listed"}</strong>
+                <span>A library, an internal API, any service. It goes on the canvas and into the spec, not checked.</span>
               </span>
             </button>
           </li>
@@ -177,7 +177,7 @@ export function AddPart({
           <span>
             <kbd>&uarr;</kbd> <kbd>&darr;</kbd> to move, <kbd>enter</kbd> to add
           </span>
-          <span>The dot is what StackWise&apos;s rules say it would do to your plan.</span>
+          <span>The dot: what StackWise&apos;s rules say.</span>
         </p>
       </section>
     </div>

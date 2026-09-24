@@ -269,7 +269,7 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
       const asked = (brief.asked_about ?? []).flatMap((id) => brief.alternatives.filter((a) => a.id === id));
       const others = brief.alternatives.filter((a) => !asked.includes(a)).slice(0, asked.length ? 3 : 4);
       if (!asked.length && !others.length) return { reply: `StackWise has no other options for ${inSentence(brief.part.label)}.` };
-      const rank = (a: TalkBrief["alternatives"][number]) => (a.score_change === 0 ? "ranks the same" : a.score_change > 0 ? "ranks higher" : "ranks lower");
+      const rank = (a: TalkBrief["alternatives"][number]) => (a.score_change === 0 ? "Ranks the same" : a.score_change > 0 ? "Ranks higher" : "Ranks lower");
       const line = (a: TalkBrief["alternatives"][number]) => `- ${a.name}: ${a.verdict}${a.problems.length ? ` (${a.problems.join("; ")})` : ""}. ${a.cost}. ${rank(a)} for your priority.`;
       const fits = swappable(brief).filter((a) => a.researched);
       const pick = asked.find((a) => fits.includes(a)) ?? fits.find((a) => a.score_change > 0);

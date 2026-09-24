@@ -104,7 +104,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     .split("\n")
     .map((f) => f.replace(/^[-*]\s*/, "").trim())
     .filter(Boolean);
-  const featureLines = features.length ? features.map((f) => `- ${f}`) : ["- (No features listed yet. Add them in the planner before you build.)"];
+  const featureLines = features.length ? features.map((f) => `- ${f}`) : ["- (No features yet. Add them in Overview before you build.)"];
 
   const needLines = catalog.needs
     .filter((n) => !n.only_if || needIsOn(index, input, n.only_if))
@@ -191,10 +191,10 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "",
     ...(noteBlocks.length ? ["## Notes on the stack", "", "Written by the person planning the app. Follow them unless they contradict a rule below.", "", ...noteBlocks] : []),
     ...(builtBlocks.length
-      ? ["## Parts you're building yourself", "", "These are the person's own code, not services. StackWise has no facts on them, so nothing that touches them was checked or priced.", "", ...builtBlocks]
+      ? ["## Your own code", "", "These are the person's own code, not services. StackWise has no facts on them, so nothing that touches them was checked or priced.", "", ...builtBlocks]
       : []),
     ...(ownBlocks.length
-      ? ["## Parts added by hand", "", "StackWise has no facts on these, so nothing here was checked or priced. Read their docs before relying on them.", "", ...ownBlocks]
+      ? ["## Not in StackWise", "", "StackWise has no facts on these, so nothing here was checked or priced. Read their docs before relying on them.", "", ...ownBlocks]
       : []),
     "## Rules for whoever builds it",
     "",
@@ -266,7 +266,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
     "## Stack",
     "",
     ...stackList,
-    ...ownParts.map((part) => `- ${part.name} (added by hand, not checked by StackWise)${part.role ? `: the app ${part.role} it` : ""}`),
+    ...ownParts.map((part) => `- ${part.name} (not in StackWise, so not checked)${part.role ? `: the app ${part.role} it` : ""}`),
     "",
     ...(noteBullets.length ? ["## Notes on the stack", "", ...noteBullets, ""] : []),
     "## Rules",
@@ -294,7 +294,7 @@ export function buildSpecPack(index: CatalogIndex, input: PlanInput, selection: 
   ].join("\n");
 
   const prompt = [
-    `Build a web app called ${name}.`,
+    `Build an app called ${name}.`,
     "",
     details.description.trim(),
     "",

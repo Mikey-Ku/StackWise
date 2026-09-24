@@ -44,6 +44,13 @@ export function providersOf(ai: AiStatus | null): ProviderInfo[] {
   return [{ id: "claude", label: "Claude", on: Boolean(ai?.ai), model: ai?.model ?? "", keyName: "ANTHROPIC_API_KEY", featured: true }];
 }
 
+/** The built-in AI that reads a description (see /api/prefill): the saved default when it has a key, else the first with one. */
+export function descriptionReader(ai: AiStatus | null, saved: string | null): ProviderInfo | null {
+  const on = providersOf(ai).filter((p) => p.on);
+  const wanted = saved?.startsWith("api:") ? saved.slice("api:".length) : undefined;
+  return on.find((p) => p.id === wanted) ?? on[0] ?? null;
+}
+
 export function recipientsFor(ai: AiStatus | null, pairing: Pick<Pairing, "agents" | "serverNow">): Recipient[] {
   const seen = Object.values(pairing.agents);
   const agentIds = [...KNOWN_AGENTS.map((a) => a.id as string), ...seen.map((a) => a.id)].filter((id, i, all) => all.indexOf(id) === i);

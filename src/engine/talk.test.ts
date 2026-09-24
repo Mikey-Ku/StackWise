@@ -88,7 +88,7 @@ describe("answerFromFacts", () => {
 
   it("suggests a swap only to an option the rules pass and that ranks higher", () => {
     const answer = ask("What else could I use instead?");
-    expect(answer.reply).toMatch(/- db-hosted: works\. .+\. ranks higher for your priority\./);
+    expect(answer.reply).toMatch(/- db-hosted: works\. .+\. Ranks higher for your priority\./);
     expect(answer.reply).not.toMatch(/\d\.\d/);
     expect(answer.swap).toBe("db-hosted");
   });
