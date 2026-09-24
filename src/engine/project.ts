@@ -16,6 +16,12 @@ import { buildTask, isOwn } from "./own";
 export interface ProjectDetails extends SpecDetails {
   planId: string;
   plan: SharedPlan;
+  /**
+   * The shared copy's version and time, so the plan file starts level with it. Left out, the file
+   * says version 0 at midnight, and the first sync would treat it as older than StackWise's copy.
+   */
+  version?: number;
+  updatedAt?: string;
 }
 
 export interface ProjectOptions {
@@ -62,7 +68,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
 
   const planFile: SpecFile = {
     name: "stackwise.plan.json",
-    content: `${JSON.stringify({ stackwise: 1, id: details.planId, version: 0, updatedAt: `${details.generatedOn}T00:00:00.000Z`, plan: details.plan }, null, 2)}\n`,
+    content: `${JSON.stringify({ stackwise: 1, id: details.planId, version: details.version ?? 0, updatedAt: details.updatedAt ?? `${details.generatedOn}T00:00:00.000Z`, plan: details.plan }, null, 2)}\n`,
   };
 
   const doneWhen = (slot: SlotId, inAgentFile = false) => {

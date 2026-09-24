@@ -6,7 +6,8 @@ import { sharedPlanSchema } from "@/engine/share";
 import { localOnly, readJson } from "@/mcp/local";
 import { NEVER_REPLACE } from "@/mcp/localfiles";
 import { writeProjectFolder } from "@/mcp/writeproject";
-import { PLAN_ID } from "@/mcp/registry";
+import { createRegistry, PLAN_ID } from "@/mcp/registry";
+import { PLAN_FILE } from "@/engine/names";
 
 /**
  * Writing the project into a folder on this computer, instead of downloading a zip. Same files,
@@ -35,6 +36,10 @@ export async function POST(request: Request) {
   const { plan, generatedOn, dryRun, replace } = parsed.data;
 
   const root = process.cwd();
+  // When this plan is shared with agents, StackWise's copy takes the plan being exported, so the
+  // project's plan file and the shared copy start out level and the first sync loses nothing.
+  const registry = createRegistry(root);
+  const shared = !dryRun && registry.read(parsed.data.id) ? registry.savePlan(parsed.data.id, plan, "browser") : null;
 
   const index = indexCatalog(loadCatalog());
   const input = planInput(plan);
@@ -45,7 +50,7 @@ export async function POST(request: Request) {
       index,
       input,
       selection,
-      { appName: plan.appName, description: plan.description, features: plan.features, builderId: plan.builderId, generatedOn, planId: parsed.data.id, plan },
+      { appName: plan.appName, description: plan.description, features: plan.features, builderId: plan.builderId, generatedOn, planId: parsed.data.id, plan, version: shared?.version, updatedAt: shared?.updatedAt ?? new Date().toISOString() },
       { stackwiseRoot: root },
     ),
     { name: NEVER_REPLACE, content: envFileText(env, { appName: plan.appName, generatedOn, custom: plan.custom }) },
@@ -53,5 +58,6 @@ export async function POST(request: Request) {
 
   const result = writeProjectFolder(parsed.data.path, files, { stackwiseRoot: root, envNames: env.map((v) => v.name), replace, dryRun });
   if ("error" in result) return Response.json({ error: result.error }, { status: 400 });
+  if (shared && result.wrote.includes(PLAN_FILE)) registry.setSynced(parsed.data.id, shared.plan);
   return Response.json({ ...result, command: `cd ${result.path.includes(" ") ? `"${result.path}"` : result.path}` });
 }

@@ -20,6 +20,39 @@ import { SIZE_PHRASE, inSentence } from "./text";
 const ANSWER_WORDS: Record<Answer, string> = { yes: "yes", no: "no", not_sure: "not sure" };
 const LEVEL_ORDER: Record<Level, number> = { blocked: 0, missing: 1, warning: 2, unknown: 3, info: 4 };
 
+/** Changing a custom part: only the fields given change. A new one needs a name. */
+const customPatchSchema = z.object({
+  name: z.string().trim().min(1).max(60).optional(),
+  role: z.string().max(80).optional(),
+  url: z.string().max(300).optional(),
+  env: z.array(z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/).max(120)).max(20).optional(),
+  note: z.string().max(NOTE_MAX).optional(),
+});
+
+/** The closest ids to a mistyped one, for "Did you mean": same text inside, or two letters off at most. */
+export function nearest(input: string, ids: string[], max = 3): string[] {
+  const distance = (a: string, b: string) => {
+    const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      let previous = row[0];
+      row[0] = i;
+      for (let j = 1; j <= b.length; j++) {
+        const current = row[j];
+        row[j] = Math.min(row[j] + 1, row[j - 1] + 1, previous + (a[i - 1] === b[j - 1] ? 0 : 1));
+        previous = current;
+      }
+    }
+    return row[b.length];
+  };
+  const needle = input.toLowerCase();
+  return ids
+    .map((id) => ({ id, score: id.includes(needle) || needle.includes(id) ? 0 : distance(needle, id) }))
+    .filter((c) => c.score <= 2)
+    .sort((a, b) => a.score - b.score || a.id.localeCompare(b.id))
+    .slice(0, max)
+    .map((c) => c.id);
+}
+
 export const planUpdateSchema = z.object({
   app_name: oneLine(200).optional(),
   description: z.string().max(5000).optional(),
@@ -31,9 +64,12 @@ export const planUpdateSchema = z.object({
   priority: z.enum(PRIORITY_IDS).optional(),
   builder: z.string().regex(/^[a-z0-9-]*$/).max(40).optional(),
   /** Notes by part id. Text replaces the note; "" removes it. */
-  notes: z.partialRecord(z.enum(SLOT_IDS), z.string().max(NOTE_MAX)).optional(),
-  /** Parts StackWise doesn't list, by id ("custom-<name>"): an object adds or replaces one, null removes it. Never checked or priced. */
-  custom: z.record(z.string().regex(CUSTOM_ID), customPartSchema.nullable()).optional(),
+  /** Keyed by part id; checked in applyPlanUpdate so a wrong key gets a useful answer. */
+  notes: z.record(z.string().max(80), z.string().max(NOTE_MAX)).optional(),
+  /** Parts StackWise doesn't list, by id ("custom-<name>"): fields to set (the rest stay as they are), or null to remove it. Never checked or priced. */
+  custom: z
+    .record(z.string().regex(CUSTOM_ID, "Custom part ids look like custom-redis: custom- then lowercase letters, digits and dashes."), customPatchSchema.nullable())
+    .optional(),
 });
 export type PlanUpdate = z.infer<typeof planUpdateSchema>;
 
@@ -66,7 +102,7 @@ export function applyPlanUpdate(index: CatalogIndex, plan: SharedPlan, update: P
   for (const [needId, answer] of Object.entries(update.answers ?? {})) {
     const need = index.needsById.get(needId);
     if (!need) {
-      problems.push(`There's no question "${needId}". get_plan lists every question id.`);
+      problems.push(`There's no question "${needId}". Question ids: ${index.catalog.needs.map((n) => n.id).join(", ")}.`);
       continue;
     }
     if (plan.answers[needId] === answer) continue;
@@ -86,11 +122,18 @@ export function applyPlanUpdate(index: CatalogIndex, plan: SharedPlan, update: P
     } else {
       const option = index.optionsById.get(value);
       if (!option) {
-        problems.push(`There's no option "${value}". search_options lists option ids.`);
+        if (value.startsWith("own-") && slot === "framework") {
+          problems.push("The framework is the app itself, so it can't be your own code. Pick a framework.");
+          continue;
+        }
+        const guesses = nearest(value, [...index.optionsById.keys()]);
+        problems.push(`There's no option "${value}".${guesses.length ? ` Did you mean ${guesses.map((g) => `"${g}"`).join(" or ")}?` : ""} search_options lists option ids; "own-${slot}" means the person builds it.`);
         continue;
       }
       if (!option.slots.includes(slot)) {
-        problems.push(`${option.name} goes in ${option.slots.map((s) => partLabel(s)).join(" or ")}, not ${partLabel(slot)}.`);
+        // Same company, right part: supabase-auth for login, supabase-db for the database.
+        const sibling = index.catalog.options.find((o) => o.provider === option.provider && o.slots.includes(slot));
+        problems.push(`${option.name} goes in ${option.slots.map((s) => partLabel(s)).join(" or ")}, not ${partLabel(slot)}.${sibling ? ` For ${partLabel(slot)}, use "${sibling.id}".` : ""}`);
         continue;
       }
       if (plan.pinned[slot] === value) continue;
@@ -119,6 +162,14 @@ export function applyPlanUpdate(index: CatalogIndex, plan: SharedPlan, update: P
   // Notes go last, so a note written for a part that changes in the same update names the new option.
   const selection = Object.keys(update.notes ?? {}).length ? recommend(index, planInput(next), next.pinned).selection : {};
   for (const [slot, text] of Object.entries(update.notes ?? {}) as [SlotId, string][]) {
+    if (!(SLOT_IDS as readonly string[]).includes(slot)) {
+      problems.push(
+        (slot as string).startsWith("custom-")
+          ? `A note on ${slot} goes in custom: {"${slot}": {"note": "..."}}.`
+          : `There's no part "${slot}". Part ids: ${SLOT_IDS.join(", ")}.`,
+      );
+      continue;
+    }
     const trimmed = text.trim();
     const current = plan.notes[slot];
     if (!trimmed) {
@@ -132,17 +183,24 @@ export function applyPlanUpdate(index: CatalogIndex, plan: SharedPlan, update: P
     changes.push(`${current ? "Rewrote" : "Wrote"} the note on ${partLabel(slot)}`);
   }
 
-  for (const [id, part] of Object.entries(update.custom ?? {})) {
+  for (const [id, patch] of Object.entries(update.custom ?? {})) {
     const current = plan.custom?.[id];
-    if (part === null) {
+    if (patch === null) {
       if (!current) continue;
       delete next.custom![id];
       changes.push(`Removed ${current.name}, added by hand`);
       continue;
     }
-    if (JSON.stringify(current) === JSON.stringify(part)) continue;
+    const given = Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
+    if (!current && !given.name) {
+      problems.push(`${id} is new, so it needs a name.`);
+      continue;
+    }
+    const part = customPartSchema.parse({ ...current, ...given });
+    const changed = (["name", "role", "url", "env", "note"] as const).filter((field) => JSON.stringify(current?.[field]) !== JSON.stringify(part[field]));
+    if (current && changed.length === 0) continue;
     next.custom = { ...next.custom, [id]: part };
-    changes.push(`${current ? "Updated" : "Added"} ${part.name} as a part StackWise doesn't check`);
+    changes.push(current ? `Updated ${part.name}: ${changed.join(", ")}` : `Added ${part.name} as a part StackWise doesn't check`);
   }
 
   if (problems.length) throw new PlanUpdateError(problems.join(" "));

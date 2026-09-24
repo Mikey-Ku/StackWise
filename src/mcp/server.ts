@@ -20,6 +20,7 @@ import {
   planInput,
   planReport,
   planDigest,
+  nearest,
   PlanUpdateError,
   planUpdateSchema,
   PRIORITY_IDS,
@@ -38,6 +39,7 @@ import { agentId, agentName, pairInstructions, pairSettings, type PairSettings }
 import { MESSAGE_MAX, type PlanRecord, type Registry } from "./registry";
 import { NEVER_REPLACE } from "./localfiles";
 import { writeProjectFolder } from "./writeproject";
+import { PLAN_FILE } from "@/engine/names";
 
 /**
  * StackWise's MCP server. Every tool calls the same engine the planner uses, so Claude asks
@@ -87,7 +89,10 @@ function checkStackIds(index: CatalogIndex, stack: Selection): string[] {
   return Object.entries(stack).flatMap(([slot, id]) => {
     if (!id) return [];
     const option = index.optionsById.get(id);
-    if (!option) return [`There's no option "${id}". Use search_options to find ids.`];
+    if (!option) {
+      const guesses = nearest(id, [...index.optionsById.keys()]);
+      return [`There's no option "${id}".${guesses.length ? ` Did you mean ${guesses.map((g) => `"${g}"`).join(" or ")}?` : ""} Use search_options to find ids.`];
+    }
     if (!option.slots.includes(slot as SlotId)) return [`${option.name} can't fill ${slot}; it fits ${option.slots.join(" or ")}.`];
     return [];
   });
@@ -245,7 +250,8 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const input: PlanInput = { ...basis.input, answers: answers ?? basis.input.answers, size: size ?? basis.input.size };
       const results = evaluatePlan(index, checked, input);
       const verdict = worstLevel(results);
-      log("check_stack", `Checked ${names(index, checked) || "an empty stack"}`, verdict, plan_id);
+      // Only a what-if on the shared plan shows in its activity, and it says it wasn't applied.
+      if (!stack && swap) log("check_stack", `Tried ${names(index, swap)} (not applied)`, verdict, plan_id);
       return json({ stack: stackReport(index, checked), verdict, checks: checkReport(index, results), cost: costReport(index, checked, input, "summary") });
     },
   );
@@ -264,7 +270,6 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       if (problems.length) return fail(problems.join(" "));
       const plan = { v: 1 as const, appName: "", description: "", features: "", answers, size: size ?? "up_to_100", priority: priority ?? "spend_zero", builderId: "claude-code", pinned: keep ?? {}, notes: {} };
       const report = planReport(index, plan, undefined, "summary");
-      log("recommend_stack", `Recommended ${report.stack.map((p) => p.option).join(" + ")}`, report.verdict);
       const { stack, verdict, checks, close_calls, cost } = report;
       return json({ stack, verdict, checks, close_calls, cost });
     },
@@ -292,6 +297,8 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const index = ctx.index();
       // Without a stack, compare within the shared plan when there is one, or against an empty stack.
       const fromPlan = stack ? null : planBasis(index, plan_id);
+      if (plan_id && typeof fromPlan === "string") return fail(fromPlan);
+      const againstNothing = !stack && typeof fromPlan === "string";
       const basis: Basis = fromPlan && typeof fromPlan !== "string" ? fromPlan : { stack: stack ?? {}, input: { answers: {}, size: "up_to_100", priority: "spend_zero" } };
       const problems = [...checkStackIds(index, basis.stack), ...(option_ids ?? []).flatMap((id) => checkStackIds(index, { [part]: id }))];
       if (problems.length) return fail(problems.join(" "));
@@ -301,6 +308,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       log("compare_options", `Compared ${alternatives.map((a) => a.option.name).join(", ")} for ${index.slotsById.get(part)?.label ?? part}`, undefined, plan_id);
       return json({
         part,
+        ...(againstNothing ? { compared_against: "nothing: no plan is shared and no stack was given, so each option is checked on its own" } : {}),
         current: basis.stack[part] || null,
         options: alternatives.map((a) => ({
           id: a.option.id,
@@ -409,7 +417,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
         ...planUpdateSchema.shape,
         detail: z.enum(["diff", "summary", "full"]).optional().describe("Leave out for just what changed."),
       },
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true },
     },
     async ({ plan_id, note, detail, ...update }) => {
       const record = sharedPlan(plan_id);
@@ -451,7 +459,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
         paths: z.array(z.string().max(200)).max(60).optional().describe('Return these files\' text instead of writing, like ["TASKS.md"].'),
         list_only: z.boolean().optional().describe("Just the paths and sizes."),
       },
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true },
     },
     async ({ plan_id, folder, replace, paths, list_only }) => {
       const record = sharedPlan(plan_id);
@@ -470,6 +478,8 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
           generatedOn: new Date().toISOString().slice(0, 10),
           planId: record.id,
           plan: record.plan,
+          version: record.version,
+          updatedAt: record.updatedAt,
         },
         { stackwiseRoot: ctx.stackwiseRoot },
       );
@@ -489,6 +499,8 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const pack = [...files, { name: NEVER_REPLACE, content: envFileText(env, { appName: record.plan.appName, generatedOn: new Date().toISOString().slice(0, 10), custom: record.plan.custom }) }];
       const result = (ctx.writeProject ?? writeProjectFolder)(target, pack, { stackwiseRoot: ctx.stackwiseRoot, envNames: env.map((v) => v.name), replace });
       if ("error" in result) return fail(result.error);
+      // The plan file and StackWise's copy now agree: that's the base the first sync merges from.
+      if (result.wrote.includes(PLAN_FILE)) ctx.registry.setSynced(record.id, record.plan);
       log("export_project", `Wrote ${result.wrote.length} project files to ${result.path}`, undefined, record.id);
       return json({
         folder: result.path,
@@ -511,8 +523,11 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
     const start = Date.now();
     const existing = record.agents[id];
 
+    // Still in the same loop: its last call ended moments ago. A new session (the terminal was closed
+    // and opened again) isn't, so its idle clock starts over instead of stopping it on the first call.
+    const looping = Boolean(existing?.lastSeenAt && start - Date.parse(existing.lastSeenAt) < settings.waitMs + 60_000);
     // A listening agent that's heard nothing for too long stops, so an idle loop doesn't spend tokens all day.
-    if (existing && !existing.stoppedAt && start - Date.parse(existing.activeAt) > settings.idleMs) {
+    if (existing && !existing.stoppedAt && looping && start - Date.parse(existing.activeAt) > settings.idleMs) {
       ctx.registry.updateAgent(record.id, id, (a) => ({ ...a, stoppedAt: iso(start), stopReason: "idle", waitingSince: undefined, waitId: undefined, waitingUntil: undefined }), iso(start));
       const minutes = Math.round(settings.idleMs / 60_000);
       return json({ stopped: true, reason: `No messages for ${minutes} minutes, so you've stopped listening. Tell the person they can ask you to pair with StackWise again whenever they want.` });
@@ -527,7 +542,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
         ...a,
         lastSeenAt: iso(start),
         // Starting again after a stop (or for the first time) counts as activity, so the idle clock restarts.
-        activeAt: !existing || a.stoppedAt ? iso(start) : a.activeAt,
+        activeAt: !existing || a.stoppedAt || !looping ? iso(start) : a.activeAt,
         stoppedAt: undefined,
         stopReason: undefined,
         waitingSince: iso(start),
@@ -559,8 +574,12 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
           plan_version_now: current.version,
           plan: {
             app: current.plan.appName,
-            stack: Object.fromEntries(stackReport(index, rec.selection).map((p) => [p.part, p.option])),
-            problems: rec.results.filter((r) => r.level === "blocked" || r.level === "missing" || r.level === "warning").map((r) => `${r.level}: ${r.title} (${r.slots.join(", ")})`),
+            // Option ids, which update_plan takes; get_plan's digest has the names and reasons.
+            stack: Object.fromEntries(stackReport(index, rec.selection).map((p) => [p.part, p.option_id])),
+            problems: rec.results
+              .filter((r) => r.level !== "info")
+              .map((r) => `${r.level}: ${r.title} (${r.slots.join(", ")})${r.fix ? `. Fix: ${r.fix}` : ""}`),
+            ...(Object.keys(current.plan.custom ?? {}).length ? { not_checked: Object.keys(current.plan.custom ?? {}) } : {}),
             notes_on: Object.keys(current.plan.notes),
           },
           ...(abouts.length
@@ -569,7 +588,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
                   part: slot,
                   option: rec.selection[slot] ? index.optionsById.get(rec.selection[slot]!)?.name ?? null : null,
                   ...(current.plan.notes[slot] ? { note: current.plan.notes[slot]!.text } : {}),
-                  checks: checkReport(index, rec.results.filter((r) => r.slots.includes(slot))).map(({ level, title, fix }) => ({ level, title, ...(fix ? { fix } : {}) })),
+                  checks: checkReport(index, rec.results.filter((r) => r.slots.includes(slot))).map(({ level, title, explanation, fix }) => ({ level, title, ...(fix ? { fix } : { explanation }) })),
                 })),
               }
             : {}),
@@ -585,7 +604,10 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       }
       await sleep(settings.pollMs);
     }
+    const replaced = superseded();
     finish();
+    // A newer call from this agent took over; calling again here would make two loops take turns cancelling each other.
+    if (replaced) return json({ messages: [], superseded: true, next: "A newer wait_for_message call of yours is listening. Stop this loop." });
     return json({ messages: [], next: "Call wait_for_message again." });
   };
 
@@ -647,10 +669,15 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       argsSchema: { agent: z.string().max(40).optional().describe('Your name, like "claude-code", "codex" or "gemini-cli".') },
     },
     ({ agent }) => {
-      const id = agentId(agent || server.server.getClientVersion()?.name || "claude-code");
+      // Over HTTP each request is separate, so the client's name from initialize isn't known here.
+      const known = agent || server.server.getClientVersion()?.name;
+      const id = agentId(known || "claude-code");
+      const unsure = known
+        ? ""
+        : "\n\nIf you aren't Claude Code, use your own name as agent instead of claude-code: codex, gemini-cli, cursor, copilot-cli, opencode, amp, goose or qwen-code. The person's messages are addressed by that name.";
       return {
         description: `Pair ${agentName(id)} with StackWise`,
-        messages: [{ role: "user", content: { type: "text", text: pairInstructions(id) } }],
+        messages: [{ role: "user", content: { type: "text", text: `${pairInstructions(id)}${unsure}` } }],
       };
     },
   );
