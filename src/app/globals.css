@@ -399,6 +399,10 @@ body {
 .ws-menu__item--danger {
   color: var(--mk-danger);
 }
+a.ws-menu__item {
+  color: inherit;
+  text-decoration: none;
+}
 
 .ws-note-inline {
   padding: 6px 10px;
@@ -1333,34 +1337,40 @@ body {
 /* Scrollbars in the floating panels stay hidden until the pointer is over the panel. */
 .ws-float,
 .ws-ask,
-.ws-add {
+.ws-add,
+.ws-sheet {
   --ws-scroll-thumb: transparent;
 }
 .ws-float:hover,
 .ws-ask:hover,
-.ws-add:hover {
+.ws-add:hover,
+.ws-sheet:hover {
   --ws-scroll-thumb: rgba(128, 128, 128, 0.45);
 }
 .ws-float *,
 .ws-ask *,
-.ws-add * {
+.ws-add *,
+.ws-sheet {
   scrollbar-width: thin;
   scrollbar-color: var(--ws-scroll-thumb) transparent;
 }
 .ws-float ::-webkit-scrollbar,
 .ws-ask ::-webkit-scrollbar,
-.ws-add ::-webkit-scrollbar {
+.ws-add ::-webkit-scrollbar,
+.ws-sheet::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 .ws-float ::-webkit-scrollbar-track,
 .ws-ask ::-webkit-scrollbar-track,
-.ws-add ::-webkit-scrollbar-track {
+.ws-add ::-webkit-scrollbar-track,
+.ws-sheet::-webkit-scrollbar-track {
   background: transparent;
 }
 .ws-float ::-webkit-scrollbar-thumb,
 .ws-ask ::-webkit-scrollbar-thumb,
-.ws-add ::-webkit-scrollbar-thumb {
+.ws-add ::-webkit-scrollbar-thumb,
+.ws-sheet::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 8px;
   background: var(--ws-scroll-thumb) padding-box;
@@ -2356,6 +2366,98 @@ body {
   color: var(--mk-text-faint);
   font-size: 12px;
 }
+.ws-connpill__state::before {
+  content: "\00b7";
+  margin-right: 6px;
+  color: var(--mk-text-faint);
+}
+.ws-connpill__state.is-live {
+  color: var(--mk-ok);
+}
+.ws-connpill__state.is-cta {
+  color: var(--mk-accent);
+  font-weight: 600;
+}
+
+/* Tooltips on the dock: a name, a shortcut and one line, above the button. */
+.ws-tip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.ws-tip {
+  position: absolute;
+  z-index: 40;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  max-width: 230px;
+  padding: 8px 11px;
+  border: 0.5px solid var(--ws-glass-line);
+  border-radius: 11px;
+  background: var(--mk-surface);
+  box-shadow: var(--ws-float-shadow);
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  translate: -50% 4px;
+  transition: opacity var(--mk-dur-fast) var(--mk-ease), translate var(--mk-dur-fast) var(--mk-ease), visibility 0s linear var(--mk-dur-fast);
+}
+.ws-tip__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--mk-text);
+  font-size: 12.5px;
+}
+.ws-tip__head kbd {
+  color: var(--mk-text-faint);
+  font: inherit;
+  font-size: 11px;
+}
+.ws-tip-wrap:hover > .ws-tip,
+.ws-tip-wrap:has(:focus-visible) > .ws-tip {
+  opacity: 1;
+  visibility: visible;
+  translate: -50% 0;
+  transition-delay: 0.35s, 0.35s, 0s;
+}
+.ws-tip-wrap:has(:focus-visible) > .ws-tip {
+  transition-delay: 0s;
+}
+/* The first and last tips line up with the dock's edges, so they stay on a phone's screen. */
+.ws-dock > .ws-tip-wrap:first-child > .ws-tip {
+  left: 0;
+  translate: 0 4px;
+}
+.ws-dock > .ws-tip-wrap:first-child:hover > .ws-tip,
+.ws-dock > .ws-tip-wrap:first-child:has(:focus-visible) > .ws-tip {
+  translate: 0 0;
+}
+.ws-dock > .ws-tip-wrap:last-child > .ws-tip {
+  right: 0;
+  left: auto;
+  translate: 0 4px;
+}
+.ws-dock > .ws-tip-wrap:last-child:hover > .ws-tip,
+.ws-dock > .ws-tip-wrap:last-child:has(:focus-visible) > .ws-tip {
+  translate: 0 0;
+}
+@media (hover: none) {
+  .ws-tip-wrap:hover > .ws-tip {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
 .ws-float--connect {
   z-index: 26;
   top: 64px;
@@ -2509,6 +2611,9 @@ body {
 .ws-template__icon--sparkle {
   background: linear-gradient(135deg, #af52de, #5e5ce6);
 }
+.ws-template__icon--card {
+  background: linear-gradient(135deg, #34c759, #30b0c7);
+}
 .ws-template__icon--cart {
   background: #ff9500;
 }
@@ -2536,7 +2641,7 @@ body {
     left: 8px;
     width: auto;
   }
-  .ws-connpill__state {
+  .ws-connpill__state:not(.is-cta) {
     display: none;
   }
 }
