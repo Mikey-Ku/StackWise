@@ -170,9 +170,9 @@ export const planningSchema = z.object({
    */
   tie_order: z.record(z.string(), z.array(z.string())).default({}),
   /**
-   * The option a part starts with when the person hasn't chosen one: a product decision, not a
-   * score. The rules still check it, it's dropped if it would block the plan, and the Overview
-   * says when another option scores higher, with a button to switch.
+   * The option a part starts with when the person hasn't chosen one: the preference of whoever
+   * runs this StackWise, not a score. Empty in this repo. The rules still check it, it's dropped
+   * if it would block the plan, and the Overview says when another option scores higher.
    */
   starting_picks: z.record(z.string(), z.string()).default({}),
 });

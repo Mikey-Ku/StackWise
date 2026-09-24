@@ -44,11 +44,9 @@ describe("data", () => {
     expect(rec.selection.framework).toBe("nextjs");
   });
 
-  it("starts an AI app with Claude, a product decision in planning.json's starting_picks", () => {
-    const index = indexCatalog(catalog);
-    const rec = recommend(index, { answers: { saves_data: "yes", login: "yes", ai_features: "yes" }, size: "up_to_100", priority: "spend_zero" });
-    expect(rec.selection.ai).toBe("anthropic");
-    expect(index.optionsById.get("anthropic")?.name).toBe("Claude API");
+  it("has no built-in favorite: every part is picked by the rules unless the person or planning.json's starting_picks says otherwise", () => {
+    expect(catalog.planning.starting_picks).toEqual({});
+    expect(indexCatalog(catalog).optionsById.get("anthropic")?.name).toBe("Claude API");
   });
 
   it("has a logo file on disk for every option", () => {

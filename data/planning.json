@@ -152,7 +152,5 @@
       "go-net-http"
     ]
   },
-  "starting_picks": {
-    "ai": "anthropic"
-  }
+  "starting_picks": {}
 }
