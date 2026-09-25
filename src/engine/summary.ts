@@ -23,8 +23,8 @@ export interface PlanBrief {
 
 const STATUS: Record<string, string> = {
   blocked: "doesn't work",
-  missing: "missing",
-  warning: "works with a warning",
+  missing: "missing a service",
+  warning: "works, with a warning",
   unknown: "not verified yet",
 };
 
@@ -69,7 +69,7 @@ export function templateSummary(brief: PlanBrief): string {
   const needs = brief.needs.length ? ` It was shaped by what you said the app needs: ${list(brief.needs)}.` : "";
   const problems = brief.problems.length
     ? `The most important thing to look at: ${brief.problems[0].title.toLowerCase()}. ${brief.problems[0].fix ?? brief.problems[0].explanation}${
-        brief.problems.length > 1 ? ` There ${brief.problems.length === 2 ? "is 1 more thing" : `are ${brief.problems.length - 1} more things`} listed in the planner.` : ""
+        brief.problems.length > 1 ? ` There ${brief.problems.length === 2 ? "is 1 more thing" : `are ${brief.problems.length - 1} more things`} listed in Overview.` : ""
       }`
     : "Every connection in the plan checks out.";
   const cost = `${brief.cost.now}.${brief.cost.next ? ` ${brief.cost.next}.` : ""}`;

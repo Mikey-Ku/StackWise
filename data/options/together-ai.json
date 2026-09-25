@@ -1,0 +1,94 @@
+{
+  "id": "together-ai",
+  "name": "Together AI",
+  "provider": "together-ai",
+  "slots": [
+    "ai"
+  ],
+  "summary": "Together AI serves open models like Llama, Qwen, DeepSeek and gpt-oss through a pay-per-token API.",
+  "website": "https://www.together.ai",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "No free trial; the platform is fully prepaid and needs a positive credit balance.",
+      "source": "https://docs.together.ai/docs/billing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan; you prepay credits (minimum $5 purchase) and pay per token.",
+      "source": "https://docs.together.ai/docs/billing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "The API is compatible with the OpenAI REST API and SDKs (base URL https://api.together.ai/v1), and the models are open, so code can move with a base URL and key change.",
+      "source": "https://docs.together.ai/docs/openai-api-compatibility",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "free_tier": {
+      "value": false,
+      "note": "Together AI does not offer free trials; a minimum $5 credit purchase is required to use the platform.",
+      "source": "https://docs.together.ai/docs/billing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "Official TypeScript SDK is published as the \"together-ai\" npm package.",
+      "source": "https://docs.together.ai/docs/quickstart",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "cheap_model_price": {
+      "value": "Qwen3.8 Flash: $0.09 input / $0.28 output per million tokens",
+      "note": "Cheapest paid serverless chat model listed; Llama 3 8B Instruct Lite is $0.14 input / $0.14 output.",
+      "source": "https://www.together.ai/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Register for a Together AI account.",
+      "env": [],
+      "source": "https://docs.together.ai/docs/quickstart"
+    },
+    {
+      "step": "Buy at least $5 of credit; the platform is prepaid.",
+      "env": [],
+      "source": "https://docs.together.ai/docs/billing"
+    },
+    {
+      "step": "Create an API key on your project's API keys page.",
+      "env": [],
+      "source": "https://docs.together.ai/docs/quickstart"
+    },
+    {
+      "step": "Set the key as an environment variable.",
+      "env": [
+        "TOGETHER_API_KEY"
+      ],
+      "source": "https://docs.together.ai/docs/quickstart"
+    },
+    {
+      "step": "Install the SDK with npm install together-ai.",
+      "env": [],
+      "source": "https://docs.together.ai/docs/quickstart"
+    },
+    {
+      "step": "Call chat completions from a server route.",
+      "env": [],
+      "source": "https://docs.together.ai/docs/quickstart"
+    }
+  ],
+  "builder_notes": [
+    "Keep TOGETHER_API_KEY on the server only; never call the API from client-side code.",
+    "Turn on auto-recharge or watch the credit balance: requests fail once prepaid credit runs out.",
+    "The OpenAI SDK works too, pointed at https://api.together.ai/v1."
+  ]
+}

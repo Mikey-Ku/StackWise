@@ -1,3 +1,5 @@
+import { OWN_PROVIDER } from "./own";
+import { extraResults } from "./extras";
 import {
   evaluateCapabilityRule,
   evaluatePlan,
@@ -144,7 +146,7 @@ function accountsSaved(index: CatalogIndex, selection: Selection): number {
   for (const slot of SLOT_IDS) {
     if (slot === "framework") continue;
     const option = optionIn(index, selection, slot);
-    if (option && !index.catalog.planning.no_account_providers.includes(option.provider)) providers.push(option.provider);
+    if (option && option.provider !== OWN_PROVIDER && !index.catalog.planning.no_account_providers.includes(option.provider)) providers.push(option.provider);
   }
   return providers.length - new Set(providers).size;
 }
@@ -181,6 +183,8 @@ export interface Recommendation {
   needed: SlotId[];
   /** Slots StackWise filled, as opposed to ones the person chose. */
   autoPicked: SlotId[];
+  /** Auto-picked slots filled by planning.json's starting_picks rather than by score. */
+  startedWith: SlotId[];
 }
 
 /**
@@ -190,6 +194,22 @@ export interface Recommendation {
  * partial plan is dropped as soon as even its best possible finish can't beat the best plan found.
  */
 export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selection = {}): Recommendation {
+  const starting = Object.entries(index.catalog.planning.starting_picks) as [SlotId, string][];
+  // Only a fully researched option that fits the part can be a starting pick; anything else is ignored.
+  const fits = (slot: SlotId, id: string) => {
+    const option = index.optionsById.get(id);
+    return Boolean(option && option.coverage === "full" && option.slots.includes(slot));
+  };
+  const starts = Object.fromEntries(starting.filter(([slot, id]) => pinned[slot] === undefined && fits(slot, id))) as Selection;
+  const rec = search(index, input, pinned, starts);
+  // A starting pick never gets to break the plan: if it's blocked, StackWise picks by score instead.
+  const blocked = rec.startedWith.filter((slot) => rec.results.some((r) => r.level === "blocked" && r.slots.includes(slot)));
+  if (blocked.length === 0) return rec;
+  for (const slot of blocked) delete starts[slot];
+  return search(index, input, pinned, starts);
+}
+
+function search(index: CatalogIndex, input: PlanInput, pinned: Selection, starts: Selection): Recommendation {
   const weights = weightsFor(index, input.priority);
   const needed = neededSlots(index, input);
   const wanted = SLOT_IDS.filter((s) => needed.includes(s) || Boolean(pinned[s]));
@@ -198,8 +218,9 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
   const candidates = new Map<SlotId, Option[]>();
   for (const slot of wanted) {
     if (pinned[slot] === "") continue;
-    const list = pinned[slot]
-      ? [index.optionsById.get(pinned[slot]!)].filter((o): o is Option => Boolean(o))
+    const fixed = pinned[slot] || starts[slot];
+    const list = fixed
+      ? [index.optionsById.get(fixed)].filter((o): o is Option => Boolean(o))
       : index.catalog.options.filter((o) => o.coverage === "full" && o.slots.includes(slot));
     if (list.length === 0) continue;
     order.push(slot);
@@ -260,7 +281,7 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
   // running total is exact at every step. A slot can only add that bonus if one of its candidates
   // shares a provider with a candidate in an earlier slot.
   const noAccount = new Set(index.catalog.planning.no_account_providers);
-  const accountOf = (slot: SlotId, option: Option) => (slot === "framework" || noAccount.has(option.provider) ? null : option.provider);
+  const accountOf = (slot: SlotId, option: Option) => (slot === "framework" || option.provider === OWN_PROVIDER || noAccount.has(option.provider) ? null : option.provider);
   const accountGain = Math.max(0, weights.accounts);
   const canShare = order.map((slot, i) => {
     const earlier = new Set(order.slice(0, i).flatMap((s) => candidates.get(s)!.map((o) => accountOf(s, o))));
@@ -282,7 +303,7 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
   const choice: Option[] = [];
   const accounts = new Map<string, number>();
 
-  const search = (depth: number, partial: number) => {
+  const walk = (depth: number, partial: number) => {
     if (depth === order.length) {
       if (partial > best.total + 1e-9) best = { total: partial, choice: [...choice] };
       return;
@@ -299,12 +320,12 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
         accounts.set(account, seen + 1);
       }
       choice.push(option);
-      search(depth + 1, partial + add);
+      walk(depth + 1, partial + add);
       choice.pop();
       if (account !== null) accounts.set(account, accounts.get(account)! - 1);
     }
   };
-  search(0, 0);
+  walk(0, 0);
 
   const selection: Selection = {};
   for (const slot of SLOT_IDS) if (pinned[slot] === "") selection[slot] = "";
@@ -312,13 +333,15 @@ export function recommend(index: CatalogIndex, input: PlanInput, pinned: Selecti
     selection[slot] = best.choice[i]?.id;
   });
 
-  const results = evaluatePlan(index, selection, input);
+  // Extras are the person's own additions: checked with the rest, never part of the search.
+  const results = [...evaluatePlan(index, selection, input), ...extraResults(index, selection, input)];
   return {
     selection,
     results,
     score: scorePlan(index, selection, input, results),
     needed,
     autoPicked: order.filter((s) => !pinned[s]),
+    startedWith: order.filter((s) => !pinned[s] && Boolean(starts[s])),
   };
 }
 
@@ -374,7 +397,8 @@ export interface CloseCall {
    * another slot, fewer problems or a perk with the rest of the plan, some other mix of checks,
    * or nothing at all (a tie broken alphabetically).
    */
-  decidedBy: Criterion | "accounts" | "fewer_problems" | "perks" | "checks" | "tie";
+  /** "starting_pick": planning.json's starting pick, although the runner-up scores higher. */
+  decidedBy: Criterion | "accounts" | "fewer_problems" | "perks" | "checks" | "tie" | "starting_pick";
   /** The perk's title when decidedBy is "perks". */
   perk?: string;
   /** A priority under which the runner-up would win, if any. */
@@ -393,6 +417,11 @@ export function closeCalls(index: CatalogIndex, input: PlanInput, recommendation
     const runner = alts[0];
     if (!runner) continue;
     const margin = Math.abs(runner.delta) < 1e-9 ? 0 : -runner.delta;
+    // A starting pick with a better-scoring option always says so, however big the gap.
+    if (recommendation.startedWith.includes(slot) && margin < -1e-9) {
+      calls.push({ slot, chosen, runnerUp: runner.option, margin, decidedBy: "starting_pick" });
+      continue;
+    }
     if (margin > index.catalog.planning.close_call_margin) continue;
 
     const chosenScores = criterionScores(index, chosen, slot, input);

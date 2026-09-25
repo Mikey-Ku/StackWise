@@ -1,589 +1,663 @@
 {
+  "start_here": {
+    "title": "How a web app fits together",
+    "summary": "Every web app is the same few pieces talking to each other. Know what each piece does and where your secrets live, and most choices get easier.",
+    "layers": [
+      {
+        "name": "Browser",
+        "plain": "The screens people see and click. It runs on their device.",
+        "rule": "Everything sent to the browser is public. Anyone can open the developer tools and read it."
+      },
+      {
+        "name": "Server",
+        "plain": "Your private code. It checks who someone is, reads the database and calls paid services.",
+        "rule": "Secrets and anything that costs money belong here, never in browser code."
+      },
+      {
+        "name": "Database",
+        "plain": "Where your app remembers things between visits: accounts, posts, orders.",
+        "rule": "Decide who may read each row, or anyone who finds the address can."
+      },
+      {
+        "name": "Outside services",
+        "plain": "Other companies' tools you call over the internet: payments, email, AI, maps.",
+        "rule": "Each one adds a key to protect, a bill to watch and something that can go down."
+      },
+      {
+        "name": "Environment variables",
+        "plain": "Settings and keys handed to your app from outside its code, different on your laptop and in production.",
+        "rule": "Keep them out of your code and out of git. Put them in your host's settings instead."
+      }
+    ],
+    "read_more": [
+      { "title": "How the web works", "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Web_standards/How_the_web_works", "source": "MDN" },
+      { "title": "Client-server overview", "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Client-Server_overview", "source": "MDN" },
+      { "title": "The Twelve-Factor App", "url": "https://12factor.net/", "source": "12factor.net" },
+      { "title": "Website security", "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Website_security", "source": "MDN" }
+    ]
+  },
   "slots": {
     "framework": {
-      "what": "The framework is the toolkit your app's code is written in and organized with. It gives your pages, and any server-side code, a shared structure, so you're not wiring up basics like page routing from scratch.",
-      "why": "Every app needs a foundation that turns your idea into screens someone can use, and connects those screens to the rest of your stack. The framework is that foundation, and it shapes what choices the rest of your stack has to support.",
+      "what": "The toolkit your app's code is written in. It gives pages, routing and server code a shared structure.",
+      "why": "It is the foundation every other part plugs into, so it limits which hosts and services fit well.",
       "choosing": [
-        "Whether it has a place for server-only code, so secrets like API keys never sit in the browser",
-        "The language it's written in, and whether that's one you know or want to learn",
-        "How fully your hosting choice supports it, since some frameworks need extra setup on some hosts",
-        "How portable the app would be if you ever wanted to move to a different host"
+        "Does it have server code? You need it for secret keys, payments and AI calls.",
+        "Is it in a language you know or want to learn?",
+        "Does your host support it fully, without extra setup?",
+        "Could you move it to another host later?"
       ],
       "watch_for": [
-        "Picking a framework with no server code, then trying to add payments or a private AI key to it anyway",
-        "Choosing a framework for its popularity without checking that your hosting choice fully supports it"
+        "Picking a browser-only framework, then needing somewhere safe for a payment or AI key.",
+        "Choosing by popularity without checking your host supports it."
       ],
-      "terms": [
-        "server",
-        "environment-variable",
-        "portability",
-        "vendor-lock-in"
+      "terms": ["server", "environment-variable", "portability", "vendor-lock-in"],
+      "read_more": [
+        { "title": "Server and Client Components", "url": "https://nextjs.org/docs/app/getting-started/server-and-client-components", "source": "Next.js docs" },
+        { "title": "Introduction to client-side frameworks", "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Frameworks_libraries/Introduction", "source": "MDN" },
+        { "title": "Rendering on the Web", "url": "https://web.dev/articles/rendering-on-the-web", "source": "web.dev" }
       ]
     },
     "hosting": {
-      "what": "Hosting is the computer, or network of computers, that runs your app around the clock and gives it an address on the internet so anyone can open it.",
-      "why": "Code sitting on your own laptop only works while your laptop is on. Hosting keeps your app running and reachable all the time, for everyone, not just you.",
+      "what": "The computers that run your app all day and give it a public address.",
+      "why": "Your laptop sleeps. A host keeps the app up for everyone, all the time.",
       "choosing": [
-        "How your code runs there: serverless, on a server that stays on, or at the edge, since that affects speed, cost and which features work",
-        "Whether it offers a persistent disk, background workers or scheduled jobs, if your app needs them",
-        "Whether it fully supports the framework you picked",
-        "Whether its free plan allows a commercial app, if you plan to charge people"
+        "How code runs: serverless, an always-on server, or the edge. This changes speed, cost and what works.",
+        "Does it offer a persistent disk, background workers or scheduled jobs, if you need them?",
+        "Does it fully support your framework?",
+        "Does the free plan allow a commercial app?"
       ],
       "watch_for": [
-        "Assuming background work, like sending a batch of emails, keeps running after the request that started it ends, especially on serverless hosting",
-        "Building a live, chat-like feature without checking whether the host can hold connections open for it"
+        "Expecting work to keep running after a serverless request ends. It usually stops.",
+        "Building live chat on a host that can't hold connections open."
       ],
-      "terms": [
-        "serverless",
-        "server",
-        "edge",
-        "cold-start",
-        "persistent-disk",
-        "websocket",
-        "connection-pooling",
-        "portability"
+      "terms": ["serverless", "server", "edge", "cold-start", "persistent-disk", "websocket", "connection-pooling", "portability"],
+      "read_more": [
+        { "title": "Serverless Architectures", "url": "https://martinfowler.com/articles/serverless.html", "source": "martinfowler.com" },
+        { "title": "What is a web server?", "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Web_mechanics/What_is_a_web_server", "source": "MDN" },
+        { "title": "Vercel Functions", "url": "https://vercel.com/docs/functions", "source": "Vercel docs" },
+        { "title": "Processes: stateless apps", "url": "https://12factor.net/processes", "source": "12factor.net" }
       ]
     },
     "domain": {
-      "what": "A domain is your app's own web address, like yourapp.com, instead of the free address your host gives you, like yourapp.vercel.app.",
-      "why": "A domain makes your app easier to find, share and trust, and most email services require you to verify one before they'll send messages that look like they come from your app instead of a generic provider.",
+      "what": "Your app's own address, like yourapp.com, instead of the free one your host gives you.",
+      "why": "People trust and remember a real name, and email services need a verified domain to send as you.",
       "choosing": [
-        "What the domain costs to renew every year after the first, since the first year is often discounted",
-        "Whether WHOIS privacy is free, so your name and home address aren't left in a public directory",
-        "Whether you can manage DNS records for the domain in the same account for free, since you'll need that to point it at your host and email service",
-        "How easy the domain would be to move to a different registrar later, and any lock period right after you buy it"
+        "The renewal price, not just the discounted first year.",
+        "Is WHOIS privacy free?",
+        "Can you manage DNS records in the same account for free?",
+        "How easy is it to transfer out later?"
       ],
       "watch_for": [
-        "Buying a domain but never adding the DNS records a host or email service asks for, so the site or outgoing email never actually starts working",
-        "Budgeting for a discounted first-year price and being surprised by a much higher renewal price the year after",
-        "Assuming the domain itself lets an app send email from its own name; most email services still require verifying that exact domain separately"
+        "Buying a domain and never adding the DNS records your host and email service ask for.",
+        "Budgeting for the first-year price and getting surprised at renewal.",
+        "Assuming owning the domain lets you send email from it. You still verify it with the email service."
       ],
-      "terms": [
-        "registrar",
-        "dns",
-        "whois-privacy",
-        "domain-verification"
+      "terms": ["registrar", "dns", "whois-privacy", "domain-verification"],
+      "read_more": [
+        { "title": "What is a domain name?", "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Web_mechanics/What_is_a_domain_name", "source": "MDN" },
+        { "title": "What happens when you update your DNS?", "url": "https://jvns.ca/blog/how-updating-dns-works/", "source": "Julia Evans" },
+        { "title": "Information for domain name registrants", "url": "https://www.icann.org/registrants", "source": "ICANN" }
       ]
     },
     "database": {
-      "what": "The database is where anything your app needs to remember lives: posts, profiles, bookings, whatever people create or you store about them.",
-      "why": "Without a database, an app forgets everything the moment the page refreshes. Anything that should still be there tomorrow needs a database to hold it.",
+      "what": "Where your app keeps anything it must remember: accounts, posts, bookings.",
+      "why": "Without one, everything disappears when the page reloads.",
       "choosing": [
-        "Whether it's relational, document-based, or simple key-value, since that shapes how you model your data",
-        "Whether it works well from serverless code, or needs connection pooling to avoid running out of connections",
-        "Whether it can push live updates to the browser on its own, if your app needs things to update instantly",
-        "Whether it has a mobile SDK, if a phone app might read from it directly later"
+        "Relational (tables) or document (JSON-like)? Relational suits most apps.",
+        "Does it work from serverless code, or does it need connection pooling?",
+        "Can it push live updates, if your app needs them?",
+        "Does it have a mobile SDK, if a phone app may come later?"
       ],
       "watch_for": [
-        "Storing data in a plain file when your host has no persistent disk, so it disappears on the next deploy",
-        "Skipping the serverless-friendly check, then hitting dropped connections once real traffic shows up"
+        "Saving data to a file on a host with no persistent disk. It vanishes on the next deploy.",
+        "Leaving tables readable by anyone because access rules felt like extra work.",
+        "Running out of connections once real traffic arrives on serverless hosting."
       ],
-      "terms": [
-        "relational-database",
-        "document-database",
-        "connection-pooling",
-        "realtime",
-        "persistent-disk",
-        "sdk",
-        "row-level-security",
-        "portability"
+      "terms": ["relational-database", "document-database", "connection-pooling", "realtime", "persistent-disk", "sdk", "row-level-security", "portability"],
+      "read_more": [
+        { "title": "PostgreSQL tutorial: concepts", "url": "https://www.postgresql.org/docs/current/tutorial-concepts.html", "source": "PostgreSQL docs" },
+        { "title": "Row Level Security", "url": "https://supabase.com/docs/guides/database/postgres/row-level-security", "source": "Supabase docs" },
+        { "title": "Connection pooling", "url": "https://neon.com/docs/connect/connection-pooling", "source": "Neon docs" },
+        { "title": "Prisma's Data Guide", "url": "https://www.prisma.io/dataguide", "source": "Prisma" }
       ]
     },
     "login": {
-      "what": "Login is how people prove who they are in your app: creating an account, signing in, and staying signed in across visits.",
-      "why": "As soon as an app shows someone their own data, like their own orders or their own profile, it needs a reliable way to know who's asking.",
+      "what": "How people create an account, sign in and stay signed in.",
+      "why": "Once someone sees their own data, your app must know who is asking.",
       "choosing": [
-        "Whether it comes with ready-made sign-in screens, or you'll be building your own",
-        "Whether it supports sign-in with another account through OAuth, or passwordless sign-in with a magic link",
-        "Whether it has a mobile SDK, if a phone app is possible later",
-        "How cleanly it connects to your database, since data rules usually need to check who's logged in"
+        "Ready-made sign-in screens, or build your own?",
+        "Sign in with Google or GitHub (OAuth), and email links (magic links)?",
+        "A mobile SDK, if a phone app may come later?",
+        "Does your database know who is logged in, so its access rules work?"
       ],
       "watch_for": [
-        "Building login before picking a database, then finding the two don't share who's logged in cleanly",
-        "Skipping the mobile SDK check, then having to rebuild login for a future phone app"
+        "Writing your own password storage. Use a login service instead.",
+        "Picking login and database separately, then finding they don't share who is logged in.",
+        "Checking permissions only in the browser. The server or database must check too."
       ],
-      "terms": [
-        "oauth",
-        "magic-link",
-        "row-level-security",
-        "sdk",
-        "portability"
+      "terms": ["oauth", "magic-link", "row-level-security", "sdk", "portability"],
+      "read_more": [
+        { "title": "Authentication Cheat Sheet", "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html", "source": "OWASP" },
+        { "title": "Session Management Cheat Sheet", "url": "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html", "source": "OWASP" },
+        { "title": "OAuth 2 Simplified", "url": "https://aaronparecki.com/oauth-2-simplified/", "source": "Aaron Parecki" }
       ]
     },
     "files": {
-      "what": "File storage is where uploaded photos, videos, PDFs and other files are kept. It's separate from the database, which is built for structured data, not large files.",
-      "why": "Anything a person uploads, from a profile picture to a resume, needs somewhere durable to live, and a way to be served back out to whoever is allowed to see it.",
+      "what": "Where uploads live: photos, videos, PDFs. Kept apart from the database, which is built for rows, not large files.",
+      "why": "Uploads need a durable home and a way to serve them only to the people allowed to see them.",
       "choosing": [
-        "Whether browsers can upload straight to storage with a signed URL, or files have to pass through your own server first",
-        "Whether it charges for egress, meaning people downloading files, not just storing them",
-        "Whether files are served through a CDN, which matters for how fast they load for people far from the storage location",
-        "How you'll control who can see each file, especially anything private"
+        "Can browsers upload straight to storage with a signed URL?",
+        "Does it charge for downloads (egress), not just storage?",
+        "Are files served through a CDN?",
+        "How do you keep private files private?"
       ],
       "watch_for": [
-        "Routing large uploads, like videos, through your own server, where size and time limits can cut them off",
-        "Making every uploaded file public by default because private access felt like extra work"
+        "Sending big uploads through your own server, where size and time limits cut them off.",
+        "Making every file public because private access felt like extra work.",
+        "Trusting a file's name or type as sent by the browser."
       ],
-      "terms": [
-        "signed-url",
-        "egress",
-        "cdn",
-        "portability"
+      "terms": ["signed-url", "egress", "cdn", "portability"],
+      "read_more": [
+        { "title": "File Upload Cheat Sheet", "url": "https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html", "source": "OWASP" },
+        { "title": "Upload and download with presigned URLs", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html", "source": "AWS docs" },
+        { "title": "Storage", "url": "https://supabase.com/docs/guides/storage", "source": "Supabase docs" }
       ]
     },
     "payments": {
-      "what": "Payments is how your app charges people and keeps track of what they've paid for, whether that's a one-time purchase or a recurring subscription.",
-      "why": "Handling card numbers yourself is both hard and risky. A payment provider takes on the security-sensitive part, and tells your app when a payment succeeds so it can unlock whatever was paid for.",
+      "what": "How your app charges people, once or on a subscription, and knows what they paid for.",
+      "why": "Handling card numbers yourself is risky and regulated. A provider takes that on and tells your app when a payment succeeds.",
       "choosing": [
-        "Whether it's a merchant of record, which changes who's responsible for sales tax and VAT",
-        "Whether it supports subscriptions, if you plan to bill people on a recurring basis",
-        "What it charges per payment, since that eats into every sale",
-        "How much rework switching providers later would take"
+        "Is it a merchant of record? That decides who handles sales tax and VAT.",
+        "Does it support subscriptions?",
+        "What does each sale cost in fees?",
+        "How hard would switching be later?"
       ],
       "watch_for": [
-        "Putting a secret key in browser code instead of keeping it in server-only environment variables",
-        "Forgetting to handle the provider's webhooks, so a successful payment never actually unlocks access"
+        "Putting the secret key in browser code.",
+        "Unlocking access on the checkout redirect instead of the webhook. Redirects get skipped; webhooks arrive.",
+        "Not verifying webhook signatures, so anyone can fake a payment."
       ],
-      "terms": [
-        "merchant-of-record",
-        "sales-tax",
-        "subscription",
-        "secret-key",
-        "publishable-key",
-        "webhook",
-        "environment-variable",
-        "portability"
+      "terms": ["merchant-of-record", "sales-tax", "subscription", "secret-key", "publishable-key", "webhook", "environment-variable", "portability"],
+      "read_more": [
+        { "title": "Fulfill orders", "url": "https://docs.stripe.com/checkout/fulfillment", "source": "Stripe docs" },
+        { "title": "Receive events in your webhook endpoint", "url": "https://docs.stripe.com/webhooks", "source": "Stripe docs" },
+        { "title": "What is a merchant of record?", "url": "https://www.paddle.com/blog/what-is-merchant-of-record", "source": "Paddle" },
+        { "title": "The fraud supply chain", "url": "https://www.bitsaboutmoney.com/archive/the-fraud-supply-chain/", "source": "Patrick McKenzie, Bits about Money" }
       ]
     },
     "ai": {
-      "what": "This is the AI model provider your app calls to do things like answer questions, summarize text, or generate images, instead of a feature you'd have to build entirely yourself.",
-      "why": "Training your own AI model is out of reach for almost anyone building an app. Calling a provider's model over an API gets you AI features without needing to be an AI researcher.",
+      "what": "The AI model provider your app calls to answer, summarize, extract or generate.",
+      "why": "You get AI features through an API without training a model yourself.",
       "choosing": [
-        "Whether it has a free tier for building and testing before you commit to paying",
-        "Whether it offers a range of models, so simple tasks can use a cheaper, faster one instead of the most expensive",
-        "Whether it has an SDK for the language your server code is written in",
-        "What happens when you hit a rate limit, and how easy that is to handle"
+        "Is there a free tier or credits for building?",
+        "A range of models, so simple tasks use a cheaper, faster one?",
+        "An SDK for your server's language?",
+        "Clear rate limits, and a way to handle hitting them?"
       ],
       "watch_for": [
-        "Calling the AI provider directly from browser code, which exposes your API key to anyone who looks",
-        "Defaulting to the most capable model for every request instead of matching the model to the task"
+        "Calling the provider from browser code, which exposes your key.",
+        "Using the biggest model for every request.",
+        "Trusting text from users or web pages as instructions. That is prompt injection."
       ],
-      "terms": [
-        "free-tier",
-        "model",
-        "token",
-        "rate-limit",
-        "api-key",
-        "secret-key",
-        "sdk"
+      "terms": ["free-tier", "model", "token", "rate-limit", "api-key", "secret-key", "sdk"],
+      "read_more": [
+        { "title": "Building effective agents", "url": "https://www.anthropic.com/engineering/building-effective-agents", "source": "Anthropic" },
+        { "title": "Production best practices", "url": "https://developers.openai.com/api/docs/guides/production-best-practices", "source": "OpenAI docs" },
+        { "title": "Prompt injection (series)", "url": "https://simonwillison.net/series/prompt-injection/", "source": "Simon Willison" },
+        { "title": "Top 10 risks for LLM applications", "url": "https://genai.owasp.org/llm-top-10/", "source": "OWASP" }
       ]
     },
     "scraping": {
-      "what": "This is the tool your app uses to pull content or data from other websites, like fetching a product page's price or turning an article into text your app can use.",
-      "why": "Websites are built for people to read in a browser, not for programs to read directly. A scraping tool fetches the page and, often, renders any JavaScript on it, so your app can work with the content instead of a browser window.",
+      "what": "A tool that fetches other websites and turns them into data your app can use.",
+      "why": "Sites are built for people, not programs. A scraper loads the page, often runs its JavaScript, and hands back the content.",
       "choosing": [
-        "Whether it renders JavaScript, since many modern sites show little or nothing until JavaScript runs",
-        "Whether it hands back clean text or Markdown ready for an AI model, instead of raw HTML you'd have to clean up yourself",
-        "Whether you're paying for a hosted service, or running the scraping yourself and only paying for your own server",
-        "How it prices JavaScript-heavy pages, since those often cost more than a plain page"
+        "Does it run JavaScript? Many sites are empty without it.",
+        "Does it return clean text or Markdown ready for an AI model?",
+        "Hosted service, or run it yourself?",
+        "What do JavaScript-heavy pages cost?"
       ],
       "watch_for": [
-        "Scraping a site that blocks it in robots.txt or forbids it in its terms of service; check both before you build on top of a site",
-        "Pulling in personal data (names, emails, profile photos) without a real reason and a plan for storing it safely",
-        "Hammering a site with requests fast enough to look like an attack; slow down and handle rate limits instead of retrying instantly"
+        "Ignoring robots.txt or a site's terms. Check both before you build on a site.",
+        "Collecting personal data with no reason and no plan to protect it.",
+        "Sending requests so fast you look like an attack. Slow down and back off."
       ],
-      "terms": [
-        "headless-browser",
-        "robots-txt",
-        "rate-limit",
-        "api-key"
+      "terms": ["headless-browser", "robots-txt", "rate-limit", "api-key"],
+      "read_more": [
+        { "title": "Introduction to robots.txt", "url": "https://developers.google.com/search/docs/crawling-indexing/robots/intro", "source": "Google Search Central" },
+        { "title": "RFC 9309: Robots Exclusion Protocol", "url": "https://www.rfc-editor.org/info/rfc9309/", "source": "IETF" },
+        { "title": "Playwright: getting started", "url": "https://playwright.dev/docs/intro", "source": "Playwright docs" }
       ]
     },
     "jobs": {
-      "what": "Background jobs are pieces of work your app runs outside of answering someone's request directly, like resizing an uploaded image, sending a batch of emails, or cleaning up old data overnight.",
-      "why": "Some work is too slow to make a person wait for while a page loads, and some work needs to happen on a timer with nobody around to click a button. Background jobs handle both.",
+      "what": "Work your app does outside a page request: resizing images, sending batches of email, nightly cleanup.",
+      "why": "Slow work shouldn't make people wait, and timed work needs to run with nobody clicking.",
       "choosing": [
-        "Whether jobs can be scheduled with cron, for things that should run automatically on a timer",
-        "Whether failed jobs land in a queue that can retry them, instead of silently disappearing",
-        "Whether your hosting can run background workers at all, since not every host can",
-        "How you'll see whether a job succeeded or failed, since nobody's watching it happen live"
+        "Can jobs run on a schedule (cron)?",
+        "Do failed jobs retry from a queue instead of vanishing?",
+        "Can your host run background workers at all?",
+        "Can you see whether each job succeeded?"
       ],
       "watch_for": [
-        "Running slow work directly inside a web request, where a host's time limit can cut it off halfway through",
-        "Assuming a job ran successfully with no way to check, then discovering later that it silently failed"
+        "Doing slow work inside a web request, where a time limit cuts it off halfway.",
+        "Jobs that do damage when retried, like charging twice. Make each job safe to run again.",
+        "No alerts, so a failing job goes unnoticed for weeks."
       ],
-      "terms": [
-        "background-job",
-        "cron",
-        "queue"
+      "terms": ["background-job", "cron", "queue"],
+      "read_more": [
+        { "title": "Cron Jobs", "url": "https://vercel.com/docs/cron-jobs", "source": "Vercel docs" },
+        { "title": "Crontab Guru", "url": "https://crontab.guru/", "source": "crontab.guru" },
+        { "title": "Background job best practices", "url": "https://github.com/sidekiq/sidekiq/wiki/Best-Practices", "source": "Sidekiq wiki" }
       ]
     },
     "email": {
-      "what": "Email is how your app sends messages to people automatically: a welcome email, a password reset, a receipt, a daily digest.",
-      "why": "Some things only work by reaching someone outside your app, in their inbox, like confirming an address or recovering a lost password. A personal email account isn't built to send these reliably or in volume.",
+      "what": "How your app sends messages on its own: welcome emails, password resets, receipts.",
+      "why": "Some things only work through an inbox. A personal email account isn't built to send them reliably.",
       "choosing": [
-        "Whether it's built for transactional email, sent because of something one person did, rather than bulk marketing sends",
-        "Whether it supports SMTP, an API, or both, depending on how your server code is set up to send mail",
-        "Whether it requires domain verification, and how much setup that takes before your first email can send",
-        "How you'll find out if an email bounced or landed in spam"
+        "Built for transactional email, not bulk marketing?",
+        "SMTP, an API, or both?",
+        "How much DNS setup before the first send?",
+        "Will it tell you about bounces and spam complaints?"
       ],
       "watch_for": [
-        "Sending from an unverified domain, so messages land in spam or get rejected outright",
-        "Using a personal inbox or its everyday account to send app email instead of a dedicated sending service"
+        "Sending from an unverified domain, so mail lands in spam or bounces.",
+        "Sending app email from a personal inbox.",
+        "Mixing marketing and password resets on one address, so spam complaints block both."
       ],
-      "terms": [
-        "transactional-email",
-        "smtp",
-        "domain-verification"
+      "terms": ["transactional-email", "smtp", "domain-verification"],
+      "read_more": [
+        { "title": "Email sender guidelines", "url": "https://support.google.com/mail/answer/81126", "source": "Gmail Help" },
+        { "title": "Verified domains", "url": "https://resend.com/docs/dashboard/domains/introduction", "source": "Resend docs" },
+        { "title": "SMTP", "url": "https://developer.mozilla.org/en-US/docs/Glossary/SMTP", "source": "MDN" }
       ]
     },
     "analytics": {
-      "what": "Analytics is how your app counts visitors and sees what they do once they arrive, like which pages they view, how they got there, and which buttons or features they actually use.",
-      "why": "You can't improve what you can't see. Analytics turns guesses about your app into real numbers, so you know whether people are finding it, where they give up, and whether a new feature gets used at all.",
+      "what": "Counts visitors and shows what they do: pages viewed, where they came from, what they click.",
+      "why": "It replaces guesses with numbers: are people finding the app, and where do they give up?",
       "choosing": [
-        "Whether it needs cookies, which decides whether your site needs a cookie consent banner",
-        "Whether it can track events like sign-ups and button clicks, not just which pages get viewed",
-        "How generous the free plan really is, since some tools give a real free tier and others only a trial before billing starts",
-        "How easily you could take your data with you if you switched tools later"
+        "Does it use cookies? That decides whether you need a consent banner.",
+        "Can it track events like sign-ups, not just page views?",
+        "Is the free plan permanent or a trial?",
+        "Can you export your data if you switch?"
       ],
       "watch_for": [
-        "Turning on a cookie-based analytics tool without asking visitors first, which privacy rules in places like the EU and UK require",
-        "Sending personal details like names or emails as event properties instead of sticking to page views and simple actions",
-        "Assuming a free trial is a permanent free plan, then getting billed once it ends"
+        "Setting analytics cookies before visitors agree. EU and UK rules require consent first.",
+        "Sending names or emails as event data.",
+        "Treating a free trial as a free plan."
       ],
-      "terms": [
-        "page-view",
-        "event",
-        "cookie-consent",
-        "portability"
+      "terms": ["page-view", "event", "cookie-consent", "portability"],
+      "read_more": [
+        { "title": "Cookies and similar technologies", "url": "https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/cookies-and-similar-technologies/", "source": "ICO (UK)" },
+        { "title": "Product analytics", "url": "https://posthog.com/docs/product-analytics", "source": "PostHog docs" },
+        { "title": "Data policy", "url": "https://plausible.io/data-policy", "source": "Plausible" }
       ]
     },
     "monitoring": {
-      "what": "Error monitoring catches the moments your app breaks for a real person, somewhere you can't see, and tells you: what broke, the exact code line, and often what that person was doing right before it happened.",
-      "why": "Once an app is out of your own hands, most bugs happen on someone else's device, in a browser tab you'll never open. Without a monitoring tool, you only hear about a bug if that person emails you, and most people just leave instead.",
+      "what": "Catches errors real people hit and tells you what broke, on which line, and what they did first.",
+      "why": "Most bugs happen on devices you'll never see. Without monitoring, you hear about them only if someone emails you.",
       "choosing": [
-        "Whether the free plan's error allowance realistically covers your app's size, and what happens once you go over it",
-        "Whether it can show you what a person actually did right before the error, not just the stack trace",
-        "Whether it also checks that your app is reachable at all, separate from catching errors inside it",
-        "How much of the setup an AI coding tool can do for you versus needing your own account and keys"
+        "Does the free error allowance fit your app?",
+        "Does it show what the person did before the error?",
+        "Does it also check the app is up at all?",
+        "How much can your AI builder set up for you?"
       ],
       "watch_for": [
-        "Only installing it in the browser and missing errors that happen in your server code, which a person never sees but your app still fails on",
-        "Turning on session replay without masking personal data first, so private details end up stored in a third party's recordings"
+        "Installing it only in the browser and missing server errors.",
+        "Not uploading source maps, so every error points at minified code.",
+        "Turning on session replay without masking personal data."
       ],
-      "terms": [
-        "source-map",
-        "session-replay",
-        "uptime",
-        "environment-variable"
+      "terms": ["source-map", "session-replay", "uptime", "environment-variable"],
+      "read_more": [
+        { "title": "Monitoring distributed systems", "url": "https://sre.google/sre-book/monitoring-distributed-systems/", "source": "Google SRE book" },
+        { "title": "Source maps for JavaScript", "url": "https://docs.sentry.io/platforms/javascript/sourcemaps/", "source": "Sentry docs" },
+        { "title": "Session Replay privacy", "url": "https://docs.sentry.io/platforms/javascript/session-replay/privacy/", "source": "Sentry docs" }
       ]
     },
     "mobile": {
-      "what": "This is whether, and how, your app could become a phone app in an app store later, in addition to or instead of a website.",
-      "why": "A website and a phone app aren't built the same way. Deciding this early affects which login, database and other services make sense, since not all of them work the same way from a phone app.",
+      "what": "Whether your app could also ship as a phone app in the App Store or Google Play.",
+      "why": "Phone apps are built differently, and not every login or database service works from one.",
       "choosing": [
-        "Whether the services in your stack, like login and database, have an SDK for phone apps, or only for the web",
-        "Whether you'd build with something like React Native, which shares patterns with web code, or a separate native app",
-        "How app store review works for the kind of app you're building, especially if it takes payments",
-        "Whether sign-in with another account through OAuth works the same way inside a phone app as it does on the web"
+        "Do your login and database have phone SDKs, not just web ones?",
+        "React Native (shares patterns with web code) or fully native?",
+        "What do store rules say about your payments?",
+        "Does sign-in with Google or Apple work inside the app?"
       ],
       "watch_for": [
-        "Picking a login or database with no mobile SDK, then having to rebuild that piece for the phone app",
-        "Assuming a phone app is just the website in a wrapper, when app store rules can require real changes, especially around payments"
+        "Picking a login or database with no mobile SDK, then rebuilding it for the phone app.",
+        "Assuming a phone app is the website in a wrapper. Store review can require real changes, especially for payments."
       ],
-      "terms": [
-        "sdk",
-        "react-native",
-        "app-store",
-        "oauth"
+      "terms": ["sdk", "react-native", "app-store", "oauth"],
+      "read_more": [
+        { "title": "App Review Guidelines", "url": "https://developer.apple.com/app-store/review/guidelines/", "source": "Apple Developer" },
+        { "title": "Introduction to React Native", "url": "https://reactnative.dev/docs/getting-started", "source": "React Native docs" },
+        { "title": "Expo documentation", "url": "https://docs.expo.dev/", "source": "Expo" },
+        { "title": "Developer Policy Center", "url": "https://play.google/developer-content-policy/", "source": "Google Play" }
       ]
     },
     "automations": {
-      "what": "An automation service runs workflows between your app and other tools, like posting a message to Slack when someone books, or adding a row to a spreadsheet when a payment clears.",
-      "why": "Connecting to another tool yourself means learning its API, storing its keys and handling its errors. An automation service already knows hundreds of tools, so a workflow can take minutes instead of a day of code.",
+      "what": "A service that runs workflows between your app and other tools, like posting to Slack when someone books.",
+      "why": "It already knows hundreds of tools, so a workflow takes minutes instead of a day of code.",
       "choosing": [
-        "How it prices: by task, by run, or free when you run it yourself",
-        "Whether your app can start a workflow by calling a webhook, and whether a workflow can call your app back",
-        "Whether a step can run your own code for anything the built-in steps don't cover",
-        "Whether you can run it on your own server, if your data can't leave it"
+        "Priced per task, per run, or free when self-hosted?",
+        "Can your app start a workflow with a webhook, and can a workflow call your app back?",
+        "Can a step run your own code?",
+        "Can you self-host it, if data must stay on your servers?"
       ],
       "watch_for": [
-        "Pricing that counts every step, so a busy workflow costs far more than it looked",
-        "Business logic that ends up spread across workflows nobody can find later"
+        "Per-step pricing that makes a busy workflow expensive.",
+        "Core business logic hidden in workflows nobody can find later."
       ],
-      "terms": [
-        "webhook",
-        "rate-limit"
+      "terms": ["webhook", "rate-limit"],
+      "read_more": [
+        { "title": "What are webhooks?", "url": "https://zapier.com/blog/what-are-webhooks/", "source": "Zapier" },
+        { "title": "n8n documentation", "url": "https://docs.n8n.io/", "source": "n8n docs" }
       ]
     },
     "data_apis": {
-      "what": "Outside data is information your app reads from another company's service, like live sports scores, weather, maps or prices.",
-      "why": "Your app can show things it doesn't own, but the service decides the rules: whether you need a key, how often you can ask, and whether the API is official or can change overnight.",
+      "what": "Information your app reads from another company's service: scores, weather, maps, prices.",
+      "why": "You can show data you don't own, but the provider sets the rules: keys, limits and how stable it is.",
       "choosing": [
-        "Whether the API is official and documented, or unofficial and likely to break without warning",
-        "Whether it needs a key, which has to stay on your server",
-        "How often you're allowed to ask, and what happens past the limit",
-        "What your app shows when the service is slow or down"
+        "Official and documented, or unofficial and likely to break?",
+        "Does it need a key? Keep it on your server.",
+        "How often can you call it, and what happens past the limit?",
+        "What does your app show when it's slow or down?"
       ],
       "watch_for": [
-        "Calling the API on every page view instead of caching the answer",
-        "Relying on an unofficial API as if it came with a promise"
+        "Calling it on every page view instead of caching the answer.",
+        "Treating an unofficial API as if it came with a promise."
       ],
-      "terms": [
-        "api-key",
-        "rate-limit"
+      "terms": ["api-key", "rate-limit"],
+      "read_more": [
+        { "title": "HTTP caching", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching", "source": "MDN" },
+        { "title": "429 Too Many Requests", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/429", "source": "MDN" },
+        { "title": "API Security Top 10", "url": "https://owasp.org/API-Security/", "source": "OWASP" }
       ]
     }
   },
   "terms": {
     "serverless": {
       "term": "Serverless",
-      "plain": "Serverless means your code only runs when it's needed, instead of sitting on a computer that runs all the time. The hosting provider starts a fresh copy of your code for each request and shuts it down when it's done, like a pop-up stand that opens only when a customer walks up.",
-      "matters": "It usually costs little when nobody is using your app, but each request possibly starting from scratch can make things like holding a database connection open harder."
+      "plain": "Your code runs only when a request arrives, on machines the host manages. Nothing sits running between requests.",
+      "matters": "Cheap when idle, but long tasks and open database connections are harder.",
+      "read_more": [{ "title": "Serverless Architectures", "url": "https://martinfowler.com/articles/serverless.html", "source": "martinfowler.com" }]
     },
     "server": {
       "term": "Server",
-      "plain": "A server is a computer that stays on and runs your app's private code, the part that talks to databases, checks passwords and calls paid APIs. That's different from the browser, which only runs code the user can see and inspect.",
-      "matters": "Anything secret, like a database password or a payment API key, has to run on a server. Put it in browser code instead, and anyone can read it."
+      "plain": "A computer running your app's private code: the part that reads the database, checks passwords and calls paid APIs.",
+      "matters": "Secrets must live here. Put them in browser code and anyone can read them.",
+      "read_more": [{ "title": "Introduction to the server side", "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Introduction", "source": "MDN" }]
     },
     "cold-start": {
       "term": "Cold start",
-      "plain": "A cold start is the short delay before serverless code runs for the first time in a while, because the host has to start up a fresh copy before it can handle the request. Once that copy is warm it usually answers quickly, until it's been idle long enough to shut down again.",
-      "matters": "It can make the first request after a quiet stretch feel slow, which matters most for anything people expect to feel instant, like loading a page."
+      "plain": "The delay when serverless code runs after sitting idle, while the host starts a fresh copy.",
+      "matters": "The first visit after a quiet spell can feel slow.",
+      "read_more": [{ "title": "Lambda execution environment lifecycle", "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html", "source": "AWS docs" }]
     },
     "edge": {
       "term": "Edge",
-      "plain": "Edge means your code runs on servers spread around the world, close to wherever the person using your app happens to be, instead of in one central location. It's like having a small shop in every neighborhood instead of one big warehouse across town.",
-      "matters": "It can make responses feel faster for a spread-out audience, but edge runtimes usually support fewer features than a full server does."
+      "plain": "Code that runs on servers spread around the world, close to each visitor.",
+      "matters": "Faster for a global audience, but edge runtimes support fewer features than a full server.",
+      "read_more": [{ "title": "Edge Runtime", "url": "https://vercel.com/docs/functions/runtimes/edge", "source": "Vercel docs" }]
     },
     "persistent-disk": {
       "term": "Persistent disk",
-      "plain": "A persistent disk is storage space attached to a server that keeps its files even after the app restarts or a new version is deployed. Without one, anything your app writes to disk while running can vanish the next time it restarts.",
-      "matters": "If any part of your stack keeps its data in a file instead of a hosted database, it needs a persistent disk, or that data disappears."
+      "plain": "Storage attached to a server that survives restarts and deploys.",
+      "matters": "Without one, anything your app writes to a file disappears on the next deploy."
     },
     "environment-variable": {
       "term": "Environment variable",
-      "plain": "An environment variable is a setting you give your app from outside its code, like a password slipped under the door instead of written on the door itself. You can set different values for each place your app runs, without changing the code.",
-      "matters": "Keys and passwords belong in environment variables, not typed into the code you write, so they don't end up visible to anyone who can see that code."
+      "plain": "A setting passed to your app from outside its code, with different values on your laptop and in production.",
+      "matters": "Keys and passwords go here, never in code or git.",
+      "read_more": [{ "title": "Config", "url": "https://12factor.net/config", "source": "12factor.net" }]
     },
     "api-key": {
       "term": "API key",
-      "plain": "An API key is a password-like string that identifies your app to another company's service, so it knows who's making each request and who to bill for it. Whoever holds the key can use it to act as your app.",
-      "matters": "If an API key ends up somewhere a stranger can read it, like browser code, they can use it and run up your bill."
+      "plain": "A password-like string that identifies your app to another service and decides who gets billed.",
+      "matters": "Whoever has it can act as your app and run up your bill.",
+      "read_more": [{ "title": "Secrets Management Cheat Sheet", "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html", "source": "OWASP" }]
     },
     "secret-key": {
       "term": "Secret key",
-      "plain": "A secret key is an API key meant to stay on your server only, and never get sent to a browser. It's often paired with a separate publishable key that's safe to expose.",
-      "matters": "A secret key with real power, like moving money, should only ever be read by server code, kept in an environment variable."
+      "plain": "An API key that must stay on your server. Often paired with a publishable key that is safe to share.",
+      "matters": "A leaked secret key can move money or spend credits. Keep it in an environment variable.",
+      "read_more": [{ "title": "Best practices for managing secret API keys", "url": "https://docs.stripe.com/keys-best-practices", "source": "Stripe docs" }]
     },
     "publishable-key": {
       "term": "Publishable key",
-      "plain": "A publishable key is the public-facing half of an API key pair, safe to put in browser code because it can only do limited things, like starting a checkout, not completing one on its own.",
-      "matters": "Knowing which key is publishable and which is secret keeps you from accidentally exposing the wrong one."
+      "plain": "The public half of a key pair. Safe in browser code because it can only start actions, not complete them.",
+      "matters": "Knowing which key is which stops you exposing the wrong one.",
+      "read_more": [{ "title": "API keys", "url": "https://docs.stripe.com/keys", "source": "Stripe docs" }]
     },
     "webhook": {
       "term": "Webhook",
-      "plain": "A webhook is a message another service sends to your server automatically when something happens on its side, like a payment succeeding or a delivery failing. Instead of your app repeatedly asking whether it happened yet, the other service tells you the moment it does.",
-      "matters": "Features like unlocking access right after a payment usually depend on your server correctly receiving and handling a webhook."
+      "plain": "A message another service sends to your server when something happens, like a payment succeeding.",
+      "matters": "Unlocking what someone paid for usually depends on handling this message correctly.",
+      "read_more": [{ "title": "What are webhooks?", "url": "https://zapier.com/blog/what-are-webhooks/", "source": "Zapier" }]
     },
     "relational-database": {
       "term": "Relational database",
-      "plain": "A relational database stores information in tables of rows and columns, like a set of connected spreadsheets, and lets you define exactly how those tables relate, such as which orders belong to which customer.",
-      "matters": "It's a good fit when your data has clear relationships and you want the database itself to enforce rules, like every order needing a real customer."
+      "plain": "Stores data in linked tables of rows and columns, like connected spreadsheets. Postgres and MySQL are examples.",
+      "matters": "A good default. The database itself enforces rules, like every order having a real customer.",
+      "read_more": [{ "title": "PostgreSQL tutorial: concepts", "url": "https://www.postgresql.org/docs/current/tutorial-concepts.html", "source": "PostgreSQL docs" }]
     },
     "document-database": {
       "term": "Document database",
-      "plain": "A document database stores each record as a flexible, self-contained document, closer to a JSON file than a spreadsheet row. Different documents in the same collection don't all have to share the same fields.",
-      "matters": "It's forgiving when your data's shape keeps changing early on, since you don't have to plan every field in advance."
+      "plain": "Stores each record as a flexible, JSON-like document. Records don't need the same fields.",
+      "matters": "Forgiving while your data's shape changes, but relationships take more work."
     },
     "row-level-security": {
       "term": "Row-level security",
-      "plain": "Row-level security lets a database enforce, for every row of data, who is allowed to read or change it, based on who's logged in. It's a check built into the database itself, not just your app's code.",
-      "matters": "It keeps protecting your data even if there's a bug in your app's own permission checks, because the database refuses the request either way."
+      "plain": "Rules inside the database that decide, row by row, who can read or change data.",
+      "matters": "Protects data even when your app's own checks have a bug.",
+      "read_more": [{ "title": "Row Security Policies", "url": "https://www.postgresql.org/docs/current/ddl-rowsecurity.html", "source": "PostgreSQL docs" }]
     },
     "connection-pooling": {
       "term": "Connection pooling",
-      "plain": "Connection pooling shares a small set of open database connections across many requests, instead of every request opening a brand new one. It's like a stand of shared taxis waiting to be reused, instead of everyone buying their own car.",
-      "matters": "Serverless hosting can start many copies of your code at once, and without pooling, each one opening its own connection can hit the database's connection limit."
+      "plain": "Sharing a small set of open database connections across many requests.",
+      "matters": "Serverless code can open hundreds of connections at once. Pooling keeps you under the database's limit.",
+      "read_more": [{ "title": "Connection pooling", "url": "https://neon.com/docs/connect/connection-pooling", "source": "Neon docs" }]
     },
     "realtime": {
       "term": "Realtime",
-      "plain": "Realtime means a service can push changes out to everyone watching the moment they happen, instead of waiting for someone to refresh or ask again. A chat where new messages just appear without reloading is realtime.",
-      "matters": "Without realtime built into your database or host, showing instant updates takes extra work, like running a separate service just to push changes out."
+      "plain": "Changes pushed to everyone watching the moment they happen, with no refresh.",
+      "matters": "Without it built in, live updates need an extra service."
     },
     "websocket": {
       "term": "WebSocket",
-      "plain": "A WebSocket is a connection between a browser and a server that both sides keep open, so either one can send a message at any moment, instead of the browser always asking first. A regular web request is closer to sending a letter and waiting for a reply.",
-      "matters": "Live features like chat or multiplayer usually need something that can hold WebSocket connections open, and not every host can do that."
+      "plain": "A connection the browser and server keep open so either side can send at any time.",
+      "matters": "Chat and multiplayer need a host that can hold these open.",
+      "read_more": [{ "title": "The WebSocket API", "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API", "source": "MDN" }]
     },
     "egress": {
       "term": "Egress",
-      "plain": "Egress is data leaving a service, most often files or data being downloaded by users. Some storage and hosting providers charge for it separately from the cost of just storing the data.",
-      "matters": "A file that's cheap to store can still get expensive if a lot of people download it, because of egress."
+      "plain": "Data leaving a service, usually people downloading files.",
+      "matters": "Cheap storage can still cost a lot if many people download the files."
     },
     "cdn": {
       "term": "CDN",
-      "plain": "A CDN, short for content delivery network, is a network of servers around the world that keep copies of your files, so people can download them from somewhere nearby instead of one far-away server.",
-      "matters": "Serving images and files through a CDN usually makes an app feel faster for people far from your main server or database."
+      "plain": "A content delivery network: servers worldwide that keep copies of your files near visitors.",
+      "matters": "Images and files load faster for people far from your main server.",
+      "read_more": [{ "title": "CDN", "url": "https://developer.mozilla.org/en-US/docs/Glossary/CDN", "source": "MDN" }]
     },
     "merchant-of-record": {
       "term": "Merchant of record",
-      "plain": "A merchant of record is the company that's legally the seller in a transaction, even though someone bought it through your app. It takes on calculating, collecting and sending off sales tax and VAT for wherever the customer is.",
-      "matters": "Without a merchant of record, figuring out sales tax across different regions is your job, not your payment provider's."
+      "plain": "The company that is legally the seller. It calculates, collects and pays sales tax and VAT for you.",
+      "matters": "Without one, tax in every country you sell to is your job.",
+      "read_more": [{ "title": "What is a merchant of record?", "url": "https://www.paddle.com/blog/what-is-merchant-of-record", "source": "Paddle" }]
     },
     "sales-tax": {
       "term": "Sales tax",
-      "plain": "Sales tax, or VAT outside the US, is a percentage a government adds to a sale, and the right amount depends on where the buyer is, not where you are. Someone has to calculate it, collect it, and send it to the correct government.",
-      "matters": "If your payment provider isn't a merchant of record, handling sales tax correctly as you sell to different places is on you."
+      "plain": "Tax added to a sale (VAT outside the US). The rate depends on where the buyer is, not where you are.",
+      "matters": "Unless your provider is a merchant of record, you calculate, collect and file it.",
+      "read_more": [{ "title": "Stripe Tax", "url": "https://docs.stripe.com/tax", "source": "Stripe docs" }]
     },
     "subscription": {
       "term": "Subscription",
-      "plain": "A subscription is a payment that repeats automatically on a schedule, like every month or year, until it's cancelled, instead of a single one-time charge.",
-      "matters": "Recurring billing needs a payment provider that supports subscriptions specifically, including retrying failed renewal charges and handling cancellations."
+      "plain": "A charge that repeats on a schedule until cancelled.",
+      "matters": "Needs a provider that retries failed renewals and handles cancellations.",
+      "read_more": [{ "title": "How subscriptions work", "url": "https://docs.stripe.com/billing/subscriptions/overview", "source": "Stripe docs" }]
     },
     "free-tier": {
       "term": "Free tier",
-      "plain": "A free tier is a version of a paid service you can use at no cost, usually with limits on how much you can use before you have to start paying.",
-      "matters": "A free tier lets you build and test before you know whether the app is worth paying to run, though it's worth checking what changes once you outgrow it."
+      "plain": "A no-cost plan with usage limits.",
+      "matters": "Good for building and testing. Check what you pay once you pass the limits."
     },
     "rate-limit": {
       "term": "Rate limit",
-      "plain": "A rate limit caps how many requests you're allowed to make to a service in a given stretch of time. Go over it, and the extra requests get rejected until the limit resets.",
-      "matters": "A busy moment in your app, like a lot of people using an AI feature at once, can hit a rate limit, so your app needs to handle that failure instead of just breaking."
+      "plain": "A cap on how many requests you can make in a time window. Extra requests are rejected.",
+      "matters": "Your app must wait and retry, not crash, when it hits one.",
+      "read_more": [{ "title": "429 Too Many Requests", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/429", "source": "MDN" }]
     },
     "token": {
       "term": "Token",
-      "plain": "A token is a small chunk of text an AI model reads or writes, roughly a word or part of a word. AI providers usually measure both usage and price in tokens rather than in whole requests.",
-      "matters": "Both what you send a model and what it sends back cost tokens, so longer conversations and documents cost more to run."
+      "plain": "A small chunk of text, often part of a word, that AI models read and write. Usage is priced in tokens.",
+      "matters": "Input and output both count, so long prompts and documents cost more.",
+      "read_more": [{ "title": "Glossary", "url": "https://platform.claude.com/docs/en/about-claude/glossary", "source": "Claude docs" }]
     },
     "model": {
       "term": "Model",
-      "plain": "A model is the specific AI system your request goes to. Providers usually offer several, trading off speed, cost and capability against each other.",
-      "matters": "Picking a model more powerful, and more expensive, than a task actually needs is one of the easiest ways to overspend on AI features."
+      "plain": "The specific AI system a request goes to. Providers offer several, trading speed and cost against capability.",
+      "matters": "Using a bigger model than the task needs is the easiest way to overspend.",
+      "read_more": [{ "title": "Models overview", "url": "https://platform.claude.com/docs/en/models/overview", "source": "Claude docs" }]
     },
     "cron": {
       "term": "Cron",
-      "plain": "Cron is a way of telling a computer to run a piece of code automatically on a schedule, like every night at midnight, with no person or button click starting it. The name comes from an old Unix tool that did exactly this.",
-      "matters": "Anything that should happen on its own on a timer, like a daily digest email, needs something that can run cron-style scheduled code."
+      "plain": "A schedule for running code automatically, like every night at midnight. Named after an old Unix tool.",
+      "matters": "Anything that runs on a timer, like a daily digest, needs it.",
+      "read_more": [{ "title": "Crontab Guru", "url": "https://crontab.guru/", "source": "crontab.guru" }]
     },
     "background-job": {
       "term": "Background job",
-      "plain": "A background job is work your app does outside of answering a person's request directly, like resizing an image or sending a batch of emails after someone clicks a button. The person doesn't have to sit and wait for it to finish.",
-      "matters": "Anything slow shouldn't run while someone is staring at a loading page. It should be handed off as a background job instead."
+      "plain": "Work done outside a page request, so nobody waits on it.",
+      "matters": "Slow work belongs here, not in the request that loads a page."
     },
     "queue": {
       "term": "Queue",
-      "plain": "A queue is a waiting line for work that still needs to be done: jobs get added at one end and are handled one at a time from the other, in order. A well-built queue can retry a job automatically if it fails, instead of losing it.",
-      "matters": "Queues make background work reliable, since a job that fails partway is still sitting in the queue to try again, rather than gone for good."
+      "plain": "A waiting line of jobs, handled in order, retried if they fail.",
+      "matters": "A job that fails partway is still there to try again, not lost."
     },
     "transactional-email": {
       "term": "Transactional email",
-      "plain": "Transactional email is a message your app sends automatically because of something one specific person did, like resetting a password or confirming an order. It's different from a newsletter sent to everyone at once.",
-      "matters": "Transactional email needs to arrive quickly and reliably, since people are often actively waiting on it, like a sign-up code."
+      "plain": "Email sent because one person did something: a password reset, a receipt, a sign-up code.",
+      "matters": "People are waiting for it, so it must arrive fast and not land in spam."
     },
     "smtp": {
       "term": "SMTP",
-      "plain": "SMTP is the standard protocol computers have used for decades to hand mail off between servers so it reaches an inbox, the way the postal system uses one standard process that works no matter who mailed the letter. Most email-sending services let you send through SMTP, through their own API, or both.",
-      "matters": "You don't need to understand SMTP deeply, but it's the older, universal option, useful as a fallback if a nicer method doesn't fit your setup."
+      "plain": "The standard protocol mail servers use to hand email to each other.",
+      "matters": "The universal fallback when a service's own API doesn't fit your setup.",
+      "read_more": [{ "title": "SMTP", "url": "https://developer.mozilla.org/en-US/docs/Glossary/SMTP", "source": "MDN" }]
     },
     "domain-verification": {
       "term": "Domain verification",
-      "plain": "Domain verification is proving to an email service that you really control the domain name you want to send from, usually by adding a specific record to that domain's DNS settings. It stops anyone from sending email pretending to be from a domain they don't own.",
-      "matters": "Without it, email you send is more likely to land in spam, or the service may not let you send from your own domain at all."
+      "plain": "Proving you control a domain, usually by adding DNS records (SPF, DKIM) the service gives you.",
+      "matters": "Without it, your email lands in spam or is refused.",
+      "read_more": [{ "title": "Email sender guidelines", "url": "https://support.google.com/mail/answer/81126", "source": "Gmail Help" }]
     },
     "sdk": {
       "term": "SDK",
-      "plain": "An SDK, short for software development kit, is a ready-made package of code a provider gives you so you can use their service from your app without building that connection yourself from scratch.",
-      "matters": "A service with an SDK for the platform you're building on, like a phone app, saves you from writing and maintaining that connection code yourself."
+      "plain": "A software development kit: a provider's ready-made code for using their service from your app.",
+      "matters": "One for your platform, web or phone, saves you writing and maintaining that code."
     },
     "react-native": {
       "term": "React Native",
-      "plain": "React Native is a framework for building phone apps using patterns from web development, so some of the same skills and logic can carry over from a website to an iPhone or Android app.",
-      "matters": "If a phone app is a possibility later, tools that share ground with React Native, or services with a React Native SDK, can save you from starting over."
+      "plain": "A framework for building iPhone and Android apps with React, the same patterns many web apps use.",
+      "matters": "Lets skills and some logic carry over from a website to a phone app.",
+      "read_more": [{ "title": "Introduction to React Native", "url": "https://reactnative.dev/docs/getting-started", "source": "React Native docs" }]
     },
     "app-store": {
       "term": "App store",
-      "plain": "An app store, like Apple's App Store or Google Play, is where people find and download phone apps, and both review every app before letting it in. That review can include checking how you handle payments and personal data.",
-      "matters": "Publishing a phone app means planning for app store review and rules, not just finishing the code."
+      "plain": "Apple's App Store or Google Play. Both review every app, including how it takes payments and handles data.",
+      "matters": "Shipping a phone app means planning for review, not just finishing the code.",
+      "read_more": [{ "title": "App Review Guidelines: payments", "url": "https://developer.apple.com/app-store/review/guidelines/#payments", "source": "Apple Developer" }]
     },
     "oauth": {
       "term": "OAuth",
-      "plain": "OAuth is a way to log in to your app using an account from somewhere else, like an email or social account, without ever giving your app that other service's password. Your app is simply told that it's really them, once the person approves it there.",
-      "matters": "It's usually faster for people to sign up with a button than a form, since there's no new password to create or remember."
+      "plain": "Signing in with an account from elsewhere, like Google, without your app ever seeing that password.",
+      "matters": "A button is faster than a form, and there is no new password to forget.",
+      "read_more": [{ "title": "OAuth 2 Simplified", "url": "https://aaronparecki.com/oauth-2-simplified/", "source": "Aaron Parecki" }]
     },
     "magic-link": {
       "term": "Magic link",
-      "plain": "A magic link is a one-time sign-in link sent to someone's email that logs them in when they click it, instead of them typing a password. It works because only the real owner of that inbox can click it.",
-      "matters": "It removes passwords entirely for the people who use it, which also removes the risk of someone reusing a weak or stolen one."
+      "plain": "A one-time sign-in link sent by email. Clicking it signs you in, no password.",
+      "matters": "No passwords means none to reuse or steal."
     },
     "signed-url": {
       "term": "Signed URL",
-      "plain": "A signed URL is a link to a private file that works temporarily because it carries a code proving it was approved, rather than the file being made public to anyone with the link forever. It usually stops working after a set stretch of time.",
-      "matters": "Signed URLs let a browser upload or download a private file directly, without every byte having to pass through your own server first."
+      "plain": "A temporary link to a private file, carrying proof it was approved. It expires.",
+      "matters": "Browsers upload and download private files directly, without passing every byte through your server.",
+      "read_more": [{ "title": "Upload and download with presigned URLs", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html", "source": "AWS docs" }]
     },
     "portability": {
       "term": "Portability",
-      "plain": "Portability is how easily you could swap one part of your stack for another later, if you needed to. A highly portable choice uses common, standard patterns, while a less portable one ties your app closely to that one provider's own way of doing things.",
-      "matters": "Portability rarely matters most when you're just trying to ship. It starts to matter if a provider changes its pricing, or your app outgrows what they offer."
+      "plain": "How easily you could swap one part for another later. Standard tools move easily; provider-only features don't.",
+      "matters": "Rarely urgent at launch. It matters when a price changes or you outgrow a plan.",
+      "read_more": [{ "title": "Backing services", "url": "https://12factor.net/backing-services", "source": "12factor.net" }]
     },
     "vendor-lock-in": {
       "term": "Vendor lock-in",
-      "plain": "Vendor lock-in is how stuck you'd be with one provider, where switching away would mean rewriting a real chunk of your app instead of just changing a setting. It comes from leaning heavily on features only that one provider offers.",
-      "matters": "Some lock-in is a fair trade for building faster. It's worth knowing where you have it, so a price change or outage elsewhere doesn't blindside you."
+      "plain": "How stuck you are with one provider. Leaving would mean rewriting code, not changing a setting.",
+      "matters": "Often a fair trade for speed. Know where you have it."
     },
     "registrar": {
       "term": "Registrar",
-      "plain": "A registrar is the company you buy a domain name from and that keeps your registration up to date each year, similar to renewing a lease. ICANN accredits registrars and sets rules they all have to follow, like handing over an auth code if you want to leave.",
-      "matters": "Which registrar you use decides what a domain costs to renew, whether WHOIS privacy and DNS management are free, and how easy it is to leave later."
+      "plain": "The company you buy and renew a domain from. ICANN accredits them and sets the rules.",
+      "matters": "It sets your renewal price, whether privacy and DNS are free, and how easy leaving is.",
+      "read_more": [{ "title": "Information for domain name registrants", "url": "https://www.icann.org/registrants", "source": "ICANN" }]
     },
     "dns": {
       "term": "DNS",
-      "plain": "DNS is the address book that turns a domain name like yourapp.com into the technical details that point it at your host, your email service, or anything else. You manage it by adding records, like an A or CNAME record, in your registrar's dashboard or wherever the domain's nameservers point.",
-      "matters": "Buying a domain doesn't connect it to anything by itself. You still have to add the DNS records your host and your email service ask for before the site or outgoing email actually works."
+      "plain": "The internet's address book. Records like A, CNAME and MX point your domain at your host and email service.",
+      "matters": "A new domain points nowhere until you add the records your host and email service give you.",
+      "read_more": [{ "title": "Mess with DNS", "url": "https://messwithdns.net/", "source": "Julia Evans" }]
     },
     "whois-privacy": {
       "term": "WHOIS privacy",
-      "plain": "WHOIS is the public directory of who owns each domain. WHOIS privacy, sometimes called domain privacy, swaps your real name, address, phone and email in that directory for the registrar's own placeholder details.",
-      "matters": "Without it, your home address and phone number can become public information the moment you register a domain. Most registrars now include this for free, but it's worth checking."
+      "plain": "Replaces your name, address and phone in the public domain directory with the registrar's details.",
+      "matters": "Without it, your home address can be public. Most registrars include it free."
     },
     "headless-browser": {
       "term": "Headless browser",
-      "plain": "A headless browser is a real web browser, like Chrome, running without a visible window, so a program can control it and read what it renders. It's how a scraping tool sees pages that only fill in after JavaScript runs.",
-      "matters": "It's slower and more expensive than a plain page fetch, since it has to actually load and run the page like a browser would, not just download text."
+      "plain": "A real browser, like Chrome, running without a window so a program can control it.",
+      "matters": "Needed for JavaScript-heavy pages, but slower and costlier than a plain fetch.",
+      "read_more": [{ "title": "Playwright: getting started", "url": "https://playwright.dev/docs/intro", "source": "Playwright docs" }]
     },
     "robots-txt": {
       "term": "robots.txt",
-      "plain": "robots.txt is a small text file a website publishes to say which pages automated tools are and aren't welcome to visit. It's a request, not a lock, so software can technically ignore it, but a well-behaved scraper checks it first.",
-      "matters": "Ignoring it can get your app's traffic blocked, and going against a site's stated wishes can cause real problems if that site's terms of service also forbid scraping."
+      "plain": "A file where a site says which pages bots may visit. A request, not a lock.",
+      "matters": "Ignoring it can get you blocked, and matters more if the site's terms also forbid scraping.",
+      "read_more": [{ "title": "Introduction to robots.txt", "url": "https://developers.google.com/search/docs/crawling-indexing/robots/intro", "source": "Google Search Central" }]
     },
     "page-view": {
       "term": "Page view",
-      "plain": "A page view is one visit to one page of your website, counted each time someone loads it. It's the most basic unit analytics tools count, like a single tally mark for each page someone opens.",
-      "matters": "Page views tell you how much traffic a page gets, but not what someone did there, so most tools pair them with events for the fuller picture."
+      "plain": "One load of one page, the most basic thing analytics counts.",
+      "matters": "Shows traffic, not what people did. Pair it with events."
     },
     "event": {
       "term": "Event",
-      "plain": "An event is a specific action someone takes in your app, like clicking a button, finishing a signup form, or completing a purchase, tracked separately from which page they were on.",
-      "matters": "Page views tell you people showed up; events tell you what they actually did, which is what you need to know whether a feature works."
+      "plain": "One action someone takes, like signing up or clicking Buy, tracked on its own.",
+      "matters": "Events tell you whether a feature is used, not just visited."
     },
     "cookie-consent": {
       "term": "Cookie consent",
-      "plain": "Cookie consent is a website visitor's clear yes to letting a site store a cookie in their browser, usually given by clicking something like Accept on a banner before any non-essential cookie is set.",
-      "matters": "In the EU and UK, cookies that aren't strictly necessary for the site to work, including most analytics cookies, need this consent before they're set, not after."
+      "plain": "A visitor's clear yes before non-essential cookies are set, usually through a banner.",
+      "matters": "The EU and UK require it before most analytics cookies, not after.",
+      "read_more": [{ "title": "Cookies and similar technologies", "url": "https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/cookies-and-similar-technologies/", "source": "ICO (UK)" }]
     },
     "source-map": {
       "term": "Source map",
-      "plain": "A source map is a file that maps the compressed, hard-to-read code your app actually runs in production back to the real code you wrote. Without one, an error monitoring tool can only show you a wall of minified code instead of your own file names and line numbers.",
-      "matters": "If source maps aren't uploaded, every error report points at meaningless compressed code, and finding the actual bug takes far longer."
+      "plain": "A file that maps the compressed code your app runs back to the code you wrote.",
+      "matters": "Without it, error reports point at unreadable minified code.",
+      "read_more": [{ "title": "Source map", "url": "https://developer.mozilla.org/en-US/docs/Glossary/Source_map", "source": "MDN" }]
     },
     "session-replay": {
       "term": "Session replay",
-      "plain": "Session replay records what a person clicked, typed and saw in your app, and plays it back like a video so you can watch what led up to an error instead of only reading a stack trace.",
-      "matters": "It turns a confusing bug report into something you can watch happen, but it also means a recording tool is capturing real user activity, so masking personal data before it's recorded matters."
+      "plain": "A video-like recording of what someone clicked and saw before an error.",
+      "matters": "Shows the bug happening, but records real people. Mask personal data first.",
+      "read_more": [{ "title": "Session Replay privacy", "url": "https://docs.sentry.io/platforms/javascript/session-replay/privacy/", "source": "Sentry docs" }]
     },
     "uptime": {
       "term": "Uptime checks",
-      "plain": "An uptime check is a request a monitoring service sends to your app from the outside, on a timer, just to see if it answers at all. It's different from error monitoring, which only catches problems your app already knows it hit.",
-      "matters": "If your whole app goes down, like a crashed server or an expired certificate, there's no error for your app to report since it can't run at all. Only an outside check catches that."
+      "plain": "An outside service requests your app on a timer to see if it answers.",
+      "matters": "When the whole app is down it can't report its own error. Only an outside check notices."
     }
   }
 }

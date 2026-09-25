@@ -17,7 +17,10 @@ export function Logo({ logo, name, size = 20, status }: { logo: LogoFile | undef
   return (
     <span className="ws-logo-wrap" style={style}>
       <span className={cx("ws-logo", file ? `ws-logo--${logo!.from}` : "ws-logo--letter")} aria-hidden>
-        {file ? (
+        {file && logo!.dark ? (
+          // A near-black mark is drawn in the text color, so it doesn't vanish in dark mode.
+          <span className="ws-logo__mono" style={{ maskImage: `url(/logos/${file})`, WebkitMaskImage: `url(/logos/${file})` }} />
+        ) : file ? (
           // eslint-disable-next-line @next/next/no-img-element -- tiny static icons; next/image's resizing adds nothing here
           <img src={`/logos/${file}`} alt="" loading="lazy" decoding="async" draggable={false} onError={() => setBroken(file)} />
         ) : (
@@ -61,12 +64,16 @@ export function StatGrid({ stats }: { stats: Stat[] }) {
   );
 }
 
+/**
+ * The one set of words for a verdict, everywhere a person reads one. The engine's sentences
+ * (VERDICT_WORDS in talk.ts, the decision record, the summary) use the same words in lowercase.
+ */
 export const VERDICT_UI: Record<Verdict, { label: string; short: string; badge: string }> = {
   blocked: { label: "Doesn't work", short: "Doesn't work", badge: "mk-badge--danger" },
-  missing: { label: "Missing a piece", short: "Missing", badge: "mk-badge--danger" },
-  warning: { label: "Works with a warning", short: "Warning", badge: "mk-badge--warn" },
+  missing: { label: "Missing a service", short: "Missing", badge: "mk-badge--danger" },
+  warning: { label: "Works, with a warning", short: "Warning", badge: "mk-badge--warn" },
   unknown: { label: "Not verified yet", short: "Not verified", badge: "ws-badge--unknown" },
-  info: { label: "Good to know", short: "Note", badge: "mk-badge--accent" },
+  info: { label: "Works, with a note", short: "Note", badge: "mk-badge--accent" },
   works: { label: "Works", short: "Works", badge: "mk-badge--ok" },
 };
 
@@ -117,6 +124,12 @@ export function useMediaQuery(query: string): boolean {
     [query],
   );
   return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches, () => false);
+}
+
+/** The undo shortcut on this computer, for the end of a toast: "⌘Z undoes it." */
+export function undoHint(): string {
+  const mac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
+  return `${mac ? "\u2318" : "Ctrl+"}Z undoes it.`;
 }
 
 export function cx(...parts: (string | false | null | undefined)[]): string {

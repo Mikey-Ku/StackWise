@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { answerFromFacts, evaluatePlan, inSentence, planInput, talkBrief, worstLevel, type SlotId } from "@/engine";
+import { answerFromFacts, evaluatePlan, inSentence, planInput, questionFocus, talkBrief, worstLevel, type SlotId } from "@/engine";
 import { agentName, pairInstructions } from "@/mcp/pairing";
+import { AnswererMark } from "./AnswererMark";
 import { answererLogo, providerLabel, recipientsFor, pickDefault, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
 import { Icon } from "./icons";
@@ -10,7 +11,7 @@ import type { AiStatus, ProviderInfo } from "./Planner";
 import { toSharedPlan, type ChatTurn } from "./store";
 import type { AgentMessage, ClaudeActivity, Pairing } from "./usePairing";
 import { newId, type PlanModel } from "./usePlans";
-import { Logo, VerdictBadge, copyText, cx, type Verdict } from "./ui";
+import { Logo, VerdictBadge, copyText, cx, undoHint, type Verdict } from "./ui";
 
 /**
  * The one place to talk about the plan: a floating panel over the canvas, opened with Cmd+K, the
@@ -20,8 +21,8 @@ import { Logo, VerdictBadge, copyText, cx, type Verdict } from "./ui";
  *   - a coding agent in a terminal (Claude Code, Codex, Gemini CLI). The message waits in the
  *     shared plan's inbox until the agent picks it up with wait_for_message; it works in the repo
  *     and answers with send_message.
- *   - a built-in model with a key in .env.local (Claude today; OpenAI and Gemini are listed as
- *     coming soon). It answers from StackWise's facts and checks, never from memory.
+ *   - a built-in AI with a key (Claude, OpenAI, Gemini and others). It answers from StackWise's
+ *     facts and checks, never from memory.
  *   - StackWise's facts, with no AI at all.
  * Suggested notes and switches only change the plan when the person accepts them, as one
  * undoable step, and a switch always shows the verdict StackWise's rules give it.
@@ -42,6 +43,8 @@ interface TalkResponse {
   by: "ai" | "facts";
   provider?: ProviderInfo["id"];
   reply: string;
+  /** The part the answer is about, when the question named another one. */
+  about?: SlotId;
   proposal?: { text: string; summary: string };
   swap?: { optionId: string; name: string; verdict: Verdict };
   note?: string;
@@ -119,7 +122,7 @@ function Turn({ model, turn, ai, onToast }: { model: PlanModel; turn: ChatTurn; 
               className="mk-btn mk-btn--primary"
               onClick={() => {
                 dispatch({ type: "useNote", slot, text: turn.proposal!.text, mode: "replace", by: turn.role === "claude" ? "claude" : "you", optionId, at: now(), turnId: turn.id });
-                onToast("The note is updated. Undo reverses it.");
+                onToast(`Note updated. ${undoHint()}`);
               }}
             >
               {hasNote ? "Replace my note" : "Use as the note"}
@@ -130,7 +133,7 @@ function Turn({ model, turn, ai, onToast }: { model: PlanModel; turn: ChatTurn; 
                 className="mk-btn mk-btn--secondary"
                 onClick={() => {
                   dispatch({ type: "useNote", slot, text: turn.proposal!.text, mode: "append", by: turn.role === "claude" ? "claude" : "you", optionId, at: now(), turnId: turn.id });
-                  onToast("Added to the note. Undo reverses it.");
+                  onToast(`Added to the note. ${undoHint()}`);
                 }}
               >
                 Add to my note
@@ -154,14 +157,14 @@ function Turn({ model, turn, ai, onToast }: { model: PlanModel; turn: ChatTurn; 
             <strong>{swapOption.name}</strong>
             {swapVerdict && <VerdictBadge level={swapVerdict} short />}
           </div>
-          <p className="mk-hint">That verdict comes from StackWise&apos;s rules, checked against the rest of your plan just now.</p>
+          <p className="mk-hint">Checked by StackWise&apos;s rules, not the AI.</p>
           <div className="mk-row mk-gap-2 mk-wrap mk-sm">
             <button
               type="button"
               className="mk-btn mk-btn--primary"
               onClick={() => {
                 dispatch({ type: "useSwap", slot, optionId: swapOption.id, turnId: turn.id });
-                onToast(`Switched to ${swapOption.name}. Undo reverses it.`);
+                onToast(`Switched to ${swapOption.name}. ${undoHint()}`);
               }}
             >
               Switch to {swapOption.name}
@@ -237,19 +240,28 @@ function ActivityRow({ activity }: { activity: ClaudeActivity }) {
   );
 }
 
+/** The one-line command that adds StackWise's MCP server, for agents whose CLI has one. The rest get the address. */
+const ADD_COMMANDS: Record<string, (url: string) => string> = {
+  "claude-code": (url) => `claude mcp add --transport http --scope user stackwise ${url}`,
+  codex: (url) => `codex mcp add stackwise --url ${url}`,
+  "gemini-cli": (url) => `gemini mcp add --transport http --scope user stackwise ${url}`,
+  "qwen-code": (url) => `qwen mcp add --transport http --scope user stackwise ${url}`,
+};
+
 /** How to get an agent listening, shown when the picked agent isn't. */
 export function ConnectCard({ recipient, pairing, onToast }: { recipient: Recipient; pairing: Pairing; onToast: (message: string) => void }) {
   const id = recipient.id.slice("agent:".length);
   const url = `${window.location.origin}/api/mcp`;
   const claude = id === "claude-code";
-  const add = claude ? `claude mcp add --transport http --scope user whystack ${url}` : url;
+  const command = ADD_COMMANDS[id]?.(url);
+  const add = command ?? url;
   const copy = async (text: string, done: string) => onToast((await copyText(text)) ? done : text);
   const title =
     recipient.state === "stopped"
-      ? `${recipient.label} stopped listening after a while with no messages.`
+      ? `${recipient.label} stopped listening.`
       : recipient.state === "connected"
-        ? `${recipient.label} has used StackWise but isn't listening.`
-        : `${recipient.label} isn't connected yet.`;
+        ? `${recipient.label} isn't listening.`
+        : `${recipient.label} isn't set up yet.`;
 
   return (
     <div className="ws-connect">
@@ -257,23 +269,23 @@ export function ConnectCard({ recipient, pairing, onToast }: { recipient: Recipi
       <ol>
         {recipient.state === "not-connected" && (
           <li>
-            <span>{claude ? "Add StackWise to Claude Code once:" : `Add StackWise's MCP server to ${recipient.label} once, at this address:`}</span>
-            <button type="button" className="ws-agent__cmd" onClick={() => void copy(add, claude ? "Copied. Run it in a terminal." : "Copied the MCP address.")}>
+            <span>{command ? "Run this once in a terminal:" : `Connect ${recipient.label} to StackWise once. Add this address:`}</span>
+            <button type="button" className="ws-agent__cmd" onClick={() => void copy(add, command ? "Copied. Run it in a terminal." : "Copied the MCP address.")}>
               <code>{add}</code>
               <span className="mk-hint">Copy</span>
             </button>
           </li>
         )}
         <li>
-          <span>{claude ? "In Claude Code, run the pair command:" : `Paste the pairing instructions into ${recipient.label}:`}</span>
+          <span>{claude ? "Then run this in Claude Code:" : `Then paste this into ${recipient.label}:`}</span>
           {claude ? (
-            <button type="button" className="ws-agent__cmd" onClick={() => void copy("/mcp__whystack__pair", "Copied. Paste it into Claude Code.")}>
-              <code>/mcp__whystack__pair</code>
+            <button type="button" className="ws-agent__cmd" onClick={() => void copy("/mcp__stackwise__pair", "Copied. Paste it into Claude Code.")}>
+              <code>/mcp__stackwise__pair</code>
               <span className="mk-hint">Copy</span>
             </button>
           ) : (
             <button type="button" className="ws-agent__cmd" onClick={() => void copy(pairInstructions(id), `Copied. Paste it into ${recipient.label}.`)}>
-              <code>You&apos;re paired with StackWise... (the whole loop)</code>
+              <code>Pairing instructions</code>
               <span className="mk-hint">Copy</span>
             </button>
           )}
@@ -282,13 +294,13 @@ export function ConnectCard({ recipient, pairing, onToast }: { recipient: Recipi
       {!pairing.enabled && (
         <label className="ws-agent__toggle">
           <span className="mk-stack mk-gap-1">
-            <strong>Share this plan with your agents</strong>
-            <span className="mk-hint">Needed for them to read it. Sending a message turns it on.</span>
+            <strong>Share this plan with agents</strong>
+            <span className="mk-hint">Agents can only read a shared plan. Sending a message turns this on.</span>
           </span>
           <input type="checkbox" role="switch" className="ws-switch" checked={pairing.enabled} onChange={(e) => pairing.setEnabled(e.target.checked)} />
         </label>
       )}
-      <span className="mk-hint">You can write now: the message waits until {recipient.label} listens.</span>
+      <span className="mk-hint">Write now. It waits until {recipient.label} listens.</span>
     </div>
   );
 }
@@ -401,7 +413,7 @@ export function AskPanel({
 
   const ask = async (text: string) => {
     const q = text.trim();
-    if (!q || busy || recipient.state === "soon") return;
+    if (!q || busy) return;
     setQuestion("");
 
     if (agent) {
@@ -419,15 +431,20 @@ export function AskPanel({
     const provider = recipient.group === "api" ? (recipient.id.slice("api:".length) as ProviderInfo["id"]) : undefined;
     if (q === EXPLAIN) return explain(factsOnly, provider);
     const shared = toSharedPlan(plan);
+    // A question can name another part or service ("Supabase instead of Firebase for the database?"): it's about that part.
+    const focus = questionFocus(index, shared, slot, q);
+    const about = focus.slot;
+    if (about !== slot) onSlot(about);
     // Only the recent turns about this part go along, so a long chat about other parts costs nothing extra.
     const history = plan.chat
-      .filter((t) => t.about === slot)
+      .filter((t) => t.about === about)
       .slice(-HISTORY_TURNS)
       .map((t) => ({ role: t.role, text: t.text }));
-    say("you", q);
+    say("you", q, { about });
     setBusy(true);
     const answer = (body: Pick<TalkResponse, "reply" | "proposal" | "provider"> & { by: TalkResponse["by"]; swapId?: string }) =>
       say(body.by === "ai" ? "claude" : "facts", body.reply, {
+        about,
         ...(body.provider ? { by: body.provider } : {}),
         ...(body.proposal ? { proposal: { ...body.proposal, status: "open" as const } } : {}),
         ...(body.swapId ? { swap: { optionId: body.swapId, status: "open" as const } } : {}),
@@ -440,9 +457,9 @@ export function AskPanel({
       if (body.note) onToast(body.note);
     } catch {
       // The server is unreachable: StackWise's facts still answer, right here in the browser.
-      const local = answerFromFacts(talkBrief(index, shared, slot), q);
+      const local = answerFromFacts(talkBrief(index, shared, about, focus.mentioned), q);
       answer({ by: "facts", reply: local.reply, proposal: local.proposal, swapId: local.swap });
-      onToast("Couldn't reach StackWise's server, so this was answered in the browser from StackWise's facts.");
+      onToast("Couldn't reach StackWise's server. Answered here from StackWise's facts.");
     } finally {
       setBusy(false);
     }
@@ -461,14 +478,13 @@ export function AskPanel({
     const entry = (r: Recipient): MenuItem => ({
       label: r.label,
       lead: answererLogo(r.id) ? (
-        // eslint-disable-next-line @next/next/no-img-element -- a committed brand icon
-        <img className="ws-menu-logo" src={answererLogo(r.id)!} alt="" />
+        <AnswererMark id={r.id} className="ws-menu-logo" />
       ) : (
         <StateDot state={r.state} />
       ),
-      hint: r.state === "needs-key" && r.keyName ? `Add ${r.keyName}` : STATE_TEXT[r.state],
+      hint: STATE_TEXT[r.state],
       checked: r.id === recipientId,
-      disabled: r.state === "soon" || r.state === "needs-key",
+      disabled: r.state === "needs-key",
       onSelect: () => setChosen(r.id),
     });
     const isDefault = savedDefault === recipientId;
@@ -476,9 +492,9 @@ export function AskPanel({
       x: box.left,
       y: box.bottom + 6,
       items: [
-        { kind: "header", label: "Agents in your terminal" },
+        { kind: "header", label: "Terminal agents" },
         ...recipients.filter((r) => r.group === "agent").map(entry),
-        { kind: "header", label: "Built-in AI" },
+        { kind: "header", label: "AI with a key" },
         ...recipients.filter((r) => r.group === "api").map(entry),
         { kind: "header", label: "No AI" },
         ...recipients.filter((r) => r.group === "facts").map(entry),
@@ -501,12 +517,12 @@ export function AskPanel({
   const showConnect = recipient.group === "agent" && recipient.state !== "listening" && recipient.state !== "working";
   const foot =
     recipient.group === "agent"
-      ? `${recipient.label}: ${STATE_TEXT[recipient.state].toLowerCase()}. It works in your project and uses StackWise's tools for the stack.`
+      ? `${recipient.label} · ${STATE_TEXT[recipient.state]}`
       : recipient.group === "api"
         ? recipient.state === "ready"
-          ? `${recipient.label}, answering from StackWise's facts and checks.`
-          : `Add ${recipient.keyName} to .env.local and restart StackWise to use ${recipient.label}.`
-        : "StackWise's own facts, no AI.";
+          ? "Answers from StackWise's facts and checks."
+          : `Add a key in the AI menu (top right) to use ${recipient.label}.`
+        : "StackWise's facts, no AI.";
 
   return (
     <section
@@ -524,8 +540,7 @@ export function AskPanel({
         <button type="button" className="ws-answerer" aria-haspopup="menu" onClick={openMenu} title="Who answers">
           <StateDot state={recipient.state} />
           {answererLogo(recipient.id) ? (
-            // eslint-disable-next-line @next/next/no-img-element -- a committed brand icon
-            <img className="ws-menu-logo" src={answererLogo(recipient.id)!} alt="" />
+            <AnswererMark id={recipient.id} className="ws-menu-logo" />
           ) : recipient.group === "agent" ? (
             <Icon name="terminal" size={13} />
           ) : (
@@ -561,12 +576,12 @@ export function AskPanel({
           <div className="ws-ask__empty">
             <p>
               {agent
-                ? `Ask ${recipient.label} to change the plan or build something in your project. It reads the plan through StackWise and answers here.`
-                : `Ask anything about ${subject}: setup, keys, what could go wrong, what else would work. Answers use StackWise's checked facts, and a suggested change only happens when you accept it.`}
+                ? `Ask ${recipient.label} to change the plan or build something in your project. It answers here.`
+                : `Ask about ${subject}. Nothing changes until you accept it.`}
             </p>
             <div className="ws-chips">
               {chips.map((s) => (
-                <button key={s} type="button" className="ws-chip" disabled={recipient.state === "soon"} onClick={() => void ask(s)}>
+                <button key={s} type="button" className="ws-chip" onClick={() => void ask(s)}>
                   {s}
                 </button>
               ))}
@@ -602,7 +617,6 @@ export function AskPanel({
           aria-label={`Message to ${recipient.label}`}
           rows={1}
           value={question}
-          disabled={recipient.state === "soon"}
           placeholder={agent ? `Message ${recipient.label} about ${subject}` : `Ask about ${subject}`}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => {
@@ -612,7 +626,7 @@ export function AskPanel({
             }
           }}
         />
-        <button type="submit" className="ws-ask__send" disabled={busy || !question.trim() || recipient.state === "soon"} aria-label="Send">
+        <button type="submit" className="ws-ask__send" disabled={busy || !question.trim()} aria-label="Send">
           <Icon name="send" size={15} />
         </button>
       </form>

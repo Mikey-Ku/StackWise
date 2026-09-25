@@ -1,13 +1,14 @@
 import fs from "node:fs";
 import os from "node:os";
 import { z } from "zod";
-import { localOnly } from "@/mcp/local";
-import { resolveFolder } from "@/mcp/localfiles";
+import { localOnly, readJson } from "@/mcp/local";
+import { resolveRealFolder } from "@/mcp/writeproject";
 import { projectPlanFileSchema } from "@/mcp/registry";
 import { ENV_NAME } from "@/project/envfile";
 import { iconData, inspect, listRuns, probe, runLog, runSql, startRun, stopRun, writeEnv } from "@/project/local";
 import { addWorktree, changes, mergeBranch, removeWorktree, repoInfo } from "@/project/git";
 import { PROBES } from "@/project/probes";
+import { LEGACY_PLAN_FILE, PLAN_FILE } from "@/engine/names";
 
 /**
  * A plan's linked project folder: what's in it, its env variables, live checks, the read-only SQL
@@ -38,10 +39,10 @@ const bodySchema = z.discriminatedUnion("action", [
 export async function POST(request: Request) {
   const blocked = localOnly(request);
   if (blocked) return blocked;
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const parsed = bodySchema.safeParse(await readJson(request));
   if (!parsed.success) return Response.json({ error: "That request wasn't one StackWise understands." }, { status: 400 });
   const body = parsed.data;
-  const folder = resolveFolder(body.path, os.homedir(), process.cwd());
+  const folder = resolveRealFolder(body.path, process.cwd());
   if ("error" in folder) return Response.json({ error: folder.error }, { status: 400 });
   const dir = folder.path;
 
@@ -50,8 +51,12 @@ export async function POST(request: Request) {
       return Response.json({ ...inspect(dir), probes: Object.keys(PROBES), home: os.homedir() });
     case "env": {
       if (!inspect(dir).exists) return Response.json({ error: "That folder doesn't exist." }, { status: 404 });
-      const result = writeEnv(dir, body.name, body.value);
-      return Response.json({ ok: true, ...result, project: { ...inspect(dir), probes: Object.keys(PROBES) } });
+      try {
+        const result = writeEnv(dir, body.name, body.value);
+        return Response.json({ ok: true, ...result, project: { ...inspect(dir), probes: Object.keys(PROBES) } });
+      } catch (error) {
+        return Response.json({ error: error instanceof Error ? error.message : "Couldn't write .env.local." }, { status: 400 });
+      }
     }
     case "probe": {
       const results = await Promise.all(body.ids.map((id) => probe(dir, id, body.healthUrl)));
@@ -60,7 +65,11 @@ export async function POST(request: Request) {
     case "sql":
       return Response.json(await runSql(dir, body.query));
     case "start":
-      return Response.json({ run: startRun(dir, body.command) });
+      try {
+        return Response.json({ run: startRun(dir, body.command) });
+      } catch (error) {
+        return Response.json({ error: error instanceof Error ? error.message : "Couldn't start it." }, { status: 400 });
+      }
     case "stop":
       return Response.json({ run: stopRun(body.id) });
     case "icon": {
@@ -71,10 +80,11 @@ export async function POST(request: Request) {
     case "planfile": {
       // The project's own plan, when it has one, so opening the folder opens its plan.
       try {
-        const file = projectPlanFileSchema.parse(JSON.parse(fs.readFileSync(`${dir}/whystack.plan.json`, "utf8")));
+        const name = [PLAN_FILE, LEGACY_PLAN_FILE].find((candidate) => fs.existsSync(`${dir}/${candidate}`)) ?? PLAN_FILE;
+        const file = projectPlanFileSchema.parse(JSON.parse(fs.readFileSync(`${dir}/${name}`, "utf8")));
         return Response.json({ id: file.id, plan: file.plan });
       } catch {
-        return Response.json({ error: "This project has no whystack.plan.json." }, { status: 404 });
+        return Response.json({ error: "This project has no stackwise.plan.json." }, { status: 404 });
       }
     }
     case "git": {

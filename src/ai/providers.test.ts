@@ -55,7 +55,7 @@ describe("choosing a provider", () => {
     expect(chooseProvider("gemini", { GEMINI_API_KEY: "g" })?.id).toBe("gemini");
     expect(chooseProvider("openai", { GEMINI_API_KEY: "g" })).toBeNull();
     expect(chooseProvider(undefined, { GOOGLE_API_KEY: "g", ANTHROPIC_API_KEY: "" })?.id).toMatch(/claude|gemini/);
-    expect(chooseProvider(undefined, { OPENAI_API_KEY: "o", WHYSTACK_AI: "off" })).toBeNull();
+    expect(chooseProvider(undefined, { OPENAI_API_KEY: "o", STACKWISE_AI: "off" })).toBeNull();
   });
 });
 

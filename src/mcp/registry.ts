@@ -5,10 +5,11 @@ import { z } from "zod";
 import { SLOT_IDS } from "@/engine/schema";
 import { sharedPlanSchema, type SharedPlan } from "@/engine/share";
 import { AGENT_ID, agentName, type AgentState } from "./pairing";
+import { LEGACY_STATE_DIR, STATE_DIR } from "@/engine/names";
 
 /**
  * Plans shared between StackWise's browser tab and Claude, kept as small JSON files in
- * `.whystack/` (gitignored) so the app's server and the command-line MCP server both see them.
+ * `.stackwise/` (gitignored) so the app's server and the command-line MCP server both see them.
  * The browser shares the plan you have open; Claude reads and changes it through the MCP tools;
  * the browser polls and shows what Claude did. Nothing here leaves the machine.
  */
@@ -76,7 +77,7 @@ export const planRecordSchema = z.object({
   messages: z.array(messageSchema).default([]),
   /** Agents that have listened on this plan, by id. */
   agents: z.record(z.string(), agentStateSchema).default({}),
-  /** The plan as it was when a project's whystack.plan.json and this copy last agreed: the base for merging them. */
+  /** The plan as it was when a project's stackwise.plan.json and this copy last agreed: the base for merging them. */
   synced: sharedPlanSchema.optional(),
 });
 export type PlanRecord = z.infer<typeof planRecordSchema>;
@@ -116,8 +117,23 @@ function laterThan(previous: string | undefined): string {
   return new Date(Math.max(now, last + 1)).toISOString();
 }
 
+/**
+ * StackWise's state folder in `root`. A folder left from when StackWise was called WhyStack is
+ * renamed on first use, so shared plans and agent conversations carry over.
+ */
+export function stateDir(root: string): string {
+  const dir = path.join(root, STATE_DIR);
+  const legacy = path.join(root, LEGACY_STATE_DIR);
+  try {
+    if (!fs.existsSync(dir) && fs.existsSync(legacy)) fs.renameSync(legacy, dir);
+  } catch {
+    // Another process renamed it first; the new folder is there either way.
+  }
+  return dir;
+}
+
 export function createRegistry(root: string): Registry {
-  const dir = path.join(root, ".whystack");
+  const dir = stateDir(root);
   const planFile = (id: string) => {
     if (!PLAN_ID.test(id)) throw new Error(`"${id}" isn't a valid plan id`);
     return path.join(dir, "plans", `${id}.json`);
@@ -238,15 +254,19 @@ export function createRegistry(root: string): Registry {
 }
 
 /** The file an exported project keeps its plan in, so the stack's record travels with the code. */
-export const projectPlanFileSchema = z.object({
-  whystack: z.literal(1),
-  id: z.string().regex(PLAN_ID),
-  version: z.number().int().min(0),
-  updatedAt: z.string(),
-  plan: sharedPlanSchema,
-});
+export const projectPlanFileSchema = z
+  .object({
+    stackwise: z.literal(1).optional(),
+    /** Plan files written while StackWise was called WhyStack. */
+    whystack: z.literal(1).optional(),
+    id: z.string().regex(PLAN_ID),
+    version: z.number().int().min(0),
+    updatedAt: z.string(),
+    plan: sharedPlanSchema,
+  })
+  .refine((file) => file.stackwise === 1 || file.whystack === 1, "not a StackWise plan file");
 export type ProjectPlanFile = z.infer<typeof projectPlanFileSchema>;
 
 export function toProjectPlanFile(record: Pick<PlanRecord, "id" | "version" | "updatedAt" | "plan">): ProjectPlanFile {
-  return { whystack: 1, id: record.id, version: record.version, updatedAt: record.updatedAt, plan: record.plan };
+  return { stackwise: 1, id: record.id, version: record.version, updatedAt: record.updatedAt, plan: record.plan };
 }

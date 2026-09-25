@@ -12,9 +12,9 @@ import { ROOT, projectCatalog, requireAi, writeReport } from "./lib";
 /**
  * pnpm eval:plain-llm
  *
- * The question behind WhyStack: how often does an AI asked to "pick a stack" choose one that
+ * The question behind StackWise: how often does an AI asked to "pick a stack" choose one that
  * breaks a rule? For each case, Claude picks one option per needed part from the same list
- * WhyStack uses, with names and one-line summaries but no facts and no rules. Both plans are then
+ * StackWise uses, with names and one-line summaries but no facts and no rules. Both plans are then
  * checked by the rules engine.
  */
 
@@ -26,7 +26,7 @@ function tally(results: CheckResult[]) {
 }
 
 type Tally = ReturnType<typeof tally>;
-type Row = { id: string; error: string } | { id: string; llm: Tally & { selection: Selection }; whystack: Tally & { selection: Selection } };
+type Row = { id: string; error: string } | { id: string; llm: Tally & { selection: Selection }; stackwise: Tally & { selection: Selection } };
 
 async function main() {
   requireAi();
@@ -73,9 +73,9 @@ async function main() {
     rows.push({
       id: item.id,
       llm: { selection: llm, ...tally(evaluatePlan(index, llm, input)) },
-      whystack: { selection: grounded.selection, ...tally(grounded.results) },
+      stackwise: { selection: grounded.selection, ...tally(grounded.results) },
     });
-    console.log(`${item.id}: plain LLM ${JSON.stringify(tally(evaluatePlan(index, llm, input)))}, WhyStack ${JSON.stringify(tally(grounded.results))}`);
+    console.log(`${item.id}: plain LLM ${JSON.stringify(tally(evaluatePlan(index, llm, input)))}, StackWise ${JSON.stringify(tally(grounded.results))}`);
   }
 
   const scored = rows.filter((r): r is Extract<Row, { llm: unknown }> => "llm" in r);
@@ -85,8 +85,8 @@ async function main() {
     `Cases scored: ${scored.length} of ${rows.length}`,
     `Plain LLM plans with something that doesn't work: ${share((r) => r.llm.blocked > 0)}`,
     `Plain LLM plans with a warning: ${share((r) => r.llm.warning > 0)}`,
-    `WhyStack plans with something that doesn't work: ${share((r) => r.whystack.blocked > 0)}`,
-    `WhyStack plans with a warning: ${share((r) => r.whystack.warning > 0)}`,
+    `StackWise plans with something that doesn't work: ${share((r) => r.stackwise.blocked > 0)}`,
+    `StackWise plans with a warning: ${share((r) => r.stackwise.warning > 0)}`,
   ].join("\n");
   const report = writeReport(`plain-llm-eval-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, JSON.stringify({ model: AI_MODEL, rows }, null, 2));
   console.log(`\n${summary}\n\nFull results: ${report}`);

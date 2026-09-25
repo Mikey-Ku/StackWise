@@ -1,12 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRef } from "react";
-import { encodeSharedPlan, sharedPlanSchema } from "@/engine";
+import { encodeSharedPlan } from "@/engine";
+import { downloadPlanFile, readPlanFile } from "./planFiles";
 import { toSharedPlan } from "./store";
 import { newId, type PlanModel } from "./usePlans";
-import { copyText, cx, downloadText } from "./ui";
+import { copyText, cx } from "./ui";
 
-/** Switch between saved plans, and move a plan between people: share links and plan files. */
+/** Switch between saved applications, and move one between people: share links and plan files. All of them, and the examples, are on /apps. */
 export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (message: string) => void }) {
   const { store, plan, dispatch } = model;
   const menu = useRef<HTMLDetailsElement>(null);
@@ -19,39 +21,18 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
     close();
     const token = await encodeSharedPlan(toSharedPlan(plan));
     const url = `${window.location.origin}${window.location.pathname}#plan=${token}`;
-    onToast((await copyText(url)) ? "Share link copied. Anyone who opens it gets their own copy of this plan." : url);
+    onToast((await copyText(url)) ? "Share link copied. It opens in StackWise running on their computer, as their own copy." : url);
   };
 
   const exportFile = () => {
     close();
-    const slug = (plan.appName.trim() || "plan").toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    downloadText(`${slug}.whystack.json`, JSON.stringify({ whystack: "plan", ...toSharedPlan(plan) }, null, 2), "application/json");
+    downloadPlanFile(plan);
   };
 
   const importFile = async (file: File) => {
-    try {
-      const raw = JSON.parse(await file.text()) as { whystack?: unknown; id?: unknown; plan?: unknown };
-      // A project's whystack.plan.json keeps its plan id, so importing it reconnects to that plan.
-      if (raw.whystack === 1 && raw.plan && typeof raw.id === "string") {
-        const parsed = sharedPlanSchema.safeParse(raw.plan);
-        if (!parsed.success) throw new Error("not a plan");
-        if (store.plans[raw.id]) {
-          dispatch({ type: "switchPlan", id: raw.id });
-          dispatch({ type: "applyRemote", id: raw.id, plan: parsed.data });
-          onToast(`Updated ${parsed.data.appName || "the plan"} from its project file.`);
-        } else {
-          dispatch({ type: "importPlan", id: /^[A-Za-z0-9_-]{1,64}$/.test(raw.id) ? raw.id : newId(), now: now(), plan: parsed.data });
-          onToast(`Imported ${parsed.data.appName || "a plan"} from its project file.`);
-        }
-        return;
-      }
-      const parsed = sharedPlanSchema.safeParse(raw);
-      if (!parsed.success) throw new Error("not a plan");
-      dispatch({ type: "importPlan", id: newId(), now: now(), plan: parsed.data });
-      onToast(`Imported ${parsed.data.appName || "a plan"}.`);
-    } catch {
-      onToast("That file isn't a StackWise plan.");
-    }
+    const { actions, message } = await readPlanFile(file, store, newId);
+    for (const action of actions) dispatch(action);
+    onToast(message);
   };
 
   const updated = (iso: string) => {
@@ -70,7 +51,7 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
         </span>
       </summary>
       <div className="ws-menu__panel">
-        <span className="mk-eyebrow">Your plans</span>
+        <span className="mk-eyebrow">Your applications</span>
         <div className="ws-menu__list">
           {store.order.map((id) => (
             <button
@@ -84,26 +65,29 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
             >
               <span>{nameOf(id)}</span>
               <span className="mk-hint">
-                {store.plans[id].step === "plan" ? "planned" : "in progress"}, {updated(store.plans[id].updatedAt)}
+                {store.plans[id].step === "plan" ? "planned" : "draft"}, {updated(store.plans[id].updatedAt)}
               </span>
             </button>
           ))}
         </div>
         <div className="ws-menu__actions">
           <button type="button" className="ws-menu__item" onClick={() => (dispatch({ type: "newPlan", id: newId(), now: now() }), close())}>
-            New plan
+            New application
           </button>
+          <Link href="/apps" className="ws-menu__item" onClick={close}>
+            All applications
+          </Link>
           <button type="button" className="ws-menu__item" onClick={() => (dispatch({ type: "duplicatePlan", id: newId(), now: now() }), close())}>
-            Duplicate this plan
+            Duplicate this application
           </button>
           <button type="button" className="ws-menu__item" onClick={shareLink}>
             Copy share link
           </button>
           <button type="button" className="ws-menu__item" onClick={exportFile}>
-            Export plan file
+            Download plan file
           </button>
           <button type="button" className="ws-menu__item" onClick={() => fileInput.current?.click()}>
-            Import plan file
+            Open plan file
           </button>
           <button
             type="button"
@@ -113,7 +97,7 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
               if (window.confirm(`Delete "${nameOf(store.activeId)}"? This can't be undone.`)) dispatch({ type: "deletePlan", now: now(), fallbackId: newId() });
             }}
           >
-            Delete this plan
+            Delete this application
           </button>
         </div>
         <input

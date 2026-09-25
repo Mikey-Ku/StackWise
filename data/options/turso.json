@@ -65,10 +65,10 @@
     }
   },
   "setup": [
-    { "step": "Install the Turso CLI and sign up or log in from the command line.", "env": [], "source": "https://docs.turso.tech/sdk/ts/guides/nextjs" },
-    { "step": "Create a database with the CLI.", "env": [], "source": "https://docs.turso.tech/sdk/ts/guides/nextjs" },
-    { "step": "Get the database URL and an auth token from the CLI.", "env": [], "source": "https://docs.turso.tech/sdk/ts/guides/nextjs" },
-    { "step": "Add them to your environment file.", "env": ["TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN"], "source": "https://docs.turso.tech/sdk/ts/guides/nextjs" },
+    { "step": "Install the Turso CLI and sign up or log in from the command line.", "env": [], "source": "https://docs.turso.tech/quickstart" },
+    { "step": "Create a database with the CLI.", "env": [], "source": "https://docs.turso.tech/quickstart" },
+    { "step": "Get the database URL and an auth token from the CLI.", "env": [], "source": "https://docs.turso.tech/quickstart" },
+    { "step": "Add them to your environment file.", "env": ["TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN"], "source": "https://docs.turso.tech/sdk/ts/quickstart" },
     { "step": "Install the client package and connect using the environment variables.", "env": [], "source": "https://docs.turso.tech/sdk/ts/quickstart" }
   ],
   "builder_notes": [

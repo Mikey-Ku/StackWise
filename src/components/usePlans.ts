@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import {
-  buildChecklist,
   closeCalls,
   costBySize,
   costOutlook,
+  fullChecklist,
   headsUps,
   indexCatalog,
   planStats,
@@ -16,27 +16,10 @@ import {
   type PlanInput,
   type SlotId,
 } from "@/engine";
-import { initialStore, migrate, reduce, type Guess, type History, type StoreAction } from "./store";
+import { loadHistory, newId, saveStore } from "./savedStore";
+import { reduce, type Guess, type History, type StoreAction } from "./store";
 
-const STORE_KEY = "whystack.store.v2";
-const OLD_KEY = "whystack.plan.v1";
-
-export function newId(): string {
-  return crypto.randomUUID().slice(0, 8);
-}
-
-function loadHistory(): History {
-  const now = new Date().toISOString();
-  const id = newId();
-  try {
-    const saved = window.localStorage.getItem(STORE_KEY) ?? window.localStorage.getItem(OLD_KEY);
-    const store = saved ? migrate(JSON.parse(saved), id, now) : null;
-    if (store) return { store, past: [], future: [] };
-  } catch {
-    // Unreadable or blocked storage: start fresh.
-  }
-  return { store: initialStore(id, now), past: [], future: [] };
-}
+export { newId };
 
 export interface PrefillStatus {
   loading: boolean;
@@ -51,23 +34,19 @@ export function usePlans(catalog: Catalog) {
   const plan = store.plans[store.activeId];
   const index = useMemo(() => indexCatalog(catalog), [catalog]);
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORE_KEY, JSON.stringify(store));
-      window.localStorage.removeItem(OLD_KEY);
-    } catch {
-      // Private windows and blocked storage: plans still work, they just won't survive a reload.
-    }
-  }, [store]);
+  useEffect(() => saveStore(store), [store]);
 
-  const input: PlanInput = useMemo(() => ({ answers: plan.answers, size: plan.size, priority: plan.priority }), [plan.answers, plan.size, plan.priority]);
+  const input: PlanInput = useMemo(
+    () => ({ answers: plan.answers, size: plan.size, priority: plan.priority, ...(Object.keys(plan.extras).length ? { extras: plan.extras } : {}) }),
+    [plan.answers, plan.size, plan.priority, plan.extras],
+  );
   const rec = useMemo(() => recommend(index, input, plan.pinned), [index, input, plan.pinned]);
   const calls = useMemo(() => closeCalls(index, input, rec), [index, input, rec]);
   const followups = useMemo(() => questionsThatMatter(index, input, plan.pinned), [index, input, plan.pinned]);
   const notSure = useMemo(() => headsUps(index, input, plan.pinned), [index, input, plan.pinned]);
   const cost = useMemo(() => costOutlook(index, rec.selection, input), [index, rec.selection, input]);
   const costSizes = useMemo(() => costBySize(index, rec.selection, input), [index, rec.selection, input]);
-  const checklist = useMemo(() => buildChecklist(index, rec.selection), [index, rec.selection]);
+  const checklist = useMemo(() => fullChecklist(index, rec.selection, input.extras), [index, rec.selection, input.extras]);
   const stats = useMemo(() => planStats(index, input, rec), [index, input, rec]);
 
   /** Put an option on the canvas. Returns a reason when it doesn't fit the slot it was dropped on. */
@@ -113,7 +92,7 @@ export type PlanModel = ReturnType<typeof usePlans>;
 /** The built-in AI picked as the default answerer ("api:openai" and so on), if one was. */
 function savedProvider(): string | undefined {
   try {
-    const saved = window.localStorage.getItem("whystack.answerer");
+    const saved = window.localStorage.getItem("stackwise.answerer");
     return saved?.startsWith("api:") ? saved.slice(4) : undefined;
   } catch {
     return undefined;

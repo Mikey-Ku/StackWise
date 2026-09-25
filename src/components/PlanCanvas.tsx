@@ -21,8 +21,10 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { connectionLabel, connectionsOf, inSentence, optionStats, planEnv, worstLevel, type CheckResult, type Connection, type Logo as LogoFile, type SlotId } from "@/engine";
+import { connectionLabel, connectionsOf, inSentence, isOwn, LINK_WORDS, linkVerdict, optionStats, planEnv, worstLevel, type CheckResult, type Connection, type Logo as LogoFile, type SlotId } from "@/engine";
+import { DiagramImage, type ImageRequest } from "./DiagramImage";
 import { Icon } from "./icons";
+import { useTheme } from "./ThemeSwitch";
 import type { Spot } from "./store";
 import type { PlanModel } from "./usePlans";
 import { Logo, VERDICT_UI, VerdictDot, cx, type Verdict } from "./ui";
@@ -46,10 +48,19 @@ const OUTER: OuterSlot[] = ["hosting", "database", "login", "email", "domain", "
 export const HIDEABLE_PARTS = OUTER.length;
 
 const APP_NODE = "app";
+/** An extra service's card: "extra-database.cache". */
+const extraNode = (id: string) => `extra-${id}`;
 const nodeId = (slot: SlotId) => (slot === "framework" ? APP_NODE : `slot-${slot}`);
 
 /** What a right-click landed on. The workspace turns it into menu items. */
-export type CanvasTarget = { kind: "part"; slot: SlotId } | { kind: "connection"; slot: SlotId } | { kind: "pair"; slot: SlotId; other: SlotId } | { kind: "canvas" };
+export type CanvasTarget =
+  | { kind: "part"; slot: SlotId }
+  | { kind: "connection"; slot: SlotId }
+  | { kind: "pair"; slot: SlotId; other: SlotId }
+  | { kind: "custom"; id: string }
+  | { kind: "extra"; id: string }
+  | { kind: "link"; id: string }
+  | { kind: "canvas" };
 
 /**
  * Where StackWise puts the parts when nobody has moved them: on an ellipse around the app,
@@ -61,13 +72,14 @@ function ellipseFor(count: number): { rx: number; ry: number } {
   return { rx, ry: Math.round(rx * 0.72) };
 }
 
-function autoLayout(visible: OuterSlot[]): Record<string, Spot> {
-  const { rx, ry } = ellipseFor(visible.length);
+/** `parts` are node ids in clockwise order: the showing parts, then the person's own. */
+function autoLayout(parts: string[]): Record<string, Spot> {
+  const { rx, ry } = ellipseFor(parts.length);
   return Object.fromEntries([
     [APP_NODE, { x: 0, y: 0 }],
-    ...visible.map((slot, i) => {
-      const angle = ((-90 + (i * 360) / visible.length) * Math.PI) / 180;
-      return [nodeId(slot), { x: Math.round(rx * Math.cos(angle)), y: Math.round(ry * Math.sin(angle)) }];
+    ...parts.map((id, i) => {
+      const angle = ((-90 + (i * 360) / parts.length) * Math.PI) / 180;
+      return [id, { x: Math.round(rx * Math.cos(angle)), y: Math.round(ry * Math.sin(angle)) }];
     }),
   ]);
 }
@@ -78,11 +90,12 @@ export function visibleParts(selection: Partial<Record<SlotId, string>>, needed:
 }
 
 /** Spots for "Tidy up": every showing part keeps its place in the order around the app, evenly spaced. */
-export function tidySpots(visible: OuterSlot[], layout: Record<string, Spot>): Record<string, Spot> {
-  const auto = autoLayout(visible);
+export function tidySpots(visible: OuterSlot[], layout: Record<string, Spot>, own: string[] = []): Record<string, Spot> {
+  const ids = [...visible.map(nodeId), ...own];
+  const auto = autoLayout(ids);
   const center = layout[APP_NODE] ?? auto[APP_NODE];
-  const { rx, ry } = ellipseFor(visible.length);
-  const parts = visible.map((slot) => ({ id: nodeId(slot), ...(layout[nodeId(slot)] ?? auto[nodeId(slot)]) }));
+  const { rx, ry } = ellipseFor(ids.length);
+  const parts = ids.map((id) => ({ id, ...(layout[id] ?? auto[id]) }));
   return { [APP_NODE]: center, ...arrangeInOrder(center, parts, rx, ry) };
 }
 
@@ -127,6 +140,9 @@ interface CanvasActions {
   menu: (target: CanvasTarget, event: ReactMouseEvent) => void;
   add: (slot?: SlotId) => void;
   remove: (slot: SlotId) => void;
+  editCustom: (id: string) => void;
+  editExtra: (id: string) => void;
+  editLink: (id: string) => void;
 }
 const ActionsContext = createContext<CanvasActions | null>(null);
 const useActions = () => useContext(ActionsContext)!;
@@ -147,9 +163,15 @@ type WireData = {
   slot: SlotId;
   /** Changes whenever what's at either end changes, so the line plays its "connected" signal again. */
   signal: string;
-  /** A connection opens its panel; a line between two parts opens the part it points to. */
-  kind: "connection" | "pair";
+  /** A connection opens its panel; a line between two parts opens the part it points to; a line to your own part edits it. */
+  kind: "connection" | "pair" | "custom" | "extra" | "link";
   other?: SlotId;
+  custom?: string;
+  /** The extra service ("database.cache") or drawn line ("payments>app") this edge is. */
+  extra?: string;
+  link?: string;
+  /** Lines the person drew between the app and this part, said after the verb: "sends webhooks back". */
+  also?: string;
   label: string;
   /** The full description, with the variables that travel along it. */
   detail?: string;
@@ -176,8 +198,26 @@ function WireEdge({ id, source, target, data }: EdgeProps<Edge<WireData>>) {
   const b = to && boxOf(to);
   if (!a || !b || !data) return null;
   const [path, labelX, labelY] = getBezierPath(wireEnds(a, b));
-  const open = () => (data.kind === "connection" ? actions.openConnection(data.slot) : actions.select(data.slot));
-  const target_: CanvasTarget = data.kind === "connection" ? { kind: "connection", slot: data.slot } : { kind: "pair", slot: data.slot, other: data.other ?? data.slot };
+  const open = () =>
+    data.kind === "custom"
+      ? actions.editCustom(data.custom!)
+      : data.kind === "extra"
+        ? actions.editExtra(data.extra!)
+        : data.kind === "link"
+          ? actions.editLink(data.link!)
+          : data.kind === "connection"
+            ? actions.openConnection(data.slot)
+            : actions.select(data.slot);
+  const target_: CanvasTarget =
+    data.kind === "custom"
+      ? { kind: "custom", id: data.custom! }
+      : data.kind === "extra"
+        ? { kind: "extra", id: data.extra! }
+        : data.kind === "link"
+          ? { kind: "link", id: data.link! }
+          : data.kind === "connection"
+            ? { kind: "connection", slot: data.slot }
+            : { kind: "pair", slot: data.slot, other: data.other ?? data.slot };
   const status = SIGNAL[data.level];
   return (
     <>
@@ -190,7 +230,7 @@ function WireEdge({ id, source, target, data }: EdgeProps<Edge<WireData>>) {
           type="button"
           className={cx("ws-wire-label nodrag nopan", `ws-wire-label--${data.level}`, data.kind === "pair" && "is-pair", data.selected && "is-selected")}
           style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
-          title={`${status.words}: ${data.detail ?? data.label}${data.note ? `. Has a note${data.note === "stale" ? " written for another option" : ""}` : ""}. Right-click for more.`}
+          title={`${status.words}: ${data.detail ?? data.label}${data.note ? `. Has a note${data.note === "stale" ? " written for another option" : ""}` : ""}.`}
           onClick={open}
           onContextMenu={(e) => actions.menu(target_, e)}
         >
@@ -199,6 +239,7 @@ function WireEdge({ id, source, target, data }: EdgeProps<Edge<WireData>>) {
           </span>
           {data.note && <span className={cx("ws-notedot", data.note === "stale" && "is-stale")} aria-hidden />}
           <span className="ws-wire-label__text">{data.label}</span>
+          {data.also && <span className="ws-wire-label__also">{data.also}</span>}
         </button>
       </EdgeLabelRenderer>
     </>
@@ -217,13 +258,14 @@ function flowOffset(id: string): number {
 }
 
 /** The mark at the start of every line's label: connected, connected with a warning, broken, missing, or not verified. */
+/** The same words as everywhere else (VERDICT_UI), with a mark for the line's label. */
 const SIGNAL: Record<Verdict, { glyph: string; words: string }> = {
-  works: { glyph: "\u2713", words: "Connected" },
-  info: { glyph: "\u2713", words: "Connected" },
-  warning: { glyph: "!", words: "Connected, with a warning" },
-  unknown: { glyph: "?", words: "Not verified yet" },
-  blocked: { glyph: "\u00d7", words: "Doesn't work" },
-  missing: { glyph: "+", words: "Needs a part" },
+  works: { glyph: "\u2713", words: VERDICT_UI.works.label },
+  info: { glyph: "\u2713", words: VERDICT_UI.info.label },
+  warning: { glyph: "!", words: VERDICT_UI.warning.label },
+  unknown: { glyph: "?", words: VERDICT_UI.unknown.label },
+  blocked: { glyph: "\u00d7", words: VERDICT_UI.blocked.label },
+  missing: { glyph: "+", words: VERDICT_UI.missing.label },
 };
 
 type DropState = "" | "is-over" | "is-bad";
@@ -252,7 +294,7 @@ function AppNode({ data }: NodeProps<Node<AppData>>) {
     <div
       className={cx("ws-node ws-app", data.drop, data.selected && "is-selected")}
       data-slot="framework"
-      title={`${data.appName}${data.frameworkName ? `, built with ${data.frameworkName}` : ""}. Double-click to ask about it, right-click for more.`}
+      title={`${data.appName}${data.frameworkName ? `, built with ${data.frameworkName}` : ""}.`}
       onClick={() => actions.select("framework")}
       onDoubleClick={() => actions.ask("framework")}
     >
@@ -301,6 +343,10 @@ type SlotData = {
   drop: DropState;
   selected: boolean;
   note: NoteState;
+  /** The person builds this part themselves. */
+  own: boolean;
+  /** Set on an extra service's card ("database.cache"). */
+  extra?: string;
 };
 
 function SlotNode({ data }: NodeProps<Node<SlotData>>) {
@@ -308,10 +354,10 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
   const empty = !data.optionName;
   return (
     <div
-      className={cx("ws-node ws-slot", empty && "is-empty", empty && !data.needed && "is-unneeded", data.drop, data.selected && "is-selected")}
+      className={cx("ws-node ws-slot", empty && "is-empty", empty && !data.needed && "is-unneeded", data.own && "is-own", data.drop, data.selected && "is-selected")}
       data-slot={data.slot}
       title={data.summary}
-      onClick={() => actions.select(data.slot)}
+      onClick={() => (data.extra ? actions.editExtra(data.extra) : actions.select(data.slot))}
       onDoubleClick={() => actions.ask(data.slot)}
     >
       <Handles />
@@ -321,12 +367,16 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
           <span className="ws-node__blank" aria-hidden>
             <Icon name="plus" size={14} />
           </span>
+        ) : data.own ? (
+          <span className="ws-node__blank ws-node__own" aria-hidden>
+            <Icon name="terminal" size={15} />
+          </span>
         ) : (
           <Logo logo={data.logo} name={data.optionName!} size={30} />
         )}
         <span className="ws-node__text">
-          <span className="ws-node__kicker">{data.label}</span>
-          <span className="ws-node__name">{empty ? (data.needed ? "Choose one" : "Optional") : data.optionName}</span>
+          <span className="ws-node__kicker">{data.own ? `${data.label}, built by you` : data.label}</span>
+          <span className="ws-node__name">{empty ? (data.needed ? "Pick one" : "Optional") : data.optionName}</span>
         </span>
       </span>
       <span className="ws-node__marks">
@@ -343,7 +393,7 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
             <button type="button" title="Ask about this" aria-label={`Ask about ${data.optionName}`} onClick={() => actions.ask(data.slot)}>
               <Icon name="sparkle" size={13} />
             </button>
-            <button type="button" title="Swap for another" aria-label={`Swap ${data.optionName}`} onClick={() => actions.add(data.slot)}>
+            <button type="button" title="Switch to another" aria-label={`Switch ${data.optionName}`} onClick={() => actions.add(data.slot)}>
               <Icon name="swap" size={13} />
             </button>
             <button type="button" title="Remove (Delete)" aria-label={`Remove ${data.optionName}`} className="is-danger" onClick={() => actions.remove(data.slot)}>
@@ -356,7 +406,39 @@ function SlotNode({ data }: NodeProps<Node<SlotData>>) {
   );
 }
 
-const nodeTypes = { app: AppNode, slot: SlotNode };
+type CustomData = {
+  id: string;
+  name: string;
+  role: string;
+  note: boolean;
+};
+
+/** A part the person added that StackWise has no facts on: a letter for a logo, and a "not checked" dot. */
+function CustomNode({ data }: NodeProps<Node<CustomData>>) {
+  const actions = useActions();
+  return (
+    <div
+      className="ws-node ws-slot ws-custom-node"
+      title={`${data.name}, added by you. StackWise has no facts on it, so it isn't checked or priced.`}
+      onClick={() => actions.editCustom(data.id)}
+    >
+      <Handles />
+      <span className="ws-node__body">
+        <Logo logo={undefined} name={data.name} size={30} />
+        <span className="ws-node__text">
+          <span className="ws-node__kicker">Added by you</span>
+          <span className="ws-node__name">{data.name}</span>
+        </span>
+      </span>
+      <span className="ws-node__marks">
+        {data.note && <NoteDot note="fresh" />}
+        <VerdictDot level="unknown" title="Not checked: StackWise has no facts on this part" />
+      </span>
+    </div>
+  );
+}
+
+const nodeTypes = { app: AppNode, slot: SlotNode, custom: CustomNode };
 
 export function PlanCanvas({
   model,
@@ -365,6 +447,7 @@ export function PlanCanvas({
   dragging,
   showAll,
   fitNonce,
+  image,
   onDropped,
   onSelect,
   onSelectConnection,
@@ -373,6 +456,9 @@ export function PlanCanvas({
   onMenu,
   onAdd,
   onRemove,
+  onEditCustom,
+  onEditExtra,
+  onEditLink,
   onToast,
 }: {
   model: PlanModel;
@@ -382,6 +468,8 @@ export function PlanCanvas({
   showAll: boolean;
   /** Changes when the layout is tidied or "fit to screen" is pressed, so the view fits again. */
   fitNonce: number;
+  /** Set to save the diagram as a PNG. */
+  image: ImageRequest | null;
   onDropped: () => void;
   onSelect: (slot: SlotId) => void;
   onSelectConnection: (slot: SlotId) => void;
@@ -390,9 +478,16 @@ export function PlanCanvas({
   onMenu: (target: CanvasTarget, x: number, y: number) => void;
   onAdd: (slot?: SlotId) => void;
   onRemove: (slot: SlotId) => void;
+  /** Opens a part the person added for editing. */
+  onEditCustom: (id: string) => void;
+  /** Opens an extra service ("database.cache") for editing. */
+  onEditExtra: (id: string) => void;
+  /** Opens a drawn line ("payments>app") for editing. */
+  onEditLink: (id: string) => void;
   onToast: (message: string) => void;
 }) {
   const { plan, dispatch, rec, index, input } = model;
+  const colorMode = useTheme().resolved;
   const [over, setOver] = useState<SlotId | "pane" | null>(null);
   /**
    * Where cards are while they're being dragged. The plan only saves a spot when the card lands,
@@ -426,8 +521,15 @@ export function PlanCanvas({
       },
       add: onAdd,
       remove: onRemove,
+      editCustom: (id) => {
+        if (!moving.current) onEditCustom(id);
+      },
+      editExtra: (id) => {
+        if (!moving.current) onEditExtra(id);
+      },
+      editLink: onEditLink,
     }),
-    [onSelect, onSelectConnection, onAsk, onMenu, onAdd, onRemove],
+    [onSelect, onSelectConnection, onAsk, onMenu, onAdd, onRemove, onEditCustom, onEditExtra, onEditLink],
   );
 
   const visible = useMemo(
@@ -435,21 +537,28 @@ export function PlanCanvas({
     [rec.selection, rec.needed, showAll, draggedOption],
   );
 
+  const own = useMemo(() => Object.keys(plan.custom ?? {}), [plan.custom]);
+  const extraIds = useMemo(() => Object.keys(plan.extras ?? {}), [plan.extras]);
   const spots = useMemo(() => {
-    const auto = autoLayout(visible);
+    // Extras sit right after their part in the ring, so a cache lands next to its database.
+    const ids = [...visible.flatMap((slot) => [nodeId(slot), ...extraIds.filter((id) => plan.extras[id].slot === slot).map(extraNode)]), ...own];
+    const auto = autoLayout(ids);
     const at = (id: string): Spot => plan.layout[id] ?? auto[id] ?? { x: 0, y: 0 };
-    return Object.fromEntries([APP_NODE, ...visible.map(nodeId)].map((id) => [id, at(id)]));
-  }, [visible, plan.layout]);
+    return Object.fromEntries([APP_NODE, ...ids].map((id) => [id, at(id)]));
+  }, [visible, own, extraIds, plan.extras, plan.layout]);
 
   const { nodes, edges } = useMemo(() => {
     const dropClass = (slot: SlotId): DropState => {
       if (!draggedOption || over !== slot) return "";
       return draggedOption.slots.includes(slot) ? "is-over" : "is-bad";
     };
-    const touching = (slot: SlotId, filter: (r: CheckResult) => boolean) => rec.results.filter((r) => r.slots.includes(slot) && filter(r));
+    // A part's own card and line show its first service's checks; an extra's show its own.
+    const touching = (slot: SlotId, filter: (r: CheckResult) => boolean) => rec.results.filter((r) => r.slots.includes(slot) && !r.instance && filter(r));
     const framework = rec.selection.framework ? index.optionsById.get(rec.selection.framework) : undefined;
-    const env = planEnv(index, rec.selection);
-    const wires = new Map<SlotId, Connection>(connectionsOf(index, rec.selection).map((c) => [c.slot, c]));
+    const env = planEnv(index, rec.selection, input.extras);
+    const allWires = connectionsOf(index, rec.selection, input.extras);
+    const wires = new Map<SlotId, Connection>(allWires.filter((c) => !c.instance).map((c) => [c.slot, c]));
+    const extraWires = new Map(allWires.filter((c) => c.instance).map((c) => [c.instance!, c]));
     const noteOf = (slot: SlotId): NoteState => {
       const note = plan.notes[slot];
       if (!note?.text.trim()) return undefined;
@@ -488,7 +597,7 @@ export function PlanCanvas({
       const cardLevel: Verdict = option ? worstLevel(touching(slot, () => true)) : level;
       const facts = option ? optionStats(index, option, slot, input).slice(0, 3) : [];
       const summary = option
-        ? [`${def.label}: ${option.name}. ${VERDICT_UI[cardLevel].label}.`, ...facts.map((s) => `${s.label}: ${s.value}.`), "Double-click to ask, right-click for more."].join("\n")
+        ? [`${def.label}: ${option.name}. ${VERDICT_UI[cardLevel].label}.`, ...facts.map((s) => `${s.label}: ${s.value}.`)].join("\n")
         : needed
           ? `Your answers need ${inSentence(def.label)}. Click to choose one, or drag an option here.`
           : `${def.label} is optional. ${def.empty_hint}.`;
@@ -508,6 +617,7 @@ export function PlanCanvas({
           drop: dropClass(slot),
           selected: selectedSlot === slot && !selectedConnection,
           note: noteOf(slot),
+          own: isOwn(optionId),
         } satisfies SlotData,
       });
 
@@ -536,29 +646,145 @@ export function PlanCanvas({
       }
     }
 
-    // Problems between two parts of the stack get their own line.
+    // The person's own parts: a line from the app like any other, never "works" because nothing checked it.
+    for (const id of own) {
+      const part = plan.custom[id];
+      nodes.push({ id, type: "custom", position: spots[id], data: { id, name: part.name, role: part.role, note: Boolean(part.note.trim()) } satisfies CustomData });
+      edges.push({
+        id: `edge-${id}`,
+        type: "wire",
+        zIndex: 0,
+        source: APP_NODE,
+        target: id,
+        className: cx("ws-edge", "ws-edge--unknown"),
+        data: {
+          slot: "framework",
+          custom: id,
+          signal: `${framework?.id ?? ""}>${id}`,
+          kind: "custom",
+          label: part.role || "uses",
+          detail: `the app ${part.role || "uses"} ${part.name}${part.env.length ? `, with ${part.env.join(", ")}` : ""}. Not checked by StackWise`,
+          level: "unknown",
+          selected: false,
+          note: part.note.trim() ? "fresh" : undefined,
+        } satisfies WireData,
+      });
+    }
+
+    // Extra services: a card next to their part, with a line from the app like any other.
+    for (const id of extraIds) {
+      const extra = plan.extras[id];
+      const option = index.optionsById.get(extra.option);
+      const def = index.slotsById.get(extra.slot);
+      if (!option || !def || !spots[extraNode(id)]) continue;
+      const mine = rec.results.filter((r) => r.instance === id);
+      const level: Verdict = worstLevel(mine.filter((r) => r.slots.length === 1 || r.slots.includes("framework")));
+      nodes.push({
+        id: extraNode(id),
+        type: "slot",
+        position: spots[extraNode(id)],
+        data: {
+          slot: extra.slot as OuterSlot,
+          label: `${def.label}: ${extra.role || id}`,
+          optionName: option.name,
+          logo: index.catalog.logos[option.id],
+          level: worstLevel(mine),
+          summary: `${def.label} for ${extra.role || id}: ${option.name}. ${VERDICT_UI[worstLevel(mine)].label}. Click to edit.`,
+          needed: false,
+          drop: "",
+          selected: false,
+          note: extra.note?.trim() ? "fresh" : undefined,
+          own: isOwn(option.id),
+          extra: id,
+        } satisfies SlotData,
+      });
+      const wire = extraWires.get(id);
+      edges.push({
+        id: `edge-${id}`,
+        type: "wire",
+        zIndex: 0,
+        source: APP_NODE,
+        target: extraNode(id),
+        className: cx("ws-edge", `ws-edge--${level}`),
+        data: {
+          slot: extra.slot,
+          extra: id,
+          signal: `${framework?.id ?? ""}>${id}:${option.id}:${level}`,
+          kind: "extra",
+          label: extra.role || def.verb,
+          detail: wire ? connectionLabel(wire, env) : undefined,
+          level,
+          selected: false,
+          note: extra.note?.trim() ? "fresh" : undefined,
+        } satisfies WireData,
+      });
+    }
+
+    // Lines the person drew. One between the app and a part rides on that part's own line, said
+    // after its verb; one between two parts is a line of its own, with the rules' verdict when a
+    // rule reads that pair and "not checked" otherwise.
+    const endNode = (end: string) => (end === "app" ? APP_NODE : end.includes(".") ? extraNode(end) : end.startsWith("custom-") ? end : nodeId(end as SlotId));
+    const linked = new Set<string>();
+    for (const [id, link] of Object.entries(plan.links ?? {})) {
+      const [a, b] = [endNode(link.from), endNode(link.to)];
+      if (!spots[a] || !spots[b]) continue;
+      linked.add([a, b].sort().join("|"));
+      const words = `${LINK_WORDS[link.kind]}${link.what ? `: ${link.what}` : ""}`;
+      if (a === APP_NODE || b === APP_NODE) {
+        const other = a === APP_NODE ? b : a;
+        const edge = edges.find((e) => e.source === APP_NODE && e.target === other);
+        if (edge?.data) edge.data = { ...edge.data, also: `${a === APP_NODE ? "" : "\u2190 "}${words}` };
+        continue;
+      }
+      const verdict = linkVerdict(index, rec.results, link, rec.selection, input);
+      const level: Verdict = verdict.checked ? verdict.level : "unknown";
+      edges.push({
+        id: `link-${id}`,
+        type: "wire",
+        zIndex: 0,
+        source: a,
+        target: b,
+        className: cx("ws-edge", `ws-edge--${level}`, "is-link"),
+        data: {
+          slot: (index.slotsById.has(link.to as SlotId) ? link.to : "framework") as SlotId,
+          link: id,
+          signal: `${id}:${level}`,
+          kind: "link",
+          label: words,
+          detail: `${link.from} ${words} ${link.to}. ${verdict.checked ? VERDICT_UI[level].label : "Not checked: no rule reads these two parts"}`,
+          level,
+          selected: false,
+          note: undefined,
+        } satisfies WireData,
+      });
+    }
+
+    // Problems between two parts of the stack get their own line, unless the person drew one there.
     const pairs = new Map<string, CheckResult[]>();
     for (const r of rec.results) {
       if (r.slots.length !== 2 || r.slots.includes("framework") || r.level === "info") continue;
       if (!r.slots.every((s) => rec.selection[s])) continue; // a check about an empty slot belongs to the one card
-      const key = r.slots.join("|");
+      // An extra's problem runs from its own card; `instance` names it.
+      const ends = r.instance ? [extraNode(r.instance), nodeId(r.slots.find((s) => s !== plan.extras[r.instance!]?.slot) ?? r.slots[0])] : r.slots.map(nodeId);
+      const key = ends.join("|");
       pairs.set(key, [...(pairs.get(key) ?? []), r]);
     }
     for (const [key, results] of pairs) {
-      const [a, b] = key.split("|") as [OuterSlot, OuterSlot];
-      if (!spots[nodeId(a)] || !spots[nodeId(b)]) continue;
+      const [a, b] = key.split("|");
+      if (!spots[a] || !spots[b] || linked.has([a, b].sort().join("|"))) continue;
       const level = worstLevel(results);
+      const [slotA, slotB] = results[0].slots as [OuterSlot, OuterSlot];
       edges.push({
         id: `pair-${key}`,
         type: "wire",
         zIndex: 0,
-        source: nodeId(a),
-        target: nodeId(b),
+        source: a,
+        target: b,
         className: cx("ws-edge", `ws-edge--${level}`, "is-pair"),
         data: {
-          slot: b,
-          signal: `${rec.selection[a]}>${rec.selection[b]}:${level}`,
-          other: a,
+          slot: slotB,
+          signal: `${key}:${results.map((r) => r.key).join(",")}:${level}`,
+          other: slotA,
           kind: "pair",
           label: results.length > 1 ? `${results[0].title} (+${results.length - 1})` : results[0].title,
           level,
@@ -569,7 +795,7 @@ export function PlanCanvas({
     }
 
     return { nodes, edges };
-  }, [rec, index, input, plan.appName, plan.icon, plan.step, plan.notes, selectedSlot, selectedConnection, over, draggedOption, visible, spots]);
+  }, [rec, index, input, plan.appName, plan.icon, plan.step, plan.notes, plan.custom, plan.extras, plan.links, own, extraIds, selectedSlot, selectedConnection, over, draggedOption, visible, spots]);
 
   // A drag only moves cards: their data (verdicts, stats, notes) isn't rebuilt on every pointer move.
   const placed = useMemo(
@@ -630,7 +856,7 @@ export function PlanCanvas({
         }}
         onDrop={(e) => {
           e.preventDefault();
-          const optionId = e.dataTransfer.getData("application/x-whystack-option") || dragging;
+          const optionId = e.dataTransfer.getData("application/x-stackwise-option") || dragging;
           setOver(null);
           onDropped();
           if (!optionId) return;
@@ -645,7 +871,7 @@ export function PlanCanvas({
           edgeTypes={edgeTypes}
           nodeOrigin={[0.5, 0.5]}
           onNodesChange={onNodesChange}
-          colorMode="system"
+          colorMode={colorMode}
           fitView
           fitViewOptions={{ padding: FIT_PADDING, maxZoom: 1 }}
           minZoom={0.25}
@@ -668,7 +894,16 @@ export function PlanCanvas({
             if (data) (data.kind === "connection" ? onSelectConnection : onSelect)(data.slot);
           }}
           onPaneClick={onDeselect}
-          onNodeContextMenu={(e, node) => actions.menu({ kind: "part", slot: slotOfNode(node.id) }, e)}
+          onNodeContextMenu={(e, node) =>
+            actions.menu(
+              node.id.startsWith("custom-")
+                ? { kind: "custom", id: node.id }
+                : node.id.startsWith("extra-")
+                  ? { kind: "extra", id: node.id.slice("extra-".length) }
+                  : { kind: "part", slot: slotOfNode(node.id) },
+              e,
+            )
+          }
           onEdgeContextMenu={(e, edge) => {
             const data = edge.data as WireData | undefined;
             if (data) actions.menu(data.kind === "connection" ? { kind: "connection", slot: data.slot } : { kind: "pair", slot: data.slot, other: data.other ?? data.slot }, e);
@@ -676,7 +911,8 @@ export function PlanCanvas({
           onPaneContextMenu={(e) => actions.menu({ kind: "canvas" }, e as ReactMouseEvent)}
         >
           <Background variant={BackgroundVariant.Dots} gap={24} size={1.3} color="var(--ws-canvas-dot)" />
-          <AutoFit shape={`${plan.step}|${visible.join(",")}|${fitNonce}`} />
+          <AutoFit shape={`${plan.step}|${visible.join(",")}|${extraIds.join(",")}|${own.join(",")}|${fitNonce}`} />
+          <DiagramImage request={image} fileName={`${(plan.appName.trim() || "app").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-stack`} onDone={onToast} />
         </ReactFlow>
       </div>
     </ActionsContext.Provider>

@@ -21,15 +21,18 @@ interface LocalReport {
 export function SpecDialog({
   model,
   generatedOn,
-  whystackRoot,
+  stackwiseRoot,
   onClose,
   onToast,
+  onSaveImage,
 }: {
   model: PlanModel;
   generatedOn: string | null;
-  whystackRoot: string | undefined;
+  stackwiseRoot: string | undefined;
   onClose: () => void;
   onToast: (message: string) => void;
+  /** Saves the diagram as a PNG, with the page's background or none. */
+  onSaveImage: (transparent: boolean) => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [active, setActive] = useState("SPEC.md");
@@ -65,16 +68,16 @@ export function SpecDialog({
               planId: plan.id,
               plan: toSharedPlan(plan),
             },
-            { whystackRoot },
+            { stackwiseRoot },
           )
         : [],
-    [generatedOn, index, input, rec.selection, plan, whystackRoot],
+    [generatedOn, index, input, rec.selection, plan, stackwiseRoot],
   );
   const file = files.find((f) => f.name === active) ?? files[0];
   const builder = model.catalog.planning.builders.find((b) => b.id === plan.builderId);
   const folder = (plan.appName.trim() || "my-app").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "my-app";
   const agents = files.filter((f) => f.name.startsWith(".claude/agents/")).length;
-  const beside = whystackRoot ? `${whystackRoot.split("/").slice(0, -1).join("/")}/${folder}` : `~/${folder}`;
+  const beside = stackwiseRoot ? `${stackwiseRoot.split("/").slice(0, -1).join("/")}/${folder}` : `~/${folder}`;
 
   const send = async (dryRun: boolean) => {
     setBusy(true);
@@ -87,7 +90,7 @@ export function SpecDialog({
       });
       const body = (await response.json()) as LocalReport & { error?: string };
       if (!response.ok || body.error) {
-        setError(body.error ?? `The server said no (${response.status}).`);
+        setError(body.error ?? `Couldn't write the files (${response.status}).`);
         setReport(null);
         return;
       }
@@ -108,7 +111,7 @@ export function SpecDialog({
       <div className="mk-modal__body mk-stack mk-gap-4">
         <div className="mk-row mk-gap-3">
           <div className="mk-grow mk-stack mk-gap-1">
-            <span className="mk-eyebrow">Project pack</span>
+            <span className="mk-eyebrow">Project files</span>
             <h3>Hand this to {builder?.label ?? "your builder"}</h3>
           </div>
           <button type="button" className="mk-btn mk-btn--ghost mk-sm" onClick={onClose}>
@@ -116,9 +119,9 @@ export function SpecDialog({
           </button>
         </div>
         <p className="mk-muted">
-          {files.length} files: the spec, setup steps, an ordered task list and the plan itself
-          {agents ? `, plus ${agents} Claude Code agents, skills like /next-step, and the StackWise MCP server so Claude checks every stack change with StackWise` : ""}. Unzip it as your project folder.
-          {builder?.format === "claude-md" && !whystackRoot ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
+          {files.length} files: the spec, setup steps, tasks and the plan
+          {agents ? `, plus ${agents} Claude Code agents and StackWise's MCP connection` : ""}. Unzip it as your project folder.
+          {builder?.format === "claude-md" && !stackwiseRoot ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
         </p>
         <label className="mk-field ws-spec__pick">
           <span className="mk-label">File</span>
@@ -164,8 +167,7 @@ export function SpecDialog({
           <div className="mk-stack mk-gap-1">
             <span className="mk-eyebrow">Or write it into a folder on this computer</span>
             <p className="mk-muted">
-              The same files, in a folder you can open straight away, plus a <code>.env.local</code> with the names your stack needs and no values. StackWise never writes over an existing{" "}
-              <code>.env.local</code>, and only writes inside your home folder.
+              The same files, plus a <code>.env.local</code> with empty values. StackWise never overwrites an existing <code>.env.local</code>.
             </p>
           </div>
           <div className="mk-row mk-gap-2 mk-wrap ws-local__row">
@@ -174,7 +176,7 @@ export function SpecDialog({
               <input className="mk-input mk-sm" value={where} placeholder={plan.folder ?? beside} onChange={(e) => setWhere(e.target.value)} spellCheck={false} />
             </label>
             <button type="button" className="mk-btn mk-btn--ghost mk-sm" disabled={busy} onClick={() => void send(true)}>
-              {busy ? "Looking" : "Check the folder"}
+              {busy ? "Looking" : "Preview"}
             </button>
             <button type="button" className="mk-btn mk-btn--primary mk-sm" disabled={busy} onClick={() => void send(false)}>
               Write the files
@@ -242,6 +244,21 @@ export function SpecDialog({
               )}
             </div>
           )}
+        </section>
+
+        <section className="mk-stack mk-gap-3 ws-local">
+          <div className="mk-stack mk-gap-1">
+            <span className="mk-eyebrow">Diagram</span>
+            <p className="mk-muted">A PNG of the canvas, at full size.</p>
+          </div>
+          <div className="mk-row mk-gap-2 mk-wrap">
+            <button type="button" className="mk-btn mk-btn--secondary mk-sm" onClick={() => onSaveImage(false)}>
+              Save as PNG
+            </button>
+            <button type="button" className="mk-btn mk-btn--ghost mk-sm" onClick={() => onSaveImage(true)}>
+              Save as PNG (transparent)
+            </button>
+          </div>
         </section>
       </div>
     </dialog>

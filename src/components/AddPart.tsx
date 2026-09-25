@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { evaluatePlan, worstLevel, type Option, type SlotId } from "@/engine";
+import { evaluatePlan, isOwn, ownId, worstLevel, type Option, type SlotId } from "@/engine";
 import { Icon } from "./icons";
 import type { PlanModel } from "./usePlans";
 import { Logo, VERDICT_UI, VerdictDot, cx, type Verdict } from "./ui";
@@ -21,7 +21,20 @@ interface Row {
   verdict: Verdict;
 }
 
-export function AddPart({ model, focus, onClose, onAdded }: { model: PlanModel; focus: SlotId | null; onClose: () => void; onAdded: (slot: SlotId, name: string, error: string | null) => void }) {
+export function AddPart({
+  model,
+  focus,
+  onClose,
+  onAdded,
+  onAddOwn,
+}: {
+  model: PlanModel;
+  focus: SlotId | null;
+  onClose: () => void;
+  onAdded: (slot: SlotId, name: string, error: string | null) => void;
+  /** For something StackWise doesn't list, with what was typed as its name. */
+  onAddOwn: (name: string) => void;
+}) {
   const { catalog, index, rec, input } = model;
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -78,7 +91,8 @@ export function AddPart({ model, focus, onClose, onAdded }: { model: PlanModel; 
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") move(1);
               else if (e.key === "ArrowUp") move(-1);
-              else if (e.key === "Enter") pick(flat[current]);
+              else if (e.key === "Enter" && flat.length) pick(flat[current]);
+              else if (e.key === "Enter") onAddOwn(query.trim());
               else if (e.key === "Escape") onClose();
               else return;
               e.preventDefault();
@@ -121,16 +135,49 @@ export function AddPart({ model, focus, onClose, onAdded }: { model: PlanModel; 
                       </li>
                     );
                   })}
+                  {slot !== "framework" && !q && (
+                    <li role="presentation">
+                      <button
+                        type="button"
+                        className={cx("ws-add__row ws-add__build", isOwn(rec.selection[slot]) && "is-in")}
+                        disabled={isOwn(rec.selection[slot])}
+                        onClick={() => {
+                          const error = model.place(ownId(slot), slot);
+                          onAdded(slot, `your own ${inGroup[0].label.toLowerCase()}`, error);
+                        }}
+                      >
+                        <span className="ws-add__ownmark" aria-hidden>
+                          <Icon name="terminal" size={13} />
+                        </span>
+                        <span className="ws-add__text">
+                          <strong>Build it yourself</strong>
+                          <span>Your own code instead of a service, like an internal database or your own scripts. Not checked or priced.</span>
+                        </span>
+                        {isOwn(rec.selection[slot]) && <span className="ws-add__tag">In plan</span>}
+                      </button>
+                    </li>
+                  )}
                 </ul>
               </li>
             );
           })}
+          <li role="presentation">
+            <button type="button" className="ws-add__row ws-add__own" onClick={() => onAddOwn(query.trim())}>
+              <span className="ws-add__ownmark" aria-hidden>
+                <Icon name="plus" size={14} />
+              </span>
+              <span className="ws-add__text">
+                <strong>{query.trim() ? `Add \u201c${query.trim()}\u201d (not in StackWise)` : "Add a part that isn't listed"}</strong>
+                <span>A library, an internal API, any service. It goes on the canvas and into the spec, not checked.</span>
+              </span>
+            </button>
+          </li>
         </ul>
         <p className="ws-add__foot">
           <span>
             <kbd>&uarr;</kbd> <kbd>&darr;</kbd> to move, <kbd>enter</kbd> to add
           </span>
-          <span>The dot is what StackWise&apos;s rules say it would do to your plan.</span>
+          <span>The dot: what StackWise&apos;s rules say.</span>
         </p>
       </section>
     </div>

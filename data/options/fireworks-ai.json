@@ -1,0 +1,89 @@
+{
+  "id": "fireworks-ai",
+  "name": "Fireworks AI",
+  "provider": "fireworks-ai",
+  "slots": [
+    "ai"
+  ],
+  "summary": "Fireworks AI runs open models quickly through a pay-per-token API that works with the OpenAI SDK.",
+  "website": "https://fireworks.ai",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "none",
+      "note": "Only a one-time $1 of free credit to get started; there is no ongoing free allowance.",
+      "source": "https://fireworks.ai/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan; serverless inference is pay per token with postpaid billing.",
+      "source": "https://fireworks.ai/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Provides an OpenAI-compatible endpoint at https://api.fireworks.ai/inference/v1 (and an Anthropic-compatible one) serving open models, so code can move with a base URL and key change.",
+      "source": "https://docs.fireworks.ai/getting-started/quickstart",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "free_tier": {
+      "value": false,
+      "note": "No ongoing free tier; new accounts get a one-time $1 in free credits.",
+      "source": "https://fireworks.ai/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": false,
+      "note": "No Fireworks JavaScript or TypeScript SDK; the docs use the OpenAI or Anthropic npm packages pointed at Fireworks. The only Fireworks SDK is for Python, in alpha.",
+      "source": "https://docs.fireworks.ai/getting-started/quickstart",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "cheap_model_price": {
+      "value": "NVIDIA Nemotron 3.5 Lightning 30B A3B: $0.05 input / $0.20 output per million tokens",
+      "note": "Standard tier. Unlisted models under 4B parameters cost $0.10 per million tokens for input and output alike.",
+      "source": "https://docs.fireworks.ai/serverless/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a Fireworks account.",
+      "env": [],
+      "source": "https://docs.fireworks.ai/getting-started/quickstart"
+    },
+    {
+      "step": "Create an API key in the Fireworks dashboard.",
+      "env": [],
+      "source": "https://docs.fireworks.ai/getting-started/quickstart"
+    },
+    {
+      "step": "Set the key as an environment variable.",
+      "env": [
+        "FIREWORKS_API_KEY"
+      ],
+      "source": "https://docs.fireworks.ai/getting-started/quickstart"
+    },
+    {
+      "step": "Install the OpenAI SDK with npm install openai and set its base URL to https://api.fireworks.ai/inference/v1.",
+      "env": [],
+      "source": "https://docs.fireworks.ai/getting-started/quickstart"
+    },
+    {
+      "step": "Call chat completions from a server route with a model id like accounts/fireworks/models/glm-5p3-flash.",
+      "env": [],
+      "source": "https://docs.fireworks.ai/getting-started/quickstart"
+    }
+  ],
+  "builder_notes": [
+    "Keep FIREWORKS_API_KEY on the server only; never call the API from client-side code.",
+    "Billing is postpaid, so you are charged after use; cap max tokens per request to keep costs predictable.",
+    "Standard, Priority and Fast serverless tiers cost different amounts; the Standard tier is the cheapest."
+  ]
+}

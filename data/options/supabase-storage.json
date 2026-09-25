@@ -45,19 +45,19 @@
   },
   "setup": [
     {
-      "step": "Create a free Supabase account and a new project to get your project URL and API keys.",
+      "step": "Create a free Supabase account and a new project at supabase.com.",
       "env": [],
-      "source": "https://supabase.com/docs/guides/storage/quickstart"
+      "source": "https://supabase.com/docs/guides/getting-started"
     },
     {
-      "step": "Install the Supabase JavaScript client library in your Next.js app with npm install @supabase/supabase-js.",
+      "step": "Install the Supabase client with npm install @supabase/supabase-js (add @supabase/ssr if your framework renders pages on the server).",
       "env": [],
-      "source": "https://supabase.com/docs/guides/storage/quickstart"
+      "source": "https://supabase.com/docs/reference/javascript/installing"
     },
     {
-      "step": "Set your project URL and publishable key as environment variables.",
+      "step": "Copy the Project URL and publishable key from the project's Connect panel and add them to your environment file.",
       "env": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
-      "source": "https://supabase.com/docs/guides/storage/quickstart"
+      "source": "https://supabase.com/docs/guides/getting-started/api-keys"
     },
     {
       "step": "Create a storage bucket from the dashboard or the client library, and set access policies for it.",
@@ -72,7 +72,7 @@
   ],
   "builder_notes": [
     "Set row level security policies on storage buckets; do not assume a bucket is private by default.",
-    "Use signed upload URLs for browser uploads instead of proxying file bytes through a Next.js API route.",
+    "Use signed upload URLs for browser uploads instead of proxying file bytes through your own server.",
     "Keep the service role key on the server only; never expose it to client code."
   ]
 }

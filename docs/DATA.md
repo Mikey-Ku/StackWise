@@ -1,6 +1,6 @@
 # The data
 
-Everything StackWise knows is in `data/`. Changes go through pull requests, and `pnpm check:data` must pass. As of 2026-09-15: 14 parts, 79 options (59 fully researched), 427 facts, 43 capability rules, 6 product rules, 15 questions, and 50 glossary terms.
+Everything StackWise knows is in `data/`. Changes go through pull requests, and `pnpm check:data` must pass. As of 2026-09-24: 16 parts, 101 options (80 fully researched), 557 facts, 45 capability rules, 6 product rules, 17 questions, and 50 glossary terms.
 
 ## Options: `data/options/<id>.json`
 
@@ -108,7 +108,7 @@ Neither one marks a fact `verified`. Only a person does.
 
 ## Review these first
 
-All 427 facts are drafts. Research agents wrote the service files on 2026-09-15 and flagged these:
+All facts are drafts. Research agents wrote the service files on 2026-09-15 and flagged these:
 
 - **Render and Railway `free_plan_commercial_use: false`** was inferred ("not for production", "we recommend Pro"), not taken from an explicit ban.
 - **Render `first_paid_usd_month` ($7)** came from third-party trackers because the pricing page wouldn't load for the agent.

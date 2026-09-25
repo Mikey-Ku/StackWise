@@ -64,7 +64,7 @@
     { "step": "In a server route, create an ApifyClient with your token, call client.actor('apify/website-content-crawler').call({ startUrls: [...] }), then read results with client.dataset(run.defaultDatasetId).listItems().", "env": [], "source": "https://docs.apify.com/api/client/js/docs/quick-start" }
   ],
   "builder_notes": [
-    "Keep APIFY_TOKEN server-side and call the Apify client from a route handler or server action, not from client code.",
+    "Keep APIFY_TOKEN server-side and call the Apify client from server code, not from the browser.",
     "Save the results from a run instead of re-running the same actor on the same URLs, since every run spends usage credit.",
     "Respect each target site's robots.txt and terms of service; picking an actor doesn't automatically make scraping that site allowed."
   ]

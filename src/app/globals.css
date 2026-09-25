@@ -399,6 +399,10 @@ body {
 .ws-menu__item--danger {
   color: var(--mk-danger);
 }
+a.ws-menu__item {
+  color: inherit;
+  text-decoration: none;
+}
 
 .ws-note-inline {
   padding: 6px 10px;
@@ -421,43 +425,8 @@ body {
   font-weight: 600;
 }
 
-.ws-learn {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mk-5);
-  padding: 0 var(--mk-5) var(--mk-12);
-}
-.ws-learn-part {
-  padding: var(--mk-2) var(--mk-3);
-  border: 1px solid var(--mk-line);
-  border-radius: var(--mk-radius);
-  font-size: var(--mk-text-sm);
-  line-height: var(--mk-leading-snug);
-}
-.ws-learn-part > summary {
-  font-family: var(--mk-font-display);
-  font-weight: 600;
-  cursor: pointer;
-}
-.ws-learn-part[open] > summary {
-  margin-bottom: var(--mk-2);
-}
-.ws-learn-part ul {
-  margin: 0;
-  padding-left: 1.1em;
-}
 .ws-learn-inline {
   font-size: var(--mk-text-sm);
-}
-.ws-term {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-bottom: var(--mk-3);
-  border-bottom: 1px solid var(--mk-line);
-  font-size: var(--mk-text-sm);
-  line-height: var(--mk-leading-snug);
-  scroll-margin-top: 90px;
 }
 .ws-check-item {
   display: flex;
@@ -570,6 +539,20 @@ body {
 .ws-logo--simple-icons img {
   width: 64%;
   height: 64%;
+}
+/* While a PNG is drawn: labels show in full, since the image's text can measure a little wider. */
+.is-exporting .ws-wire-label__text {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+}
+.ws-logo__mono {
+  display: block;
+  width: 64%;
+  height: 64%;
+  background: var(--mk-text);
+  -webkit-mask: center / contain no-repeat;
+  mask: center / contain no-repeat;
 }
 .ws-logo--site img {
   width: 80%;
@@ -731,6 +714,37 @@ body {
   display: flex;
   align-items: center;
   gap: var(--mk-2);
+}
+.ws-checkgroup__name {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.ws-checkgroup__docs {
+  flex: none;
+  font-size: 12px;
+  font-weight: 500;
+}
+.ws-moredocs {
+  padding-top: 8px;
+}
+.ws-moredocs > summary {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mk-text-muted);
+}
+.ws-moredocs ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .ws-costlines {
@@ -1070,6 +1084,7 @@ body {
   font-size: 15px;
   font-weight: 650;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .ws-menu__button {
@@ -1211,6 +1226,7 @@ body {
   animation: ws-fade var(--mk-dur-slow) var(--mk-ease);
 }
 .ws-dock__btn {
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1270,11 +1286,94 @@ body {
 }
 .ws-float--left {
   left: 12px;
+  width: var(--ws-panel-w, 360px);
 }
 .ws-float--right {
   z-index: 16;
   right: 12px;
-  width: 380px;
+  width: var(--ws-panel-w, 380px);
+}
+/* The inner edge of a side panel: drag it to resize (PanelEdge). A quiet grey line shows on hover. */
+.ws-edge-grip {
+  position: absolute;
+  z-index: 3;
+  top: 18px;
+  bottom: 18px;
+  width: 10px;
+  cursor: col-resize;
+  touch-action: none;
+}
+.ws-edge-grip--left {
+  right: 0;
+}
+.ws-edge-grip--right {
+  left: 0;
+}
+.ws-edge-grip::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--mk-text-faint);
+  opacity: 0;
+  transition: opacity var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-edge-grip--left::after {
+  right: 2px;
+}
+.ws-edge-grip--right::after {
+  left: 2px;
+}
+.ws-edge-grip:hover::after,
+.ws-edge-grip:focus-visible::after,
+.ws-edge-grip.is-dragging::after {
+  opacity: 0.5;
+}
+.ws-edge-grip:focus-visible {
+  outline: none;
+}
+/* Scrollbars in the floating panels stay hidden until the pointer is over the panel. */
+.ws-float,
+.ws-ask,
+.ws-add,
+.ws-sheet {
+  --ws-scroll-thumb: transparent;
+}
+.ws-float:hover,
+.ws-ask:hover,
+.ws-add:hover,
+.ws-sheet:hover {
+  --ws-scroll-thumb: rgba(128, 128, 128, 0.45);
+}
+.ws-float *,
+.ws-ask *,
+.ws-add *,
+.ws-sheet {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ws-scroll-thumb) transparent;
+}
+.ws-float ::-webkit-scrollbar,
+.ws-ask ::-webkit-scrollbar,
+.ws-add ::-webkit-scrollbar,
+.ws-sheet::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.ws-float ::-webkit-scrollbar-track,
+.ws-ask ::-webkit-scrollbar-track,
+.ws-add ::-webkit-scrollbar-track,
+.ws-sheet::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ws-float ::-webkit-scrollbar-thumb,
+.ws-ask ::-webkit-scrollbar-thumb,
+.ws-add ::-webkit-scrollbar-thumb,
+.ws-sheet::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: var(--ws-scroll-thumb) padding-box;
 }
 .ws-float__head {
   display: flex;
@@ -1305,8 +1404,7 @@ body {
   gap: var(--mk-5);
   padding: 6px 20px 28px;
 }
-.ws-float .ws-palette,
-.ws-float .ws-learn {
+.ws-float .ws-palette {
   padding: 0 20px 28px;
 }
 .ws-float .ws-palette__top {
@@ -2181,6 +2279,10 @@ body {
   .ws-float--right {
     width: 330px;
   }
+  /* Too narrow to resize: panels keep one width, and become sheets below 640px. */
+  .ws-edge-grip {
+    display: none;
+  }
   .ws-askbtn kbd {
     display: none;
   }
@@ -2264,6 +2366,98 @@ body {
   color: var(--mk-text-faint);
   font-size: 12px;
 }
+.ws-connpill__state::before {
+  content: "\00b7";
+  margin-right: 6px;
+  color: var(--mk-text-faint);
+}
+.ws-connpill__state.is-live {
+  color: var(--mk-ok);
+}
+.ws-connpill__state.is-cta {
+  color: var(--mk-accent);
+  font-weight: 600;
+}
+
+/* Tooltips on the dock: a name, a shortcut and one line, above the button. */
+.ws-tip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.ws-tip {
+  position: absolute;
+  z-index: 40;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  max-width: 230px;
+  padding: 8px 11px;
+  border: 0.5px solid var(--ws-glass-line);
+  border-radius: 11px;
+  background: var(--mk-surface);
+  box-shadow: var(--ws-float-shadow);
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  translate: -50% 4px;
+  transition: opacity var(--mk-dur-fast) var(--mk-ease), translate var(--mk-dur-fast) var(--mk-ease), visibility 0s linear var(--mk-dur-fast);
+}
+.ws-tip__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--mk-text);
+  font-size: 12.5px;
+}
+.ws-tip__head kbd {
+  color: var(--mk-text-faint);
+  font: inherit;
+  font-size: 11px;
+}
+.ws-tip-wrap:hover > .ws-tip,
+.ws-tip-wrap:has(:focus-visible) > .ws-tip {
+  opacity: 1;
+  visibility: visible;
+  translate: -50% 0;
+  transition-delay: 0.35s, 0.35s, 0s;
+}
+.ws-tip-wrap:has(:focus-visible) > .ws-tip {
+  transition-delay: 0s;
+}
+/* The first and last tips line up with the dock's edges, so they stay on a phone's screen. */
+.ws-dock > .ws-tip-wrap:first-child > .ws-tip {
+  left: 0;
+  translate: 0 4px;
+}
+.ws-dock > .ws-tip-wrap:first-child:hover > .ws-tip,
+.ws-dock > .ws-tip-wrap:first-child:has(:focus-visible) > .ws-tip {
+  translate: 0 0;
+}
+.ws-dock > .ws-tip-wrap:last-child > .ws-tip {
+  right: 0;
+  left: auto;
+  translate: 0 4px;
+}
+.ws-dock > .ws-tip-wrap:last-child:hover > .ws-tip,
+.ws-dock > .ws-tip-wrap:last-child:has(:focus-visible) > .ws-tip {
+  translate: 0 0;
+}
+@media (hover: none) {
+  .ws-tip-wrap:hover > .ws-tip {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
 .ws-float--connect {
   z-index: 26;
   top: 64px;
@@ -2295,14 +2489,16 @@ body {
 }
 .ws-conn-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  grid-auto-rows: 1fr;
   gap: 8px;
 }
 .ws-conn {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 12px;
   border: 1px solid transparent;
   border-radius: 14px;
   background: var(--mk-surface-sunk);
@@ -2329,12 +2525,12 @@ body {
   min-width: 0;
 }
 .ws-conn__text strong {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
+  overflow: hidden;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ws-conn__text > span {
   overflow: hidden;
@@ -2342,14 +2538,6 @@ body {
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.ws-conn__tag {
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: var(--mk-accent);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
 }
 .ws-conn-ok {
   display: flex;
@@ -2423,6 +2611,9 @@ body {
 .ws-template__icon--sparkle {
   background: linear-gradient(135deg, #af52de, #5e5ce6);
 }
+.ws-template__icon--card {
+  background: linear-gradient(135deg, #34c759, #30b0c7);
+}
 .ws-template__icon--cart {
   background: #ff9500;
 }
@@ -2450,7 +2641,7 @@ body {
     left: 8px;
     width: auto;
   }
-  .ws-connpill__state {
+  .ws-connpill__state:not(.is-cta) {
     display: none;
   }
 }
@@ -2744,6 +2935,72 @@ body {
   color: var(--mk-accent);
   font-size: 11px;
   font-weight: 600;
+}
+.ws-add__own {
+  margin-top: 6px;
+  border-top: 1px solid var(--mk-line);
+  border-radius: 0 0 var(--mk-radius) var(--mk-radius);
+}
+.ws-add__ownmark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px dashed var(--mk-line-strong);
+  border-radius: 7px;
+  color: var(--mk-text-muted);
+}
+/* Built by the person, or added by hand: solid like a real part, with a dashed edge for "not checked". */
+.ws-slot.is-own,
+.ws-self-end {
+  align-self: flex-end;
+}
+/* A line someone drew between two parts: dashed, so it reads as their statement, not a service connection. */
+.ws-canvas .ws-edge.is-link .react-flow__edge-path {
+  stroke-dasharray: 2 5;
+}
+.ws-wire-label__also {
+  color: var(--mk-text-faint);
+  font-size: 0.92em;
+}
+.ws-wire-label__also::before {
+  content: "\00b7";
+  margin: 0 4px;
+}
+.ws-custom-node {
+  border: 1px dashed var(--mk-line-strong);
+}
+.ws-node__own {
+  color: var(--mk-text-muted);
+}
+.ws-own-logo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px dashed var(--mk-line-strong);
+  border-radius: 10px;
+  color: var(--mk-text-muted);
+}
+.ws-own-hint {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.ws-custom {
+  width: min(520px, calc(100vw - 32px));
+}
+.ws-custom__env {
+  font-family: var(--mk-font-mono);
+}
+.ws-custom__remove {
+  margin-left: auto;
+  color: var(--mk-danger, #d70015);
 }
 .ws-add__empty {
   padding: 24px;
@@ -3205,16 +3462,41 @@ body {
   display: grid;
   flex: none;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
   background: var(--mk-surface);
   box-shadow: inset 0 0 0 0.5px var(--mk-line-strong);
 }
-.ws-conn__logo img {
-  width: 20px;
-  height: 20px;
+.ws-conn__logo .ws-amark {
+  width: 24px;
+  height: 24px;
+}
+/* A logo image, or a one-color mark drawn in the text color so it reads in light and dark. */
+.ws-amark {
+  display: block;
+  flex: none;
   object-fit: contain;
+}
+.ws-amark--mono {
+  background: currentColor;
+  -webkit-mask: center / contain no-repeat;
+  mask: center / contain no-repeat;
+}
+.ws-conn-more > .ws-conn-grid {
+  margin-top: 8px;
+}
+.ws-keyform__row {
+  display: flex;
+  gap: 8px;
+}
+.ws-keyform__row .mk-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mk-font-mono);
+}
+.ws-keyform .mk-hint code {
+  overflow-wrap: anywhere;
 }
 .ws-conn__logo .ws-status-dot {
   position: absolute;

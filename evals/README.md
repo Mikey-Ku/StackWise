@@ -1,9 +1,9 @@
 # Evals
 
-Two questions WhyStack should be able to answer with numbers:
+Two questions StackWise should be able to answer with numbers:
 
 1. **Does the AI pre-fill read descriptions better than keywords?** (`pnpm eval:prefill`)
-2. **How often does a plain LLM, asked to pick a stack, choose one that breaks a rule, compared with WhyStack's plan?** (`pnpm eval:plain-llm`)
+2. **How often does a plain LLM, asked to pick a stack, choose one that breaks a rule, compared with StackWise's plan?** (`pnpm eval:plain-llm`)
 
 Both read the same cases from `prefill-cases.json`.
 
@@ -42,6 +42,6 @@ Michael writes every case. Claude does not generate eval questions or answers fo
 - **Opposite answers**: yes when the truth was no, or no when it was yes. These are the mistakes that change a plan.
 - A per-question breakdown, to see which questions each method struggles with
 
-`eval:plain-llm` uses each case's expected answers as confirmed answers, asks Claude to pick one option per needed part from the same list WhyStack uses (names and one-line summaries only, no facts, no rules), then runs both plans through the rules engine and reports how many have something that doesn't work or a warning.
+`eval:plain-llm` uses each case's expected answers as confirmed answers, asks Claude to pick one option per needed part from the same list StackWise uses (names and one-line summaries only, no facts, no rules), then runs both plans through the rules engine and reports how many have something that doesn't work or a warning.
 
 Run `pnpm eval:prefill --keywords-only` to grade the baseline without calling Claude. Results are written to `reports/` (gitignored). Both AI evals need `ANTHROPIC_API_KEY` in `.env.local`, and each case costs one Claude call.

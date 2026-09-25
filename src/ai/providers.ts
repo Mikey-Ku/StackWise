@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { AI_MODEL, AiError, aiEnabled } from "./config";
+import { setting } from "@/engine/names";
 
 /**
  * Node-only. The built-in AI can be any model in PROVIDERS that has what it needs in .env.local.
@@ -33,15 +34,22 @@ export interface ProviderDef {
 }
 
 export const PROVIDERS: ProviderDef[] = [
-  { id: "claude", label: "Claude", kind: "anthropic", keyEnv: ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"], modelEnv: "WHYSTACK_MODEL", defaultModel: AI_MODEL },
+  { id: "claude", label: "Claude", kind: "anthropic", keyEnv: ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"], modelEnv: "STACKWISE_MODEL", defaultModel: AI_MODEL },
   { id: "openai", label: "OpenAI", kind: "openai-chat", keyEnv: ["OPENAI_API_KEY"], modelEnv: "OPENAI_MODEL", defaultModel: "gpt-6-luna", baseUrl: "https://api.openai.com/v1" },
   { id: "gemini", label: "Gemini", kind: "gemini", keyEnv: ["GEMINI_API_KEY", "GOOGLE_API_KEY"], modelEnv: "GEMINI_MODEL", defaultModel: "gemini-3.8-flash" },
+  { id: "deepseek", label: "DeepSeek", kind: "openai-chat", keyEnv: ["DEEPSEEK_API_KEY"], modelEnv: "DEEPSEEK_MODEL", defaultModel: "deepseek-chat", baseUrl: "https://api.deepseek.com/v1" },
   { id: "openrouter", label: "OpenRouter", kind: "openai-chat", keyEnv: ["OPENROUTER_API_KEY"], modelEnv: "OPENROUTER_MODEL", baseUrl: "https://openrouter.ai/api/v1" },
   { id: "groq", label: "Groq", kind: "openai-chat", keyEnv: ["GROQ_API_KEY"], modelEnv: "GROQ_MODEL", baseUrl: "https://api.groq.com/openai/v1" },
   { id: "mistral", label: "Mistral", kind: "openai-chat", keyEnv: ["MISTRAL_API_KEY"], modelEnv: "MISTRAL_MODEL", baseUrl: "https://api.mistral.ai/v1" },
   { id: "ollama", label: "Ollama (on this computer)", kind: "openai-chat", keyEnv: [], modelEnv: "OLLAMA_MODEL", baseUrl: "http://localhost:11434/v1", baseUrlEnv: "OLLAMA_BASE_URL" },
   { id: "custom", label: "Custom model", kind: "openai-chat", keyEnv: ["CUSTOM_AI_API_KEY"], modelEnv: "CUSTOM_AI_MODEL", baseUrlEnv: "CUSTOM_AI_BASE_URL", labelEnv: "CUSTOM_AI_LABEL" },
 ];
+
+/** Always offered on the Connect screen, where a key can be pasted in; the rest show once they're set up. */
+export const FEATURED_PROVIDERS = ["claude", "openai", "gemini", "deepseek"];
+
+/** The only variables the Connect screen may write to StackWise's own .env.local: each provider's first key name. */
+export const PROVIDER_KEY_NAMES = new Set(PROVIDERS.flatMap((p) => p.keyEnv.slice(0, 1)));
 
 export const PROVIDER_IDS = PROVIDERS.map((p) => p.id);
 export type ProviderId = string;
@@ -58,14 +66,14 @@ export interface ProviderStatus {
   needs: string[];
   /** Where OpenAI-style requests go. Never includes a key. */
   baseUrl?: string;
-  /** Always offered in the menus (Claude, OpenAI, Gemini); the rest show once they're set up. */
+  /** Always offered in the menus (Claude, OpenAI, Gemini, DeepSeek); the rest show once they're set up. */
   featured: boolean;
 }
 
 type Env = Record<string, string | undefined>;
 
 export function providerStatus(env: Env = process.env): ProviderStatus[] {
-  const off = env.WHYSTACK_AI === "off";
+  const off = setting("AI", env) === "off";
   return PROVIDERS.map((def) => {
     const model = env[def.modelEnv] || def.defaultModel || "";
     const baseUrl = (def.baseUrlEnv && env[def.baseUrlEnv]) || def.baseUrl;
@@ -84,7 +92,7 @@ export function providerStatus(env: Env = process.env): ProviderStatus[] {
       keyName: def.keyEnv[0] ?? def.modelEnv,
       needs,
       ...(baseUrl ? { baseUrl } : {}),
-      featured: ["claude", "openai", "gemini"].includes(def.id),
+      featured: FEATURED_PROVIDERS.includes(def.id),
     };
   });
 }

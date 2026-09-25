@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { planEnv, type SlotId } from "@/engine";
 import { agentName, pairInstructions, presence } from "@/mcp/pairing";
+import { STATE_TEXT } from "./answerers";
 import { Icon } from "./icons";
 import type { Pairing } from "./usePairing";
 import type { PlanModel } from "./usePlans";
@@ -208,7 +209,7 @@ function Runner({ path, project, appOk, onChecked }: { path: string; project: In
       right={
         <span className={cx("ws-proj__health", appOk === true && "is-ok", appOk === false && "is-bad")} title={project.healthUrl ?? undefined}>
           <span className={cx("ws-status-dot", appOk && "is-on")} aria-hidden />
-          {appOk === null ? "Checking" : appOk ? "App is up" : "App is down"}
+          {appOk === null ? "Checking" : appOk ? "App is up" : "Not running"}
           <button type="button" className="ws-link" onClick={onChecked}>
             Check
           </button>
@@ -245,7 +246,7 @@ function Runner({ path, project, appOk, onChecked }: { path: string; project: In
       )}
       {current && (
         <p className="mk-hint">
-          {current.running ? `Running since ${new Date(current.startedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : `Stopped${current.exitCode === null ? "" : `, exit code ${current.exitCode}`}`}. Runs with a clean environment: StackWise&apos;s own keys never reach your app.
+          {current.running ? `Running since ${new Date(current.startedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : `Stopped${current.exitCode === null ? "" : `, exit code ${current.exitCode}`}`}.
         </p>
       )}
       {log.length > 0 && (
@@ -346,7 +347,7 @@ function ProbeRow({ result, logo, name }: { result: ProbeResult; logo: React.Rea
         )}
         {result.statusPage && (
           <a href={result.statusPage} target="_blank" rel="noreferrer" className="ws-small-link">
-            Is it them? Check their status page
+            Their status page
           </a>
         )}
       </div>
@@ -441,14 +442,14 @@ function Agents({ path, pairing, onToast }: { path: string; pairing: Pairing; on
             const listening = state ? presence(state, pairing.serverNow) : "not-connected";
             const changed = w.changes ? [...new Set([...w.changes.committed, ...w.changes.uncommitted])] : [];
             const claude = w.agent!.startsWith("claude-code");
-            const start = claude ? `cd ${w.path} && claude "/mcp__whystack__pair ${w.agent}"` : `cd ${w.path}`;
+            const start = claude ? `cd ${w.path} && claude "/mcp__stackwise__pair ${w.agent}"` : `cd ${w.path}`;
             return (
               <div key={w.path} className="ws-proj__agent">
                 <div className="ws-proj__envtop">
                   <span className={cx("ws-status-dot", (listening === "listening" || listening === "working") && "is-on")} aria-hidden />
                   <strong>{agentName(w.agent!)}</strong>
                   <code className="ws-proj__branch">{w.branch}</code>
-                  <span className="ws-proj__tag">{listening === "not-connected" ? "Not connected" : listening}</span>
+                  <span className="ws-proj__tag">{STATE_TEXT[listening]}</span>
                 </div>
                 <span className="mk-hint">
                   {w.path.replace(/^\/Users\/[^/]+/, "~")}. {w.changes?.ahead ?? 0} commit{w.changes?.ahead === 1 ? "" : "s"} ahead, {changed.length} file{changed.length === 1 ? "" : "s"} changed
@@ -552,7 +553,7 @@ function SqlConsole({ path }: { path: string }) {
         <button type="button" className="mk-btn mk-btn--primary" disabled={busy} onClick={() => void run()}>
           {busy ? "Running..." : "Run query"}
         </button>
-        <span className="mk-hint">Cmd+Enter. Only SELECT, WITH, SHOW and EXPLAIN run, inside a read-only transaction.</span>
+        <span className="mk-hint">Cmd+Enter runs it. Read-only: SELECT, WITH, SHOW and EXPLAIN.</span>
       </div>
       {result && "error" in result && <p className="ws-proj__error">{result.error}</p>}
       {result && !("error" in result) && (
@@ -647,7 +648,7 @@ export function ProjectPanel({ model, pairing, onToast }: { model: PlanModel; pa
   if (!path || !project) {
     return (
       <div className="ws-proj">
-        <p className="mk-muted">Link this plan to its project folder to run the app, set its environment variables, check every service with your own keys, and read its database. Everything stays on this computer.</p>
+        <p className="mk-muted">Link your project folder to run the app, set its environment variables, test each service with your keys and read the database. Nothing leaves this computer.</p>
         <form
           className="ws-proj__link"
           onSubmit={(e) => {
@@ -720,7 +721,7 @@ export function ProjectPanel({ model, pairing, onToast }: { model: PlanModel; pa
 
       <Runner path={path} project={project} appOk={appResult ? appResult.ok : null} onChecked={() => void check(["app"])} />
 
-      <Section title="Checks" icon="checklist" right={checkable.length > 0 && <button type="button" className="mk-btn mk-btn--secondary mk-sm" disabled={checking} onClick={() => void check(["app", ...checkable.map((c) => c.id)])}>{checking ? "Checking..." : "Check everything"}</button>}>
+      <Section title="Live tests" icon="checklist" right={checkable.length > 0 && <button type="button" className="mk-btn mk-btn--secondary mk-sm" disabled={checking} onClick={() => void check(["app", ...checkable.map((c) => c.id)])}>{checking ? "Testing..." : "Test all"}</button>}>
         {appResult && <ProbeRow result={appResult} name={plan.appName.trim() || "Your app"} logo={<Icon name="web" size={20} />} />}
         {checkable.map(({ id }) => {
           const option = index.optionsById.get(id);
@@ -732,19 +733,19 @@ export function ProjectPanel({ model, pairing, onToast }: { model: PlanModel; pa
               <Logo logo={catalog.logos[id]} name={option?.name ?? id} size={20} />
               <span className="ws-proj__probetext">
                 <strong>{option?.name}</strong>
-                <span>Not checked yet</span>
+                <span>Not tested yet</span>
               </span>
               <button type="button" className="ws-link" onClick={() => void check([id])}>
-                Check
+                Test
               </button>
             </div>
           );
         })}
-        {checkable.length === 0 && !appResult && <p className="mk-hint">None of the services in this plan has a live check yet.</p>}
+        {checkable.length === 0 && !appResult && <p className="mk-hint">No live test for these services yet.</p>}
       </Section>
 
       <Section title={`Environment${missing ? `, ${missing} missing` : ""}`} icon="note" right={<span className="mk-hint">Writes to .env.local</span>}>
-        {!project.envIgnored && <p className="ws-proj__error">.env.local isn&apos;t in .gitignore. Add it before you set any keys, so they never get committed.</p>}
+        {!project.envIgnored && !project.issues.some((issue) => issue.includes(".gitignore")) && <p className="ws-proj__error">.env.local isn&apos;t in .gitignore. Add it before you set any keys, so they never get committed.</p>}
         <ul className="ws-proj__envs">
           {rows.map((row) => (
             <EnvRow

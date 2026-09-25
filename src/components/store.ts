@@ -1,4 +1,4 @@
-import { NOTE_MAX, type Answer, type Note, type PriorityId, type Selection, type SharedPlan, type SizeId, type SlotId } from "@/engine";
+import { NOTE_MAX, type Answer, type CustomPart, type Extra, type Note, type PlanLink, type PriorityId, type Selection, type SharedPlan, type SizeId, type SlotId } from "@/engine";
 
 /**
  * Every plan the person has, kept in their browser. Pure functions only, so the rules for undo,
@@ -66,6 +66,12 @@ export interface PlanState {
   layout: Record<string, Spot>;
   /** Notes on each part and the line to it. Shared with the plan, exported, and editable by Claude. */
   notes: Partial<Record<SlotId, Note>>;
+  /** Parts StackWise has no facts on, added by hand, by id ("custom-..."). Shared and exported like notes. */
+  custom: Record<string, CustomPart>;
+  /** Extra services in a part, by "<part>.<name>" ("database.cache"): checked and priced like the rest. */
+  extras: Record<string, Extra>;
+  /** Lines between things in the plan, by "<from>><to>". */
+  links: Record<string, PlanLink>;
   /** The conversation about this plan. Only in this browser: the notes are what's kept. */
   chat: ChatTurn[];
   /** A folder on this computer the project files were written into, if there is one. */
@@ -114,6 +120,15 @@ export type PlanAction =
   | { type: "setFolder"; folder: string | null }
   | { type: "setIcon"; icon: string | null }
   | { type: "loadExample"; appName: string; description: string }
+  /** Adding or editing a part StackWise has no facts on. Undoable. */
+  | { type: "setCustom"; id: string; part: CustomPart }
+  | { type: "removeCustom"; id: string }
+  /** Adding or changing an extra service in a part. Undoable. */
+  | { type: "setExtra"; id: string; extra: Extra }
+  | { type: "removeExtra"; id: string }
+  /** Drawing, relabeling or removing a line between two things. Undoable. */
+  | { type: "setLink"; id: string; link: PlanLink }
+  | { type: "removeLink"; id: string }
   /** Start from a kind of app: its answers become guesses to confirm, and it may pick a phone toolkit. */
   | { type: "applyTemplate"; label: string; description: string; answers: Record<string, Answer>; pinned?: Selection }
   | { type: "resetPlan" };
@@ -131,7 +146,7 @@ export type StoreAction =
   | { type: "redo" };
 
 /** Changes worth undoing: the ones that change the plan, not typing or checking boxes. */
-const UNDOABLE = new Set<StoreAction["type"]>(["applyPrefill", "answer", "setSize", "setPriority", "confirmAll", "place", "clearSlot", "autoPick", "useNote", "useSwap", "loadExample", "applyTemplate", "resetPlan"]);
+const UNDOABLE = new Set<StoreAction["type"]>(["applyPrefill", "answer", "setSize", "setPriority", "confirmAll", "place", "clearSlot", "autoPick", "useNote", "useSwap", "loadExample", "applyTemplate", "resetPlan", "setCustom", "removeCustom", "setExtra", "removeExtra", "setLink", "removeLink"]);
 const HISTORY_LIMIT = 50;
 
 export function blankPlan(id: string, now: string): PlanState {
@@ -152,8 +167,16 @@ export function blankPlan(id: string, now: string): PlanState {
     checked: {},
     layout: {},
     notes: {},
+    custom: {},
+    extras: {},
+    links: {},
     chat: [],
   };
+}
+
+/** Links that don't touch `end`: removing something takes its lines with it. */
+function withoutLinksTo(links: Record<string, PlanLink>, end: string): Record<string, PlanLink> {
+  return Object.fromEntries(Object.entries(links).filter(([, link]) => link.from !== end && link.to !== end));
 }
 
 function withNote(plan: PlanState, slot: SlotId, note: Note | null): PlanState {
@@ -259,6 +282,31 @@ function reducePlan(plan: PlanState, action: PlanAction): PlanState {
       else delete next.icon;
       return next;
     }
+    case "setCustom":
+      return { ...plan, custom: { ...plan.custom, [action.id]: action.part } };
+    case "removeCustom": {
+      const custom = { ...plan.custom };
+      delete custom[action.id];
+      const layout = { ...plan.layout };
+      delete layout[action.id];
+      return { ...plan, custom, layout, links: withoutLinksTo(plan.links, action.id) };
+    }
+    case "setExtra":
+      return { ...plan, extras: { ...plan.extras, [action.id]: action.extra } };
+    case "removeExtra": {
+      const extras = { ...plan.extras };
+      delete extras[action.id];
+      const layout = { ...plan.layout };
+      delete layout[`extra-${action.id}`];
+      return { ...plan, extras, layout, links: withoutLinksTo(plan.links, action.id) };
+    }
+    case "setLink":
+      return { ...plan, links: { ...plan.links, [action.id]: action.link } };
+    case "removeLink": {
+      const links = { ...plan.links };
+      delete links[action.id];
+      return { ...plan, links };
+    }
     case "loadExample":
       return { ...blankPlan(plan.id, plan.createdAt), appName: action.appName, description: action.description };
     case "applyTemplate": {
@@ -313,6 +361,9 @@ export function reduce(history: History, action: StoreAction, now = new Date().t
         builderId: action.plan.builderId,
         pinned: action.plan.pinned,
         notes: action.plan.notes,
+        custom: action.plan.custom ?? {},
+        extras: action.plan.extras ?? {},
+        links: action.plan.links ?? {},
         step: "plan",
       };
       return { store: { ...withPlan(store, plan), activeId: action.id, order: [action.id, ...store.order] }, past: [], future: [] };
@@ -332,6 +383,9 @@ export function reduce(history: History, action: StoreAction, now = new Date().t
         builderId: action.plan.builderId,
         pinned: action.plan.pinned,
         notes: action.plan.notes,
+        custom: action.plan.custom ?? {},
+        extras: action.plan.extras ?? {},
+        links: action.plan.links ?? {},
         guesses,
         // Claude's answers count as confirmed, so show the plan rather than a preview.
         step: Object.keys(action.plan.answers).length > 0 ? "plan" : target.step,
@@ -372,6 +426,9 @@ export function toSharedPlan(plan: PlanState): SharedPlan {
     builderId: plan.builderId,
     pinned: plan.pinned,
     notes: plan.notes,
+    ...(Object.keys(plan.custom).length ? { custom: plan.custom } : {}),
+    ...(Object.keys(plan.extras).length ? { extras: plan.extras } : {}),
+    ...(Object.keys(plan.links).length ? { links: plan.links } : {}),
   };
 }
 

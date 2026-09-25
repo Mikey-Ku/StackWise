@@ -130,8 +130,8 @@ describe("connectionLabel", () => {
 describe("envFileText", () => {
   const text = envFileText(planEnv(index, selection), { appName: "Bird count", generatedOn: "2026-09-15" });
 
-  it("groups names under the service and the step that gives you the value", () => {
-    expect(text).toContain("# login-keys\n# Copy both keys from the dashboard.\n# https://example.com/keys\nNEXT_PUBLIC_LOGIN_KEY=\nLOGIN_SECRET=");
+  it("groups names under the service, with its docs once, and the step that gives you the value", () => {
+    expect(text).toContain("# login-keys\n# Docs: https://example.com/keys\n# Copy both keys from the dashboard.\nNEXT_PUBLIC_LOGIN_KEY=\nLOGIN_SECRET=");
   });
 
   it("never writes a value, and says the file stays out of git", () => {

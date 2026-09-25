@@ -1,10 +1,12 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { execFile, spawn, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import type { QueryArrayConfig } from "pg";
 import { detectProject, type Detected } from "./detect";
 import { envValues, gitignoreCovers, parseEnv, setEnv, springEnvRefs } from "./envfile";
 import { buildProbe, PROBES, safeBody } from "./probes";
 import { checkReadOnly, postgresFrom, ROW_LIMIT, sqliteFrom, TIMEOUT_MS } from "./sql";
+import { LEGACY_PLAN_FILE, PLAN_FILE } from "@/engine/names";
 
 /**
  * Node-only. A project folder on this computer, linked to a plan: what it is, its env files,
@@ -89,9 +91,10 @@ export function findIcon(folder: string): string | null {
 
 /** An icon from the project as a data URL, small enough to keep with the plan in the browser. */
 export function iconData(folder: string, file: string): string | null {
-  const full = path.resolve(folder, file);
-  const type = ICON_TYPES[path.extname(full).toLowerCase()];
-  if (!type || !full.startsWith(folder + path.sep)) return null;
+  const type = ICON_TYPES[path.extname(file).toLowerCase()];
+  // Followed through symlinks: an icon that links to a file elsewhere is never read.
+  const full = type ? inside(folder, file) : null;
+  if (!full) return null;
   try {
     const bytes = fs.readFileSync(full);
     if (bytes.length > 256 * 1024) return null;
@@ -142,7 +145,7 @@ export function inspect(folder: string): Inspection {
     } else issues.push(`This project needs Java ${detected.javaVersion}, and StackWise couldn't find it on this Mac. Install it with: brew install openjdk@${detected.javaVersion}`);
   }
   if (rows.size && !envIgnored && has(WRITE_TO)) issues.push("Git doesn't ignore .env.local, so your keys could be committed. Add .env.local to .gitignore.");
-  return { ...detected, commands, folder, exists, env: [...rows.values()], configRefs: [...new Set(configRefs)], envIgnored, planFile: has("whystack.plan.json"), issues, icon: exists ? findIcon(folder) : null, readme: exists ? readmeSummary(read(folder, "README.md") ?? read(folder, "readme.md")) : null };
+  return { ...detected, commands, folder, exists, env: [...rows.values()], configRefs: [...new Set(configRefs)], envIgnored, planFile: has(PLAN_FILE) || has(LEGACY_PLAN_FILE), issues, icon: exists ? findIcon(folder) : null, readme: exists ? readmeSummary(read(folder, "README.md") ?? read(folder, "readme.md")) : null };
 }
 
 /** Every value the project's env files set, later files winning, the way most frameworks load them. */
@@ -154,8 +157,12 @@ export function projectEnv(folder: string): Record<string, string> {
 /** Set one variable in the project's .env.local. The file is created readable only by you. */
 export function writeEnv(folder: string, name: string, value: string): { created: boolean; ignored: boolean } {
   const file = path.join(folder, WRITE_TO);
+  // A .env.local that links somewhere else would have the key written to wherever it points.
+  if (fs.existsSync(file) && fs.lstatSync(file).isSymbolicLink()) throw new Error(".env.local is a link to another file, so StackWise won't write to it.");
   const before = read(folder, WRITE_TO);
   fs.writeFileSync(file, setEnv(before ?? "", name, value), { mode: 0o600 });
+  // The mode above only applies to a new file; an existing one is made private too.
+  fs.chmodSync(file, 0o600);
   return { created: before === null, ignored: gitignoreCovers(read(folder, ".gitignore"), WRITE_TO) };
 }
 
@@ -181,10 +188,21 @@ async function get(url: string, headers: Record<string, string>, secrets: string
 }
 
 /** One live check: a service in the plan, or "app" for the running app's own health page. */
+export function isLoopbackUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (url.protocol === "http:" || url.protocol === "https:") && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export async function probe(folder: string, id: string, healthUrl?: string | null): Promise<ProbeResult> {
   if (id === "app") {
     const url = healthUrl ?? inspect(folder).healthUrl;
     if (!url) return { id, title: "Your app answers", ok: false, error: "StackWise doesn't know where this app answers yet." };
+    // The app check only ever calls this computer; StackWise isn't a way to fetch other sites.
+    if (!isLoopbackUrl(url)) return { id, title: "Your app answers", ok: false, error: "The app check only calls addresses on this computer, like http://localhost:3000." };
     try {
       const result = await get(url, {}, []);
       return { id, title: "Your app answers", ok: result.status < 400, ...result, request: { url, headers: {} } };
@@ -213,6 +231,57 @@ export interface SqlResult {
   database: string;
 }
 
+/** A path inside the folder, following symlinks, or null when it lands outside. */
+export function inside(folder: string, relative: string): string | null {
+  try {
+    const root = fs.realpathSync(folder);
+    const full = fs.realpathSync(path.resolve(folder, relative));
+    return full === root || full.startsWith(root + path.sep) ? full : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * SQLite runs synchronously, and a runaway query (a recursive one that never ends) can't be
+ * interrupted from JavaScript, not even by stopping a worker thread. So each query runs in its own
+ * short-lived Node process, killed after TIMEOUT_MS, and stops reading rows after ROW_LIMIT.
+ */
+const SQLITE_SCRIPT = `
+const { DatabaseSync } = require("node:sqlite");
+const [file, query, limit] = process.argv.slice(1);
+try {
+  const db = new DatabaseSync(file, { readOnly: true });
+  const rows = [];
+  let more = false;
+  for (const row of db.prepare(query).iterate()) {
+    if (rows.length >= Number(limit)) { more = true; break; }
+    rows.push({ ...row });
+  }
+  db.close();
+  process.stdout.write(JSON.stringify({ rows, more }));
+} catch (error) {
+  process.stdout.write(JSON.stringify({ error: String((error && error.message) || error) }));
+}`;
+
+function sqliteQuery(file: string, query: string): Promise<{ rows: Record<string, unknown>[]; more: boolean } | { error: string }> {
+  return new Promise((resolve) => {
+    execFile(
+      process.execPath,
+      ["-e", SQLITE_SCRIPT, file, query, String(ROW_LIMIT)],
+      { timeout: TIMEOUT_MS, killSignal: "SIGKILL", maxBuffer: 8 * 1024 * 1024, env: childEnv() },
+      (error, stdout) => {
+        if (error && (error.killed || error.signal)) return resolve({ error: `The query took longer than ${TIMEOUT_MS / 1000} seconds, so it was stopped.` });
+        try {
+          resolve(JSON.parse(stdout));
+        } catch {
+          resolve({ error: "The query failed." });
+        }
+      },
+    );
+  });
+}
+
 /** One read-only query against the project's database. */
 export async function runSql(folder: string, query: string): Promise<SqlResult | { error: string }> {
   const refused = checkReadOnly(query);
@@ -222,11 +291,20 @@ export async function runSql(folder: string, query: string): Promise<SqlResult |
   const pg = postgresFrom(env);
   if (pg) {
     const { Client } = await import("pg");
-    const client = new Client({ ...pg.config, statement_timeout: TIMEOUT_MS, connectionTimeoutMillis: TIMEOUT_MS, application_name: "StackWise read-only" });
+    // The whole session is read-only, not just the transaction, so a COMMIT smuggled into the query can't end it.
+    const client = new Client({
+      ...pg.config,
+      statement_timeout: TIMEOUT_MS,
+      connectionTimeoutMillis: TIMEOUT_MS,
+      application_name: "StackWise read-only",
+      options: "-c default_transaction_read_only=on",
+    });
     try {
       await client.connect();
       await client.query("BEGIN READ ONLY");
-      const result = await client.query({ text: query, rowMode: "array" });
+      // The extended protocol runs exactly one statement: "SELECT 1; COMMIT; DELETE ..." is refused by Postgres itself.
+      const config: QueryArrayConfig & { queryMode: "extended" } = { text: query, rowMode: "array", queryMode: "extended" };
+      const result = await client.query(config);
       await client.query("ROLLBACK");
       const rows = (result.rows as unknown[][]).slice(0, ROW_LIMIT);
       return { columns: result.fields.map((f) => f.name), rows, truncated: result.rows.length > ROW_LIMIT, ms: Date.now() - started, database: `Postgres (${pg.from})` };
@@ -238,22 +316,14 @@ export async function runSql(folder: string, query: string): Promise<SqlResult |
   }
   const file = sqliteFrom(env);
   if (file) {
-    const full = path.resolve(folder, file);
-    if (!full.startsWith(folder)) return { error: "That database file is outside the project." };
-    const { DatabaseSync } = await import("node:sqlite");
-    const db = new DatabaseSync(full, { readOnly: true });
-    try {
-      const statement = db.prepare(query);
-      const rows = statement.all() as Record<string, unknown>[];
-      const columns = rows[0] ? Object.keys(rows[0]) : [];
-      return { columns, rows: rows.slice(0, ROW_LIMIT).map((r) => columns.map((c) => r[c])), truncated: rows.length > ROW_LIMIT, ms: Date.now() - started, database: `SQLite (${file})` };
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "The query failed." };
-    } finally {
-      db.close();
-    }
+    const full = inside(folder, file);
+    if (!full) return { error: "That database file is outside the project." };
+    const result = await sqliteQuery(full, query);
+    if ("error" in result) return result;
+    const columns = result.rows[0] ? Object.keys(result.rows[0]) : [];
+    return { columns, rows: result.rows.map((r) => columns.map((c) => r[c])), truncated: result.more, ms: Date.now() - started, database: `SQLite (${file})` };
   }
-  return { error: "StackWise found no Postgres URL (DATABASE_URL or SPRING_DATASOURCE_URL) or SQLite file in this project's env files. A database that lives inside the app, like Wheelhouse's local H2 file, can only be read by the app itself." };
+  return { error: "StackWise found no Postgres URL (DATABASE_URL or SPRING_DATASOURCE_URL) or SQLite file in this project's env files. A database that lives inside the app, like an H2 file inside the app, can only be read by the app itself." };
 }
 
 /* ---------- processes StackWise runs ---------- */
@@ -288,6 +358,7 @@ function childEnv(): NodeJS.ProcessEnv {
 export function startRun(folder: string, command: string): RunInfo {
   const existing = [...runs.values()].find((r) => r.folder === folder && r.command === command && r.running);
   if (existing) return info(existing);
+  if (!fs.existsSync(folder) || !fs.statSync(folder).isDirectory()) throw new Error("That folder doesn't exist.");
   const child = spawn(command, { cwd: folder, shell: "/bin/sh", detached: true, env: childEnv() });
   const run: Run = { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, folder, command, startedAt: new Date().toISOString(), running: true, exitCode: null, lines: 0, child, log: [] };
   const push = (chunk: Buffer) => {
@@ -300,6 +371,10 @@ export function startRun(folder: string, command: string): RunInfo {
   };
   child.stdout?.on("data", push);
   child.stderr?.on("data", push);
+  child.on("error", (error) => {
+    run.running = false;
+    run.log.push(`(couldn't start: ${error.message})`);
+  });
   child.on("exit", (code) => {
     run.running = false;
     run.exitCode = code;
