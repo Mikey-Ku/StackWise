@@ -15,6 +15,7 @@ describe("staleness", () => {
     const fact = { value: true, note: "n", source: "https://example.com", retrieved: "2026-01-01", status: "draft" as const };
     expect(isStale(fact, "2026-04-01")).toBe(false);
     expect(isStale(fact, "2026-06-01")).toBe(true);
+    expect(isStale({ ...fact, status: "verified", reviewed: "2026-05-20" }, "2026-06-01")).toBe(false);
   });
 
   it("lists every stale fact in the catalog", () => {

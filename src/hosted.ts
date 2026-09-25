@@ -9,10 +9,19 @@ import { setting } from "@/engine/names";
  */
 export const HOSTED = process.env.NEXT_PUBLIC_STACKWISE_HOSTED === "1";
 
+type Env = Record<string, string | undefined>;
+
+/**
+ * The server's answer: either flag. STACKWISE_HOSTED=1 at run time closes the local-only routes
+ * and the review page even in a build made without the public flag, so a forgotten build flag
+ * can't open them. The page itself only knows HOSTED, which is fixed when it's built.
+ */
+export function isHosted(env: Env = process.env): boolean {
+  return env.NEXT_PUBLIC_STACKWISE_HOSTED === "1" || setting("HOSTED", env) === "1";
+}
+
 /** Where to get StackWise to run on your own computer. */
 export const SOURCE_URL = "https://github.com/Mikey-Ku/StackWise";
-
-type Env = Record<string, string | undefined>;
 
 /**
  * Whether the built-in AI may spend a key's credit. STACKWISE_AI=off turns it off anywhere. A
@@ -21,6 +30,6 @@ type Env = Record<string, string | undefined>;
  */
 export function aiAllowed(env: Env = process.env): boolean {
   if (setting("AI", env) === "off") return false;
-  if (env.NEXT_PUBLIC_STACKWISE_HOSTED === "1" && setting("HOSTED_AI", env) !== "on") return false;
+  if (isHosted(env) && setting("HOSTED_AI", env) !== "on") return false;
   return true;
 }
