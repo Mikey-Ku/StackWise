@@ -58,10 +58,10 @@
     }
   },
   "setup": [
-    { "step": "Create a PostHog account, either PostHog Cloud or self-hosted.", "env": [], "source": "https://posthog.com/docs/libraries/next-js" },
-    { "step": "Install the client SDK with npm install --save posthog-js.", "env": [], "source": "https://posthog.com/docs/libraries/next-js" },
-    { "step": "Add your project token and host to .env.local and your hosting provider; find the token in your project settings.", "env": ["NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN", "NEXT_PUBLIC_POSTHOG_HOST"], "source": "https://posthog.com/docs/libraries/next-js" },
-    { "step": "Create instrumentation-client.js at your app root and call posthog.init() with those values; PostHog then captures page views automatically.", "env": [], "source": "https://posthog.com/docs/libraries/next-js" }
+    { "step": "Create a PostHog account, either PostHog Cloud or self-hosted.", "env": [], "source": "https://posthog.com/docs/libraries/js" },
+    { "step": "Install the client SDK with npm install --save posthog-js.", "env": [], "source": "https://posthog.com/docs/libraries/js" },
+    { "step": "Add your project token and host to your environment file and your hosting provider; find the token in your project settings.", "env": ["NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN", "NEXT_PUBLIC_POSTHOG_HOST"], "source": "https://posthog.com/docs/libraries/js" },
+    { "step": "Call posthog.init() with those values once, when your app first loads in the browser; PostHog then captures page views automatically.", "env": [], "source": "https://posthog.com/docs/libraries/js" }
   ],
   "builder_notes": [
     "Keep personal details like emails and names out of event properties; identify logged-in users with a stable id such as their user id, and skip identify() entirely for anonymous visitors.",

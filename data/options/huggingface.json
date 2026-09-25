@@ -1,0 +1,89 @@
+{
+  "id": "huggingface",
+  "name": "Hugging Face Inference Providers",
+  "provider": "huggingface",
+  "slots": [
+    "ai"
+  ],
+  "summary": "Hugging Face's router lets your app call hundreds of open models, served by partner providers, with one token and one bill.",
+  "website": "https://huggingface.co/docs/inference-providers/index",
+  "coverage": "full",
+  "facts": {
+    "free_plan_covers": {
+      "value": "just_me",
+      "note": "Free accounts get $0.10 of Inference Providers credit each month (subject to change), enough to try it yourself but not to serve other people.",
+      "source": "https://huggingface.co/docs/inference-providers/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "first_paid_usd_month": {
+      "value": null,
+      "note": "No monthly plan is needed for the API; past the free credit you buy credits and pay the providers' per-token rates with no Hugging Face markup. An optional PRO account raises the monthly credit to $2.",
+      "source": "https://huggingface.co/docs/inference-providers/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "portability": {
+      "value": "high",
+      "note": "Offers an OpenAI-compatible chat endpoint at https://router.huggingface.co/v1 and serves open-weight models, so code can move with a base URL and key change.",
+      "source": "https://huggingface.co/docs/inference-providers/index",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "free_tier": {
+      "value": true,
+      "note": "Every Hugging Face user gets monthly Inference Providers credits; free accounts get $0.10 a month.",
+      "source": "https://huggingface.co/docs/inference-providers/pricing",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "sdk_typescript": {
+      "value": true,
+      "note": "Official JavaScript and TypeScript client is published as the \"@huggingface/inference\" npm package.",
+      "source": "https://huggingface.co/docs/inference-providers/index",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    },
+    "cheap_model_price": {
+      "value": "Llama 3.1 8B Instruct: $0.02 input / $0.05 output per million tokens (via DeepInfra)",
+      "note": "Prices are the serving provider's rates passed through at cost and differ by provider; the router's model list shows each provider's current price.",
+      "source": "https://router.huggingface.co/v1/models",
+      "retrieved": "2026-09-23",
+      "status": "draft"
+    }
+  },
+  "setup": [
+    {
+      "step": "Create a Hugging Face account.",
+      "env": [],
+      "source": "https://huggingface.co/docs/inference-providers/index"
+    },
+    {
+      "step": "Create a fine-grained access token with the \"Make calls to Inference Providers\" permission in your token settings.",
+      "env": [],
+      "source": "https://huggingface.co/docs/inference-providers/index"
+    },
+    {
+      "step": "Set the token as an environment variable.",
+      "env": [
+        "HF_TOKEN"
+      ],
+      "source": "https://huggingface.co/docs/inference-providers/index"
+    },
+    {
+      "step": "Install the SDK with npm install @huggingface/inference, or use the openai package with the base URL https://router.huggingface.co/v1.",
+      "env": [],
+      "source": "https://huggingface.co/docs/inference-providers/index"
+    },
+    {
+      "step": "Call chat completions from a server route, naming the model (for example openai/gpt-oss-120b).",
+      "env": [],
+      "source": "https://huggingface.co/docs/inference-providers/index"
+    }
+  ],
+  "builder_notes": [
+    "Keep HF_TOKEN on the server only; never call the router from client-side code.",
+    "Append :cheapest to a model id to route to the lowest-priced provider, or :fastest for the highest throughput.",
+    "The free credit is only $0.10 a month; buy credits before launch so requests keep working."
+  ]
+}

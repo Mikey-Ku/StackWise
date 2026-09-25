@@ -76,6 +76,10 @@
     "question": "Will people upload photos, videos or files?",
     "why": "Uploads need file storage, which is separate from the database.",
     "keywords": [
+      "-video call*",
+      "-video chat*",
+      "-video meeting*",
+      "-video conferenc*",
       "upload*",
       "photo*",
       "image*",
@@ -99,6 +103,10 @@
     "question": "Will uploads include videos or files bigger than a few megabytes?",
     "why": "Big files can break when they pass through a server with size and time limits.",
     "keywords": [
+      "-video call*",
+      "-video chat*",
+      "-video meeting*",
+      "-video conferenc*",
       "video*",
       "large file*",
       "audio",
@@ -253,8 +261,8 @@
   },
   {
     "id": "might_go_mobile",
-    "label": "Phone app later",
-    "question": "Might you want a phone app in the App Store later?",
+    "label": "Phone app, now or later",
+    "question": "Will there be an iPhone or Android app, now or later?",
     "why": "Some services work in phone apps and some do not, so choosing now avoids a rebuild.",
     "keywords": [
       "mobile app*",

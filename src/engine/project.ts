@@ -3,6 +3,7 @@ import { evaluatePlan, optionIn, type CatalogIndex, type CheckResult } from "./e
 import type { PlanInput, Selection, SlotId } from "./schema";
 import type { SharedPlan } from "./share";
 import { buildSpecPack, type SpecDetails, type SpecFile } from "./spec";
+import { buildTask, isOwn } from "./own";
 
 /**
  * The project pack: the spec pack plus what an AI builder needs to work through it on its own.
@@ -15,17 +16,33 @@ import { buildSpecPack, type SpecDetails, type SpecFile } from "./spec";
 export interface ProjectDetails extends SpecDetails {
   planId: string;
   plan: SharedPlan;
+  /**
+   * The shared copy's version and time, so the plan file starts level with it. Left out, the file
+   * says version 0 at midnight, and the first sync would treat it as older than StackWise's copy.
+   */
+  version?: number;
+  updatedAt?: string;
 }
 
 export interface ProjectOptions {
   /** Where StackWise lives on this machine, so the project can start its MCP server. */
-  whystackRoot?: string;
+  stackwiseRoot?: string;
 }
 
 const PROBLEM_LEVELS = new Set(["blocked", "missing", "warning", "unknown"]);
 
+/**
+ * A YAML value that can't break out of its line: newlines become spaces, and anything YAML would
+ * read as syntax is quoted. Agent files are read by Claude Code, and their frontmatter sets what
+ * an agent is allowed to do, so text from a plan (the app's name, a custom part) must stay text.
+ */
+export function yamlValue(value: string): string {
+  const flat = value.replace(/\s*[\r\n]+\s*/g, " ").trim();
+  return /^[\w(]/.test(flat) && !/: |\s#|["'`{}[\]|>&*!%@]/.test(flat) ? flat : JSON.stringify(flat);
+}
+
 function frontmatter(fields: Record<string, string>): string {
-  return ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${v}`), "---", ""].join("\n");
+  return ["---", ...Object.entries(fields).map(([k, v]) => `${k}: ${yamlValue(v)}`), "---", ""].join("\n");
 }
 
 function unique(items: string[]): string[] {
@@ -37,7 +54,7 @@ function resultLine(r: CheckResult): string {
 }
 
 export function buildProjectPack(index: CatalogIndex, input: PlanInput, selection: Selection, details: ProjectDetails, options: ProjectOptions = {}): SpecFile[] {
-  const spec = buildSpecPack(index, input, selection, { ...details, notes: details.notes ?? details.plan.notes });
+  const spec = buildSpecPack(index, input, selection, { ...details, notes: details.notes ?? details.plan.notes, custom: details.custom ?? details.plan.custom, links: details.links ?? details.plan.links });
   const name = details.appName.trim() || "My app";
   const builder = index.catalog.planning.builders.find((b) => b.id === details.builderId);
   const results = evaluatePlan(index, selection, input);
@@ -50,8 +67,8 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
   });
 
   const planFile: SpecFile = {
-    name: "whystack.plan.json",
-    content: `${JSON.stringify({ whystack: 1, id: details.planId, version: 0, updatedAt: `${details.generatedOn}T00:00:00.000Z`, plan: details.plan }, null, 2)}\n`,
+    name: "stackwise.plan.json",
+    content: `${JSON.stringify({ stackwise: 1, id: details.planId, version: details.version ?? 0, updatedAt: details.updatedAt ?? `${details.generatedOn}T00:00:00.000Z`, plan: details.plan }, null, 2)}\n`,
   };
 
   const doneWhen = (slot: SlotId, inAgentFile = false) => {
@@ -80,7 +97,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
       ...parts.flatMap(({ slot, option, def, agent }, i) => [
         `## ${i + 1}. ${def.label}: ${option.name}`,
         "",
-        `- [ ] ${def.build_task.replace("{option}", option.name)} Agent: \`${agent}\``,
+        `- [ ] ${buildTask(def, option)} Agent: \`${agent}\``,
         "",
         "Done when:",
         "",
@@ -92,13 +109,13 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
 
   if (builder?.format !== "claude-md") return [...spec, tasks, planFile];
 
-  const mcpReady = Boolean(options.whystackRoot);
-  const whystackSection = [
+  const mcpReady = Boolean(options.stackwiseRoot);
+  const stackwiseSection = [
     "## Working with StackWise",
     "",
-    "`whystack.plan.json` is the record of this stack and why each part was picked. The StackWise MCP server" +
+    "`stackwise.plan.json` is the record of this stack and why each part was picked. The StackWise MCP server" +
       (mcpReady ? " (in `.mcp.json`)" : "") +
-      " runs the same checks as the StackWise planner, from sourced facts.",
+      " runs the same checks as StackWise itself, from sourced facts.",
     "",
     "- Don't decide from memory whether services work together, what they cost or what their limits are. Before adding, removing or swapping a hosted service, SDK or host, use the `stack-guard` agent, or call `check_stack` yourself.",
     "- After the stack changes, call `update_plan` with a one-line note saying why, then add the decision to DECISIONS.md.",
@@ -111,7 +128,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
     "",
   ].join("\n");
 
-  const files: SpecFile[] = spec.map((f) => (f.name === "CLAUDE.md" ? { ...f, content: `${f.content.trimEnd()}\n\n${whystackSection}` } : f));
+  const files: SpecFile[] = spec.map((f) => (f.name === "CLAUDE.md" ? { ...f, content: `${f.content.trimEnd()}\n\n${stackwiseSection}` } : f));
 
   const agent = (fileName: string, fields: Record<string, string>, body: string[]): SpecFile => ({
     name: `.claude/agents/${fileName}.md`,
@@ -123,7 +140,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
       "stack-guard",
       {
         description: "Use before adding, removing or swapping any hosted service, SDK or host, and whenever someone asks whether two services work together or what they cost. Checks the change with StackWise and records it in the plan.",
-        tools: "Read, Grep, Glob, Edit, mcp__whystack",
+        tools: "Read, Grep, Glob, Edit, mcp__stackwise",
       },
       [
         `You keep ${name}'s stack honest. StackWise decides whether services work together, from sourced facts. You never decide that from memory.`,
@@ -131,9 +148,9 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
         "For any proposed change:",
         "",
         "1. Call `get_plan` to see the current stack, its checks and its costs.",
-        "2. Call `check_stack` with the stack as it would be after the change. When choosing between options, call `compare_options`.",
+        "2. To choose an option for a part, call `compare_options` with just the part: it ranks the best options within the plan. To check one change, call `check_stack` with only `swap`, like `{ \"email\": \"postmark\" }`.",
         "3. Explain the result in plain words: what works, each warning with its fix, and how the monthly cost changes.",
-        "4. If the person agrees, call `update_plan` with the new part and a one-line note saying why, then add a short entry to DECISIONS.md.",
+        "4. If the person agrees, call `update_plan` with the new part and a one-line note saying why. It returns the new checks and cost, so you don't need `get_plan` again. Then add a short entry to DECISIONS.md.",
         "",
         "Never change the stack in code until the checks pass or the person has accepted the warnings.",
       ],
@@ -142,21 +159,21 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
       "setup-guide",
       {
         description: "Walks the person through SETUP.md one step at a time: creating accounts, finding keys and naming environment variables. Use at the start of the project and whenever a service is added.",
-        tools: "Read, Grep, Glob, Edit, mcp__whystack",
+        tools: "Read, Grep, Glob, Edit, mcp__stackwise",
       },
       [
         `You help set up the accounts ${name} needs, in the order SETUP.md lists them.`,
         "",
         "- Go one step at a time and wait for the person to finish each one.",
         "- Never ask for a secret value, and never write one into a file or the chat. Add variable names with empty values to `.env.example`, and tell the person to put the real values in `.env.local`, which must stay out of git.",
-        "- If SETUP.md looks out of date with `whystack.plan.json`, call `setup_steps` for the current steps and names.",
+        "- If SETUP.md looks out of date with `stackwise.plan.json`, call `setup_steps` for the current steps and names.",
       ],
     ),
     agent(
       "spec-reviewer",
       {
         description: "Reviews finished work before a task in TASKS.md is checked off: the rules in SPEC.md, the task's Done when list, secrets handling and the plan's checks.",
-        tools: "Read, Grep, Glob, Bash, mcp__whystack",
+        tools: "Read, Grep, Glob, Bash, mcp__stackwise",
       },
       [
         `You review changes to ${name}. Don't fix anything yourself; report what to change.`,
@@ -180,23 +197,29 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
         agentName,
         {
           description: `Builds the ${def.label.toLowerCase()} part of ${name} with ${option.name}, following SPEC.md. Use for the "${def.label}" task in TASKS.md.`,
-          tools: "Read, Write, Edit, Grep, Glob, Bash, mcp__whystack",
+          tools: "Read, Write, Edit, Grep, Glob, Bash, mcp__stackwise",
         },
         [
           `You build one part of ${name}: ${def.label}, with ${option.name}. ${option.summary}`,
           "",
           "## The task",
           "",
-          def.build_task.replace("{option}", option.name),
+          buildTask(def, option),
           "",
           "## Setup it needs",
           "",
           ...(option.setup.length
-            ? option.setup.map((s) => {
-                const env = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${adaptEnvName(e, selection.framework)}\``).join(", ")}.` : "";
-                return `- ${s.step}${env}${/^https?:\/\//.test(s.source) ? ` Docs: ${s.source}` : ""}`;
-              })
-            : ["- Setup steps haven't been researched. Follow the official quickstart and call `setup_steps`."]),
+            ? [
+                ...option.setup.map((s) => {
+                  const env = s.env.length ? ` Environment variables: ${s.env.map((e) => `\`${adaptEnvName(e, selection.framework)}\``).join(", ")}.` : "";
+                  return `- ${s.step}${env}`;
+                }),
+                // The docs once, not on every step.
+                ...[...new Set(option.setup.map((s) => s.source).filter((url) => /^https?:\/\//.test(url)))].map((url, i) => `${i ? "More docs" : "Docs"}: ${url}`),
+              ]
+            : isOwn(option.id)
+              ? ["- It's the person's own code, not a service. Ask them how the app reaches it (an address, credentials) and keep those in environment variables."]
+              : ["- Setup steps haven't been researched. Follow the official quickstart and call `setup_steps`."]),
           "",
           "## Rules",
           "",
@@ -218,7 +241,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
           "",
           ...doneWhen(slot, true).map((line) => `- ${line}`),
           "",
-          "If this part needs a service or SDK that isn't in `whystack.plan.json`, stop and use `stack-guard` first.",
+          "If this part needs a service or SDK that isn't in `stackwise.plan.json`, stop and use `stack-guard` first.",
         ],
       );
     }),
@@ -233,7 +256,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
     skill("next-step", { description: "Do the next unchecked task in TASKS.md with the agent it names, review it, then check it off.", "disable-model-invocation": "true" }, [
       "1. Read TASKS.md and find the first unchecked task.",
       "2. Say which task is next and which agent will do it.",
-      "3. Hand the task to that agent. If it needs a service or SDK that isn't in `whystack.plan.json`, run `stack-guard` first.",
+      "3. Hand the task to that agent. If it needs a service or SDK that isn't in `stackwise.plan.json`, run `stack-guard` first.",
       "4. Run `spec-reviewer` on the result. If anything fails, fix it or report it, and leave the box unchecked.",
       "5. When the review passes, check the task's box in TASKS.md and say what's next.",
     ]),
@@ -248,9 +271,9 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
     ? [
         {
           name: ".mcp.json",
-          content: `${JSON.stringify({ mcpServers: { whystack: { command: "pnpm", args: ["--silent", "--dir", options.whystackRoot!, "mcp"] } } }, null, 2)}\n`,
+          content: `${JSON.stringify({ mcpServers: { stackwise: { command: "pnpm", args: ["--silent", "--dir", options.stackwiseRoot!, "mcp"] } } }, null, 2)}\n`,
         },
-        { name: ".claude/settings.json", content: `${JSON.stringify({ permissions: { allow: ["mcp__whystack"] } }, null, 2)}\n` },
+        { name: ".claude/settings.json", content: `${JSON.stringify({ permissions: { allow: ["mcp__stackwise"] } }, null, 2)}\n` },
       ]
     : [];
 

@@ -44,6 +44,11 @@ describe("data", () => {
     expect(rec.selection.framework).toBe("nextjs");
   });
 
+  it("has no built-in favorite: every part is picked by the rules unless the person or planning.json's starting_picks says otherwise", () => {
+    expect(catalog.planning.starting_picks).toEqual({});
+    expect(indexCatalog(catalog).optionsById.get("anthropic")?.name).toBe("Claude API");
+  });
+
   it("has a logo file on disk for every option", () => {
     const missing = catalog.options.filter((o) => !fs.existsSync(path.join(__dirname, "..", "..", "public", "logos", catalog.logos[o.id]?.file ?? "none")));
     expect(missing.map((o) => o.id)).toEqual([]);
@@ -52,5 +57,20 @@ describe("data", () => {
   it("has teaching content for every part and every term it uses", () => {
     for (const slot of catalog.slots) expect(catalog.learn.slots[slot.id], slot.id).toBeDefined();
     expect(Object.keys(catalog.learn.terms).length).toBeGreaterThanOrEqual(30);
+  });
+
+  it("gives every part 2 to 4 further-reading links, all over https", () => {
+    for (const slot of catalog.slots) {
+      const links = catalog.learn.slots[slot.id]?.read_more ?? [];
+      expect(links.length, slot.id).toBeGreaterThanOrEqual(2);
+      expect(links.length, slot.id).toBeLessThanOrEqual(4);
+    }
+    const all = [
+      ...(catalog.learn.start_here?.read_more ?? []),
+      ...Object.values(catalog.learn.slots).flatMap((entry) => entry?.read_more ?? []),
+      ...Object.values(catalog.learn.terms).flatMap((term) => term.read_more),
+    ];
+    expect(all.length).toBeGreaterThan(0);
+    expect(all.filter((link) => !link.url.startsWith("https://")).map((link) => link.url)).toEqual([]);
   });
 });

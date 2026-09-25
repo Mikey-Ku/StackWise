@@ -1,12 +1,12 @@
 {
-  "name": "whystack",
+  "name": "stackwise",
   "version": "0.1.0",
   "private": true,
   "description": "Plan a web app stack you understand: a sourced rules engine checks every connection, then hands your AI builder a spec.",
   "scripts": {
-    "dev": "next dev -p 4310",
+    "dev": "next dev -H 127.0.0.1 -p 4310",
     "build": "next build",
-    "start": "next start -p 4310",
+    "start": "next start -H 127.0.0.1 -p 4310",
     "lint": "eslint",
     "mcp": "tsx src/mcp/stdio.ts",
     "typecheck": "tsc --noEmit",
@@ -25,6 +25,7 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@xyflow/react": "^12.11.0",
     "fflate": "^0.8.3",
+    "html-to-image": "1.11.11",
     "next": "16.3.4",
     "pg": "^8.23.0",
     "react": "19.2.8",

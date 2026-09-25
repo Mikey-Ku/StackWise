@@ -9,7 +9,7 @@ export interface Template {
   id: string;
   label: string;
   blurb: string;
-  icon: "web" | "phone" | "phones" | "sparkle" | "cart" | "tool";
+  icon: "web" | "phone" | "phones" | "sparkle" | "card" | "cart" | "tool";
   description: string;
   answers: Record<string, Answer>;
   pinned?: Selection;
@@ -58,6 +58,14 @@ export const TEMPLATES: Template[] = [
     icon: "sparkle",
     description: "An AI app where people log in, chat with an assistant or generate text and images, and keep their history.",
     answers: { saves_data: "yes", login: "yes", ai_features: "yes", users_pay: "not_sure" },
+  },
+  {
+    id: "saas",
+    label: "Paid AI app",
+    blurb: "Subscriptions, AI, background jobs",
+    icon: "card",
+    description: "A subscription web app where people log in, upload files and generate work with AI. Long jobs run in the background, it sends emails on a schedule, and it lives on its own web address with analytics and error alerts.",
+    answers: { saves_data: "yes", login: "yes", users_pay: "yes", uploads: "yes", ai_features: "yes", long_jobs: "yes", scheduled_tasks: "yes", sends_email: "yes", own_domain: "yes", tracks_usage: "yes", error_alerts: "yes" },
   },
   {
     id: "store",

@@ -51,15 +51,15 @@
     }
   },
   "setup": [
-    { "step": "Create an application in the Clerk dashboard.", "env": [], "source": "https://clerk.com/docs/quickstarts/nextjs" },
-    { "step": "Run Clerk's setup command in your Next.js project to install @clerk/nextjs and configure environment variables automatically.", "env": [], "source": "https://clerk.com/docs/quickstarts/nextjs" },
-    { "step": "Confirm your environment file has the publishable and secret keys.", "env": ["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "CLERK_SECRET_KEY"], "source": "https://clerk.com/docs/quickstarts/nextjs" },
-    { "step": "Wrap your app's root layout in ClerkProvider.", "env": [], "source": "https://clerk.com/docs/quickstarts/nextjs" },
-    { "step": "Add clerkMiddleware to your project to protect routes.", "env": [], "source": "https://clerk.com/docs/quickstarts/nextjs" }
+    { "step": "Create an application in the Clerk dashboard.", "env": [], "source": "https://clerk.com/docs/getting-started/quickstart/overview" },
+    { "step": "Install Clerk's SDK for your framework, following Clerk's quickstart for it.", "env": [], "source": "https://clerk.com/docs/getting-started/quickstart/overview" },
+    { "step": "Copy the publishable and secret keys from the API keys page in the Clerk dashboard into your environment file.", "env": ["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "CLERK_SECRET_KEY"], "source": "https://clerk.com/docs/guides/development/clerk-environment-variables" },
+    { "step": "Add Clerk's provider or plugin at the root of your app so every page knows who is signed in.", "env": [], "source": "https://clerk.com/docs/getting-started/quickstart/overview" },
+    { "step": "Add Clerk's middleware on the server to protect the routes that need a signed-in user.", "env": [], "source": "https://clerk.com/docs/getting-started/quickstart/overview" }
   ],
   "builder_notes": [
     "CLERK_SECRET_KEY must stay server-side only; never commit it or expose it to client code.",
-    "The app must be wrapped in ClerkProvider or Clerk's components and hooks will not work.",
-    "clerkMiddleware() is required for route protection; on Next.js 16 and later the file is named proxy.ts instead of middleware.ts."
+    "The app must be wrapped in Clerk's provider or plugin, or Clerk's components will not work.",
+    "clerkMiddleware() is required for route protection; follow your framework's quickstart for the file it goes in, since the name differs by framework and version."
   ]
 }

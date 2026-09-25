@@ -169,11 +169,30 @@ export const planningSchema = z.object({
    * it never outranks a better score. Without it, ties break alphabetically.
    */
   tie_order: z.record(z.string(), z.array(z.string())).default({}),
+  /**
+   * The option a part starts with when the person hasn't chosen one: the preference of whoever
+   * runs this StackWise, not a score. Empty in this repo. The rules still check it, it's dropped
+   * if it would block the plan, and the Overview says when another option scores higher.
+   */
+  starting_picks: z.record(z.string(), z.string()).default({}),
 });
 export type Planning = z.infer<typeof planningSchema>;
 export type Fee = Planning["fees"][number];
 
+/** A link to further reading on the Learn page: a title, where it lives, and who publishes it. */
+export const learnLinkSchema = z.object({ title: z.string().min(1), url: httpUrl, source: z.string().min(1) });
+export type LearnLink = z.infer<typeof learnLinkSchema>;
+
 export const learnSchema = z.object({
+  /** The Learn page's opening section: the pieces every web app is made of. Optional so older data still loads. */
+  start_here: z
+    .object({
+      title: z.string(),
+      summary: z.string(),
+      layers: z.array(z.object({ name: z.string(), plain: z.string(), rule: z.string() })),
+      read_more: z.array(learnLinkSchema).default([]),
+    })
+    .optional(),
   // Partial so a new part can be added before its teaching content; the data checks report the gap.
   slots: z.partialRecord(
     slotIdSchema,
@@ -183,9 +202,13 @@ export const learnSchema = z.object({
       choosing: z.array(z.string()),
       watch_for: z.array(z.string()),
       terms: z.array(z.string()),
+      read_more: z.array(learnLinkSchema).default([]),
     }),
   ),
-  terms: z.record(z.string(), z.object({ term: z.string(), plain: z.string(), matters: z.string() })),
+  terms: z.record(
+    z.string(),
+    z.object({ term: z.string(), plain: z.string(), matters: z.string(), read_more: z.array(learnLinkSchema).default([]) }),
+  ),
 });
 export type Learn = z.infer<typeof learnSchema>;
 
@@ -198,7 +221,8 @@ export const logoSchema = z.discriminatedUnion("from", [
   z.object({ from: z.literal("simple-icons"), slug: z.string().min(1), file: logoFile.optional(), source: httpUrl.optional() }),
   z.object({ from: z.literal("site"), url: httpUrl, file: logoFile.optional(), source: httpUrl.optional() }),
 ]);
-export type Logo = z.infer<typeof logoSchema>;
+/** `dark` is worked out when the catalog loads: a one-color mark too dark to see on a dark background. */
+export type Logo = z.infer<typeof logoSchema> & { dark?: boolean };
 
 export interface Catalog {
   slots: SlotDef[];
@@ -215,10 +239,21 @@ export interface Catalog {
 export type Answer = "yes" | "no" | "not_sure";
 
 /** What the beginner told the planner. */
+/** A second (third…) service in a part, by id "<part>.<name>" (see extras.ts). */
+export interface Extra {
+  slot: SlotId;
+  option: string;
+  /** What this one is for, in a word or two: "cache", "embeddings", "analytics warehouse". */
+  role: string;
+  note?: string;
+}
+
 export interface PlanInput {
   answers: Record<string, Answer>;
   size: SizeId;
   priority: PriorityId;
+  /** Extra services the person added; checked, priced and wired like the rest, never searched. */
+  extras?: Record<string, Extra>;
 }
 
 /** Which option sits in each slot. An empty string means the person cleared that slot on purpose. */

@@ -67,7 +67,7 @@
       "source": "https://ai.google.dev/gemini-api/docs/quickstart"
     },
     {
-      "step": "Call the client from a server-side route handler so the key is never exposed to the browser.",
+      "step": "Call the client from a server route so the key is never exposed to the browser.",
       "env": [],
       "source": "https://ai.google.dev/gemini-api/docs/quickstart"
     },

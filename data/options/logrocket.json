@@ -50,7 +50,7 @@
     { "step": "Mark any input or element that shows personal data with the data-private attribute so LogRocket never records it.", "env": [], "source": "https://docs.logrocket.com/docs/privacy" }
   ],
   "builder_notes": [
-    "The docs pass the app ID straight to LogRocket.init(); store it in an environment variable like NEXT_PUBLIC_LOGROCKET_APP_ID instead of hardcoding it, even though it isn't a secret.",
+    "The docs pass the app ID straight to LogRocket.init(); store it in a browser-readable environment variable (with your framework's public prefix) instead of hardcoding it, even though it isn't a secret.",
     "Only call LogRocket.init() in client-side code that runs once; calling it during server rendering or more than once breaks session capture.",
     "Turn on the private-by-default option, or add data-private and use requestSanitizer/responseSanitizer, before recording any page or network call with personal data."
   ]

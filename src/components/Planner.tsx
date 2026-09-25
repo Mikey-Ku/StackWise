@@ -1,6 +1,7 @@
 "use client";
 
-import { criterionLabel, describeTotal, inSentence, money, optionStats, SIZE_IDS, SIZE_PHRASE, type CloseCall, type Need, type PriorityId, type SizeId, type SlotId } from "@/engine";
+import { criterionLabel, inSentence, money, optionStats, SIZE_IDS, SIZE_PHRASE, type CheckResult, type CloseCall, type CostSummary, type Need, type PriorityId, type SizeId, type SlotId } from "@/engine";
+import { descriptionReader, readDefaultAnswerer } from "./answerers";
 import { TEMPLATES, type Template } from "./templates";
 import type { PlanModel } from "./usePlans";
 import { Icon, type IconName } from "./icons";
@@ -43,12 +44,10 @@ function QuestionRow({ model, need }: { model: PlanModel; need: Need }) {
         {guess ? (
           <p className="mk-hint">
             {guess.by === "template" ? (
-              <>
-                The {guess.evidence} template says {guess.answer === "not_sure" ? "not sure" : guess.answer}. Click an answer to confirm.
-              </>
+              <>From the {guess.evidence} template.</>
             ) : (
               <>
-                {guess.by === "ai" ? "The AI read" : "Matched"} &ldquo;{guess.evidence}&rdquo; and guessed {guess.answer}. Click an answer to confirm.
+                You wrote &ldquo;{guess.evidence}&rdquo;, so: {guess.answer === "not_sure" ? "not sure" : guess.answer}.
               </>
             )}
           </p>
@@ -66,16 +65,18 @@ function PlanSettings({ model }: { model: PlanModel }) {
   return (
     <div className="mk-stack mk-gap-5">
       <div className="mk-field">
-        <span className="mk-label">How many people in the first month?</span>
+        <span className="mk-label">People using it each month</span>
         <Seg<SizeId>
-          label="Audience size"
+          label="People using it each month"
           value={plan.size}
           options={SIZE_IDS.map((id) => ({ id, label: catalog.planning.sizes.find((s) => s.id === id)?.label ?? id }))}
           onChange={(size) => dispatch({ type: "setSize", size })}
         />
+        <span className="mk-hint">Changes which free plans fit, and the cost. Nothing else.</span>
       </div>
       <div className="mk-field">
-        <span className="mk-label">What matters most right now?</span>
+        <span className="mk-label">What matters most?</span>
+        <span className="mk-hint">Decides between services that all work.</span>
         <div className="ws-priorities" role="radiogroup" aria-label="Priority">
           {catalog.planning.priorities.map((p) => (
             <button
@@ -93,7 +94,7 @@ function PlanSettings({ model }: { model: PlanModel }) {
         </div>
       </div>
       <label className="mk-field">
-        <span className="mk-label">What will you build it with?</span>
+        <span className="mk-label">What will build it?</span>
         <select className="mk-select mk-sm" value={plan.builderId} onChange={(e) => dispatch({ type: "setBuilder", builderId: e.target.value })}>
           {catalog.planning.builders.map((b) => (
             <option key={b.id} value={b.id}>
@@ -106,7 +107,7 @@ function PlanSettings({ model }: { model: PlanModel }) {
   );
 }
 
-const TEMPLATE_ICONS: Record<Template["icon"], IconName> = { web: "web", phone: "phone", phones: "phones", sparkle: "sparkle", cart: "cart", tool: "tool" };
+const TEMPLATE_ICONS: Record<Template["icon"], IconName> = { web: "web", phone: "phone", phones: "phones", sparkle: "sparkle", card: "card", cart: "cart", tool: "tool" };
 
 function TemplateIcon({ id, icon }: { id: string; icon: Template["icon"] }) {
   return (
@@ -119,11 +120,12 @@ function TemplateIcon({ id, icon }: { id: string; icon: Template["icon"] }) {
 function DescribeStep({ model, ai }: { model: PlanModel; ai: AiStatus | null }) {
   const { plan, dispatch, prefill } = model;
   const ready = plan.description.trim().length >= 12;
+  const reader = descriptionReader(ai, readDefaultAnswerer());
   return (
     <div className="mk-stack mk-gap-6">
       <div className="mk-stack mk-gap-3">
         <h2 className="ws-h2">What are you building?</h2>
-        <p className="mk-muted">Start from a kind of app, or describe yours. Either way you confirm every guess before anything is decided.</p>
+        <p className="mk-muted">Pick a starting point or describe your app. You confirm every answer next.</p>
       </div>
 
       <div className="ws-templates" role="list">
@@ -160,9 +162,9 @@ function DescribeStep({ model, ai }: { model: PlanModel; ai: AiStatus | null }) 
           onChange={(e) => dispatch({ type: "setText", field: "description", value: e.target.value })}
         />
         <span className="mk-hint">
-          {ai?.ai
-            ? "Claude reads this and quotes the words behind every guess. Your description is sent to Anthropic's API."
-            : "Guesses come from keywords right now. Add an Anthropic API key to have Claude read it instead."}
+          {reader
+            ? `${reader.label} reads this and quotes the words behind each guess, so your description is sent to ${reader.label}.`
+            : "Guesses come from keywords. Connect an AI with a key (top right) for better guesses."}
         </span>
       </label>
       <div className="mk-row mk-gap-3 mk-wrap">
@@ -187,13 +189,13 @@ function ConfirmStep({ model }: { model: PlanModel }) {
   return (
     <div className="mk-stack mk-gap-6">
       <div className="mk-stack mk-gap-3">
-        <h2 className="ws-h2">{guessCount ? "Here's what I picked up" : "A few questions"}</h2>
+        <h2 className="ws-h2">{guessCount ? "Check these answers" : "A few questions"}</h2>
         <p className="mk-muted">
           {guessCount
-            ? `${guessCount} answer${guessCount === 1 ? "" : "s"} ${template ? `from the ${template} template` : "guessed from your description"}, plus only the questions whose answers would change your plan.`
-            : "Only the questions whose answers would change your plan."}
+            ? `${guessCount} guessed ${template ? `from the ${template} template` : "from your description"}. Only questions that change the plan are shown.`
+            : "Only questions that change the plan are shown."}
         </p>
-        {prefill.by && <p className="mk-hint">{prefill.by === "ai" ? "Guesses by the AI, each with the words it read." : "Guesses from keywords in your description."}</p>}
+        <p className="mk-hint">Tap an answer to confirm it. &ldquo;Not sure&rdquo; counts as no.</p>
         {prefill.note && <p className="mk-hint ws-note-inline">{prefill.note}</p>}
       </div>
 
@@ -222,26 +224,56 @@ function ConfirmStep({ model }: { model: PlanModel }) {
 
 function closeCallText(model: PlanModel, call: CloseCall): string {
   const label = inSentence(model.index.slotsById.get(call.slot)?.label ?? call.slot);
-  const lead = `${call.chosen.name} edges out ${call.runnerUp.name} for ${label}`;
+  const lead = `${call.chosen.name} over ${call.runnerUp.name} for ${label}`;
   const base =
-    call.decidedBy === "tie"
-      ? `${call.chosen.name} and ${call.runnerUp.name} tie on everything StackWise measures for ${label}, so either is a fine pick.`
-      : call.decidedBy === "accounts"
-        ? `${lead} because it shares an account with another part of your stack.`
-        : call.decidedBy === "fewer_problems"
-          ? `${lead} because it causes fewer warnings with the rest of your plan.`
-          : call.decidedBy === "perks"
-            ? `${lead} because it pairs well with the rest of your plan: ${call.perk?.toLowerCase()}.`
-            : call.decidedBy === "checks"
-              ? `${lead} because of how it fits with the rest of your plan.`
-              : `${lead}: it's ${criterionLabel(call.decidedBy, call.slot)}.`;
+    call.decidedBy === "starting_pick"
+      ? `${call.chosen.name} is set as the starting pick for ${label}. ${call.runnerUp.name} ranks higher for your priority, so switch if you like.`
+      : call.decidedBy === "tie"
+        ? `${call.chosen.name} and ${call.runnerUp.name} are even on cost, setup and switching. StackWise doesn't compare what they're like to use, so look at both before you pick.`
+        : call.decidedBy === "accounts"
+          ? `${lead}: one account with another part of your plan.`
+          : call.decidedBy === "fewer_problems"
+            ? `${lead}: fewer problems with the rest of your plan.`
+            : call.decidedBy === "perks"
+              ? `${lead}: ${call.perk?.toLowerCase()}.`
+              : call.decidedBy === "checks"
+                ? `${lead}: it fits the rest of your plan better.`
+                : `${lead}: ${criterionLabel(call.decidedBy, call.slot)}.`;
   const flip = call.flipsUnder ? model.catalog.planning.priorities.find((p) => p.id === call.flipsUnder)?.label : undefined;
   return flip ? `${base} If "${flip}" mattered most, ${call.runnerUp.name} would win.` : base;
 }
 
+/** "1 warning", "2 warnings and 1 not verified": what's left to look at, by kind. */
+const PROBLEM_WORDS: Record<Exclude<CheckResult["level"], "info">, [one: string, many: string]> = {
+  blocked: ["thing that doesn't work", "things that don't work"],
+  missing: ["missing service", "missing services"],
+  warning: ["warning", "warnings"],
+  unknown: ["check not verified", "checks not verified"],
+};
+export function problemPhrase(results: CheckResult[]): string {
+  const parts = (Object.keys(PROBLEM_WORDS) as (keyof typeof PROBLEM_WORDS)[]).flatMap((level) => {
+    const n = results.filter((r) => r.level === level).length;
+    return n ? [`${n} ${PROBLEM_WORDS[level][n === 1 ? 0 : 1]}`] : [];
+  });
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : (parts[0] ?? "");
+}
+
+/** A month's cost in words: "$0 a month + pay-per-use fees + $10.46 a year". */
+function costWords(cost: CostSummary): string {
+  return [
+    `${money(cost.monthlyUsd)} a month`,
+    cost.hasUsage && "pay-per-use fees",
+    cost.yearlyUsd > 0 && `${money(cost.yearlyUsd)} a year`,
+    cost.oneTimeUsd > 0 && `${money(cost.oneTimeUsd)} once`,
+    cost.hasUnknown && "prices not verified yet",
+  ]
+    .filter(Boolean)
+    .join(" + ");
+}
+
 /** Everything about the plan as a whole, in the Overview panel: what to look at, close calls, cost, features and answers. */
 export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { model: PlanModel; onSelect: (slot: SlotId) => void; onOpenChecklist: () => void; onExplain: () => void }) {
-  const { plan, dispatch, catalog, rec, calls, followups, notSure, cost, costSizes, index, input } = model;
+  const { plan, dispatch, catalog, rec, calls, followups, notSure, cost, costSizes, index, input, stats } = model;
   const problems = rec.results.filter((r) => r.level !== "info");
   const serious = problems.filter((r) => r.level === "blocked" || r.level === "missing");
   const sizeLabel = (id: string) => catalog.planning.sizes.find((s) => s.id === id)?.label ?? id;
@@ -251,8 +283,7 @@ export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { mode
     <div className="mk-stack mk-gap-6">
       <div className={cx("mk-alert", serious.length ? "mk-alert--danger" : problems.length ? "mk-alert--warn" : "mk-alert--ok")}>
         <div className="mk-stack mk-gap-1">
-          <strong>{problems.length === 0 ? "Every connection checks out." : `${problems.length} thing${problems.length === 1 ? "" : "s"} to look at before you build.`}</strong>
-          <span className="mk-muted">Click a part to see why it was picked. Right-click it for everything else.</span>
+          <strong>{problems.length === 0 ? "No problems found." : `${problemPhrase(problems)} to look at before you build.`}</strong>
         </div>
       </div>
 
@@ -273,7 +304,7 @@ export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { mode
 
       {calls.length > 0 && (
         <section className="mk-stack mk-gap-3">
-          <span className="mk-eyebrow">Close calls</span>
+          <span className="mk-eyebrow">Could go either way</span>
           {calls.map((call) => (
             <div key={call.slot} className="ws-note">
               <p>{closeCallText(model, call)}</p>
@@ -299,10 +330,19 @@ export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { mode
         </section>
       )}
 
+      {stats.accounts > 0 && (
+        <section className="mk-stack mk-gap-1">
+          <p>
+            <strong>Accounts to create ({stats.accounts}):</strong> {stats.accountNames.join(", ")}
+          </p>
+          <p className="mk-hint">One per company, however many parts it covers.</p>
+        </section>
+      )}
+
       <section className="mk-stack mk-gap-2">
         <span className="mk-eyebrow">Cost</span>
         <p>
-          For {SIZE_PHRASE[cost.now.size]}: <strong>{describeTotal(cost.now)}</strong>.
+          For {SIZE_PHRASE[cost.now.size]}: <strong>{costWords(cost.now)}</strong>.
         </p>
         <ul className="ws-costlines">
           {cost.now.lines.map((line) => {
@@ -327,7 +367,7 @@ export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { mode
               <a className="ws-costlines__row" href={fee.source} target="_blank" rel="noreferrer">
                 <span className="ws-costlines__name">
                   <span>{fee.label}</span>
-                  <span className="mk-hint">Comes with {inSentence(index.slotsById.get(fee.slot)?.label ?? fee.slot)}, whichever you pick</span>
+                  <span className="mk-hint">Needed for any {inSentence(index.slotsById.get(fee.slot)?.label ?? fee.slot)}</span>
                 </span>
                 <span className="ws-costlines__value">
                   {money(fee.usd)} {fee.per === "year" ? "a year" : "once"}
@@ -353,7 +393,7 @@ export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { mode
                     <td className="mk-table__num">
                       {money(s.monthlyUsd)}
                       {s.hasUsage ? " + usage" : ""}
-                      {s.hasUnknown ? " + unverified" : ""}
+                      {s.hasUnknown ? " + unknown prices" : ""}
                     </td>
                   </tr>
                 ))}
@@ -361,7 +401,7 @@ export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { mode
             </table>
           </div>
           <p className="mk-hint">
-            Each part is free until its free plan runs out, then its first paid plan. Pay-per-use parts show as &ldquo;+ usage&rdquo;.
+            Each part is free until its free plan runs out, then its first paid plan. &ldquo;+ usage&rdquo; means pay-per-use fees on top.
             {cost.now.yearlyUsd > 0 || cost.now.oneTimeUsd > 0 ? ` Not included above: ${[cost.now.yearlyUsd > 0 && `${money(cost.now.yearlyUsd)} a year`, cost.now.oneTimeUsd > 0 && `${money(cost.now.oneTimeUsd)} once`].filter(Boolean).join(" and ")}.` : ""}
           </p>
         </details>
@@ -376,12 +416,12 @@ export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { mode
           placeholder={"Pick a time slot\nPay a deposit\nGet a reminder the day before"}
           onChange={(e) => dispatch({ type: "setText", field: "features", value: e.target.value })}
         />
-        <span className="mk-hint">These go into your spec pack so the builder knows what to make.</span>
+        <span className="mk-hint">Goes into SPEC.md for whoever builds it.</span>
       </label>
 
       {optional.length > 0 && (
         <details className="ws-details" open>
-          <summary>Sharpen your plan ({optional.length})</summary>
+          <summary>Questions that could change the plan ({optional.length})</summary>
           <div className="mk-stack mk-gap-2">{optional.map((need) => <QuestionRow key={need.id} model={model} need={need} />)}</div>
         </details>
       )}
@@ -402,7 +442,7 @@ export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { mode
 
       <div className="mk-row mk-gap-3 mk-wrap">
         <button type="button" className="mk-btn mk-btn--secondary mk-sm" onClick={onOpenChecklist}>
-          Open the build checklist
+          Open the checklist
         </button>
         <button type="button" className="mk-btn mk-btn--ghost mk-sm" onClick={() => dispatch({ type: "goTo", step: "describe" })}>
           Edit description
@@ -418,17 +458,17 @@ export function Planner({ model, ai }: { model: PlanModel; ai: AiStatus | null }
   return <ConfirmStep model={model} />;
 }
 
-/** The plan in one quiet line: what it costs now, how many accounts, and whether every check passes. Opens the Overview. */
+/** The plan in one quiet line: what it costs now and whether every check passes. Opens the Overview. */
 export function SummaryPill({ model, onOpen }: { model: PlanModel; onOpen: () => void }) {
-  const { stats } = model;
+  const { stats, rec } = model;
   const level: Verdict = stats.problems === 0 ? "works" : stats.worst;
   const extra = [stats.now.yearlyUsd > 0 && `${money(stats.now.yearlyUsd)}/yr`, stats.now.oneTimeUsd > 0 && `${money(stats.now.oneTimeUsd)} once`].filter(Boolean).join(" + ");
   const jump = stats.firstIncrease;
+  const problems = rec.results.filter((r) => r.level !== "info");
   const title = [
-    `${money(stats.now.monthlyUsd)} a month for ${SIZE_PHRASE[stats.now.size]}${stats.now.hasUsage ? ", plus usage" : ""}${extra ? `, plus ${extra}` : ""}.`,
+    `${money(stats.now.monthlyUsd)} a month for ${SIZE_PHRASE[stats.now.size]}${stats.now.hasUsage ? ", plus pay-per-use fees" : ""}${extra ? `, plus ${extra}` : ""}.`,
     jump ? `${money(jump.monthlyUsd)} a month at ${SIZE_PHRASE[jump.size]}.` : "No price jump as you grow.",
-    `${stats.accounts} accounts to sign up for, ${stats.setupSteps} setup steps.`,
-    stats.problems === 0 ? "Every connection checks out." : `${stats.problems} thing${stats.problems === 1 ? "" : "s"} to look at.`,
+    stats.problems === 0 ? "No problems found." : `${problemPhrase(problems)} to look at.`,
   ].join("\n");
   return (
     <button type="button" className="ws-summary" title={title} onClick={onOpen}>
@@ -437,13 +477,9 @@ export function SummaryPill({ model, onOpen }: { model: PlanModel; onOpen: () =>
         <small>/mo</small>
       </strong>
       <span className="ws-summary__sep" aria-hidden />
-      <span>
-        {stats.accounts} account{stats.accounts === 1 ? "" : "s"}
-      </span>
-      <span className="ws-summary__sep" aria-hidden />
       <span className={cx("ws-summary__checks", `ws-summary__checks--${level}`)}>
         <VerdictDot level={level} />
-        {stats.problems === 0 ? "All clear" : `${stats.problems} to look at`}
+        {stats.problems === 0 ? "No problems" : stats.problems === 1 ? problemPhrase(problems) : `${stats.problems} problems`}
       </span>
     </button>
   );

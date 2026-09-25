@@ -14,7 +14,7 @@
     },
     {
       "id": "more",
-      "label": "More"
+      "label": "More than 1,000"
     }
   ],
   "priorities": [
@@ -45,7 +45,7 @@
     {
       "id": "learn",
       "label": "Learn how it works",
-      "help": "Standard tools whose skills carry over to other projects.",
+      "help": "Services that are easy to leave, so what you learn works elsewhere.",
       "weights": {
         "cost": 1,
         "price": 0.5,
@@ -57,7 +57,7 @@
     {
       "id": "ready_to_grow",
       "label": "Ready to grow",
-      "help": "Reasonable paid plans and easy to move later.",
+      "help": "Cheap paid plans, and easy to leave later.",
       "weights": {
         "cost": 0.5,
         "price": 2,
@@ -151,5 +151,6 @@
       "aspnet-core",
       "go-net-http"
     ]
-  }
+  },
+  "starting_picks": {}
 }

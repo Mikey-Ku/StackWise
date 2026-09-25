@@ -135,6 +135,9 @@ export function checkCatalog(catalog: Catalog): string[] {
     if (!catalog.slots.some((s) => s.id === slot)) problems.push(`planning.json tie_order: there's no part "${slot}"`);
     for (const id of ids) if (!catalog.options.some((o) => o.id === id && o.slots.includes(slot as never))) problems.push(`planning.json tie_order: "${id}" isn't an option in ${slot}`);
   }
+  for (const [slot, id] of Object.entries(catalog.planning.starting_picks)) {
+    if (!catalog.options.some((o) => o.id === id && o.coverage === "full" && o.slots.includes(slot as never))) problems.push(`planning.json starting_picks: "${id}" isn't a fully researched option in ${slot}`);
+  }
   const learnSlots = catalog.learn.slots as Partial<Learn["slots"]>;
   for (const slot of catalog.slots) {
     const entry = learnSlots[slot.id as SlotId];

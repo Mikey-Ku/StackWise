@@ -38,7 +38,7 @@ describe("option stats", () => {
   it("never guesses for an unresearched option", () => {
     const stats = optionStats(index, opt("host-partial"), "hosting", input());
     expect(stats.map((s) => s.id)).toEqual(["now", "paidFrom", "freePlan", "switching"]);
-    expect(stats.every((s) => s.value === "Not verified" && s.tone === "unknown")).toBe(true);
+    expect(stats.every((s) => s.value === "Not researched" && s.tone === "unknown")).toBe(true);
     expect(cardStats(stats)).toEqual([]);
   });
 

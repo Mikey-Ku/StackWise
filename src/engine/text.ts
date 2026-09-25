@@ -38,7 +38,7 @@ const VALUE_LABELS: Record<string, string> = {
   included: "Included",
   hosted: "Hosted for you",
   local_file: "A file on your server",
-  relational: "Tables (relational)",
+  relational: "Tables (SQL)",
   document: "Documents",
   key_value: "Keys and values",
   full: "full",
@@ -47,7 +47,7 @@ const VALUE_LABELS: Record<string, string> = {
 
 /** A fact value in words a beginner reads. */
 export function formatFactValue(index: CatalogIndex, def: FactDef | undefined, value: FactValue): string {
-  if (value === null) return def?.type === "number_or_null" ? "No monthly plan" : "Not verified";
+  if (value === null) return def?.type === "number_or_null" ? "No monthly plan" : "Not researched";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (typeof value === "number") return def?.type === "number_or_null" ? `$${value}/month` : String(value);
   if (typeof value === "object") {

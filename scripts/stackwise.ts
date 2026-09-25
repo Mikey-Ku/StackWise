@@ -7,17 +7,19 @@ import path from "node:path";
  *
  *   stackwise            open StackWise on this folder's plan (starting StackWise if it isn't running)
  *   stackwise ~/code/x   the same, for another folder
- *   stackwise setup      connect Claude Code to StackWise once, so /mcp__whystack__pair works everywhere
+ *   stackwise setup      connect Claude Code to StackWise once, so /mcp__stackwise__pair works everywhere
  *   stackwise stop       stop the StackWise this command started
  *
  * StackWise itself runs from its own folder (this repo) on http://localhost:4310, in the background,
- * with its log in .whystack/server.log. Opening a folder sends the browser to #open=<folder>, and
- * the page picks the folder's whystack.plan.json, a plan already linked to it, or a new one.
+ * with its log in .stackwise/server.log. Opening a folder sends the browser to #open=<folder>, and
+ * the page picks the folder's stackwise.plan.json, a plan already linked to it, or a new one.
  */
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const URL_BASE = "http://localhost:4310";
-const STATE = path.join(ROOT, ".whystack");
+const STATE = path.join(ROOT, ".stackwise");
+// Carry the log and pid over from when StackWise was called WhyStack.
+if (!fs.existsSync(STATE) && fs.existsSync(path.join(ROOT, ".whystack"))) fs.renameSync(path.join(ROOT, ".whystack"), STATE);
 const PID_FILE = path.join(STATE, "server.pid");
 const LOG_FILE = path.join(STATE, "server.log");
 
@@ -52,8 +54,8 @@ function openBrowser(url: string): void {
   spawnSync(opener, [url], { stdio: "ignore", shell: process.platform === "win32" });
 }
 
-function claudeHasStackWise(): boolean {
-  const result = spawnSync("claude", ["mcp", "get", "whystack"], { encoding: "utf8", timeout: 30_000 });
+function claudeHas(name: string): boolean {
+  const result = spawnSync("claude", ["mcp", "get", name], { encoding: "utf8", timeout: 30_000 });
   return result.status === 0;
 }
 
@@ -68,7 +70,7 @@ async function open(folderArg: string | undefined) {
   say();
   say("To work with Claude Code on this plan, in this folder:");
   say("  claude");
-  say("  /mcp__whystack__pair");
+  say("  /mcp__stackwise__pair");
   say("Then write to it from Ask in StackWise. (First time? Run: stackwise setup)");
 }
 
@@ -77,13 +79,15 @@ function setup() {
     say("Claude Code isn't installed. Get it at https://claude.com/claude-code, then run stackwise setup again.");
     return;
   }
-  if (claudeHasStackWise()) {
-    say("Claude Code already knows StackWise. In any project: claude, then /mcp__whystack__pair");
+  // Set up before the rename, under StackWise's old name: replace it.
+  if (claudeHas("whystack")) spawnSync("claude", ["mcp", "remove", "--scope", "user", "whystack"], { stdio: "ignore" });
+  if (claudeHas("stackwise")) {
+    say("Claude Code already knows StackWise. In any project: claude, then /mcp__stackwise__pair");
     return;
   }
-  const added = spawnSync("claude", ["mcp", "add", "--transport", "http", "--scope", "user", "whystack", `${URL_BASE}/api/mcp`], { stdio: "inherit" });
-  if (added.status === 0) say("Done. In any project: claude, then /mcp__whystack__pair");
-  else say("That didn't work. You can add it yourself: claude mcp add --transport http --scope user whystack http://localhost:4310/api/mcp");
+  const added = spawnSync("claude", ["mcp", "add", "--transport", "http", "--scope", "user", "stackwise", `${URL_BASE}/api/mcp`], { stdio: "inherit" });
+  if (added.status === 0) say("Done. In any project: claude, then /mcp__stackwise__pair");
+  else say("That didn't work. You can add it yourself: claude mcp add --transport http --scope user stackwise http://localhost:4310/api/mcp");
 }
 
 function stop() {

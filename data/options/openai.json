@@ -72,13 +72,13 @@
       "source": "https://developers.openai.com/api/docs/quickstart"
     },
     {
-      "step": "Import OpenAI and call the API from a server-side route handler or server action.",
+      "step": "Import OpenAI and call the API from a server route.",
       "env": [],
       "source": "https://developers.openai.com/api/docs/quickstart"
     }
   ],
   "builder_notes": [
-    "Keep OPENAI_API_KEY on the server; call it from API routes or server actions, never from client components.",
+    "Keep OPENAI_API_KEY on the server; call it from server code, never from the browser.",
     "Set explicit max token limits and handle rate-limit errors, since cost scales directly with tokens used.",
     "Pick the smallest model (gpt-5-nano or gpt-5-mini) that meets quality needs before reaching for a bigger, pricier one."
   ]

@@ -65,11 +65,11 @@
     }
   },
   "setup": [
-    { "step": "Create a free Supabase account and a new project at supabase.com.", "env": [], "source": "https://supabase.com/docs/guides/getting-started/quickstarts/nextjs" },
-    { "step": "Scaffold a Next.js app with the official Supabase starter template, which installs @supabase/supabase-js and @supabase/ssr for you.", "env": [], "source": "https://supabase.com/docs/guides/getting-started/quickstarts/nextjs" },
-    { "step": "Copy the Project URL and publishable key from the project's Connect panel in the dashboard.", "env": [], "source": "https://supabase.com/docs/guides/getting-started/quickstarts/nextjs" },
-    { "step": "Add the URL and key to your environment file.", "env": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"], "source": "https://supabase.com/docs/guides/getting-started/quickstarts/nextjs" },
-    { "step": "Create a table in the SQL editor and turn on Row Level Security with a policy before reading or writing from the app.", "env": [], "source": "https://supabase.com/docs/guides/getting-started/quickstarts/nextjs" }
+    { "step": "Create a free Supabase account and a new project at supabase.com.", "env": [], "source": "https://supabase.com/docs/guides/getting-started" },
+    { "step": "Install the Supabase client with npm install @supabase/supabase-js (add @supabase/ssr if your framework renders pages on the server).", "env": [], "source": "https://supabase.com/docs/reference/javascript/installing" },
+    { "step": "Copy the Project URL and publishable key from the project's Connect panel in the dashboard.", "env": [], "source": "https://supabase.com/docs/guides/getting-started/api-keys" },
+    { "step": "Add the URL and key to your environment file.", "env": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"], "source": "https://supabase.com/docs/guides/getting-started/api-keys" },
+    { "step": "Create a table in the SQL editor and turn on Row Level Security with a policy before reading or writing from the app.", "env": [], "source": "https://supabase.com/docs/guides/database/postgres/row-level-security" }
   ],
   "builder_notes": [
     "Use the publishable key in browser code and keep the secret key only on the server; never expose the secret key to the browser.",

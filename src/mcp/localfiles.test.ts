@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { missingEnvNames, planWrites, resolveFolder } from "./localfiles";
 
 const HOME = "/Users/sam";
-const WHYSTACK = "/Users/sam/code/whystack";
-const resolve = (input: string) => resolveFolder(input, HOME, WHYSTACK);
+const STACKWISE = "/Users/sam/code/stackwise";
+const resolve = (input: string) => resolveFolder(input, HOME, STACKWISE);
 const errorOf = (input: string) => (resolve(input) as { error: string }).error;
 
 describe("resolveFolder", () => {
@@ -21,9 +21,9 @@ describe("resolveFolder", () => {
   });
 
   it("refuses StackWise's own folder", () => {
-    expect(errorOf("~/code/whystack")).toContain("StackWise's own folder");
-    expect(errorOf("~/code/whystack/src")).toContain("StackWise's own folder");
-    expect(resolve("~/code/whystack-app")).toEqual({ path: "/Users/sam/code/whystack-app" });
+    expect(errorOf("~/code/stackwise")).toContain("StackWise's own folder");
+    expect(errorOf("~/code/stackwise/src")).toContain("StackWise's own folder");
+    expect(resolve("~/code/stackwise-app")).toEqual({ path: "/Users/sam/code/stackwise-app" });
   });
 
   it("refuses system folders and hidden folders", () => {
