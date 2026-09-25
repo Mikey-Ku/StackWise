@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { applyReview, FLAGS_FILE, readFlags, reviewHidden } from "./review-store";
+import { applyReview, FLAGS_FILE, readFlags } from "./review-store";
 import { fixtureOptions } from "./test-fixtures";
 
 /**
@@ -83,18 +83,11 @@ describe("applyReview", () => {
   });
 });
 
-describe("readFlags and reviewHidden", () => {
+describe("readFlags", () => {
   it("reads a missing or broken log as no flags", () => {
     expect(readFlags(stateDir)).toEqual({});
     fs.mkdirSync(stateDir, { recursive: true });
     fs.writeFileSync(path.join(stateDir, FLAGS_FILE), "not json");
     expect(readFlags(stateDir)).toEqual({});
-  });
-
-  it("is hidden on a hosted StackWise", () => {
-    expect(reviewHidden({})).toBe(false);
-    expect(reviewHidden({ STACKWISE_HOSTED: "1" })).toBe(true);
-    expect(reviewHidden({ NEXT_PUBLIC_STACKWISE_HOSTED: "1" })).toBe(true);
-    expect(reviewHidden({ STACKWISE_HOSTED: "0" })).toBe(false);
   });
 });

@@ -4,27 +4,8 @@
     {
       "name": "stackwise",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "dev"
-      ],
+      "runtimeArgs": ["dev"],
       "port": 4310
-    },
-    {
-      "name": "stackwise-hosted",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "exec",
-        "next",
-        "start",
-        "-H",
-        "127.0.0.1",
-        "-p",
-        "4311"
-      ],
-      "env": {
-        "NEXT_PUBLIC_STACKWISE_HOSTED": "1"
-      },
-      "port": 4311
     }
   ]
 }

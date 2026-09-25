@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { isHosted } from "@/hosted";
 import { editFactReview } from "./review";
 import { factValueSchema, optionSchema, type FactValue } from "./schema";
 
@@ -25,11 +24,6 @@ const flagSchema = z.object({
 export type ReviewFlag = z.infer<typeof flagSchema>;
 /** By "<optionId>.<fact>". */
 export type ReviewFlags = Record<string, ReviewFlag>;
-
-/** Reviewing writes to data/, so a hosted StackWise has no review page or route at all. */
-export function reviewHidden(env: Record<string, string | undefined> = process.env): boolean {
-  return isHosted(env);
-}
 
 export function readFlags(stateDir: string): ReviewFlags {
   try {

@@ -6,26 +6,24 @@ import { loadCatalog } from "@/engine/load";
 import { STATE_DIR } from "@/engine/names";
 import { todayIso } from "@/engine/staleness";
 import { reviewCounts, reviewList } from "@/engine/review";
-import { applyReview, COMMENT_MAX, FACT_KEY, OPTION_ID, readFlags, reviewHidden } from "@/engine/review-store";
+import { applyReview, COMMENT_MAX, FACT_KEY, OPTION_ID, readFlags } from "@/engine/review-store";
 import { localOnly, readJson } from "@/mcp/local";
 
 /**
  * The fact review (/review). GET lists the facts to check, the ones behind the default plans
  * first, with the flags left so far. POST records one decision: "confirm" marks the fact verified
  * in its option file with today's date; "flag" keeps it a draft and logs the comment in
- * .stackwise/review-flags.json. Answers this computer only, and doesn't exist on a hosted
- * StackWise (STACKWISE_HOSTED=1).
+ * .stackwise/review-flags.json. Answers StackWise's own page on this computer only, and nothing
+ * with STACKWISE_PAIRING=off (see localOnly).
  */
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const notFound = () => Response.json({ error: "Not found." }, { status: 404 });
 const dataDir = () => path.join(process.cwd(), "data");
 const stateDir = () => path.join(/* turbopackIgnore: true */ process.cwd(), STATE_DIR);
 
 export async function GET(request: Request) {
-  if (reviewHidden()) return notFound();
   const blocked = localOnly(request);
   if (blocked) return blocked;
 
@@ -50,7 +48,6 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  if (reviewHidden()) return notFound();
   const blocked = localOnly(request);
   if (blocked) return blocked;
   const parsed = bodySchema.safeParse(await readJson(request, 16 * 1024));

@@ -45,25 +45,3 @@ describe("local-only guard", () => {
     expect(await readJson(body(JSON.stringify({ a: "x".repeat(100) })), 50)).toBeNull();
   });
 });
-
-describe("the hosted copy", () => {
-  const hostedRequest = (headers: Record<string, string>, method = "POST") =>
-    new Request("https://stackwise.example/api/talk", { method, headers: { "content-type": "application/json", ...headers } });
-
-  it("turns off everything that reaches into a computer", async () => {
-    const refused = localOnly(hostedRequest({ host: "localhost:4310" }), true);
-    expect(refused?.status).toBe(404);
-    expect(await refused?.json()).toEqual({ error: "This only works when StackWise runs on your own computer." });
-  });
-
-  it("answers its own page under its public name, and programs", () => {
-    expect(sameOrigin(hostedRequest({ host: "stackwise.example", origin: "https://stackwise.example", "sec-fetch-site": "same-origin" }), true)).toBeNull();
-    expect(sameOrigin(hostedRequest({ host: "stackwise.example" }), true)).toBeNull();
-  });
-
-  it("still refuses other sites and form posts", () => {
-    expect(sameOrigin(hostedRequest({ host: "stackwise.example", origin: "https://evil.example" }), true)?.status).toBe(403);
-    expect(sameOrigin(hostedRequest({ host: "stackwise.example", "sec-fetch-site": "cross-site" }), true)?.status).toBe(403);
-    expect(sameOrigin(hostedRequest({ host: "stackwise.example", "content-type": "text/plain" }), true)?.status).toBe(415);
-  });
-});

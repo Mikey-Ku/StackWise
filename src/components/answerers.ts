@@ -1,7 +1,6 @@
 import { agentName, KNOWN_AGENTS, presence, type Presence } from "@/mcp/pairing";
 import type { AiStatus, ProviderInfo } from "./Planner";
 import type { Pairing } from "./usePairing";
-import { HOSTED } from "@/hosted";
 
 /**
  * Who can answer in StackWise: a coding agent in a terminal, a built-in AI with a key, or
@@ -52,12 +51,7 @@ export function descriptionReader(ai: AiStatus | null, saved: string | null): Pr
   return on.find((p) => p.id === wanted) ?? on[0] ?? null;
 }
 
-/** Everyone who could answer. The hosted copy lists no agents and only a built-in AI its owner turned on. */
-export function recipientsFor(ai: AiStatus | null, pairing: Pick<Pairing, "agents" | "serverNow">, hosted = HOSTED): Recipient[] {
-  if (hosted) {
-    const on = providersOf(ai).filter((p) => p.on);
-    return [...on.map((p): Recipient => ({ id: `api:${p.id}`, label: `${p.label} API (${p.model})`, group: "api", state: "ready", keyName: p.keyName })), { id: "facts", label: "StackWise facts", group: "facts", state: "ready" }];
-  }
+export function recipientsFor(ai: AiStatus | null, pairing: Pick<Pairing, "agents" | "serverNow">): Recipient[] {
   const seen = Object.values(pairing.agents);
   const agentIds = [...KNOWN_AGENTS.map((a) => a.id as string), ...seen.map((a) => a.id)].filter((id, i, all) => all.indexOf(id) === i);
   return [

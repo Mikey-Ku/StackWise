@@ -7,7 +7,6 @@ import { downloadPlanFile, readPlanFile } from "./planFiles";
 import { toSharedPlan } from "./store";
 import { newId, type PlanModel } from "./usePlans";
 import { copyText, cx } from "./ui";
-import { HOSTED } from "@/hosted";
 
 /** Switch between saved applications, and move one between people: share links and plan files. All of them, and the examples, are on /apps. */
 export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (message: string) => void }) {
@@ -90,12 +89,9 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
           <button type="button" className="ws-menu__item" onClick={() => fileInput.current?.click()}>
             Open plan file
           </button>
-          {/* Reviewing writes to data/, so a hosted StackWise doesn't offer it (the page and route 404 there too). */}
-          {!HOSTED && (
-            <Link href="/review" className="ws-menu__item" onClick={close}>
-              Review facts
-            </Link>
-          )}
+          <Link href="/review" className="ws-menu__item" onClick={close}>
+            Review facts
+          </Link>
           <button
             type="button"
             className="ws-menu__item ws-menu__item--danger"

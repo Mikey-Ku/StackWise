@@ -5,7 +5,6 @@ import type { SharedPlan, SlotId } from "@/engine";
 import type { AgentState } from "@/mcp/pairing";
 import type { Message } from "@/mcp/registry";
 import { toSharedPlan, type History, type PlanState, type StoreAction } from "./store";
-import { HOSTED } from "@/hosted";
 
 /**
  * Pairing with coding agents from the browser side. When sharing is on, the plan you have open is
@@ -50,9 +49,7 @@ export function usePairing({
   dispatch: (action: StoreAction) => void;
   onClaudeChange: (appName: string, change: ClaudeActivity | undefined) => void;
 }) {
-  // The hosted copy has no agents to pair with (src/hosted.ts), so it never shares or polls.
   const [enabled, setEnabledState] = useState(() => {
-    if (HOSTED) return false;
     try {
       return window.localStorage.getItem(PAIRING_KEY) === "on";
     } catch {
@@ -91,7 +88,6 @@ export function usePairing({
 
   // Ask the server what agents changed, did or said since the last look.
   useEffect(() => {
-    if (HOSTED) return;
     let stopped = false;
     let timer = 0;
     const tick = async () => {
@@ -176,7 +172,6 @@ export function usePairing({
   /** Write to one agent. The message waits in the shared plan's inbox until that agent picks it up. */
   const send = useCallback(
     async (agent: string, text: string, about: SlotId): Promise<string | null> => {
-      if (HOSTED) return "Coding agents pair with StackWise running on your computer, not with this online demo.";
       if (!enabled) setEnabled(true);
       if (sharedId.current !== active.id && !(await share(active))) return "Couldn't reach StackWise's server, so the message wasn't sent.";
       try {
