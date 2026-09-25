@@ -117,6 +117,8 @@ export function applyChecks(catalog: Catalog, options: Map<string, Option>, outp
     entry.note = check.evidence.slice(0, 240);
     entry.retrieved = today;
     entry.status = "draft";
+    // A person's review was of the old value.
+    delete entry.reviewed;
     changes.push({ key: check.key, kind: "updated", from, to: next, evidence: check.evidence });
   }
   return changes;

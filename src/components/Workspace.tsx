@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { connectionsOf, decodeSharedPlan, envFileText, inSentence, isOwn, LINK_WORDS, linkId, ownId, planEnv, SLOT_IDS, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
+import { buildPlan, buildPlanMarkdown, connectionsOf, decodeSharedPlan, envFileText, inSentence, isOwn, LINK_WORDS, linkId, ownId, planEnv, SLOT_IDS, taskBrief, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
 import { presence } from "@/mcp/pairing";
 import { AddPart } from "./AddPart";
 import { AnswererMark } from "./AnswererMark";
@@ -35,6 +35,8 @@ import { Logo, copyText, cx, undoHint } from "./ui";
 import { sharedName } from "./planFiles";
 import { Tip } from "./Tip";
 import { migrateLegacyStorage } from "./storage";
+import { useAdvanced } from "./useAdvanced";
+import { HOSTED, SOURCE_URL } from "@/hosted";
 
 /**
  * The workspace is the canvas, full screen, with everything else floating over it:
@@ -45,6 +47,10 @@ import { migrateLegacyStorage } from "./storage";
  *   - right-click menus on parts, lines and the canvas
  * Describing the app and confirming the guesses happen in a sheet over the canvas, which fills in
  * behind it as the answers change.
+ *
+ * The hosted copy (src/hosted.ts) has no Connect step, no agents and no project folder. Advanced
+ * tools (useAdvanced) hide the ways to add extras, lines, your own parts and the Project panel
+ * until someone turns them on; whatever a plan already has keeps its own menu either way.
  */
 
 type Panel = "overview" | "project" | "options" | "checklist";
@@ -112,6 +118,12 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const [linkEdit, setLinkEdit] = useState<LinkEdit | null>(null);
   const [leftWidth, setLeftWidth] = usePanelWidth("left", LEFT_WIDTH);
   const [rightWidth, setRightWidth] = usePanelWidth("right", RIGHT_WIDTH);
+  const [advanced, setAdvanced] = useAdvanced();
+  /** The Project panel: only on your own computer, and once advanced tools are on or the plan already has a folder. */
+  const projectPanel = !HOSTED && (advanced || Boolean(plan.folder));
+  const panels = PANELS.filter((p) => p.id !== "project" || projectPanel);
+  /** The open left panel, unless it's Project and advanced tools were just turned off. */
+  const shown = panels.find((p) => p.id === panel) ?? null;
 
   const onClaudeChange = useCallback((appName: string, change: ClaudeActivity | undefined) => {
     const what = change ? `${change.summary}${change.changes.length ? `: ${change.changes.slice(0, 2).join("; ")}${change.changes.length > 2 ? ` (+${change.changes.length - 2})` : ""}` : ""}` : "updated the plan";
@@ -137,10 +149,11 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     setConnectSeen(true);
     setConnectAgain(false);
   };
-  const showConnect = connectAgain || (!connectSeen && plan.step === "describe");
-  const sheetStep = showConnect ? 0 : plan.step === "describe" ? 1 : 2;
+  // The hosted copy has nothing to connect: no terminal agents, and no keys of the visitor's.
+  const showConnect = !HOSTED && (connectAgain || (!connectSeen && plan.step === "describe"));
+  const sheetStep = showConnect ? 0 : (HOSTED ? 0 : 1) + (plan.step === "describe" ? 0 : 1);
   const steps = [
-    { label: "Connect", go: () => setConnectAgain(true) },
+    ...(HOSTED ? [] : [{ label: "Connect", go: () => setConnectAgain(true) }]),
     {
       label: "Describe",
       go: () => {
@@ -188,7 +201,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const openedFolder = useRef<string | null>(null);
   useEffect(() => {
     const match = window.location.hash.match(/^#open=(.+)$/);
-    if (!match) return;
+    if (!match || HOSTED) return;
     const folder = decodeURIComponent(match[1]);
     if (openedFolder.current === folder) return;
     openedFolder.current = folder;
@@ -237,7 +250,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     // files there, so a link from someone else only links it after the person says yes.
     const match = window.location.hash.match(/^#plan=([A-Za-z0-9_-]+)(?:&folder=([^&]+))?$/);
     if (!match || importedToken.current === match[1]) return;
-    const folder = match[2] ? decodeURIComponent(match[2]) : null;
+    const folder = match[2] && !HOSTED ? decodeURIComponent(match[2]) : null;
     importedToken.current = match[1];
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
     void decodeSharedPlan(match[1]).then((shared) => {
@@ -350,6 +363,37 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     [plan.appName, plan.extras, plan.custom, index, nameOf],
   );
 
+  /** The canvas as ordered build tasks (buildplan.ts), for "Build this with" and "Copy the build plan". */
+  const tasks = useMemo(() => buildPlan(index, model.input, rec.selection, plan), [index, model.input, rec.selection, plan]);
+  /**
+   * Who builds a task: the agent listening now, else the default answerer if it's an agent, else the
+   * builder the plan names, else Claude Code. A message waits until that agent listens. None hosted.
+   */
+  const builderAgent = useMemo(() => {
+    const agents = recipients.filter((r) => r.group === "agent");
+    return (
+      agents.find((r) => r.state === "listening" || r.state === "working") ??
+      agents.find((r) => r.id === answerer.id) ??
+      agents.find((r) => r.id === `agent:${plan.builderId}`) ??
+      agents.find((r) => r.id === "agent:claude-code")
+    );
+  }, [recipients, answerer.id, plan.builderId]);
+  /** "Build this with <agent>": sends one task, in full, to that agent through the Ask panel. */
+  const buildWith = useCallback(
+    (taskId: string): MenuItem[] => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!builderAgent || !building || !task) return [];
+      return [
+        {
+          label: `Build this with ${builderAgent.label}`,
+          icon: "terminal",
+          onSelect: () => setAsk({ open: true, slot: task.slot, request: { slot: task.slot, question: taskBrief(tasks, taskId, plan.appName)!, nonce: Date.now(), to: builderAgent.id } }),
+        },
+      ];
+    },
+    [tasks, builderAgent, building, plan.appName],
+  );
+
   /** "Draw a line to…": every other thing on the canvas a line from `from` could reach. */
   const drawLineMenu = useCallback(
     (from: string): MenuItem => {
@@ -392,6 +436,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           { label: "Ask about this", icon: "sparkle", onSelect: () => openAsk(slot) },
           { label: "Details", icon: "info", onSelect: () => select(slot) },
           ...(hasWire ? [{ label: "Connection", icon: "link" as const, onSelect: () => selectConnection(slot) }] : []),
+          ...(current ? buildWith(`part:${slot}`) : []),
           { kind: "separator" },
           {
             kind: "submenu",
@@ -409,7 +454,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               },
             })),
           },
-          ...(slot !== "framework" && !isOwn(current)
+          ...(advanced && slot !== "framework" && !isOwn(current)
             ? [
                 {
                   label: "Build it yourself",
@@ -423,9 +468,9 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             : []),
           ...(slot !== "framework" && needed && !rec.autoPicked.includes(slot) ? [{ label: "Let StackWise pick", icon: "wand" as const, onSelect: () => dispatch({ type: "autoPick", slot }) }] : []),
           // A second service in this part (a cache next to the database), and lines to other parts.
-          ...(slot !== "framework" && current ? [{ label: `Add another service for ${def.label.toLowerCase()}`, icon: "plus" as const, onSelect: () => setExtraEdit({ id: null, slot }) }] : []),
-          ...(current ? [drawLineMenu(slot === "framework" ? "app" : slot)] : []),
-          ...(slot === "framework"
+          ...(advanced && slot !== "framework" && current ? [{ label: `Add another service for ${def.label.toLowerCase()}`, icon: "plus" as const, onSelect: () => setExtraEdit({ id: null, slot }) }] : []),
+          ...(advanced && current ? [drawLineMenu(slot === "framework" ? "app" : slot)] : []),
+          ...(slot === "framework" && projectPanel
             ? [{ label: plan.icon ? "Change the app's logo" : "Add a logo for this app", icon: "pin" as const, onSelect: () => setPanel("project") }]
             : []),
           {
@@ -473,6 +518,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         items = [
           { kind: "header", label: endName(target.id) },
           { label: "Edit", icon: "note", onSelect: () => setExtraEdit({ id: target.id, slot: extra.slot }) },
+          ...buildWith(`extra:${target.id}`),
           drawLineMenu(target.id),
           { kind: "separator" },
           {
@@ -491,6 +537,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         items = [
           { kind: "header", label: `${endName(link.from)} ${LINK_WORDS[link.kind]} ${endName(link.to)}` },
           { label: "Edit the line", icon: "note", onSelect: () => setLinkEdit({ from: link.from, to: link.to, saved: true }) },
+          ...buildWith(`link:${target.id}`),
           {
             label: "Remove the line",
             icon: "trash",
@@ -507,6 +554,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         items = [
           { kind: "header", label: `${part.name}, added by you` },
           { label: "Edit", icon: "note", onSelect: () => setCustomEdit({ id: target.id }) },
+          ...buildWith(`custom:${target.id}`),
           drawLineMenu(target.id),
           {
             label: "Remove",
@@ -534,7 +582,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           { label: "Explain my plan", icon: "overview", disabled: !building, onSelect: () => openAsk("framework", "Explain my plan") },
           { kind: "separator" },
           { label: "Add a part", icon: "plus", hint: "A", onSelect: () => openAdd() },
-          { label: "Add a part that isn't listed", icon: "plus", onSelect: () => setCustomEdit({ id: null }) },
+          ...(advanced ? [{ label: "Add a part that isn't listed", icon: "plus" as const, onSelect: () => setCustomEdit({ id: null }) }] : []),
           { label: showAll ? "Hide empty parts" : "Show empty parts", icon: "parts", checked: showAll, onSelect: () => setShowAll((v) => !v) },
           {
             label: "Fit to screen",
@@ -555,13 +603,22 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           { kind: "separator" },
           { label: "Edit answers", icon: "checklist", onSelect: () => dispatch({ type: "goTo", step: "confirm" }) },
           { label: "Export project", icon: "export", disabled: !building, onSelect: () => setSpecDate(todayIso()) },
+          {
+            label: "Copy the build plan",
+            icon: "checklist",
+            disabled: !building,
+            onSelect: async () => {
+              const text = buildPlanMarkdown(tasks, { appName: plan.appName, generatedOn: today, problems: rec.results.some((r) => r.level !== "info") });
+              setToast((await copyText(text)) ? `Copied ${tasks.length} tasks in build order. Paste them into your builder's chat or TASKS.md.` : "Couldn't copy.");
+            },
+          },
           { label: "Save as PNG", icon: "export", disabled: !building, onSelect: () => saveImage(false) },
           { label: "Save as PNG (transparent)", icon: "export", disabled: !building, onSelect: () => saveImage(true) },
         ];
       }
       setMenu({ x, y, items });
     },
-    [mod, history, dispatch, index, rec, catalog, nameOf, openAsk, openAdd, openLearn, saveImage, removePart, select, selectConnection, model, plan.appName, plan.layout, plan.icon, plan.custom, plan.extras, plan.links, drawLineMenu, endName, today, building, showAll],
+    [mod, history, dispatch, index, rec, catalog, nameOf, openAsk, openAdd, openLearn, saveImage, removePart, select, selectConnection, model, plan.appName, plan.layout, plan.icon, plan.custom, plan.extras, plan.links, drawLineMenu, endName, today, building, showAll, advanced, projectPanel, buildWith, tasks],
   );
 
   // The AI pill: who answers, and whether it's there. Nothing connected reads as an invitation.
@@ -608,19 +665,33 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         </div>
         {building && <SummaryPill model={model} onOpen={() => setPanel("overview")} />}
         <div className="ws-bar__side ws-bar__side--end">
-          <button
-            type="button"
-            className={cx("ws-connpill", connectOpen && "is-on", answererLive && "is-live")}
-            aria-expanded={connectOpen}
-            aria-label={`AI: ${answererName}, ${answererState.toLowerCase()}. Change it.`}
-            title={answerer.id === "facts" ? "No AI is connected. StackWise answers from its own facts. Click to connect one." : `${answerer.label}: ${answererState.toLowerCase()}. Click to change.`}
-            onClick={() => setConnectOpen((v) => !v)}
-          >
-            <span className={cx("ws-status-dot", answererLive && "is-on", answerer.state === "stopped" && "is-warn")} aria-hidden />
-            {answerer.id !== "facts" && <AnswererMark id={answerer.id} className="ws-menu-logo" />}
-            <span className="ws-connpill__label">{answererName}</span>
-            <span className={cx("ws-connpill__state", answererLive && "is-live", answerer.id === "facts" && "is-cta")}>{answererState}</span>
-          </button>
+          {HOSTED ? (
+            <a
+              className="ws-connpill"
+              href={`${SOURCE_URL}#start-in-two-minutes`}
+              target="_blank"
+              rel="noreferrer"
+              title="This copy keeps your plans in this browser and answers from StackWise's facts. Run StackWise on your computer to pair a coding agent, use your own AI key and write project files."
+            >
+              <span className="ws-status-dot" aria-hidden />
+              <span className="ws-connpill__label">Online demo</span>
+              <span className="ws-connpill__state is-cta">Run it yourself</span>
+            </a>
+          ) : (
+            <button
+              type="button"
+              className={cx("ws-connpill", connectOpen && "is-on", answererLive && "is-live")}
+              aria-expanded={connectOpen}
+              aria-label={`AI: ${answererName}, ${answererState.toLowerCase()}. Change it.`}
+              title={answerer.id === "facts" ? "No AI is connected. StackWise answers from its own facts. Click to connect one." : `${answerer.label}: ${answererState.toLowerCase()}. Click to change.`}
+              onClick={() => setConnectOpen((v) => !v)}
+            >
+              <span className={cx("ws-status-dot", answererLive && "is-on", answerer.state === "stopped" && "is-warn")} aria-hidden />
+              {answerer.id !== "facts" && <AnswererMark id={answerer.id} className="ws-menu-logo" />}
+              <span className="ws-connpill__label">{answererName}</span>
+              <span className={cx("ws-connpill__state", answererLive && "is-live", answerer.id === "facts" && "is-cta")}>{answererState}</span>
+            </button>
+          )}
           <button type="button" className={cx("ws-askbtn", ask.open && "is-on")} onClick={() => setAsk((a) => ({ ...a, open: !a.open, request: null }))} title={`Ask about your plan (${mod}K)`}>
             <Icon name="sparkle" size={15} />
             <span>Ask</span>
@@ -648,7 +719,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             </button>
           </Tip>
           <span className="ws-dock__sep" aria-hidden />
-          {PANELS.map((p) => (
+          {panels.map((p) => (
             <Tip key={p.id} name={p.label} text={p.hint}>
               <button type="button" className={cx("ws-dock__btn", panel === p.id && "is-on")} aria-pressed={panel === p.id} onClick={() => togglePanel(p.id)}>
                 <Icon name={p.icon} size={16} />
@@ -679,28 +750,33 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               <Icon name="fit" size={16} />
             </button>
           </Tip>
+          <Tip name={advanced ? "Advanced tools: on" : "Advanced tools: off"} text={`A second service in one part, lines between parts, parts you build yourself${HOSTED ? "" : " and the Project panel"}. Click to turn them ${advanced ? "off" : "on"}.`}>
+            <button type="button" className={cx("ws-dock__btn ws-dock__btn--icon", advanced && "is-on")} aria-pressed={advanced} aria-label="Advanced tools" onClick={() => setAdvanced(!advanced)}>
+              <Icon name="tool" size={16} />
+            </button>
+          </Tip>
           <ThemeSwitch className="ws-dock__btn ws-dock__btn--icon" tip />
         </nav>
       )}
 
-      {building && panel && (
-        <aside className="ws-float ws-float--left" style={{ "--ws-panel-w": `${leftWidth}px` } as CSSProperties} aria-label={PANELS.find((p) => p.id === panel)?.label}>
+      {building && shown && (
+        <aside className="ws-float ws-float--left" style={{ "--ws-panel-w": `${leftWidth}px` } as CSSProperties} aria-label={shown.label}>
           <PanelEdge side="left" width={leftWidth} fallback={LEFT_WIDTH} onResize={setLeftWidth} />
           <div className="ws-float__head">
-            <h2>{PANELS.find((p) => p.id === panel)?.label}</h2>
+            <h2>{shown.label}</h2>
             <button type="button" className="ws-iconbtn" aria-label="Close" onClick={() => setPanel(null)}>
               <Icon name="close" size={14} />
             </button>
           </div>
           <div className="ws-float__body">
-            {panel === "overview" && (
+            {shown.id === "overview" && (
               <>
                 <Overview model={model} onSelect={select} onOpenChecklist={() => setPanel("checklist")} onExplain={() => openAsk("framework", "Explain my plan")} />
               </>
             )}
-            {panel === "project" && <ProjectPanel model={model} pairing={pairing} onToast={setToast} />}
-            {panel === "options" && <Palette model={model} selectedSlot={selectedSlot} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onToast={setToast} />}
-            {panel === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} onOpenProject={() => setPanel("project")} />}
+            {shown.id === "project" && <ProjectPanel model={model} pairing={pairing} onToast={setToast} />}
+            {shown.id === "options" && <Palette model={model} selectedSlot={selectedSlot} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onToast={setToast} />}
+            {shown.id === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} onOpenProject={projectPanel ? () => setPanel("project") : undefined} />}
           </div>
         </aside>
       )}
@@ -734,6 +810,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
                 onToast={setToast}
                 onCompare={(slot, optionIds) => setCompare({ slot, optionIds })}
                 onLearn={() => openLearn(selectedSlot)}
+                advanced={advanced}
               />
             )}
           </div>
@@ -793,6 +870,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         <AddPart
           model={model}
           focus={adding.focus}
+          advanced={advanced}
           onClose={() => setAdding(null)}
           onAddOwn={(name) => {
             setAdding(null);

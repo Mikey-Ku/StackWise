@@ -6,6 +6,15 @@ You describe your app in a paragraph. StackWise works out what it needs (logins,
 
 The AI never decides whether two services work together. Rules do, from facts with a source and a date. AI reads your description, explains the plan and drafts new facts for a person to review.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/stackwise-plan-dark.png">
+  <img alt="A finished plan on the canvas: the app in the middle and a card for each service, joined by checked lines" src="docs/images/stackwise-plan.png">
+</picture>
+
+![Describing an app, confirming the guesses, the plan, a part's details, the right-click menu and the export](docs/images/stackwise-flow.gif)
+
+A two-minute walkthrough for a video or an interview is in [docs/DEMO.md](docs/DEMO.md).
+
 ## Start in two minutes
 
 You need Node 22.9 or newer and pnpm. Claude Code is optional, for working with an agent.
@@ -37,8 +46,9 @@ Everything works without an API key. To have an AI read your description, answer
 2. **Say what you're building.** Pick a kind of app (web, iOS, Android, both, AI app, store, internal tool) or describe it, then confirm each guess.
 3. **Read the canvas.** Your app in the middle, a card per part, and a line per connection: a check means it works, `!` a warning, a cross that it doesn't. A light flows along the lines that work. Click a card for why it was picked; right-click anything for everything else; press A to add a part.
 4. **Ask.** Cmd+K opens one conversation per plan. Pick who answers: an agent in your terminal, a model with a key, or StackWise's own facts.
-5. **Link your project.** The Project panel runs the app, sets environment variables, checks every service with your keys, reads the database (read only) and gives extra agents their own git worktree.
-6. **Export.** A spec pack for your AI builder, or the files written straight into the project.
+5. **Turn on Advanced tools when you need them.** The wrench in the dock adds a second service in one part (a cache next to the database), lines between two parts (Stripe sends webhooks to your app), parts you build yourself and parts StackWise doesn't list, and the Project panel.
+6. **Link your project.** The Project panel runs the app, sets environment variables, checks every service with your keys, reads the database (read only) and gives extra agents their own git worktree.
+7. **Export.** A spec pack for your AI builder, or the files written straight into the project. "Copy the build plan" on the canvas menu gives the tasks alone, in order.
 
 ```bash
 pnpm test             # engine, AI (with a fake client), store, scripts and data checks
@@ -46,6 +56,7 @@ pnpm check:data       # only the data checks: schemas, sources, every pair gets 
 pnpm check:options -- --id firecrawl   # check one option file while you write it
 pnpm typecheck && pnpm lint && pnpm build
 
+pnpm eval:questions   # the question ids eval cases can grade, no AI
 pnpm eval:prefill     # AI pre-fill vs the keyword baseline (needs cases in evals/)
 pnpm eval:plain-llm   # how often a plain LLM picks a stack that breaks a rule
 pnpm check:sources    # reread every fact's source page with Claude; --apply to update
@@ -114,7 +125,8 @@ Claude can check stacks, compare options, estimate costs and change the plan you
 **Leaving with a plan**
 - Project pack, as a zip: SPEC.md, SETUP.md, TASKS.md, DECISIONS.md with the reasoning for every part, the plan file, `.env.example` with every variable name grouped by service, a `.gitignore` that keeps the values out of git, and PROMPT.txt, AGENTS.md or CLAUDE.md for your builder. For Claude Code it adds `.mcp.json`, a build agent per part, a stack guard, a setup guide, a reviewer and a `/next-step` skill. Environment variable names follow your framework.
 - Or write the same files straight into a folder on this computer, plus a `.env.local` with the names and no values, ready to open with `claude`. StackWise only writes inside your home folder, never writes over an existing `.env.local`, and tells you which names yours is missing.
-- Pair a coding agent through StackWise's MCP server: 13 tools, a shared plan, and two-way chat. Run `/mcp__stackwise__pair` in Claude Code, write to it from StackWise, and it works in your project and answers in the Ask panel, with the files it changed.
+- A build plan from the canvas: every part, extra service, part added by hand and line between two things becomes a task, in an order where each only needs the ones above it, with the person's notes and what "done" means. It's TASKS.md in the export, "Copy the build plan" on the canvas, and `get_build_plan` over MCP; right-click a part or a line and "Build this with Claude Code" (or any paired agent) sends that one task.
+- Pair a coding agent through StackWise's MCP server: 14 tools, a shared plan, and two-way chat. Run `/mcp__stackwise__pair` in Claude Code, write to it from StackWise, and it works in your project and answers in the Ask panel, with the files it changed.
 - Build checklist: every account, key and build step in order, checked off as you go.
 - Copy the reasoning for one part, to paste into a proposal or pull request.
 - Several saved plans, share links (the whole plan lives in the link, no account needed), and plan files to export and import.
@@ -127,10 +139,10 @@ Claude can check stacks, compare options, estimate costs and change the plan you
 ## Not built yet
 
 - Accounts and syncing plans across devices (plans live in your browser; share links and plan files move them)
-- The free-form expert canvas for queues, caches and multi-service architectures
+- Checks for services StackWise doesn't list, and for lines between two parts that no rule reads (they say "not checked")
 - Planning a phone app on its own (a phone app can be added to a web plan today)
 - The eval cases: `evals/prefill-cases.json` is empty on purpose, see [evals/README.md](evals/README.md)
-- Reviewed facts: all 557 are drafts, see [docs/DATA.md](docs/DATA.md)
+- Reviewed facts: every fact is still a draft until someone checks it on `/review` (plan menu, Review facts), see [docs/DATA.md](docs/DATA.md)
 
 ## Where things are
 
@@ -153,7 +165,7 @@ src/project/          a linked project folder: run it, its env files, live check
 src/mcp/              the MCP server, its stdio command, and shared plans in .stackwise/
 scripts/              evals, source checker, option drafter, logo fetcher
 evals/                eval cases (written by a person) and how to run them
-docs/                 DECISIONS.md, LEARNING.md, DATA.md, MCP.md
+docs/                 DECISIONS.md, LEARNING.md, DATA.md, MCP.md, DEMO.md, images/
 ```
 
 Start with [docs/LEARNING.md](docs/LEARNING.md) for how it works, and [docs/DECISIONS.md](docs/DECISIONS.md) for why it's shaped this way.
@@ -165,7 +177,17 @@ StackWise runs on your computer and can run your app, write project files, save 
 - It listens on 127.0.0.1, never on your network.
 - Its API answers only StackWise's own page (checked with the Origin and Sec-Fetch-Site headers) and programs on this computer, like Claude Code. Every POST must be JSON.
 - It never shows a key or env value back to the page, runs your app with a clean environment, and opens databases read-only.
-- Don't put it behind a proxy or on a server: it has no accounts. `STACKWISE_PAIRING=off` turns off pairing and everything that writes files.
+- Don't put it behind a proxy or on a server as it is: it has no accounts. `STACKWISE_PAIRING=off` turns off pairing and everything that writes files. For a public copy, use hosted mode below.
+
+## Run it yourself
+
+The full StackWise runs on your computer (see [Start in two minutes](#start-in-two-minutes)): pairing with a coding agent, AI keys, the Project panel and writing files all need that.
+
+A hosted copy is the planner, the canvas, Learn and the export as a zip, with plans kept in each visitor's browser. Build it with `NEXT_PUBLIC_STACKWISE_HOSTED=1` set (on Vercel, add it as an environment variable before the first deploy). In a hosted copy:
+
+- Every route that reaches into a computer answers 404: the MCP server, pairing, the project folder, writing files, saving keys and fact review. Setting `STACKWISE_HOSTED=1` at run time closes them too, even in a build made without the flag.
+- The page leaves out the Connect screen, the Project panel, folder links and the "write into a folder" part of Export, and answers from StackWise's facts.
+- The built-in AI stays off even if a key is set, because anyone could spend it. `STACKWISE_HOSTED_AI=on` turns it on, with the hourly limit per server instance.
 
 ## License
 

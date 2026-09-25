@@ -44,6 +44,8 @@ describe("source checker", () => {
 
   it("re-dates confirmed facts, updates contradicted ones back to draft, and refuses bad values", () => {
     const options = new Map(catalog.options.map((o) => [o.id, structuredClone(o)]));
+    const reviewedDisk = options.get("host-server")!.facts.persistent_disk;
+    Object.assign(reviewedDisk, { status: "verified", reviewed: "2026-10-01" });
     const changes = applyChecks(
       catalog,
       options,
@@ -60,6 +62,7 @@ describe("source checker", () => {
     const host = options.get("host-server")!;
     expect(host.facts.background_workers.retrieved).toBe("2026-12-01");
     expect(host.facts.persistent_disk).toMatchObject({ value: "included", status: "draft", retrieved: "2026-12-01" });
+    expect(host.facts.persistent_disk.reviewed).toBeUndefined();
     expect(host.facts.first_paid_usd_month.value).toBe(7);
     expect(changes.map((c) => c.kind)).toEqual(["refreshed", "updated", "needs_review", "needs_review"]);
     // The catalog itself is untouched; only the copies change.

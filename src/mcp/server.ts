@@ -3,6 +3,10 @@ import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/proto
 import type { ServerNotification, ServerRequest } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import {
+  todayIso,
+  buildPlan,
+  buildPlanDigest,
+  taskBrief,
   adaptEnvName,
   alternativesFor,
   connectionsOf,
@@ -409,6 +413,32 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
   );
 
   server.registerTool(
+    "get_build_plan",
+    {
+      title: "Get the build plan",
+      description:
+        "The shared plan as ordered build tasks: accounts, each part, each extra service, parts added by hand, and each line drawn between two things, with what each needs first. " +
+        'Leave out task for one line per task; pass a task id like "part:payments" or "link:payments>app" for that task in full (what to build, the person\'s note, variables, what to finish first, what to watch and when it\'s done).',
+      inputSchema: { plan_id: planIdSchema, task: z.string().max(200).optional().describe("A task id from the list.") },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ plan_id, task }) => {
+      const record = sharedPlan(plan_id);
+      if (typeof record === "string") return fail(record);
+      const index = ctx.index();
+      const input = planInput(record.plan);
+      const tasks = buildPlan(index, input, recommend(index, input, record.plan.pinned).selection, record.plan);
+      if (!task) return json({ plan_id: record.id, version: record.version, tasks: buildPlanDigest(tasks) });
+      const brief = taskBrief(tasks, task, record.plan.appName);
+      if (!brief) {
+        const guesses = nearest(task, tasks.map((t) => t.id));
+        return fail(`There's no task "${task}".${guesses.length ? ` Did you mean ${guesses.map((g) => `"${g}"`).join(" or ")}?` : ""} Leave out task for the list.`);
+      }
+      return json({ plan_id: record.id, version: record.version, task: brief });
+    },
+  );
+
+  server.registerTool(
     "update_plan",
     {
       title: "Change the shared plan",
@@ -479,7 +509,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
           description: record.plan.description,
           features: record.plan.features,
           builderId: record.plan.builderId,
-          generatedOn: new Date().toISOString().slice(0, 10),
+          generatedOn: todayIso(),
           planId: record.id,
           plan: record.plan,
           version: record.version,
@@ -500,7 +530,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const target = folder ?? ctx.projectDir;
       if (!target) return fail("Pass folder: the project's absolute path. StackWise writes the files there and returns their names.");
       const env = planEnv(index, rec.selection);
-      const pack = [...files, { name: NEVER_REPLACE, content: envFileText(env, { appName: record.plan.appName, generatedOn: new Date().toISOString().slice(0, 10), custom: record.plan.custom }) }];
+      const pack = [...files, { name: NEVER_REPLACE, content: envFileText(env, { appName: record.plan.appName, generatedOn: todayIso(), custom: record.plan.custom }) }];
       const result = (ctx.writeProject ?? writeProjectFolder)(target, pack, { stackwiseRoot: ctx.stackwiseRoot, envNames: env.map((v) => v.name), replace });
       if ("error" in result) return fail(result.error);
       // The plan file and StackWise's copy now agree: that's the base the first sync merges from.

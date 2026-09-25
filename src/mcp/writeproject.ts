@@ -80,22 +80,23 @@ export function writeProjectFolder(
 ): WriteReport | { error: string } {
   const folder = resolveRealFolder(input, options.stackwiseRoot, options.home);
   if ("error" in folder) return folder;
-  const exists = (name: string) => fs.existsSync(path.join(folder.path, name));
+  // Paths in the person's folder, not StackWise's: the comments keep the bundler from shipping the whole repo with this route.
+  const exists = (name: string) => fs.existsSync(/*turbopackIgnore: true*/ path.join(/*turbopackIgnore: true*/ folder.path, name));
   const planned = planWrites(files, exists, options.replace ?? false);
   // Never write through a symlink: it could point anywhere on the computer.
   const write = planned.write.filter((file) => !throughLink(folder.path, file.name));
   const keep = [...planned.keep, ...planned.write.filter((file) => !write.includes(file)).map((file) => ({ name: file.name, why: "It's a link to somewhere else, so StackWise leaves it alone." }))];
   let envLocal: string | null = null;
   try {
-    envLocal = fs.readFileSync(path.join(folder.path, NEVER_REPLACE), "utf8");
+    envLocal = fs.readFileSync(/*turbopackIgnore: true*/ path.join(/*turbopackIgnore: true*/ folder.path, NEVER_REPLACE), "utf8");
   } catch {
     // No .env.local yet: nothing can be missing from it.
   }
-  const report = { path: folder.path, folderExists: fs.existsSync(folder.path), write: write.map((f) => f.name), keep, missingEnv: missingEnvNames(options.envNames, envLocal), wrote: [] as string[] };
+  const report = { path: folder.path, folderExists: fs.existsSync(/*turbopackIgnore: true*/ folder.path), write: write.map((f) => f.name), keep, missingEnv: missingEnvNames(options.envNames, envLocal), wrote: [] as string[] };
   if (options.dryRun) return report;
   try {
     for (const file of write) {
-      const target = path.join(folder.path, file.name);
+      const target = path.join(/*turbopackIgnore: true*/ folder.path, file.name);
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, file.content, file.name === NEVER_REPLACE ? { mode: 0o600 } : undefined);
       if (file.name === NEVER_REPLACE) fs.chmodSync(target, 0o600);

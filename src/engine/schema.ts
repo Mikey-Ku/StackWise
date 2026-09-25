@@ -34,6 +34,8 @@ export const factSchema = z.object({
   retrieved: isoDate,
   /** "draft" until a human has checked the fact against its source. */
   status: z.enum(["draft", "verified"]),
+  /** The day a person checked it against its source on the review page (/review). Only on verified facts. */
+  reviewed: isoDate.optional(),
 });
 export type Fact = z.infer<typeof factSchema>;
 
