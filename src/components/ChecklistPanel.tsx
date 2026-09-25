@@ -72,8 +72,8 @@ function Group({ model, group }: { model: PlanModel; group: SetupGroup }) {
   );
 }
 
-/** The setup steps and build order from the plan, checked off as you go. `onOpenProject` opens the Project panel. */
-export function ChecklistPanel({ model, today, onToast, onOpenProject }: { model: PlanModel; today: string; onToast: (message: string) => void; onOpenProject: () => void }) {
+/** The setup steps and build order from the plan, checked off as you go. `onOpenProject` opens the Project panel, when there is one. */
+export function ChecklistPanel({ model, today, onToast, onOpenProject }: { model: PlanModel; today: string; onToast: (message: string) => void; onOpenProject?: () => void }) {
   const { checklist, plan, dispatch, index, rec } = model;
   const progress = checklistProgress(checklist, plan.checked, index);
   const env = planEnv(index, rec.selection);
@@ -135,9 +135,11 @@ export function ChecklistPanel({ model, today, onToast, onOpenProject }: { model
             ))}
           </ul>
           <div className="mk-row mk-gap-2 mk-wrap">
-            <button type="button" className="mk-btn mk-btn--primary mk-sm" onClick={onOpenProject}>
-              {plan.folder ? "Fill in the values" : "Link your project to fill them in"}
-            </button>
+            {onOpenProject && (
+              <button type="button" className="mk-btn mk-btn--primary mk-sm" onClick={onOpenProject}>
+                {plan.folder ? "Fill in the values" : "Link your project to fill them in"}
+              </button>
+            )}
             <button
               type="button"
               className="mk-btn mk-btn--secondary mk-sm"

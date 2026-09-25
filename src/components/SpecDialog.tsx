@@ -5,6 +5,7 @@ import { buildProjectPack } from "@/engine";
 import { toSharedPlan } from "./store";
 import type { PlanModel } from "./usePlans";
 import { copyText, downloadZip } from "./ui";
+import { HOSTED } from "@/hosted";
 
 /** What POST /api/local says it would do, or did. */
 interface LocalReport {
@@ -120,8 +121,12 @@ export function SpecDialog({
         </div>
         <p className="mk-muted">
           {files.length} files: the spec, setup steps, tasks and the plan
-          {agents ? `, plus ${agents} Claude Code agents and StackWise's MCP connection` : ""}. Unzip it as your project folder.
-          {builder?.format === "claude-md" && !stackwiseRoot ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
+          {agents ? `, plus ${agents} Claude Code agents${stackwiseRoot ? " and StackWise's MCP connection" : ""}` : ""}. Unzip it as your project folder.
+          {builder?.format === "claude-md" && !stackwiseRoot
+            ? HOSTED
+              ? " To let Claude Code check its work against StackWise while it builds, run StackWise on your computer and export from there (that adds .mcp.json)."
+              : " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it."
+            : ""}
         </p>
         <label className="mk-field ws-spec__pick">
           <span className="mk-label">File</span>
@@ -163,88 +168,90 @@ export function SpecDialog({
           </button>
         </div>
 
-        <section className="mk-stack mk-gap-3 ws-local">
-          <div className="mk-stack mk-gap-1">
-            <span className="mk-eyebrow">Or write it into a folder on this computer</span>
-            <p className="mk-muted">
-              The same files, plus a <code>.env.local</code> with empty values. StackWise never overwrites an existing <code>.env.local</code>.
-            </p>
-          </div>
-          <div className="mk-row mk-gap-2 mk-wrap ws-local__row">
-            <label className="mk-field mk-grow">
-              <span className="mk-label">Folder</span>
-              <input className="mk-input mk-sm" value={where} placeholder={plan.folder ?? beside} onChange={(e) => setWhere(e.target.value)} spellCheck={false} />
-            </label>
-            <button type="button" className="mk-btn mk-btn--ghost mk-sm" disabled={busy} onClick={() => void send(true)}>
-              {busy ? "Looking" : "Preview"}
-            </button>
-            <button type="button" className="mk-btn mk-btn--primary mk-sm" disabled={busy} onClick={() => void send(false)}>
-              Write the files
-            </button>
-          </div>
-          {error && <p className="mk-alert mk-alert--danger">{error}</p>}
-          {report && (
-            <div className="mk-stack mk-gap-2">
-              <p>
-                {report.wrote.length > 0 ? (
-                  <>
-                    <strong>
-                      Wrote {report.wrote.length} file{report.wrote.length === 1 ? "" : "s"}
-                    </strong>{" "}
-                    into <code>{report.path}</code>.
-                  </>
-                ) : (
-                  <>
-                    <strong>
-                      {report.write.length} file{report.write.length === 1 ? "" : "s"} to write
-                    </strong>{" "}
-                    into <code>{report.path}</code>
-                    {report.folderExists ? "" : ", a new folder"}.
-                  </>
-                )}
+        {!HOSTED && (
+          <section className="mk-stack mk-gap-3 ws-local">
+            <div className="mk-stack mk-gap-1">
+              <span className="mk-eyebrow">Or write it into a folder on this computer</span>
+              <p className="mk-muted">
+                The same files, plus a <code>.env.local</code> with empty values. StackWise never overwrites an existing <code>.env.local</code>.
               </p>
-              {report.keep.length > 0 && (
-                <div className="mk-stack mk-gap-1">
-                  <p className="mk-muted">
-                    Left alone, because {report.keep.length === 1 ? "it's" : "they're"} already there: {report.keep.slice(0, 4).map((k) => k.name).join(", ")}
-                    {report.keep.length > 4 ? ` and ${report.keep.length - 4} more` : ""}.
-                  </p>
-                  {report.keep.some((k) => k.name === ".env.local") && (
-                    <p className="mk-hint">
-                      Your <code>.env.local</code> is one of them. Your real values live in it, so StackWise never writes over it.
-                    </p>
-                  )}
-                  {report.keep.some((k) => k.name !== ".env.local") && (
-                    <label className="mk-row mk-gap-2">
-                      <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} />
-                      <span>Replace files that are already there</span>
-                    </label>
-                  )}
-                </div>
-              )}
-              {report.missingEnv.length > 0 && (
-                <p className="mk-muted">
-                  Your <code>.env.local</code> there is missing {report.missingEnv.length} name{report.missingEnv.length === 1 ? "" : "s"}: {report.missingEnv.join(", ")}.{" "}
-                  {report.missingEnv.length === 1 ? "It's" : "They're"} in <code>.env.example</code>.
-                </p>
-              )}
-              {report.wrote.length > 0 && (
-                <div className="mk-row mk-gap-2 mk-wrap">
-                  <code className="mk-code ws-local__cmd">{`${report.command}${builder?.format === "claude-md" ? " && claude" : ""}`}</code>
-                  <button
-                    type="button"
-                    className="mk-btn mk-btn--secondary mk-sm"
-                    onClick={async () =>
-                      onToast((await copyText(`${report.command}${builder?.format === "claude-md" ? " && claude" : ""}`)) ? "Copied. Paste it into a terminal." : "Couldn't copy.")
-                    }
-                  >
-                    Copy the command
-                  </button>
-                </div>
-              )}
             </div>
-          )}
-        </section>
+            <div className="mk-row mk-gap-2 mk-wrap ws-local__row">
+              <label className="mk-field mk-grow">
+                <span className="mk-label">Folder</span>
+                <input className="mk-input mk-sm" value={where} placeholder={plan.folder ?? beside} onChange={(e) => setWhere(e.target.value)} spellCheck={false} />
+              </label>
+              <button type="button" className="mk-btn mk-btn--ghost mk-sm" disabled={busy} onClick={() => void send(true)}>
+                {busy ? "Looking" : "Preview"}
+              </button>
+              <button type="button" className="mk-btn mk-btn--primary mk-sm" disabled={busy} onClick={() => void send(false)}>
+                Write the files
+              </button>
+            </div>
+            {error && <p className="mk-alert mk-alert--danger">{error}</p>}
+            {report && (
+              <div className="mk-stack mk-gap-2">
+                <p>
+                  {report.wrote.length > 0 ? (
+                    <>
+                      <strong>
+                        Wrote {report.wrote.length} file{report.wrote.length === 1 ? "" : "s"}
+                      </strong>{" "}
+                      into <code>{report.path}</code>.
+                    </>
+                  ) : (
+                    <>
+                      <strong>
+                        {report.write.length} file{report.write.length === 1 ? "" : "s"} to write
+                      </strong>{" "}
+                      into <code>{report.path}</code>
+                      {report.folderExists ? "" : ", a new folder"}.
+                    </>
+                  )}
+                </p>
+                {report.keep.length > 0 && (
+                  <div className="mk-stack mk-gap-1">
+                    <p className="mk-muted">
+                      Left alone, because {report.keep.length === 1 ? "it's" : "they're"} already there: {report.keep.slice(0, 4).map((k) => k.name).join(", ")}
+                      {report.keep.length > 4 ? ` and ${report.keep.length - 4} more` : ""}.
+                    </p>
+                    {report.keep.some((k) => k.name === ".env.local") && (
+                      <p className="mk-hint">
+                        Your <code>.env.local</code> is one of them. Your real values live in it, so StackWise never writes over it.
+                      </p>
+                    )}
+                    {report.keep.some((k) => k.name !== ".env.local") && (
+                      <label className="mk-row mk-gap-2">
+                        <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} />
+                        <span>Replace files that are already there</span>
+                      </label>
+                    )}
+                  </div>
+                )}
+                {report.missingEnv.length > 0 && (
+                  <p className="mk-muted">
+                    Your <code>.env.local</code> there is missing {report.missingEnv.length} name{report.missingEnv.length === 1 ? "" : "s"}: {report.missingEnv.join(", ")}.{" "}
+                    {report.missingEnv.length === 1 ? "It's" : "They're"} in <code>.env.example</code>.
+                  </p>
+                )}
+                {report.wrote.length > 0 && (
+                  <div className="mk-row mk-gap-2 mk-wrap">
+                    <code className="mk-code ws-local__cmd">{`${report.command}${builder?.format === "claude-md" ? " && claude" : ""}`}</code>
+                    <button
+                      type="button"
+                      className="mk-btn mk-btn--secondary mk-sm"
+                      onClick={async () =>
+                        onToast((await copyText(`${report.command}${builder?.format === "claude-md" ? " && claude" : ""}`)) ? "Copied. Paste it into a terminal." : "Couldn't copy.")
+                      }
+                    >
+                      Copy the command
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="mk-stack mk-gap-3 ws-local">
           <div className="mk-stack mk-gap-1">

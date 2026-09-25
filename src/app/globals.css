@@ -2356,6 +2356,7 @@ body {
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
+  text-decoration: none;
   cursor: pointer;
 }
 .ws-connpill:hover,
