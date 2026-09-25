@@ -108,7 +108,7 @@ The review page does this one fact at a time: run `pnpm dev`, open `/review` (or
 - **"Matches the source"** sets `status` to `"verified"` and adds `"reviewed": "<today>"` under it. Nothing else in the file changes, so the diff is those two lines.
 - **"Something's off"** leaves the fact a draft (a verified one goes back to draft) and saves your note in `.stackwise/review-flags.json`, which is gitignored. Fix `value` and `note`, update `retrieved`, then confirm it on the page, which clears the flag.
 - `pnpm check:sources --apply` drops `reviewed` from any fact whose value it changes, since the review was of the old value.
-- The page and `/api/review` only answer this computer, and don't exist when `STACKWISE_HOSTED=1`.
+- The page and `/api/review` only answer StackWise's own page on this computer, and `STACKWISE_PAIRING=off` turns the route off.
 
 By hand it's the same: open the `source`, and if it still says what `value` and `note` claim, change `status` to `"verified"` and add `reviewed` with the date.
 

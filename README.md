@@ -177,17 +177,7 @@ StackWise runs on your computer and can run your app, write project files, save 
 - It listens on 127.0.0.1, never on your network.
 - Its API answers only StackWise's own page (checked with the Origin and Sec-Fetch-Site headers) and programs on this computer, like Claude Code. Every POST must be JSON.
 - It never shows a key or env value back to the page, runs your app with a clean environment, and opens databases read-only.
-- Don't put it behind a proxy or on a server as it is: it has no accounts. `STACKWISE_PAIRING=off` turns off pairing and everything that writes files. For a public copy, use hosted mode below.
-
-## Run it yourself
-
-The full StackWise runs on your computer (see [Start in two minutes](#start-in-two-minutes)): pairing with a coding agent, AI keys, the Project panel and writing files all need that.
-
-A hosted copy is the planner, the canvas, Learn and the export as a zip, with plans kept in each visitor's browser. Build it with `NEXT_PUBLIC_STACKWISE_HOSTED=1` set (on Vercel, add it as an environment variable before the first deploy). In a hosted copy:
-
-- Every route that reaches into a computer answers 404: the MCP server, pairing, the project folder, writing files, saving keys and fact review. Setting `STACKWISE_HOSTED=1` at run time closes them too, even in a build made without the flag.
-- The page leaves out the Connect screen, the Project panel, folder links and the "write into a folder" part of Export, and answers from StackWise's facts.
-- The built-in AI stays off even if a key is set, because anyone could spend it. `STACKWISE_HOSTED_AI=on` turns it on, with the hourly limit per server instance.
+- Don't put it behind a proxy or on a server: it has no accounts. `STACKWISE_PAIRING=off` turns off pairing and everything that writes files.
 
 ## License
 
