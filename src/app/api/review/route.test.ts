@@ -4,7 +4,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { GET, POST } from "./route";
 
 /**
- * The review route answers this computer only and doesn't exist on a hosted StackWise. These
+ * The review route answers this computer only, and nothing with pairing off. These
  * tests read the real catalog but never send a decision that could land: every POST here is one
  * the route must refuse, and the last check makes sure data/ is byte for byte what it was. The
  * writing itself is tested on temp copies in src/engine/review-store.test.ts.
@@ -25,7 +25,6 @@ beforeAll(() => {
 });
 
 afterEach(() => {
-  delete process.env.STACKWISE_HOSTED;
   delete process.env.STACKWISE_PAIRING;
 });
 
@@ -76,12 +75,9 @@ describe("POST /api/review", () => {
     expect(form.status).toBe(415);
   });
 
-  it("doesn't exist on a hosted StackWise, or with pairing off", async () => {
-    process.env.STACKWISE_HOSTED = "1";
-    expect((await get()).status).toBe(404);
-    expect((await post({ optionId: "nextjs", fact: "portability", decision: "confirm" })).status).toBe(404);
-    delete process.env.STACKWISE_HOSTED;
+  it("answers nothing with pairing off", async () => {
     process.env.STACKWISE_PAIRING = "off";
+    expect((await get()).status).toBe(404);
     expect((await post({ optionId: "nextjs", fact: "portability", decision: "confirm" })).status).toBe(404);
   });
 });

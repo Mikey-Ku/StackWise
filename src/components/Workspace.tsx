@@ -36,7 +36,6 @@ import { sharedName } from "./planFiles";
 import { Tip } from "./Tip";
 import { migrateLegacyStorage } from "./storage";
 import { useAdvanced } from "./useAdvanced";
-import { HOSTED, SOURCE_URL } from "@/hosted";
 
 /**
  * The workspace is the canvas, full screen, with everything else floating over it:
@@ -48,9 +47,8 @@ import { HOSTED, SOURCE_URL } from "@/hosted";
  * Describing the app and confirming the guesses happen in a sheet over the canvas, which fills in
  * behind it as the answers change.
  *
- * The hosted copy (src/hosted.ts) has no Connect step, no agents and no project folder. Advanced
- * tools (useAdvanced) hide the ways to add extras, lines, your own parts and the Project panel
- * until someone turns them on; whatever a plan already has keeps its own menu either way.
+ * Advanced tools (useAdvanced) hide the ways to add extras, lines, your own parts and the Project
+ * panel until someone turns them on; whatever a plan already has keeps its own menu either way.
  */
 
 type Panel = "overview" | "project" | "options" | "checklist";
@@ -119,8 +117,8 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const [leftWidth, setLeftWidth] = usePanelWidth("left", LEFT_WIDTH);
   const [rightWidth, setRightWidth] = usePanelWidth("right", RIGHT_WIDTH);
   const [advanced, setAdvanced] = useAdvanced();
-  /** The Project panel: only on your own computer, and once advanced tools are on or the plan already has a folder. */
-  const projectPanel = !HOSTED && (advanced || Boolean(plan.folder));
+  /** The Project panel, once advanced tools are on or the plan already has a folder. */
+  const projectPanel = advanced || Boolean(plan.folder);
   const panels = PANELS.filter((p) => p.id !== "project" || projectPanel);
   /** The open left panel, unless it's Project and advanced tools were just turned off. */
   const shown = panels.find((p) => p.id === panel) ?? null;
@@ -149,11 +147,10 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     setConnectSeen(true);
     setConnectAgain(false);
   };
-  // The hosted copy has nothing to connect: no terminal agents, and no keys of the visitor's.
-  const showConnect = !HOSTED && (connectAgain || (!connectSeen && plan.step === "describe"));
-  const sheetStep = showConnect ? 0 : (HOSTED ? 0 : 1) + (plan.step === "describe" ? 0 : 1);
+  const showConnect = connectAgain || (!connectSeen && plan.step === "describe");
+  const sheetStep = showConnect ? 0 : plan.step === "describe" ? 1 : 2;
   const steps = [
-    ...(HOSTED ? [] : [{ label: "Connect", go: () => setConnectAgain(true) }]),
+    { label: "Connect", go: () => setConnectAgain(true) },
     {
       label: "Describe",
       go: () => {
@@ -201,7 +198,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const openedFolder = useRef<string | null>(null);
   useEffect(() => {
     const match = window.location.hash.match(/^#open=(.+)$/);
-    if (!match || HOSTED) return;
+    if (!match) return;
     const folder = decodeURIComponent(match[1]);
     if (openedFolder.current === folder) return;
     openedFolder.current = folder;
@@ -250,7 +247,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     // files there, so a link from someone else only links it after the person says yes.
     const match = window.location.hash.match(/^#plan=([A-Za-z0-9_-]+)(?:&folder=([^&]+))?$/);
     if (!match || importedToken.current === match[1]) return;
-    const folder = match[2] && !HOSTED ? decodeURIComponent(match[2]) : null;
+    const folder = match[2] ? decodeURIComponent(match[2]) : null;
     importedToken.current = match[1];
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
     void decodeSharedPlan(match[1]).then((shared) => {
@@ -367,7 +364,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const tasks = useMemo(() => buildPlan(index, model.input, rec.selection, plan), [index, model.input, rec.selection, plan]);
   /**
    * Who builds a task: the agent listening now, else the default answerer if it's an agent, else the
-   * builder the plan names, else Claude Code. A message waits until that agent listens. None hosted.
+   * builder the plan names, else Claude Code. A message waits until that agent listens.
    */
   const builderAgent = useMemo(() => {
     const agents = recipients.filter((r) => r.group === "agent");
@@ -665,33 +662,19 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         </div>
         {building && <SummaryPill model={model} onOpen={() => setPanel("overview")} />}
         <div className="ws-bar__side ws-bar__side--end">
-          {HOSTED ? (
-            <a
-              className="ws-connpill"
-              href={`${SOURCE_URL}#start-in-two-minutes`}
-              target="_blank"
-              rel="noreferrer"
-              title="This copy keeps your plans in this browser and answers from StackWise's facts. Run StackWise on your computer to pair a coding agent, use your own AI key and write project files."
-            >
-              <span className="ws-status-dot" aria-hidden />
-              <span className="ws-connpill__label">Online demo</span>
-              <span className="ws-connpill__state is-cta">Run it yourself</span>
-            </a>
-          ) : (
-            <button
-              type="button"
-              className={cx("ws-connpill", connectOpen && "is-on", answererLive && "is-live")}
-              aria-expanded={connectOpen}
-              aria-label={`AI: ${answererName}, ${answererState.toLowerCase()}. Change it.`}
-              title={answerer.id === "facts" ? "No AI is connected. StackWise answers from its own facts. Click to connect one." : `${answerer.label}: ${answererState.toLowerCase()}. Click to change.`}
-              onClick={() => setConnectOpen((v) => !v)}
-            >
-              <span className={cx("ws-status-dot", answererLive && "is-on", answerer.state === "stopped" && "is-warn")} aria-hidden />
-              {answerer.id !== "facts" && <AnswererMark id={answerer.id} className="ws-menu-logo" />}
-              <span className="ws-connpill__label">{answererName}</span>
-              <span className={cx("ws-connpill__state", answererLive && "is-live", answerer.id === "facts" && "is-cta")}>{answererState}</span>
-            </button>
-          )}
+          <button
+            type="button"
+            className={cx("ws-connpill", connectOpen && "is-on", answererLive && "is-live")}
+            aria-expanded={connectOpen}
+            aria-label={`AI: ${answererName}, ${answererState.toLowerCase()}. Change it.`}
+            title={answerer.id === "facts" ? "No AI is connected. StackWise answers from its own facts. Click to connect one." : `${answerer.label}: ${answererState.toLowerCase()}. Click to change.`}
+            onClick={() => setConnectOpen((v) => !v)}
+          >
+            <span className={cx("ws-status-dot", answererLive && "is-on", answerer.state === "stopped" && "is-warn")} aria-hidden />
+            {answerer.id !== "facts" && <AnswererMark id={answerer.id} className="ws-menu-logo" />}
+            <span className="ws-connpill__label">{answererName}</span>
+            <span className={cx("ws-connpill__state", answererLive && "is-live", answerer.id === "facts" && "is-cta")}>{answererState}</span>
+          </button>
           <button type="button" className={cx("ws-askbtn", ask.open && "is-on")} onClick={() => setAsk((a) => ({ ...a, open: !a.open, request: null }))} title={`Ask about your plan (${mod}K)`}>
             <Icon name="sparkle" size={15} />
             <span>Ask</span>
@@ -750,7 +733,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               <Icon name="fit" size={16} />
             </button>
           </Tip>
-          <Tip name={advanced ? "Advanced tools: on" : "Advanced tools: off"} text={`A second service in one part, lines between parts, parts you build yourself${HOSTED ? "" : " and the Project panel"}. Click to turn them ${advanced ? "off" : "on"}.`}>
+          <Tip name={advanced ? "Advanced tools: on" : "Advanced tools: off"} text={`A second service in one part, lines between parts, parts you build yourself and the Project panel. Click to turn them ${advanced ? "off" : "on"}.`}>
             <button type="button" className={cx("ws-dock__btn ws-dock__btn--icon", advanced && "is-on")} aria-pressed={advanced} aria-label="Advanced tools" onClick={() => setAdvanced(!advanced)}>
               <Icon name="tool" size={16} />
             </button>
