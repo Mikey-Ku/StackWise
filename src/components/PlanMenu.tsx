@@ -89,6 +89,12 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
           <button type="button" className="ws-menu__item" onClick={() => fileInput.current?.click()}>
             Open plan file
           </button>
+          {/* Reviewing writes to data/, so a hosted StackWise doesn't offer it (the page and route 404 there too). */}
+          {process.env.NEXT_PUBLIC_STACKWISE_HOSTED !== "1" && (
+            <Link href="/review" className="ws-menu__item" onClick={close}>
+              Review facts
+            </Link>
+          )}
           <button
             type="button"
             className="ws-menu__item ws-menu__item--danger"
