@@ -7,8 +7,8 @@ import { createStackWiseServer } from "@/mcp/server";
 
 /**
  * StackWise's MCP server over HTTP, for Claude to pair on the plan open in StackWise:
- *   claude mcp add --transport http --scope user stackwise http://localhost:4310/api/mcp
- * Stateless: each request gets a fresh server, and the shared plan lives in .stackwise/.
+ *   claude mcp add --transport http --scope user stackwise http://127.0.0.1:4310/api/mcp
+ * 127.0.0.1, not localhost: see mcpAddress in src/mcp/pairing.ts. Stateless: each request gets a fresh server, and the shared plan lives in .stackwise/.
  */
 
 export const dynamic = "force-dynamic";

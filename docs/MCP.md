@@ -7,7 +7,7 @@ It works two ways:
 | | Pairing in StackWise | An exported project |
 |---|---|---|
 | Transport | HTTP, served by the running app at `/api/mcp` | A command Claude Code starts: `pnpm --silent --dir <StackWise> mcp` |
-| Connect | `claude mcp add --transport http --scope user stackwise http://localhost:4310/api/mcp` | Nothing to do: the project's `.mcp.json` has it |
+| Connect | `claude mcp add --transport http --scope user stackwise http://127.0.0.1:4310/api/mcp` | Nothing to do: the project's `.mcp.json` has it |
 | Plan it works on | The plan you have open, once sharing is on in Ask, Agent | The project's `stackwise.plan.json` |
 | Needs StackWise running | Yes | No. Changes reach the StackWise tab whenever it's open |
 
@@ -21,7 +21,7 @@ A link is a line between two things in the plan: the app, a part, an extra or a 
 
 1. Run `pnpm dev` and open http://localhost:4310.
 2. Open **Ask** (Cmd+K), pick **Claude Code** in the Answering menu, and copy the command from the card. Sending a message, or "Share this plan with agents" in the same menu, turns sharing on.
-3. Run the command once. `--scope user` makes StackWise available in every Claude Code session.
+3. Run the command once. `--scope user` makes StackWise available in every Claude Code session. The address is `127.0.0.1`, not `localhost`: the server listens only on 127.0.0.1, and on macOS `localhost` means `::1` first, which Claude Code doesn't fall back from. If you added it with `localhost` and it says `ECONNREFUSED`, run `stackwise setup` again.
 4. In Claude Code, ask something like "check my StackWise plan and fix the warnings" or "add web scraping to my plan and compare the options".
 
 Claude's changes appear on the canvas within about two seconds, with a toast and its reason in the Ask panel. Undo reverses them like any other change. Switch plans and Claude follows; turn sharing off and Claude can still check stacks but can't see your plans.

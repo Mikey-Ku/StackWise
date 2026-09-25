@@ -17,6 +17,9 @@ import path from "node:path";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const URL_BASE = "http://localhost:4310";
+// 127.0.0.1, not localhost, for the reason in mcpAddress (src/mcp/pairing.ts). Not imported from
+// there: this runs from any folder, where tsx can't resolve the "@/" paths.
+const MCP_URL = "http://127.0.0.1:4310/api/mcp";
 const STATE = path.join(ROOT, ".stackwise");
 // Carry the log and pid over from when StackWise was called WhyStack.
 if (!fs.existsSync(STATE) && fs.existsSync(path.join(ROOT, ".whystack"))) fs.renameSync(path.join(ROOT, ".whystack"), STATE);
@@ -54,9 +57,11 @@ function openBrowser(url: string): void {
   spawnSync(opener, [url], { stdio: "ignore", shell: process.platform === "win32" });
 }
 
-function claudeHas(name: string): boolean {
+/** The address Claude Code has for an MCP server ("" for one it starts itself), or null if it has none by that name. */
+function claudeServer(name: string): string | null {
   const result = spawnSync("claude", ["mcp", "get", name], { encoding: "utf8", timeout: 30_000 });
-  return result.status === 0;
+  if (result.status !== 0) return null;
+  return /^\s*URL:\s*(\S+)/m.exec(result.stdout)?.[1] ?? "";
 }
 
 async function open(folderArg: string | undefined) {
@@ -80,14 +85,17 @@ function setup() {
     return;
   }
   // Set up before the rename, under StackWise's old name: replace it.
-  if (claudeHas("whystack")) spawnSync("claude", ["mcp", "remove", "--scope", "user", "whystack"], { stdio: "ignore" });
-  if (claudeHas("stackwise")) {
+  if (claudeServer("whystack") !== null) spawnSync("claude", ["mcp", "remove", "--scope", "user", "whystack"], { stdio: "ignore" });
+  const known = claudeServer("stackwise");
+  if (known === MCP_URL) {
     say("Claude Code already knows StackWise. In any project: claude, then /mcp__stackwise__pair");
     return;
   }
-  const added = spawnSync("claude", ["mcp", "add", "--transport", "http", "--scope", "user", "stackwise", `${URL_BASE}/api/mcp`], { stdio: "inherit" });
+  // Added at localhost before mcpAddress, which Claude Code can't reach on macOS: replace it.
+  if (known !== null) spawnSync("claude", ["mcp", "remove", "--scope", "user", "stackwise"], { stdio: "ignore" });
+  const added = spawnSync("claude", ["mcp", "add", "--transport", "http", "--scope", "user", "stackwise", MCP_URL], { stdio: "inherit" });
   if (added.status === 0) say("Done. In any project: claude, then /mcp__stackwise__pair");
-  else say("That didn't work. You can add it yourself: claude mcp add --transport http --scope user stackwise http://localhost:4310/api/mcp");
+  else say(`That didn't work. You can add it yourself: claude mcp add --transport http --scope user stackwise ${MCP_URL}`);
 }
 
 function stop() {
