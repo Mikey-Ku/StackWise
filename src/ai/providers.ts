@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { AI_MODEL, AiError, aiEnabled } from "./config";
-import { setting } from "@/engine/names";
+import { aiAllowed } from "@/hosted";
 
 /**
  * Node-only. The built-in AI can be any model in PROVIDERS that has what it needs in .env.local.
@@ -73,7 +73,7 @@ export interface ProviderStatus {
 type Env = Record<string, string | undefined>;
 
 export function providerStatus(env: Env = process.env): ProviderStatus[] {
-  const off = setting("AI", env) === "off";
+  const off = !aiAllowed(env);
   return PROVIDERS.map((def) => {
     const model = env[def.modelEnv] || def.defaultModel || "";
     const baseUrl = (def.baseUrlEnv && env[def.baseUrlEnv]) || def.baseUrl;

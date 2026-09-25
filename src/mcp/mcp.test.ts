@@ -54,6 +54,15 @@ async function connect(planId: string | null, pair = { waitMs: 400, pollMs: 20, 
   await Promise.all([server.connect(serverSide), client.connect(clientSide)]);
 }
 
+/** Resolves once `check` is true, polling every few milliseconds, so a test waits on state instead of guessing a delay. */
+async function until(check: () => boolean, ms = 5000) {
+  const end = Date.now() + ms;
+  while (!check()) {
+    if (Date.now() > end) throw new Error("Timed out waiting for the registry.");
+    await new Promise((r) => setTimeout(r, 5));
+  }
+}
+
 async function call(name: string, args: Record<string, unknown> = {}) {
   const result = await client.callTool({ name, arguments: args });
   const text = (result.content as { type: string; text: string }[])[0].text;
@@ -81,6 +90,7 @@ describe("MCP server", () => {
         "compare_options",
         "estimate_costs",
         "export_project",
+        "get_build_plan",
         "get_option",
         "get_plan",
         "list_parts",
@@ -155,6 +165,19 @@ describe("MCP server", () => {
     expect(result.data.changes).toEqual(["Updated Upstash Redis: note"]);
     expect(registry.read("p1")!.plan.custom?.["custom-redis"]).toEqual({ name: "Upstash Redis", role: "caches with", url: "https://upstash.com", env: ["REDIS_URL"], note: "Sessions expire after a day." });
     expect((await call("update_plan", { note: "New one", custom: { "custom-vector": { role: "searches with" } } })).text).toContain("needs a name");
+  });
+
+  it("turns the shared plan into ordered build tasks, and one task into a brief", async () => {
+    const paid = { ...basePlan, answers: { ...basePlan.answers, users_pay: "yes" as const }, pinned: { ...basePlan.pinned, payments: "pay-card" } };
+    registry.savePlan("p1", { ...paid, links: { "payments>app": { from: "payments", to: "app", kind: "webhook", what: "paid events" } } }, "browser");
+    await connect("p1");
+    const list = await call("get_build_plan");
+    const lines = list.data.tasks.split("\n");
+    expect(lines[0]).toContain("[setup]");
+    expect(lines.findIndex((l: string) => l.includes("[link:payments>app]"))).toBeGreaterThan(lines.findIndex((l: string) => l.includes("[part:payments]")));
+    const one = await call("get_build_plan", { task: "link:payments>app" });
+    expect(one.data.task).toContain("Have pay-card send webhooks (paid events) to the app");
+    expect((await call("get_build_plan", { task: "part:paymentz" })).text).toContain('Did you mean "part:payments"');
   });
 
   it("answers a mistake with what to do instead", async () => {
@@ -376,11 +399,14 @@ describe("chatting with a coding agent", () => {
 
   it("lets a newer wait take over from an older one, so a message never goes to a call nobody is reading", async () => {
     registry.savePlan("p1", basePlan, "browser");
-    await connect("p1", { waitMs: 400, pollMs: 10, idleMs: 60_000 });
+    // Long enough that neither call times out on a slow machine; each step waits for the registry, not the clock.
+    await connect("p1", { waitMs: 5000, pollMs: 10, idleMs: 60_000 });
+    const waitIdNow = () => registry.read("p1")!.agents["claude-code"]?.waitId;
     const older = call("wait_for_message", { agent: "claude-code" });
-    await new Promise((r) => setTimeout(r, 40));
+    await until(() => Boolean(waitIdNow()));
+    const first = waitIdNow();
     const newer = call("wait_for_message", { agent: "claude-code", wait_seconds: 5 });
-    await new Promise((r) => setTimeout(r, 40));
+    await until(() => Boolean(waitIdNow()) && waitIdNow() !== first);
     registry.postMessage("p1", { agent: "claude-code", text: "Hello" });
     const olderResult = (await older).data;
     expect(olderResult).toMatchObject({ messages: [], superseded: true });

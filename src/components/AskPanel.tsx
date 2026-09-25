@@ -33,6 +33,8 @@ export interface AskRequest {
   slot: SlotId;
   question?: string;
   nonce: number;
+  /** Who it goes to, when a menu names someone ("Build this with Claude Code"); otherwise the picked answerer. */
+  to?: RecipientId;
 }
 
 const SUGGESTIONS = ["How do I set this up?", "Which keys does it need?", "What could go wrong?", "What else would work?", "Write a note for me"];
@@ -342,7 +344,9 @@ export function AskPanel({
   const handled = useRef<number | null>(null);
 
   const recipients = recipientsFor(ai, pairing);
-  const recipientId = chosen ?? pickDefault(recipients, savedDefault);
+  // A menu that names someone ("Build this with Codex") shows that conversation until the person picks another.
+  const requested = request?.to && recipients.some((r) => r.id === request.to) ? request.to : undefined;
+  const recipientId = chosen ?? requested ?? pickDefault(recipients, savedDefault);
   const recipient = recipients.find((r) => r.id === recipientId) ?? recipients.find((r) => r.id === "facts")!;
   const agent = recipient.group === "agent" ? recipient.id.slice("agent:".length) : null;
 
@@ -411,14 +415,15 @@ export function AskPanel({
     }
   };
 
-  const ask = async (text: string) => {
+  const ask = async (text: string, to?: RecipientId) => {
     const q = text.trim();
     if (!q || busy) return;
     setQuestion("");
 
-    if (agent) {
+    const toAgent = to?.startsWith("agent:") ? to.slice("agent:".length) : agent;
+    if (toAgent) {
       setBusy(true);
-      const error = await pairing.send(agent, q, slot);
+      const error = await pairing.send(toAgent, q, slot);
       setBusy(false);
       if (error) {
         setQuestion(q);
@@ -469,7 +474,7 @@ export function AskPanel({
   useEffect(() => {
     if (!request?.question || request.slot !== slot || handled.current === request.nonce) return;
     handled.current = request.nonce;
-    void ask(request.question);
+    void ask(request.question, request.to);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per request, not per render of ask
   }, [request, slot]);
 

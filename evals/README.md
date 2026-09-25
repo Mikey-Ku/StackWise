@@ -11,6 +11,13 @@ Both read the same cases from `prefill-cases.json`.
 
 Michael writes every case. Claude does not generate eval questions or answers for this project. The harness, the grader and its tests exist; the cases file is empty on purpose.
 
+## Writing and running them
+
+1. `pnpm eval:questions` lists every question id with the question it asks. No AI, no network.
+2. Add cases to `prefill-cases.json` in the format below.
+3. `pnpm eval:prefill --keywords-only` checks the file (an unknown question id or a bad value stops it and says where) and grades the keyword baseline, still without AI. Run it after every few cases.
+4. With `ANTHROPIC_API_KEY` in `.env.local`: `pnpm eval:prefill` grades the AI pre-fill next to the baseline, and `pnpm eval:plain-llm` compares a plain LLM's stacks with StackWise's. Each case is one Claude call per eval.
+
 ## Case format
 
 ```json

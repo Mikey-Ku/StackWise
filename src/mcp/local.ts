@@ -1,4 +1,5 @@
 import { setting } from "@/engine/names";
+import { isHosted } from "@/hosted";
 
 /**
  * StackWise's API writes files, starts processes, saves keys and spends AI credit, so it only
@@ -11,6 +12,9 @@ import { setting } from "@/engine/names";
  *   "same-origin" in Sec-Fetch-Site when the browser sends it. Another app on localhost:5173 is a
  *   different origin. A POST must be JSON, so a page elsewhere can't send a "simple" request that
  *   skips the browser's preflight. Programs like Claude Code send no Origin and are let through.
+ *
+ * The hosted copy (src/hosted.ts) has no computer to protect: `localOnly` routes answer 404 there,
+ * and `sameOrigin` checks the page came from the site's own name instead of a loopback one.
  */
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
@@ -30,14 +34,20 @@ function address(value: string): { name: string; port: string } | null {
 
 const refuse = (status: number, error: string) => Response.json({ error }, { status });
 
-/** Null when the request comes from StackWise's own page or a program on this computer; otherwise the refusal. */
-export function sameOrigin(request: Request): Response | null {
+/**
+ * Null when the request comes from StackWise's own page or a program on this computer; otherwise
+ * the refusal. `hosted` is for the hosted copy, where the Host is the site's public name and any
+ * program may call, but a browser page from another site still may not.
+ */
+export function sameOrigin(request: Request, hosted = isHosted()): Response | null {
   const host = address(`http://${request.headers.get("host") ?? ""}`);
-  if (!host || !LOCAL_HOSTS.has(host.name)) return refuse(403, "StackWise only answers requests from this computer.");
+  if (!host || (!hosted && !LOCAL_HOSTS.has(host.name))) return refuse(403, "StackWise only answers requests from this computer.");
   const origin = request.headers.get("origin");
   if (origin !== null) {
     const from = address(origin);
-    if (!from || !LOCAL_HOSTS.has(from.name) || from.port !== host.port) return refuse(403, "StackWise only answers its own page.");
+    // Hosted, the page is https on the default port while Host carries no port, so only the names are compared.
+    const own = hosted ? from?.name === host.name : Boolean(from && LOCAL_HOSTS.has(from.name) && from.port === host.port);
+    if (!own) return refuse(403, "StackWise only answers its own page.");
   }
   const site = request.headers.get("sec-fetch-site");
   if (site && site !== "same-origin" && site !== "none") return refuse(403, "StackWise only answers its own page.");
@@ -48,7 +58,8 @@ export function sameOrigin(request: Request): Response | null {
 }
 
 /** The guard for pairing, the MCP server and the routes that change things on disk. */
-export function localOnly(request: Request): Response | null {
+export function localOnly(request: Request, hosted = isHosted()): Response | null {
+  if (hosted) return refuse(404, "This only works when StackWise runs on your own computer.");
   if (setting("PAIRING") === "off") {
     return refuse(404, "Agent pairing is off on this server (STACKWISE_PAIRING=off).");
   }

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { setting } from "@/engine/names";
+import { aiAllowed } from "@/hosted";
 
 /**
  * Node-only. AI is optional everywhere in StackWise: with no key configured, the planner uses
@@ -13,7 +14,7 @@ export const AI_EFFORT = (setting("EFFORT") as "low" | "medium" | "high" | undef
 export const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 
 export function aiEnabled(): boolean {
-  if (setting("AI") === "off") return false;
+  if (!aiAllowed()) return false;
   return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 }
 
