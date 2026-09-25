@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { answerFromFacts, evaluatePlan, inSentence, planInput, questionFocus, talkBrief, worstLevel, type SlotId } from "@/engine";
-import { agentName, pairInstructions } from "@/mcp/pairing";
+import { agentName, mcpAddress, pairInstructions } from "@/mcp/pairing";
 import { AnswererMark } from "./AnswererMark";
 import { answererLogo, providerLabel, recipientsFor, pickDefault, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
@@ -253,7 +253,7 @@ const ADD_COMMANDS: Record<string, (url: string) => string> = {
 /** How to get an agent listening, shown when the picked agent isn't. */
 export function ConnectCard({ recipient, pairing, onToast }: { recipient: Recipient; pairing: Pairing; onToast: (message: string) => void }) {
   const id = recipient.id.slice("agent:".length);
-  const url = `${window.location.origin}/api/mcp`;
+  const url = mcpAddress(window.location.origin);
   const claude = id === "claude-code";
   const command = ADD_COMMANDS[id]?.(url);
   const add = command ?? url;

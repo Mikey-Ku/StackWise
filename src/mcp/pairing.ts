@@ -119,6 +119,18 @@ export function presence(agent: AgentState, now: number): Presence {
 }
 
 /**
+ * The address an agent adds to reach StackWise's MCP server. Always 127.0.0.1, even when the page
+ * is open at localhost: the server listens only on 127.0.0.1 (`-H 127.0.0.1`), macOS resolves
+ * localhost to ::1 first, and Claude Code doesn't fall back to IPv4, so it's refused. The page
+ * itself stays on localhost, because plans are stored per address in the browser.
+ */
+export function mcpAddress(origin = "http://localhost:4310"): string {
+  const url = new URL("/api/mcp", origin);
+  url.hostname = "127.0.0.1";
+  return url.href;
+}
+
+/**
  * What the pair prompt tells an agent. It's also shown in StackWise to copy, for agents that
  * don't support MCP prompts, and written into exported projects' CLAUDE.md and AGENTS.md.
  */

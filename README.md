@@ -70,7 +70,7 @@ pnpm mcp              # StackWise's MCP server over stdio (exported projects sta
 StackWise is also an MCP server, so your coding agent uses its rules instead of guessing. Open **Ask** (Cmd+K), pick your agent in the Answering menu, then add StackWise to Claude Code once (any agent that speaks MCP can connect to the same address) and run `/mcp__stackwise__pair` so you can write to it from StackWise:
 
 ```bash
-claude mcp add --transport http --scope user stackwise http://localhost:4310/api/mcp
+claude mcp add --transport http --scope user stackwise http://127.0.0.1:4310/api/mcp
 ```
 
 Claude can check stacks, compare options, estimate costs and change the plan you share; its changes appear on the canvas with its reasons, and Undo reverses them. **Export project** gives Claude Code a ready project: tasks, an agent per part, `/next-step`, and an `.mcp.json` that starts StackWise's server. See [docs/MCP.md](docs/MCP.md).
