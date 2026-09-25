@@ -27,9 +27,12 @@ export function AddPart({
   onClose,
   onAdded,
   onAddOwn,
+  advanced,
 }: {
   model: PlanModel;
   focus: SlotId | null;
+  /** Advanced tools on: "Build it yourself" in each part, and adding a part StackWise doesn't list. Without them, that last one shows only when a search finds nothing. */
+  advanced: boolean;
   onClose: () => void;
   onAdded: (slot: SlotId, name: string, error: string | null) => void;
   /** For something StackWise doesn't list, with what was typed as its name. */
@@ -92,7 +95,7 @@ export function AddPart({
               if (e.key === "ArrowDown") move(1);
               else if (e.key === "ArrowUp") move(-1);
               else if (e.key === "Enter" && flat.length) pick(flat[current]);
-              else if (e.key === "Enter") onAddOwn(query.trim());
+              else if (e.key === "Enter" && query.trim()) onAddOwn(query.trim());
               else if (e.key === "Escape") onClose();
               else return;
               e.preventDefault();
@@ -135,7 +138,7 @@ export function AddPart({
                       </li>
                     );
                   })}
-                  {slot !== "framework" && !q && (
+                  {advanced && slot !== "framework" && !q && (
                     <li role="presentation">
                       <button
                         type="button"
@@ -161,17 +164,19 @@ export function AddPart({
               </li>
             );
           })}
-          <li role="presentation">
-            <button type="button" className="ws-add__row ws-add__own" onClick={() => onAddOwn(query.trim())}>
-              <span className="ws-add__ownmark" aria-hidden>
-                <Icon name="plus" size={14} />
-              </span>
-              <span className="ws-add__text">
-                <strong>{query.trim() ? `Add \u201c${query.trim()}\u201d (not in StackWise)` : "Add a part that isn't listed"}</strong>
-                <span>A library, an internal API, any service. It goes on the canvas and into the spec, not checked.</span>
-              </span>
-            </button>
-          </li>
+          {(advanced || flat.length === 0) && (
+            <li role="presentation">
+              <button type="button" className="ws-add__row ws-add__own" onClick={() => onAddOwn(query.trim())}>
+                <span className="ws-add__ownmark" aria-hidden>
+                  <Icon name="plus" size={14} />
+                </span>
+                <span className="ws-add__text">
+                  <strong>{query.trim() ? `Add \u201c${query.trim()}\u201d (not in StackWise)` : "Add a part that isn't listed"}</strong>
+                  <span>A library, an internal API, any service. It goes on the canvas and into the spec, not checked.</span>
+                </span>
+              </button>
+            </li>
+          )}
         </ul>
         <p className="ws-add__foot">
           <span>

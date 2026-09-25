@@ -38,7 +38,10 @@ export function Inspector({
   onToast,
   onCompare,
   onLearn,
+  advanced,
 }: {
+  /** Advanced tools on: offers "Build it yourself". */
+  advanced: boolean;
   model: PlanModel;
   slot: SlotId | null;
   today: string;
@@ -108,7 +111,7 @@ export function Inspector({
           <button type="button" className="mk-btn mk-btn--primary" onClick={() => onAsk(slot)}>
             <Icon name="sparkle" size={14} /> Ask about {option && !own ? option.name : "this"}
           </button>
-          {slot !== "framework" && !own && (
+          {advanced && slot !== "framework" && !own && (
             <button
               type="button"
               className="mk-btn mk-btn--ghost"

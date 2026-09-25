@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   const index = indexCatalog(loadCatalog());
   const input = planInput(plan);
   const { selection } = recommend(index, input, plan.pinned);
-  const env = planEnv(index, selection);
+  const env = planEnv(index, selection, plan.extras ?? {});
   const files: SpecFile[] = [
     ...buildProjectPack(
       index,
