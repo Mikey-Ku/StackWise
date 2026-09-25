@@ -21,7 +21,7 @@ export const runtime = "nodejs";
 
 const notFound = () => Response.json({ error: "Not found." }, { status: 404 });
 const dataDir = () => path.join(process.cwd(), "data");
-const stateDir = () => path.join(process.cwd(), STATE_DIR);
+const stateDir = () => path.join(/* turbopackIgnore: true */ process.cwd(), STATE_DIR);
 
 /** The reviewer's date, in this computer's time zone. */
 function localToday(now = new Date()): string {
