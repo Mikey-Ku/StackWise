@@ -1,6 +1,6 @@
 "use client";
 
-import { criterionLabel, inSentence, money, optionStats, SIZE_IDS, SIZE_PHRASE, type CheckResult, type CloseCall, type CostSummary, type Need, type PriorityId, type SizeId, type SlotId } from "@/engine";
+import { criterionLabel, factsBehindPlan, inSentence, money, optionStats, reviewedCount, SIZE_IDS, SIZE_PHRASE, type CheckResult, type CloseCall, type CostSummary, type Need, type PriorityId, type SizeId, type SlotId } from "@/engine";
 import { descriptionReader, readDefaultAnswerer } from "./answerers";
 import { TEMPLATES, type Template } from "./templates";
 import type { PlanModel } from "./usePlans";
@@ -278,12 +278,18 @@ export function Overview({ model, onSelect, onOpenChecklist, onExplain }: { mode
   const serious = problems.filter((r) => r.level === "blocked" || r.level === "missing");
   const sizeLabel = (id: string) => catalog.planning.sizes.find((s) => s.id === id)?.label ?? id;
   const optional = catalog.needs.filter((n) => followups.includes(n.id));
+  const behind = factsBehindPlan(index, rec.selection, input.extras);
 
   return (
     <div className="mk-stack mk-gap-6">
       <div className={cx("mk-alert", serious.length ? "mk-alert--danger" : problems.length ? "mk-alert--warn" : "mk-alert--ok")}>
         <div className="mk-stack mk-gap-1">
           <strong>{problems.length === 0 ? "No problems found." : `${problemPhrase(problems)} to look at before you build.`}</strong>
+          {behind.length > 0 && (
+            <span className="mk-hint" title="The facts the checks and the ranking read for this plan's services. Reviewed means a person checked one against its source.">
+              {reviewedCount(index, behind)} of {behind.length} facts behind this plan reviewed.
+            </span>
+          )}
         </div>
       </div>
 
