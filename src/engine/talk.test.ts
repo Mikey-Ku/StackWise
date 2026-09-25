@@ -86,6 +86,14 @@ describe("answerFromFacts", () => {
     expect(ask("What could go wrong?").reply).toContain("- Your data would disappear.");
   });
 
+  it("names the keys one setup step hands out together, and says which the browser can read", () => {
+    const variable = (name: string, browser: boolean) => ({ name, from: "db-file", where_to_get_it: "Copy the keys from the dashboard.", docs: "https://example.com", browser_can_read_it: browser });
+    const shared = { ...brief, connection: { ...brief.connection!, variables: [variable("PUBLIC_KEY", true), variable("SECRET_KEY", false)] } };
+    const reply = answerFromFacts(shared, "Which keys do I need?").reply;
+    expect(reply).toContain("- PUBLIC_KEY, SECRET_KEY: Copy the keys from the dashboard. The browser can read PUBLIC_KEY, so it must never be a secret.");
+    expect(reply.match(/Copy the keys/g)).toHaveLength(1);
+  });
+
   it("suggests a swap only to an option the rules pass and that ranks higher", () => {
     const answer = ask("What else could I use instead?");
     expect(answer.reply).toMatch(/- db-hosted: works\. .+\. Ranks higher for your priority\./);
