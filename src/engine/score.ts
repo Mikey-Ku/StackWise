@@ -116,6 +116,21 @@ export function criterionScores(index: CatalogIndex, option: Option, slot: SlotI
   return { cost, price, setup, portability };
 }
 
+/**
+ * The facts criterionScores reads for an option in this part, so the fact review knows what the
+ * ranking rests on. Keep it in step with criterionScores: a test watches which facts it reads.
+ */
+export function scoreFacts(slot: SlotId): string[] {
+  if (slot === "domain") return ["com_first_year_usd", "com_renewal_usd", "portability"];
+  return [
+    "free_plan_covers",
+    ...(slot === "hosting" ? ["free_plan_commercial_use"] : []),
+    "first_paid_usd_month",
+    ...(slot === "payments" ? ["card_fee_percent", "card_fee_fixed_usd"] : []),
+    "portability",
+  ];
+}
+
 function weighted(scores: Record<Criterion, number>, weights: Weights): number {
   return CRITERIA.reduce((sum, c) => sum + scores[c] * weights[c], 0);
 }
