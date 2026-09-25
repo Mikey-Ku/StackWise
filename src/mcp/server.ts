@@ -3,6 +3,9 @@ import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/proto
 import type { ServerNotification, ServerRequest } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import {
+  buildPlan,
+  buildPlanDigest,
+  taskBrief,
   adaptEnvName,
   alternativesFor,
   connectionsOf,
@@ -405,6 +408,32 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const index = ctx.index();
       if (!detail || detail === "digest") return json({ plan_id: record.id, version: record.version, last_changed_by: record.updatedBy, digest: planDigest(index, record.plan) });
       return json({ plan_id: record.id, version: record.version, last_changed_by: record.updatedBy, ...planReport(index, record.plan, undefined, detail) });
+    },
+  );
+
+  server.registerTool(
+    "get_build_plan",
+    {
+      title: "Get the build plan",
+      description:
+        "The shared plan as ordered build tasks: accounts, each part, each extra service, parts added by hand, and each line drawn between two things, with what each needs first. " +
+        'Leave out task for one line per task; pass a task id like "part:payments" or "link:payments>app" for that task in full (what to build, the person\'s note, variables, what to finish first, what to watch and when it\'s done).',
+      inputSchema: { plan_id: planIdSchema, task: z.string().max(200).optional().describe("A task id from the list.") },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ plan_id, task }) => {
+      const record = sharedPlan(plan_id);
+      if (typeof record === "string") return fail(record);
+      const index = ctx.index();
+      const input = planInput(record.plan);
+      const tasks = buildPlan(index, input, recommend(index, input, record.plan.pinned).selection, record.plan);
+      if (!task) return json({ plan_id: record.id, version: record.version, tasks: buildPlanDigest(tasks) });
+      const brief = taskBrief(tasks, task, record.plan.appName);
+      if (!brief) {
+        const guesses = nearest(task, tasks.map((t) => t.id));
+        return fail(`There's no task "${task}".${guesses.length ? ` Did you mean ${guesses.map((g) => `"${g}"`).join(" or ")}?` : ""} Leave out task for the list.`);
+      }
+      return json({ plan_id: record.id, version: record.version, task: brief });
     },
   );
 

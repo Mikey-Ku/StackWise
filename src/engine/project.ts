@@ -4,6 +4,7 @@ import type { PlanInput, Selection, SlotId } from "./schema";
 import type { SharedPlan } from "./share";
 import { buildSpecPack, type SpecDetails, type SpecFile } from "./spec";
 import { buildTask, isOwn } from "./own";
+import { buildPlan, buildPlanMarkdown } from "./buildplan";
 
 /**
  * The project pack: the spec pack plus what an AI builder needs to work through it on its own.
@@ -82,29 +83,10 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
     ];
   };
 
+  // TASKS.md is the canvas as work: parts, extra services, parts added by hand and the lines between them (buildplan.ts).
   const tasks: SpecFile = {
     name: "TASKS.md",
-    content: [
-      `# Tasks for ${name}`,
-      "",
-      `Planned with StackWise on ${details.generatedOn}. Work top to bottom. In Claude Code, \`/next-step\` does the next unchecked task with the agent it names. Check a box only when everything under "Done when" is true.`,
-      "",
-      "## 0. Before you build",
-      "",
-      "- [ ] Create the accounts and keys in SETUP.md. Agent: `setup-guide`",
-      ...(problems.length ? ["- [ ] Fix or accept each problem under \"Problems to watch\" in SPEC.md. Agent: `stack-guard`"] : []),
-      "",
-      ...parts.flatMap(({ slot, option, def, agent }, i) => [
-        `## ${i + 1}. ${def.label}: ${option.name}`,
-        "",
-        `- [ ] ${buildTask(def, option)} Agent: \`${agent}\``,
-        "",
-        "Done when:",
-        "",
-        ...doneWhen(slot).map((line) => `- ${line}`),
-        "",
-      ]),
-    ].join("\n"),
+    content: buildPlanMarkdown(buildPlan(index, input, selection, details.plan), { appName: name, generatedOn: details.generatedOn, problems: problems.length > 0 }),
   };
 
   if (builder?.format !== "claude-md") return [...spec, tasks, planFile];
