@@ -15,6 +15,7 @@
     "check:options": "tsx scripts/check-options.ts",
     "eval:prefill": "tsx --env-file-if-exists=.env.local scripts/eval-prefill.ts",
     "eval:plain-llm": "tsx --env-file-if-exists=.env.local scripts/eval-plain-llm.ts",
+    "eval:questions": "tsx scripts/eval-questions.ts",
     "check:sources": "tsx --env-file-if-exists=.env.local scripts/check-sources.ts",
     "draft:option": "tsx --env-file-if-exists=.env.local scripts/draft-option.ts",
     "build:logos": "tsx scripts/build-logos.ts",

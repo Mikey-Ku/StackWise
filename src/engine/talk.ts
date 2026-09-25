@@ -251,7 +251,11 @@ export function answerFromFacts(brief: TalkBrief, question: string): FactsAnswer
       return {
         reply: [
           `${brief.connection!.carries_every_variable ? `${name} needs every variable in the plan` : `Your code reads ${vars.length === 1 ? "one variable" : `${vars.length} variables`} to reach ${name}`}:`,
-          ...vars.map((v) => `- ${v.name}: ${v.where_to_get_it}${v.browser_can_read_it ? " The browser can read this one, so it must never be a secret." : ""}`),
+          // Variables one setup step hands out share a line, so the step isn't repeated for each.
+          ...[...Map.groupBy(vars, (v) => v.where_to_get_it)].map(([step, group]) => {
+            const open = group.filter((v) => v.browser_can_read_it).map((v) => v.name);
+            return `- ${group.map((v) => v.name).join(", ")}: ${step}${open.length ? ` The browser can read ${open.join(" and ")}, so ${open.length === 1 ? "it" : "they"} must never be a secret.` : ""}`;
+          }),
           "Put the values in .env.local, never in the code.",
         ].join("\n"),
       };
