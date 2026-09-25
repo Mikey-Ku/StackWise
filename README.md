@@ -6,7 +6,10 @@ You describe your app in a paragraph. StackWise works out what it needs (logins,
 
 The AI never decides whether two services work together. Rules do, from facts with a source and a date. AI reads your description, explains the plan and drafts new facts for a person to review.
 
-![A finished plan on the canvas: the app in the middle and a card for each service, joined by checked lines](docs/images/stackwise-plan.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/stackwise-plan-dark.png">
+  <img alt="A finished plan on the canvas: the app in the middle and a card for each service, joined by checked lines" src="docs/images/stackwise-plan.png">
+</picture>
 
 ![Describing an app, confirming the guesses, the plan, a part's details, the right-click menu and the export](docs/images/stackwise-flow.gif)
 
