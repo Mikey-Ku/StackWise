@@ -54,6 +54,15 @@ async function connect(planId: string | null, pair = { waitMs: 400, pollMs: 20, 
   await Promise.all([server.connect(serverSide), client.connect(clientSide)]);
 }
 
+/** Resolves once `check` is true, polling every few milliseconds, so a test waits on state instead of guessing a delay. */
+async function until(check: () => boolean, ms = 5000) {
+  const end = Date.now() + ms;
+  while (!check()) {
+    if (Date.now() > end) throw new Error("Timed out waiting for the registry.");
+    await new Promise((r) => setTimeout(r, 5));
+  }
+}
+
 async function call(name: string, args: Record<string, unknown> = {}) {
   const result = await client.callTool({ name, arguments: args });
   const text = (result.content as { type: string; text: string }[])[0].text;
@@ -390,11 +399,14 @@ describe("chatting with a coding agent", () => {
 
   it("lets a newer wait take over from an older one, so a message never goes to a call nobody is reading", async () => {
     registry.savePlan("p1", basePlan, "browser");
-    await connect("p1", { waitMs: 400, pollMs: 10, idleMs: 60_000 });
+    // Long enough that neither call times out on a slow machine; each step waits for the registry, not the clock.
+    await connect("p1", { waitMs: 5000, pollMs: 10, idleMs: 60_000 });
+    const waitIdNow = () => registry.read("p1")!.agents["claude-code"]?.waitId;
     const older = call("wait_for_message", { agent: "claude-code" });
-    await new Promise((r) => setTimeout(r, 40));
+    await until(() => Boolean(waitIdNow()));
+    const first = waitIdNow();
     const newer = call("wait_for_message", { agent: "claude-code", wait_seconds: 5 });
-    await new Promise((r) => setTimeout(r, 40));
+    await until(() => Boolean(waitIdNow()) && waitIdNow() !== first);
     registry.postMessage("p1", { agent: "claude-code", text: "Hello" });
     const olderResult = (await older).data;
     expect(olderResult).toMatchObject({ messages: [], superseded: true });
