@@ -1,5 +1,5 @@
 import { setting } from "@/engine/names";
-import { HOSTED } from "@/hosted";
+import { isHosted } from "@/hosted";
 
 /**
  * StackWise's API writes files, starts processes, saves keys and spends AI credit, so it only
@@ -39,7 +39,7 @@ const refuse = (status: number, error: string) => Response.json({ error }, { sta
  * the refusal. `hosted` is for the hosted copy, where the Host is the site's public name and any
  * program may call, but a browser page from another site still may not.
  */
-export function sameOrigin(request: Request, hosted = HOSTED): Response | null {
+export function sameOrigin(request: Request, hosted = isHosted()): Response | null {
   const host = address(`http://${request.headers.get("host") ?? ""}`);
   if (!host || (!hosted && !LOCAL_HOSTS.has(host.name))) return refuse(403, "StackWise only answers requests from this computer.");
   const origin = request.headers.get("origin");
@@ -58,7 +58,7 @@ export function sameOrigin(request: Request, hosted = HOSTED): Response | null {
 }
 
 /** The guard for pairing, the MCP server and the routes that change things on disk. */
-export function localOnly(request: Request, hosted = HOSTED): Response | null {
+export function localOnly(request: Request, hosted = isHosted()): Response | null {
   if (hosted) return refuse(404, "This only works when StackWise runs on your own computer.");
   if (setting("PAIRING") === "off") {
     return refuse(404, "Agent pairing is off on this server (STACKWISE_PAIRING=off).");

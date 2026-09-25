@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { chooseProvider, providerStatus } from "@/ai/providers";
 import { aiLimitPerHour } from "@/ai/rate-limit";
-import { HOSTED } from "@/hosted";
+import { isHosted } from "@/hosted";
 import { sameOrigin } from "@/mcp/local";
 
 export const dynamic = "force-dynamic";
@@ -12,5 +12,5 @@ export function GET(request: Request) {
   if (blocked) return blocked;
   const providers = providerStatus();
   const first = chooseProvider(undefined);
-  return NextResponse.json({ ai: Boolean(first), model: first?.model ?? "", providers, limitPerHour: aiLimitPerHour(), ...(HOSTED ? { hosted: true } : { root: process.cwd() }) });
+  return NextResponse.json({ ai: Boolean(first), model: first?.model ?? "", providers, limitPerHour: aiLimitPerHour(), ...(isHosted() ? { hosted: true } : { root: process.cwd() }) });
 }

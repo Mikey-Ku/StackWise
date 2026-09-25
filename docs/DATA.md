@@ -102,9 +102,15 @@ Neither one marks a fact `verified`. Only a person does.
 
 ## Reviewing a fact
 
-1. Open the `source` and confirm the page still says what `value` and `note` claim.
-2. If it does, change `status` to `"verified"` and update `retrieved`.
-3. If it doesn't, fix `value` and `note`, update `retrieved`, and leave `status` as `"draft"` for a second look.
+The review page does this one fact at a time: run `pnpm dev`, open `/review` (or "Review facts" in the plan menu), and work down the list with J and K, Y for "Matches the source" and N for "Something's off".
+
+- **What comes first.** The facts the default plans rest on: StackWise plans every template and the Pitchwell example, and for each option they end up with it lists the facts the rules and the ranking read (the part's `required_facts` and the score's criteria). The facts used by the most defaults are at the top. "All" adds every other fact of a fully researched option. The Overview says how many facts behind the open plan are reviewed.
+- **"Matches the source"** sets `status` to `"verified"` and adds `"reviewed": "<today>"` under it. Nothing else in the file changes, so the diff is those two lines.
+- **"Something's off"** leaves the fact a draft (a verified one goes back to draft) and saves your note in `.stackwise/review-flags.json`, which is gitignored. Fix `value` and `note`, update `retrieved`, then confirm it on the page, which clears the flag.
+- `pnpm check:sources --apply` drops `reviewed` from any fact whose value it changes, since the review was of the old value.
+- The page and `/api/review` only answer this computer, and don't exist when `STACKWISE_HOSTED=1`.
+
+By hand it's the same: open the `source`, and if it still says what `value` and `note` claim, change `status` to `"verified"` and add `reviewed` with the date.
 
 ## Review these first
 
