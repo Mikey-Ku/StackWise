@@ -668,7 +668,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           {HOSTED ? (
             <a
               className="ws-connpill"
-              href={`${SOURCE_URL}#run-it-on-your-computer`}
+              href={`${SOURCE_URL}#start-in-two-minutes`}
               target="_blank"
               rel="noreferrer"
               title="This copy keeps your plans in this browser and answers from StackWise's facts. Run StackWise on your computer to pair a coding agent, use your own AI key and write project files."

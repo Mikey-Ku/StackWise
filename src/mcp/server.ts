@@ -3,6 +3,7 @@ import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/proto
 import type { ServerNotification, ServerRequest } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import {
+  todayIso,
   buildPlan,
   buildPlanDigest,
   taskBrief,
@@ -508,7 +509,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
           description: record.plan.description,
           features: record.plan.features,
           builderId: record.plan.builderId,
-          generatedOn: new Date().toISOString().slice(0, 10),
+          generatedOn: todayIso(),
           planId: record.id,
           plan: record.plan,
           version: record.version,
@@ -529,7 +530,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const target = folder ?? ctx.projectDir;
       if (!target) return fail("Pass folder: the project's absolute path. StackWise writes the files there and returns their names.");
       const env = planEnv(index, rec.selection);
-      const pack = [...files, { name: NEVER_REPLACE, content: envFileText(env, { appName: record.plan.appName, generatedOn: new Date().toISOString().slice(0, 10), custom: record.plan.custom }) }];
+      const pack = [...files, { name: NEVER_REPLACE, content: envFileText(env, { appName: record.plan.appName, generatedOn: todayIso(), custom: record.plan.custom }) }];
       const result = (ctx.writeProject ?? writeProjectFolder)(target, pack, { stackwiseRoot: ctx.stackwiseRoot, envNames: env.map((v) => v.name), replace });
       if ("error" in result) return fail(result.error);
       // The plan file and StackWise's copy now agree: that's the base the first sync merges from.

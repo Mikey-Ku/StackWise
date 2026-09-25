@@ -34,6 +34,8 @@ export function staleFacts(catalog: Catalog, today: string, maxDays = STALE_AFTE
   );
 }
 
+/** Today in this computer's time zone, so a plan exported at 10pm is dated today, not tomorrow. */
 export function todayIso(now = new Date()): string {
-  return now.toISOString().slice(0, 10);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }

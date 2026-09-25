@@ -4,6 +4,7 @@ import { defaultPlans } from "@/components/defaultPlans";
 import { indexCatalog } from "@/engine/evaluate";
 import { loadCatalog } from "@/engine/load";
 import { STATE_DIR } from "@/engine/names";
+import { todayIso } from "@/engine/staleness";
 import { reviewCounts, reviewList } from "@/engine/review";
 import { applyReview, COMMENT_MAX, FACT_KEY, OPTION_ID, readFlags, reviewHidden } from "@/engine/review-store";
 import { localOnly, readJson } from "@/mcp/local";
@@ -22,12 +23,6 @@ export const runtime = "nodejs";
 const notFound = () => Response.json({ error: "Not found." }, { status: 404 });
 const dataDir = () => path.join(process.cwd(), "data");
 const stateDir = () => path.join(/* turbopackIgnore: true */ process.cwd(), STATE_DIR);
-
-/** The reviewer's date, in this computer's time zone. */
-function localToday(now = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-}
 
 export async function GET(request: Request) {
   if (reviewHidden()) return notFound();
@@ -66,7 +61,7 @@ export async function POST(request: Request) {
   if (!option) return Response.json({ error: `No option "${parsed.data.optionId}".` }, { status: 404 });
   if (!Object.hasOwn(option.facts, parsed.data.fact)) return Response.json({ error: `${option.name} has no fact "${parsed.data.fact}".` }, { status: 404 });
 
-  const result = applyReview(dataDir(), stateDir(), parsed.data, localToday());
+  const result = applyReview(dataDir(), stateDir(), parsed.data, todayIso());
   if (!result.ok) return Response.json({ error: result.error }, { status: result.code });
   return Response.json(result);
 }
