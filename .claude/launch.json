@@ -6,6 +6,11 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev"],
       "port": 4310
+    },
+    {
+      "name": "stackwise-running",
+      "url": "http://localhost:4310",
+      "port": 4310
     }
   ]
 }
