@@ -25,11 +25,11 @@ One run through StackWise for a video, a class or an interview. It works with no
 
 ## 1:00 Break it on purpose (20 seconds)
 
-1. Right-click **Firestore**, **Switch to**, **SQLite file**.
-2. The line turns into a cross: "Your data would disappear". Netlify doesn't give the app a permanent disk, and SQLite keeps its data in a file on that disk, so anything people save is lost on the next deploy. The fix and the sources are in Details.
-3. Press Cmd+Z. It's back.
+1. Right-click **Firestore**, **Switch to**, **SQLite file**. Hosting quietly moves from Netlify to Fly.io: SQLite keeps its data in a file, so StackWise re-plans the host to one with a permanent disk.
+2. Right-click **Fly.io**, **Switch to**, **Netlify**, to force the bad pairing. The line between them turns red: "Your data would disappear". Netlify gives the app no permanent disk, so anything people save is lost on the next deploy. The fix and the sources are in Details.
+3. Press Cmd+Z twice. It's back.
 
-"No AI decided that. A rule read two facts, the host's disk and where the database keeps its data, each with a source."
+"No AI decided that. A rule read two facts, the host's disk and where the database keeps its data, each with a source, and the search picked around it until I forced it."
 
 ## 1:20 Ask (15 seconds)
 
