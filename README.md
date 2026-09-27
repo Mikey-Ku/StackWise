@@ -13,7 +13,7 @@ The AI never decides whether two services work together. Rules do, from facts wi
 
 ![Describing an app, confirming the guesses, the plan, a part's details, the right-click menu and the export](docs/images/stackwise-flow.gif)
 
-A two-minute walkthrough for a video or an interview is in [docs/DEMO.md](docs/DEMO.md).
+**[Watch the 85-second demo](https://michaelkujr.me/projects/stackwise/)** (captioned, no sound needed), or read the write-up on the same page: the problem it solves, how it teaches, and what the rules catch. A two-minute walkthrough for giving the demo yourself is in [docs/DEMO.md](docs/DEMO.md).
 
 ## Start in two minutes
 
