@@ -1,6 +1,6 @@
 // After `next build` with STACKWISE_STANDALONE=1: the standalone server needs the static files,
-// public/ and data/ beside it, which Next leaves out. Copied here, then electron-builder ships the
-// folder as the app's resources.
+// public/ and data/ beside it, which Next leaves out. Copied here, then after-pack.cjs ships the
+// folder inside the app bundle.
 const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
@@ -12,11 +12,13 @@ if (!fs.existsSync(path.join(built, "server.js"))) {
   console.error("No .next/standalone/server.js: run STACKWISE_STANDALONE=1 next build first.");
   process.exit(1);
 }
-// pnpm lays node_modules out as symlinks into a store; copied as files, the folder works on any Mac.
-// Node's cpSync keeps symlinked folders as links even with dereference, so cp -RL does the copy.
+// pnpm lays node_modules out as symlinks into a store (.pnpm), and Node resolves a package's
+// dependencies from where the link points, so the links have to stay links: copied as plain
+// folders, next can't find @swc/helpers any more. cp -R keeps them; the loop below makes every
+// absolute one relative, so the folder works wherever the bundle ends up.
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
-execFileSync("cp", ["-RL", `${built}/.`, out]);
+execFileSync("cp", ["-R", `${built}/.`, out]);
 for (const [from, to] of [
   [".next/static", ".next/static"],
   ["public", "public"],
@@ -27,16 +29,39 @@ for (const [from, to] of [
 }
 // Nothing of the person's goes into the bundle: no keys, no state.
 for (const stray of [".env.local", ".env", ".stackwise"]) fs.rmSync(path.join(out, stray), { recursive: true, force: true });
-const links = [];
+
+let relinked = 0;
+const bad = [];
 const walk = (dir) => {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isSymbolicLink()) links.push(path.join(dir, entry.name));
-    else if (entry.isDirectory()) walk(path.join(dir, entry.name));
+    const file = path.join(dir, entry.name);
+    if (entry.isSymbolicLink()) {
+      let target = fs.readlinkSync(file);
+      if (path.isAbsolute(target)) {
+        const inside = path.relative(built, target);
+        if (inside.startsWith("..")) {
+          bad.push(`${file} -> ${target}`);
+          continue;
+        }
+        target = path.relative(path.dirname(file), path.join(out, inside));
+        fs.unlinkSync(file);
+        fs.symlinkSync(target, file);
+        relinked += 1;
+      }
+      let real;
+      try {
+        real = fs.realpathSync(file);
+      } catch {
+        bad.push(`${file} -> ${target} (dangling)`);
+        continue;
+      }
+      if (path.relative(out, real).startsWith("..")) bad.push(`${file} -> ${real} (outside)`);
+    } else if (entry.isDirectory()) walk(file);
   }
 };
 walk(out);
-if (links.length) {
-  console.error(`Symlinks left in ${out}: ${links.slice(0, 5).join(", ")}`);
+if (bad.length) {
+  console.error(`Links that leave ${out}:\n${bad.slice(0, 8).join("\n")}`);
   process.exit(1);
 }
-console.log(`Packed ${out}: server.js, .next/static, public, data, no symlinks.`);
+console.log(`Packed ${out}: server.js, .next/static, public, data; ${relinked} links made relative, none leave the folder.`);

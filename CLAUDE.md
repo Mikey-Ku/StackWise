@@ -11,7 +11,7 @@ Planning tool for beginners building web apps with AI builders. A deterministic 
 - `pnpm build:logos [-- --only <id,id>]` downloads logos into `public/logos` (network, no key)
 - `stackwise [folder]` (from `bin/stackwise`, installed with `pnpm link --global`; or `pnpm stackwise -- <folder>`) starts StackWise in the background if it isn't up (log and pid in `.stackwise/`) and opens `#open=<folder>`; `stackwise setup` adds the MCP server to Claude Code; `stackwise stop` stops it
 - `pnpm mcp` runs StackWise's MCP server over stdio; the app serves the same tools at `/api/mcp` (docs/MCP.md)
-- `pnpm app` opens the Electron window on top of `pnpm dev`; `pnpm app:build` builds the dmg into `release/` (standalone Next build, `electron/pack.cjs`, then electron-builder run from inside `electron/`, whose package.json is the builder project)
+- `pnpm app` opens the Electron window on top of `pnpm dev`; `pnpm app:build` builds the dmg into `release/` (standalone Next build, `electron/pack.cjs`, then `electron/build.cjs` runs electron-builder inside `electron/`, whose package.json is the builder project, with pnpm's `npm_*` variables stripped so it doesn't pack the repo's node_modules)
 
 ## Map
 
