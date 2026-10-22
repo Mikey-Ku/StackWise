@@ -143,7 +143,7 @@ body {
 /* ---------- canvas ---------- */
 .ws-canvas {
   position: absolute;
-  inset: 0;
+  inset: var(--bar-h) 0 0 0;
 }
 .ws-canvas .react-flow {
   background: transparent;
@@ -963,9 +963,7 @@ body {
   letter-spacing: -0.015em;
 }
 
-/* Frosted glass, for everything that floats: lighter for the bars, denser for panels and menus that hold text. */
-.ws-bar__side,
-.ws-summary,
+/* Frosted glass, for everything that floats: lighter for the dock, denser for panels and menus that hold text. */
 .ws-dock {
   border: 0.5px solid var(--ws-glass-line);
   background: var(--ws-glass);
@@ -1032,21 +1030,24 @@ body {
   box-shadow: 0 0 0 3px var(--mk-ok-soft);
 }
 
-/* The bar on top: plans on the left, the plan in one line in the middle, Ask and Export on the right. */
+/* The bar on top: one flat toolbar (plans on the left, the plan in one line in the middle, Ask and
+   Export on the right) that the canvas starts under and the chat pane sits beside. */
 .ws-bar {
   position: absolute;
   z-index: 30;
-  top: 12px;
-  right: 12px;
-  left: 12px;
+  top: 0;
+  right: 0;
+  left: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  pointer-events: none;
-}
-.ws-bar > * {
-  pointer-events: auto;
+  height: var(--bar-h);
+  padding: 0 12px;
+  border-bottom: 0.5px solid var(--ws-glass-line);
+  background: var(--ws-glass);
+  -webkit-backdrop-filter: var(--ws-blur);
+  backdrop-filter: var(--ws-blur);
 }
 .ws-bar__side {
   display: flex;
@@ -1055,15 +1056,12 @@ body {
   gap: 4px;
   min-width: 0;
   max-width: 100%;
-  height: 40px;
-  padding: 0 4px 0 9px;
-  border-radius: 999px;
+  height: var(--bar-h);
 }
 .ws-bar__side--end {
   grid-column: 3;
   justify-self: end;
   gap: 4px;
-  padding: 0 6px;
 }
 .ws-mark {
   display: inline-flex;
@@ -1106,9 +1104,11 @@ body {
   grid-column: 2;
   align-items: center;
   gap: 10px;
-  height: 36px;
-  padding: 0 16px;
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
   border-radius: 999px;
+  background: var(--ws-fill);
   color: var(--mk-text-muted);
   font: inherit;
   font-size: 13px;
@@ -1190,7 +1190,7 @@ body {
 .ws-problems {
   position: absolute;
   z-index: 29;
-  top: 62px;
+  top: calc(var(--bar-h) + 10px);
   left: 50%;
   translate: -50% 0;
   max-width: min(720px, calc(100% - 32px));
@@ -1265,7 +1265,7 @@ body {
 .ws-float {
   position: absolute;
   z-index: 15;
-  top: 64px;
+  top: calc(var(--bar-h) + 12px);
   bottom: 72px;
   display: flex;
   flex-direction: column;
@@ -1409,10 +1409,10 @@ body {
 .ws-sheet-wrap {
   position: absolute;
   z-index: 25;
-  inset: 0;
+  inset: var(--bar-h) 0 0 0;
   display: grid;
   place-items: center;
-  padding: 68px 16px 16px;
+  padding: 16px;
   background: color-mix(in srgb, var(--mk-bg) 45%, transparent);
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
@@ -1636,6 +1636,7 @@ body {
    planning sheet and the dock all make room for it. */
 .ws {
   --ask-w: 340px;
+  --bar-h: 52px;
 }
 .ws-ask {
   position: absolute;
@@ -1656,7 +1657,8 @@ body {
 }
 .ws[data-ask="open"] .ws-bar,
 html[data-desktop] .ws[data-ask="open"] .ws-bar {
-  left: calc(var(--ask-w) + 12px);
+  left: var(--ask-w);
+  padding-left: 12px;
   grid-template-columns: auto minmax(0, 1fr) auto;
 }
 .ws[data-ask="open"] .ws-summary {
@@ -1671,9 +1673,9 @@ html[data-desktop] .ws[data-ask="open"] .ws-bar {
 .ws[data-ask="open"] .ws-dock {
   left: calc(var(--ask-w) + (100% - var(--ask-w)) / 2);
 }
-/* In the Mac app the traffic lights sit in the pane's top corner. */
-html[data-desktop] .ws-ask {
-  padding-top: 38px;
+/* In the Mac app the traffic lights sit in the pane's top row, or in the bar when the pane is closed. */
+html[data-desktop] .ws-ask__top {
+  padding-left: 84px;
 }
 .ws-bar__nav {
   display: grid;
@@ -1696,7 +1698,9 @@ html[data-desktop] .ws-ask {
   flex: none;
   align-items: center;
   gap: 6px;
-  padding: 10px 10px 8px 12px;
+  height: var(--bar-h);
+  padding: 0 10px 0 12px;
+  border-bottom: 0.5px solid var(--ws-glass-line);
 }
 .ws-ask__new {
   flex: none;
@@ -2449,10 +2453,8 @@ html[data-desktop] .ws-ask {
   }
 @media (max-width: 600px) {
   .ws-bar {
-    top: 8px;
-    right: 8px;
-    left: 8px;
     gap: 6px;
+    padding: 0 8px;
   }
   .ws-mark__name {
     display: none;
@@ -2478,15 +2480,15 @@ html[data-desktop] .ws-ask {
     border-radius: 20px;
     box-shadow: var(--ws-float-shadow);
   }
-  html[data-desktop] .ws-ask {
-    padding-top: 0;
+  html[data-desktop] .ws-ask__top {
+    padding-left: 12px;
   }
   .ws[data-ask="open"] .ws-canvas,
   .ws[data-ask="open"] .ws-sheet-wrap {
     left: 0;
   }
   .ws[data-ask="open"] .ws-bar {
-    left: 12px;
+    left: 0;
   }
   .ws[data-ask="open"] .ws-dock {
     left: 50%;
@@ -2622,7 +2624,7 @@ html[data-desktop] .ws-ask {
 }
 .ws-float--connect {
   z-index: 26;
-  top: 64px;
+  top: calc(var(--bar-h) + 12px);
   right: 12px;
   bottom: auto;
   width: 440px;
@@ -3538,10 +3540,15 @@ html[data-desktop] .ws::before {
   -webkit-app-region: drag;
 }
 html[data-desktop] .ws-bar {
-  left: 98px;
+  padding-left: 98px;
+  -webkit-app-region: drag;
 }
-html[data-desktop] .ws-bar > * {
+html[data-desktop] .ws-bar > *,
+html[data-desktop] .ws-ask__top > * {
   -webkit-app-region: no-drag;
+}
+html[data-desktop] .ws-ask__top {
+  -webkit-app-region: drag;
 }
 
 /* ---------- v1: layers on the canvas ---------- */

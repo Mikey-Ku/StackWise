@@ -39,11 +39,11 @@ import { migrateLegacyStorage } from "./storage";
 import { planDefaults } from "./savedStore";
 import { useAdvanced } from "./useAdvanced";
 
-/** Whether the chat pane is open: what this browser last had, else open on a window wide enough for it. */
+/** Whether the chat pane is open: open on a window wide enough for it; closing it lasts for the session. */
 const ASK_OPEN_KEY = "stackwise.ask-open";
 function readAskOpen(): boolean {
   try {
-    const saved = window.localStorage.getItem(ASK_OPEN_KEY);
+    const saved = window.sessionStorage.getItem(ASK_OPEN_KEY);
     if (saved) return saved === "yes";
   } catch {
     // Private windows: decide by the window alone.
@@ -101,7 +101,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const [ask, setAsk] = useState<{ open: boolean; slot: SlotId; request: AskRequest | null }>(() => ({ open: readAskOpen(), slot: "framework", request: null }));
   useEffect(() => {
     try {
-      window.localStorage.setItem(ASK_OPEN_KEY, ask.open ? "yes" : "no");
+      window.sessionStorage.setItem(ASK_OPEN_KEY, ask.open ? "yes" : "no");
     } catch {
       // Private windows: the pane's state lasts until the tab closes.
     }
