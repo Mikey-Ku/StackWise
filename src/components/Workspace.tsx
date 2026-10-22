@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { buildPlan, buildPlanMarkdown, connectionsOf, decodeSharedPlan, testPlan, envFileText, inSentence, isOwn, LINK_WORDS, linkId, ownId, planEnv, SLOT_IDS, taskBrief, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
+import { buildPlan, buildPlanMarkdown, connectionsOf, decodeSharedPlan, narrateChange, testPlan, envFileText, inSentence, isOwn, LINK_WORDS, linkId, ownId, planEnv, SLOT_IDS, taskBrief, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
 import { presence } from "@/mcp/pairing";
 import { AddPart } from "./AddPart";
 import { AnswererMark } from "./AnswererMark";
@@ -30,6 +30,7 @@ import { ProjectPanel } from "./ProjectPanel";
 import { Overview, Planner, SummaryPill, type AiStatus } from "./Planner";
 import { SpecDialog } from "./SpecDialog";
 import { usePairing, type ClaudeActivity } from "./usePairing";
+import { toSharedPlan } from "./store";
 import { newId, usePlans } from "./usePlans";
 import { Logo, copyText, cx, undoHint } from "./ui";
 import { sharedName } from "./planFiles";
@@ -172,6 +173,27 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     { label: "Confirm", go: () => dispatch({ type: "goTo", step: "confirm" }) },
   ];
   const mod = isMac() ? "⌘" : "Ctrl+";
+
+  // The chat narrates every change to the plan: what changed, as if typed, then what it did, from the facts.
+  const moment = useRef<{ id: string; plan: SharedPlan; rec: typeof rec } | null>(null);
+  useEffect(() => {
+    const shared = toSharedPlan(plan);
+    const prev = moment.current;
+    moment.current = { id: plan.id, plan: shared, rec };
+    if (!prev || prev.id !== plan.id) return;
+    const story = narrateChange(index, { plan: prev.plan, rec: prev.rec }, { plan: shared, rec });
+    if (!story) return;
+    const at = new Date().toISOString();
+    queueMicrotask(() =>
+      dispatch({
+        type: "addTurns",
+        turns: [
+          { id: newId(), role: "you", text: story.you, at, about: story.about },
+          { id: newId(), role: "facts", text: story.facts, at, about: story.about },
+        ],
+      }),
+    );
+  }, [plan, rec, index, dispatch]);
 
   // A different part or connection starts at the top of its panel, not where the last one was scrolled.
   const drawerRef = useRef<HTMLDivElement>(null);
