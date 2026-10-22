@@ -1675,6 +1675,38 @@ html[data-desktop] .ws[data-ask="open"] .ws-bar {
 .ws[data-ask="open"] .ws-dock {
   left: calc(var(--ask-w) + (100% - var(--ask-w)) / 2);
 }
+/* A left panel opens beside the pane, not over it. */
+.ws[data-ask="open"] .ws-float--left {
+  left: calc(var(--ask-w) + 12px);
+}
+/* The pane slides in, and while it opens or closes everything that makes room for it glides. */
+.ws-ask {
+  animation: ws-slide-in 240ms var(--mk-ease);
+}
+@keyframes ws-slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+.ws[data-settling="yes"] .ws-canvas,
+.ws[data-settling="yes"] .ws-sheet-wrap,
+.ws[data-settling="yes"] .ws-bar,
+.ws[data-settling="yes"] .ws-dock,
+.ws[data-settling="yes"] .ws-float--left {
+  transition: left 240ms var(--mk-ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws-ask {
+    animation: none;
+  }
+  .ws[data-settling="yes"] .ws-canvas,
+  .ws[data-settling="yes"] .ws-sheet-wrap,
+  .ws[data-settling="yes"] .ws-bar,
+  .ws[data-settling="yes"] .ws-dock,
+  .ws[data-settling="yes"] .ws-float--left {
+    transition: none;
+  }
+}
 /* In the Mac app the traffic lights sit in the pane's top row, or in the bar when the pane is closed. */
 html[data-desktop] .ws-ask__top {
   padding-left: 84px;
@@ -1703,38 +1735,31 @@ html[data-desktop] .ws-ask__top {
   height: var(--bar-h);
   padding: 0 10px 0 12px;
 }
-.ws-ask__hide svg {
-  transform: rotate(180deg);
-}
-.ws-ask__new {
-  flex: none;
-  height: 28px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--ws-fill);
-  color: var(--mk-text);
-  font: inherit;
-  font-size: 0.86em;
-  font-weight: 600;
-  cursor: pointer;
-}
-.ws-ask__new:hover:not(:disabled) {
-  background: var(--ws-fill-hover);
-}
-.ws-ask__new:disabled {
-  color: var(--mk-text-faint);
-  cursor: default;
-}
+/* The header: the plan's name, then new chat and hide as plain icons, like a sidebar's own controls. */
 .ws-ask__plan {
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  padding: 0 6px;
-  color: var(--mk-text-faint);
-  font-size: 0.86em;
+  padding: 0 4px;
+  color: var(--mk-text);
+  font-size: 0.93em;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.ws-ask__top .ws-iconbtn {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+}
+.ws-ask__top .ws-iconbtn:hover:not(:disabled) {
+  background: var(--ws-fill);
+  color: var(--mk-text);
+}
+.ws-ask__top .ws-iconbtn:disabled {
+  color: var(--mk-text-faint);
+  opacity: 0.5;
+  cursor: default;
 }
 .ws-iconbtn.is-on {
   background: var(--mk-accent);
@@ -1759,6 +1784,17 @@ html[data-desktop] .ws-ask__top {
 .ws-answerer--model {
   color: var(--mk-text-muted);
   font-weight: 500;
+}
+.ws-ask__ctx {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 28px;
+  color: var(--mk-text-muted);
+}
+.ws-ask__ctx.is-full {
+  color: var(--mk-warn);
 }
 .ws-answerer:disabled {
   cursor: default;
@@ -2466,6 +2502,12 @@ html[data-desktop] .ws-ask__top {
   }
   .ws[data-ask="open"] .ws-dock {
     left: 50%;
+  }
+  .ws[data-ask="open"] .ws-float--left {
+    left: 8px;
+  }
+  .ws-ask {
+    animation: ws-pop var(--mk-dur) var(--mk-ease);
   }
   .ws-bar__nav,
   .ws-ask .ws-edge-grip {

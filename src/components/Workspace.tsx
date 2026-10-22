@@ -106,12 +106,25 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
       // Private windows: the pane's state lasts until the tab closes.
     }
   }, [ask.open]);
-  // The chat pane and the left panel share the left side of the canvas: opening one closes the other.
-  const closeAsk = useCallback(() => setAsk((a) => (a.open ? { ...a, open: false, request: null } : a)), []);
+  // The chat pane and a left panel can share the left side when the window has room for both:
+  // the panel then floats beside the pane. On a narrow window, opening one closes the other.
+  const roomForBoth = () => window.innerWidth >= 1100;
+  /** While the pane opens or closes, the canvas, the bar and the dock glide to their new place (CSS reads this). */
+  const [settling, setSettling] = useState(false);
+  const settleTimer = useRef(0);
+  const settle = useCallback(() => {
+    setSettling(true);
+    window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(() => setSettling(false), 300);
+  }, []);
+  const closeAsk = useCallback(() => {
+    settle();
+    setAsk((a) => (a.open ? { ...a, open: false, request: null } : a));
+  }, [settle]);
   const openPanel = useCallback(
     (next: Panel) => {
       setPanel(next);
-      closeAsk();
+      if (!roomForBoth()) closeAsk();
     },
     [closeAsk],
   );
@@ -120,9 +133,10 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     else openPanel(next);
   };
   const toggleAsk = useCallback(() => {
-    if (!ask.open) setPanel(null);
+    if (!ask.open && !roomForBoth()) setPanel(null);
+    settle();
     setAsk((a) => ({ ...a, open: !a.open, request: null }));
-  }, [ask.open]);
+  }, [ask.open, settle]);
   const [menu, setMenu] = useState<MenuRequest | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -306,9 +320,10 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     setConnection(null);
   }, []);
   const openAsk = useCallback((slot: SlotId, question?: string) => {
-    setPanel(null);
+    if (!roomForBoth()) setPanel(null);
+    if (!ask.open) settle();
     setAsk({ open: true, slot, request: question ? { slot, question, nonce: Date.now() } : null });
-  }, []);
+  }, [ask.open, settle]);
   const openAdd = useCallback((slot?: SlotId) => setAdding({ focus: slot ?? null }), []);
 
   /**
@@ -411,7 +426,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           label: `Build this with ${builderAgent.label}`,
           icon: "terminal",
           onSelect: () => {
-            setPanel(null);
+            if (!roomForBoth()) setPanel(null);
             setAsk({ open: true, slot: task.slot, request: { slot: task.slot, question: taskBrief(tasks, taskId, plan.appName, testPlan(index, model.input, rec.selection, task, plan.appName))!, nonce: Date.now(), to: builderAgent.id } });
           },
         },
@@ -653,7 +668,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const answererState = answerer.id === "facts" ? "Connect" : answerer.group === "api" ? "Ready" : STATE_TEXT[answerer.state];
 
   return (
-    <div className={cx("ws", !building && "is-planning")} data-drawer={selectedSlot ? "open" : "closed"} data-panel={panel ?? "none"} data-ask={ask.open ? "open" : "closed"} style={{ "--ask-w": `${askWidth}px` } as CSSProperties}>
+    <div className={cx("ws", !building && "is-planning")} data-drawer={selectedSlot ? "open" : "closed"} data-panel={panel ?? "none"} data-ask={ask.open ? "open" : "closed"} data-settling={settling ? "yes" : undefined} style={{ "--ask-w": `${askWidth}px` } as CSSProperties}>
       <ReactFlowProvider>
         <PlanCanvas
           model={model}

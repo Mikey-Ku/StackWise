@@ -23,7 +23,7 @@ export interface ProviderInfo {
   modelEnv?: string;
   models?: string[];
   /** What's known about each offered model: a short name, context window, output limit, price. */
-  modelInfo?: { id: string; name: string; note: string; context: string; output: string; price: string; source: string; checked_on: string }[];
+  modelInfo?: { id: string; name: string; note: string; context: string; contextTokens: number; output: string; price: string; source: string; checked_on: string }[];
   defaultModel?: string;
   /** What it still needs in .env.local, by name. Older servers leave it out. */
   needs?: string[];
