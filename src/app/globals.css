@@ -1675,6 +1675,38 @@ html[data-desktop] .ws[data-ask="open"] .ws-bar {
 .ws[data-ask="open"] .ws-dock {
   left: calc(var(--ask-w) + (100% - var(--ask-w)) / 2);
 }
+/* A left panel opens beside the pane, not over it. */
+.ws[data-ask="open"] .ws-float--left {
+  left: calc(var(--ask-w) + 12px);
+}
+/* The pane slides in, and while it opens or closes everything that makes room for it glides. */
+.ws-ask {
+  animation: ws-slide-in 240ms var(--mk-ease);
+}
+@keyframes ws-slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+.ws[data-settling="yes"] .ws-canvas,
+.ws[data-settling="yes"] .ws-sheet-wrap,
+.ws[data-settling="yes"] .ws-bar,
+.ws[data-settling="yes"] .ws-dock,
+.ws[data-settling="yes"] .ws-float--left {
+  transition: left 240ms var(--mk-ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws-ask {
+    animation: none;
+  }
+  .ws[data-settling="yes"] .ws-canvas,
+  .ws[data-settling="yes"] .ws-sheet-wrap,
+  .ws[data-settling="yes"] .ws-bar,
+  .ws[data-settling="yes"] .ws-dock,
+  .ws[data-settling="yes"] .ws-float--left {
+    transition: none;
+  }
+}
 /* In the Mac app the traffic lights sit in the pane's top row, or in the bar when the pane is closed. */
 html[data-desktop] .ws-ask__top {
   padding-left: 84px;
@@ -2466,6 +2498,12 @@ html[data-desktop] .ws-ask__top {
   }
   .ws[data-ask="open"] .ws-dock {
     left: 50%;
+  }
+  .ws[data-ask="open"] .ws-float--left {
+    left: 8px;
+  }
+  .ws-ask {
+    animation: ws-pop var(--mk-dur) var(--mk-ease);
   }
   .ws-bar__nav,
   .ws-ask .ws-edge-grip {
