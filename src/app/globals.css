@@ -143,7 +143,7 @@ body {
 /* ---------- canvas ---------- */
 .ws-canvas {
   position: absolute;
-  inset: 0;
+  inset: var(--bar-h) 0 0 0;
 }
 .ws-canvas .react-flow {
   background: transparent;
@@ -910,20 +910,10 @@ a.ws-costlines__row {
 .ws-envlist code {
   overflow-wrap: anywhere;
 }
-/* Writing the project into a folder on this computer. */
+/* The sections under the files in the export dialog. */
 .ws-local {
   padding-top: var(--mk-4);
   border-top: 1px solid var(--mk-line);
-}
-.ws-local__row {
-  align-items: flex-end;
-}
-.ws-local__row .mk-field {
-  min-width: 240px;
-}
-.ws-local__cmd {
-  padding: var(--mk-2) var(--mk-3);
-  overflow-wrap: anywhere;
 }
 .ws-local code {
   font-family: var(--mk-font-mono);
@@ -973,9 +963,7 @@ body {
   letter-spacing: -0.015em;
 }
 
-/* Frosted glass, for everything that floats: lighter for the bars, denser for panels and menus that hold text. */
-.ws-bar__side,
-.ws-summary,
+/* Frosted glass, for everything that floats: lighter for the dock, denser for panels and menus that hold text. */
 .ws-dock {
   border: 0.5px solid var(--ws-glass-line);
   background: var(--ws-glass);
@@ -1042,21 +1030,24 @@ body {
   box-shadow: 0 0 0 3px var(--mk-ok-soft);
 }
 
-/* The bar on top: plans on the left, the plan in one line in the middle, Ask and Export on the right. */
+/* The bar on top: one flat toolbar (plans on the left, the plan in one line in the middle, Ask and
+   Export on the right) that the canvas starts under and the chat pane sits beside. */
 .ws-bar {
   position: absolute;
   z-index: 30;
-  top: 12px;
-  right: 12px;
-  left: 12px;
+  top: 0;
+  right: 0;
+  left: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  pointer-events: none;
-}
-.ws-bar > * {
-  pointer-events: auto;
+  height: var(--bar-h);
+  padding: 0 12px;
+  border-bottom: 0.5px solid var(--ws-glass-line);
+  background: var(--ws-glass);
+  -webkit-backdrop-filter: var(--ws-blur);
+  backdrop-filter: var(--ws-blur);
 }
 .ws-bar__side {
   display: flex;
@@ -1065,15 +1056,12 @@ body {
   gap: 4px;
   min-width: 0;
   max-width: 100%;
-  height: 40px;
-  padding: 0 4px 0 9px;
-  border-radius: 999px;
+  height: var(--bar-h);
 }
 .ws-bar__side--end {
   grid-column: 3;
   justify-self: end;
   gap: 4px;
-  padding: 0 6px;
 }
 .ws-mark {
   display: inline-flex;
@@ -1116,9 +1104,11 @@ body {
   grid-column: 2;
   align-items: center;
   gap: 10px;
-  height: 36px;
-  padding: 0 16px;
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
   border-radius: 999px;
+  background: var(--ws-fill);
   color: var(--mk-text-muted);
   font: inherit;
   font-size: 13px;
@@ -1200,7 +1190,7 @@ body {
 .ws-problems {
   position: absolute;
   z-index: 29;
-  top: 62px;
+  top: calc(var(--bar-h) + 10px);
   left: 50%;
   translate: -50% 0;
   max-width: min(720px, calc(100% - 32px));
@@ -1275,7 +1265,7 @@ body {
 .ws-float {
   position: absolute;
   z-index: 15;
-  top: 64px;
+  top: calc(var(--bar-h) + 12px);
   bottom: 72px;
   display: flex;
   flex-direction: column;
@@ -1419,10 +1409,10 @@ body {
 .ws-sheet-wrap {
   position: absolute;
   z-index: 25;
-  inset: 0;
+  inset: var(--bar-h) 0 0 0;
   display: grid;
   place-items: center;
-  padding: 68px 16px 16px;
+  padding: 16px;
   background: color-mix(in srgb, var(--mk-bg) 45%, transparent);
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
@@ -1642,28 +1632,113 @@ body {
 }
 
 /* The Ask panel. */
+/* A fixed side panel, not a floating card: full height on the left, and the canvas, the bar, the
+   planning sheet and the dock all make room for it. */
+.ws {
+  --ask-w: 340px;
+  --bar-h: 52px;
+}
 .ws-ask {
   position: absolute;
   z-index: 28;
-  bottom: 72px;
-  left: 50%;
-  translate: -50% 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
-  width: min(600px, calc(100% - 24px));
-  max-height: min(560px, calc(100% - 150px));
-  border-radius: 20px;
-  animation: ws-pop var(--mk-dur) var(--mk-ease);
+  width: var(--ask-w);
+  /* The pane's type follows the window: 12px on a small one, 14px on a wide one. */
+  font-size: clamp(12px, 0.7vw + 5.5px, 14px);
+  border-right: 0.5px solid var(--ws-glass-line);
+  border-radius: 0;
+  box-shadow: none;
 }
-.ws.is-planning .ws-ask {
-  bottom: 16px;
+.ws[data-ask="open"] .ws-canvas,
+.ws[data-ask="open"] .ws-sheet-wrap {
+  left: var(--ask-w);
 }
-.ws-ask__head {
+.ws[data-ask="open"] .ws-bar,
+html[data-desktop] .ws[data-ask="open"] .ws-bar {
+  left: var(--ask-w);
+  padding-left: 12px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.ws[data-ask="open"] .ws-summary {
+  justify-self: center;
+  max-width: 100%;
+  overflow: hidden;
+}
+/* Beside the pane the AI pill keeps its dot and name; the state is in the title and the popover. */
+.ws[data-ask="open"] .ws-connpill__state:not(.is-cta) {
+  display: none;
+}
+.ws[data-ask="open"] .ws-dock {
+  left: calc(var(--ask-w) + (100% - var(--ask-w)) / 2);
+}
+/* In the Mac app the traffic lights sit in the pane's top row, or in the bar when the pane is closed. */
+html[data-desktop] .ws-ask__top {
+  padding-left: 84px;
+}
+.ws-bar__nav {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--mk-text-muted);
+  cursor: pointer;
+}
+.ws-bar__nav:hover {
+  background: var(--ws-fill);
+  color: var(--mk-text);
+}
+.ws-ask__top {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 8px;
-  padding: 10px 10px 8px 12px;
+  gap: 6px;
+  height: var(--bar-h);
+  padding: 0 10px 0 12px;
+}
+.ws-ask__hide svg {
+  transform: rotate(180deg);
+}
+.ws-ask__new {
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ws-fill);
+  color: var(--mk-text);
+  font: inherit;
+  font-size: 0.86em;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ws-ask__new:hover:not(:disabled) {
+  background: var(--ws-fill-hover);
+}
+.ws-ask__new:disabled {
+  color: var(--mk-text-faint);
+  cursor: default;
+}
+.ws-ask__plan {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 6px;
+  color: var(--mk-text-faint);
+  font-size: 0.86em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-iconbtn.is-on {
+  background: var(--mk-accent);
+  color: #fff;
 }
 .ws-answerer {
   display: inline-flex;
@@ -1671,16 +1746,23 @@ body {
   gap: 6px;
   min-width: 0;
   height: 28px;
-  margin-right: auto;
   padding: 0 10px;
   border: 0;
   border-radius: 8px;
   background: var(--ws-fill);
   color: var(--mk-text);
   font: inherit;
-  font-size: 12px;
+  font-size: 0.86em;
   font-weight: 600;
   cursor: pointer;
+}
+.ws-answerer--model {
+  color: var(--mk-text-muted);
+  font-weight: 500;
+}
+.ws-answerer:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 .ws-answerer:hover {
   background: var(--ws-fill-hover);
@@ -1767,7 +1849,7 @@ body {
   padding: 12px 14px;
   border-radius: 14px;
   background: var(--mk-surface-sunk);
-  font-size: 13px;
+  font-size: 0.93em;
   line-height: 1.45;
 }
 .ws-connect ol {
@@ -1785,46 +1867,62 @@ body {
   padding: 0;
   background: transparent;
 }
-.ws-ask__about {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  height: 28px;
-  padding: 0 8px;
-  border-radius: 8px;
-  background: var(--ws-fill);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.ws-ask__about select {
-  min-width: 0;
-  max-width: 220px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-overflow: ellipsis;
-  appearance: none;
-  cursor: pointer;
-}
 .ws-ask__body {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-height: 60px;
-  padding: 4px 18px 12px;
+  padding: 4px 14px 12px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+/* Nothing said yet: the starters sit low, near the composer, like a fresh chat. */
 .ws-ask__empty {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 4px 0;
+  gap: 10px;
+  margin-top: auto;
+  padding: 4px 0 6px;
   color: var(--mk-text-muted);
-  font-size: 13px;
+  font-size: 0.93em;
   line-height: 1.45;
+}
+.ws-ask__lead {
+  margin: 0 0 4px;
+  color: var(--mk-text);
+  font-weight: 600;
+  text-align: center;
+}
+.ws-ask__empty .mk-hint {
+  text-align: center;
+}
+.ws-starts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ws-start {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border: 0.5px solid var(--mk-line-strong);
+  border-radius: 999px;
+  background: var(--mk-surface);
+  color: var(--mk-text);
+  font: inherit;
+  font-size: 1em;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-start:hover {
+  background: var(--ws-fill-hover);
+}
+.ws-start svg {
+  flex: none;
+  color: var(--mk-text-muted);
 }
 .ws-thread {
   display: flex;
@@ -1835,7 +1933,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 14px;
+  font-size: 1em;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -1858,7 +1956,7 @@ body {
 }
 .ws-turn__who {
   color: var(--mk-text-faint);
-  font-size: 11px;
+  font-size: 0.8em;
   font-weight: 600;
 }
 .ws-turn__text {
@@ -1900,32 +1998,54 @@ body {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.ws-ask__notice {
+  margin: 0 12px 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text-muted);
+  font-size: 0.86em;
+  line-height: 1.4;
+}
 .ws-ask__compose {
   display: flex;
   flex: none;
-  align-items: flex-end;
-  gap: 8px;
-  margin: 0 12px;
-  padding: 5px 5px 5px 14px;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 12px 12px;
+  padding: 10px 10px 8px 14px;
   border: 0.5px solid var(--mk-line-strong);
-  border-radius: 20px;
+  border-radius: 18px;
   background: var(--mk-surface);
 }
+.ws-ask__tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+/* Focus is quiet here: the caret says it all, like any chat box. */
 .ws-ask__compose:focus-within {
-  border-color: var(--mk-accent);
-  box-shadow: var(--mk-focus-ring);
+  border-color: var(--mk-line-strong);
+}
+.ws-ask__compose textarea:focus,
+.ws-ask__compose textarea:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
 }
 .ws-ask__compose textarea {
-  flex: 1;
+  flex: none;
+  width: 100%;
   min-width: 0;
-  max-height: 120px;
-  padding: 5px 0;
+  max-height: 140px;
+  padding: 2px 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--mk-text);
   font: inherit;
-  font-size: 14px;
+  font-size: 1em;
   line-height: 1.4;
   resize: none;
   field-sizing: content;
@@ -1934,8 +2054,9 @@ body {
   display: grid;
   flex: none;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
   border: 0;
   border-radius: 50%;
   background: var(--mk-accent);
@@ -1946,18 +2067,6 @@ body {
   background: var(--ws-fill);
   color: var(--mk-text-faint);
   cursor: default;
-}
-.ws-ask__foot {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 18px 12px;
-  color: var(--mk-text-faint);
-  font-size: 11px;
-}
-.ws-ask__clear {
-  margin-left: auto;
 }
 .ws-chips {
   display: flex;
@@ -2148,15 +2257,22 @@ body {
 .ws-cmenu__icon .ws-logo {
   border: 0;
 }
+/* The name always shows whole; a hint takes what's left and trims itself. */
 .ws-cmenu__label {
-  flex: 1;
-  min-width: 0;
+  flex: none;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .ws-cmenu__hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
   color: var(--mk-text-faint);
   font-size: 12px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ws-cmenu__item:not(:disabled):hover .ws-cmenu__hint,
 .ws-cmenu__item:not(:disabled):focus-visible .ws-cmenu__hint {
@@ -2311,10 +2427,8 @@ body {
   }
 @media (max-width: 600px) {
   .ws-bar {
-    top: 8px;
-    right: 8px;
-    left: 8px;
     gap: 6px;
+    padding: 0 8px;
   }
   .ws-mark__name {
     display: none;
@@ -2330,8 +2444,32 @@ body {
     bottom: 10px;
   }
   .ws-ask {
+    top: auto;
+    right: 8px;
     bottom: 64px;
-    width: calc(100% - 16px);
+    left: 8px;
+    width: auto;
+    max-height: 70%;
+    border: 0.5px solid var(--ws-glass-line);
+    border-radius: 20px;
+    box-shadow: var(--ws-float-shadow);
+  }
+  html[data-desktop] .ws-ask__top {
+    padding-left: 12px;
+  }
+  .ws[data-ask="open"] .ws-canvas,
+  .ws[data-ask="open"] .ws-sheet-wrap {
+    left: 0;
+  }
+  .ws[data-ask="open"] .ws-bar {
+    left: 0;
+  }
+  .ws[data-ask="open"] .ws-dock {
+    left: 50%;
+  }
+  .ws-bar__nav,
+  .ws-ask .ws-edge-grip {
+    display: none;
   }
   .ws-sheet-wrap {
     padding: 60px 8px 8px;
@@ -2460,7 +2598,7 @@ body {
 }
 .ws-float--connect {
   z-index: 26;
-  top: 64px;
+  top: calc(var(--bar-h) + 12px);
   right: 12px;
   bottom: auto;
   width: 440px;
@@ -3121,7 +3259,7 @@ body {
   color: #fff;
 }
 
-/* ---------- v0.9: the project panel: run, check, set variables, read the database ---------- */
+/* ---------- v0.9: the project panel: link a folder, set its variables ---------- */
 .ws-proj {
   display: flex;
   flex-direction: column;
@@ -3205,46 +3343,9 @@ body {
   align-items: center;
   gap: 6px;
 }
-.ws-proj__health {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--mk-text-muted);
-  font-size: 12px;
-}
-.ws-proj__health.is-ok {
-  color: var(--mk-ok);
-}
-.ws-proj__health.is-bad {
-  color: var(--mk-danger);
-}
-.ws-proj__runrow {
-  display: flex;
-  gap: 8px;
-}
-.ws-proj__cmd {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--mk-font-mono);
-  font-size: 12px;
-}
 .ws-chip.is-on {
   background: var(--mk-accent);
   color: #fff;
-}
-.ws-proj__log {
-  max-height: 220px;
-  margin: 0;
-  padding: 10px 12px;
-  overflow: auto;
-  border-radius: 10px;
-  background: #1c1c1e;
-  color: #e5e5ea;
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 .ws-proj__envs {
   display: flex;
@@ -3289,84 +3390,6 @@ body {
   flex: 1;
   min-width: 0;
   font-family: var(--mk-font-mono);
-}
-.ws-proj__probe {
-  border-radius: 12px;
-  background: var(--mk-surface-sunk);
-}
-.ws-proj__probe > summary,
-.ws-proj__probe.is-idle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  list-style: none;
-  cursor: pointer;
-}
-.ws-proj__probe > summary::-webkit-details-marker {
-  display: none;
-}
-.ws-proj__probe.is-bad {
-  background: var(--mk-danger-soft);
-}
-.ws-proj__probetext {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-}
-.ws-proj__probetext strong {
-  font-size: 13px;
-}
-.ws-proj__probetext span {
-  color: var(--mk-text-muted);
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-.ws-proj__code {
-  flex: none;
-  color: var(--mk-text-faint);
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-}
-.ws-proj__probebody {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 0 10px 10px;
-}
-.ws-proj__probebody pre,
-.ws-proj__sample pre {
-  max-height: 200px;
-  margin: 0;
-  padding: 8px 10px;
-  overflow: auto;
-  border-radius: 8px;
-  background: var(--mk-surface);
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.ws-proj__sample {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
-}
-.ws-proj__sql {
-  font-family: var(--mk-font-mono);
-  font-size: 12px;
-}
-.ws-proj__table {
-  max-height: 260px;
-  overflow: auto;
-}
-.ws-proj__table td,
-.ws-proj__table th {
-  padding: 4px 8px;
-  font-size: 11px;
-  white-space: nowrap;
 }
 .ws-node__icon {
   flex: none;
@@ -3422,41 +3445,6 @@ body {
   font-size: 11px;
   overflow-wrap: anywhere;
 }
-.ws-proj__agent {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--mk-surface-sunk);
-}
-.ws-proj__branch {
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-  color: var(--mk-text-muted);
-}
-.ws-proj__files ul {
-  margin: 4px 0 0;
-  padding-left: 1.1em;
-  font-size: 11px;
-}
-.ws-proj__files summary {
-  color: var(--mk-text-muted);
-  font-size: 12px;
-  cursor: pointer;
-}
-.ws-proj__addagent {
-  display: flex;
-  gap: 6px;
-}
-.ws-proj__addagent .mk-select {
-  width: auto;
-  flex: none;
-}
-.ws-proj__addagent .mk-input {
-  flex: 1;
-  min-width: 0;
-}
 .ws-conn__logo {
   position: relative;
   display: grid;
@@ -3511,4 +3499,66 @@ body {
   width: 15px;
   height: 15px;
   object-fit: contain;
+}
+
+/* ---------- v1: inside the Mac app (electron/preload.cjs sets data-desktop) ---------- */
+/* The window has no title bar: the top strip drags it, and the bar sits past the traffic lights. */
+html[data-desktop] .ws::before {
+  content: "";
+  position: absolute;
+  z-index: 29;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 48px;
+  -webkit-app-region: drag;
+}
+html[data-desktop] .ws-bar {
+  padding-left: 98px;
+  -webkit-app-region: drag;
+}
+html[data-desktop] .ws-bar > *,
+html[data-desktop] .ws-ask__top > * {
+  -webkit-app-region: no-drag;
+}
+html[data-desktop] .ws-ask__top {
+  -webkit-app-region: drag;
+}
+
+/* ---------- v1: layers on the canvas ---------- */
+/* A zone behind each layer's cards: where it runs, people, data, outside services. It only draws
+   and labels; everything in it is clicked, dragged and dropped on as before. */
+.react-flow__node-zone {
+  pointer-events: none;
+}
+.ws-zone {
+  box-sizing: border-box;
+  height: 100%;
+  border: 1px dashed color-mix(in srgb, var(--mk-text) 18%, transparent);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--mk-text) 3.5%, transparent);
+}
+.ws-zone__label {
+  position: absolute;
+  top: 10px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--mk-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  pointer-events: auto;
+}
+.ws-zone__label:hover {
+  background: var(--ws-fill);
+  color: var(--mk-text);
+}
+.is-exporting .ws-zone__label {
+  background: none;
 }

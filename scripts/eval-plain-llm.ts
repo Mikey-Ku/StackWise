@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { AI_EFFORT, AI_MODEL, FALLBACK_BETA, getClient } from "@/ai/config";
+import { AI_EFFORT, aiModel, FALLBACK_BETA, getClient } from "@/ai/config";
 import { evaluatePlan, indexCatalog, neededSlots, type CheckResult } from "@/engine/evaluate";
 import type { PlanInput, Selection } from "@/engine/schema";
 import { recommend } from "@/engine/score";
@@ -51,7 +51,7 @@ async function main() {
     const schema = z.object({ picks: z.array(z.object({ slot: z.enum(slots as [string, ...string[]]), option: z.string() })) });
 
     const response = await client.beta.messages.parse({
-      model: AI_MODEL,
+      model: aiModel(),
       max_tokens: 16000,
       betas: [FALLBACK_BETA],
       fallbacks: "default",
@@ -88,7 +88,7 @@ async function main() {
     `StackWise plans with something that doesn't work: ${share((r) => r.stackwise.blocked > 0)}`,
     `StackWise plans with a warning: ${share((r) => r.stackwise.warning > 0)}`,
   ].join("\n");
-  const report = writeReport(`plain-llm-eval-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, JSON.stringify({ model: AI_MODEL, rows }, null, 2));
+  const report = writeReport(`plain-llm-eval-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, JSON.stringify({ model: aiModel(), rows }, null, 2));
   console.log(`\n${summary}\n\nFull results: ${report}`);
 }
 

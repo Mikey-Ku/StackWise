@@ -6,22 +6,12 @@ import { toSharedPlan } from "./store";
 import type { PlanModel } from "./usePlans";
 import { copyText, downloadZip } from "./ui";
 
-/** What POST /api/local says it would do, or did. */
-interface LocalReport {
-  path: string;
-  folderExists: boolean;
-  write: string[];
-  keep: { name: string; why: string }[];
-  missingEnv: string[];
-  command: string;
-  wrote: string[];
-}
-
 /** The project pack: the spec, setup, tasks and plan file, plus Claude Code's agents and MCP config when that's the builder. */
 export function SpecDialog({
   model,
   generatedOn,
   stackwiseRoot,
+  mcpUrl,
   onClose,
   onToast,
   onSaveImage,
@@ -29,6 +19,8 @@ export function SpecDialog({
   model: PlanModel;
   generatedOn: string | null;
   stackwiseRoot: string | undefined;
+  /** The running StackWise's MCP address, in the Mac app: exported projects point at it. */
+  mcpUrl?: string;
   onClose: () => void;
   onToast: (message: string) => void;
   /** Saves the diagram as a PNG, with the page's background or none. */
@@ -37,11 +29,6 @@ export function SpecDialog({
   const ref = useRef<HTMLDialogElement>(null);
   const [active, setActive] = useState("SPEC.md");
   const [copied, setCopied] = useState(false);
-  const [where, setWhere] = useState("");
-  const [replace, setReplace] = useState(false);
-  const [report, setReport] = useState<LocalReport | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const open = generatedOn !== null;
   const { plan, index, input, rec } = model;
 
@@ -68,43 +55,15 @@ export function SpecDialog({
               planId: plan.id,
               plan: toSharedPlan(plan),
             },
-            { stackwiseRoot },
+            { stackwiseRoot, mcpUrl },
           )
         : [],
-    [generatedOn, index, input, rec.selection, plan, stackwiseRoot],
+    [generatedOn, index, input, rec.selection, plan, stackwiseRoot, mcpUrl],
   );
   const file = files.find((f) => f.name === active) ?? files[0];
   const builder = model.catalog.planning.builders.find((b) => b.id === plan.builderId);
   const folder = (plan.appName.trim() || "my-app").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "my-app";
   const agents = files.filter((f) => f.name.startsWith(".claude/agents/")).length;
-  const beside = stackwiseRoot ? `${stackwiseRoot.split("/").slice(0, -1).join("/")}/${folder}` : `~/${folder}`;
-
-  const send = async (dryRun: boolean) => {
-    setBusy(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/local", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ path: where || beside, id: plan.id, plan: toSharedPlan(plan), generatedOn, dryRun, replace }),
-      });
-      const body = (await response.json()) as LocalReport & { error?: string };
-      if (!response.ok || body.error) {
-        setError(body.error ?? `Couldn't write the files (${response.status}).`);
-        setReport(null);
-        return;
-      }
-      setReport(body);
-      if (!dryRun) {
-        model.dispatch({ type: "setFolder", folder: body.path });
-        onToast(`Wrote ${body.wrote.length} file${body.wrote.length === 1 ? "" : "s"} into ${body.path}.`);
-      }
-    } catch {
-      setError("Couldn't reach StackWise's server. It writes files only while the app is running on this computer.");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <dialog ref={ref} className="mk-modal ws-spec" onClose={onClose}>
@@ -120,8 +79,8 @@ export function SpecDialog({
         </div>
         <p className="mk-muted">
           {files.length} files: the spec, setup steps, tasks and the plan
-          {agents ? `, plus ${agents} Claude Code agents${stackwiseRoot ? " and StackWise's MCP connection" : ""}` : ""}. Unzip it as your project folder.
-          {builder?.format === "claude-md" && !stackwiseRoot ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
+          {agents ? `, plus ${agents} Claude Code agents${stackwiseRoot || mcpUrl ? " and StackWise's MCP connection" : ""}` : ""}. Unzip it as your project folder.
+          {builder?.format === "claude-md" && !stackwiseRoot && !mcpUrl ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
         </p>
         <label className="mk-field ws-spec__pick">
           <span className="mk-label">File</span>
@@ -162,89 +121,6 @@ export function SpecDialog({
             {copied ? "Copied" : `Copy ${file?.name ?? ""}`}
           </button>
         </div>
-
-        <section className="mk-stack mk-gap-3 ws-local">
-          <div className="mk-stack mk-gap-1">
-            <span className="mk-eyebrow">Or write it into a folder on this computer</span>
-            <p className="mk-muted">
-              The same files, plus a <code>.env.local</code> with empty values. StackWise never overwrites an existing <code>.env.local</code>.
-            </p>
-          </div>
-          <div className="mk-row mk-gap-2 mk-wrap ws-local__row">
-            <label className="mk-field mk-grow">
-              <span className="mk-label">Folder</span>
-              <input className="mk-input mk-sm" value={where} placeholder={plan.folder ?? beside} onChange={(e) => setWhere(e.target.value)} spellCheck={false} />
-            </label>
-            <button type="button" className="mk-btn mk-btn--ghost mk-sm" disabled={busy} onClick={() => void send(true)}>
-              {busy ? "Looking" : "Preview"}
-            </button>
-            <button type="button" className="mk-btn mk-btn--primary mk-sm" disabled={busy} onClick={() => void send(false)}>
-              Write the files
-            </button>
-          </div>
-          {error && <p className="mk-alert mk-alert--danger">{error}</p>}
-          {report && (
-            <div className="mk-stack mk-gap-2">
-              <p>
-                {report.wrote.length > 0 ? (
-                  <>
-                    <strong>
-                      Wrote {report.wrote.length} file{report.wrote.length === 1 ? "" : "s"}
-                    </strong>{" "}
-                    into <code>{report.path}</code>.
-                  </>
-                ) : (
-                  <>
-                    <strong>
-                      {report.write.length} file{report.write.length === 1 ? "" : "s"} to write
-                    </strong>{" "}
-                    into <code>{report.path}</code>
-                    {report.folderExists ? "" : ", a new folder"}.
-                  </>
-                )}
-              </p>
-              {report.keep.length > 0 && (
-                <div className="mk-stack mk-gap-1">
-                  <p className="mk-muted">
-                    Left alone, because {report.keep.length === 1 ? "it's" : "they're"} already there: {report.keep.slice(0, 4).map((k) => k.name).join(", ")}
-                    {report.keep.length > 4 ? ` and ${report.keep.length - 4} more` : ""}.
-                  </p>
-                  {report.keep.some((k) => k.name === ".env.local") && (
-                    <p className="mk-hint">
-                      Your <code>.env.local</code> is one of them. Your real values live in it, so StackWise never writes over it.
-                    </p>
-                  )}
-                  {report.keep.some((k) => k.name !== ".env.local") && (
-                    <label className="mk-row mk-gap-2">
-                      <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} />
-                      <span>Replace files that are already there</span>
-                    </label>
-                  )}
-                </div>
-              )}
-              {report.missingEnv.length > 0 && (
-                <p className="mk-muted">
-                  Your <code>.env.local</code> there is missing {report.missingEnv.length} name{report.missingEnv.length === 1 ? "" : "s"}: {report.missingEnv.join(", ")}.{" "}
-                  {report.missingEnv.length === 1 ? "It's" : "They're"} in <code>.env.example</code>.
-                </p>
-              )}
-              {report.wrote.length > 0 && (
-                <div className="mk-row mk-gap-2 mk-wrap">
-                  <code className="mk-code ws-local__cmd">{`${report.command}${builder?.format === "claude-md" ? " && claude" : ""}`}</code>
-                  <button
-                    type="button"
-                    className="mk-btn mk-btn--secondary mk-sm"
-                    onClick={async () =>
-                      onToast((await copyText(`${report.command}${builder?.format === "claude-md" ? " && claude" : ""}`)) ? "Copied. Paste it into a terminal." : "Couldn't copy.")
-                    }
-                  >
-                    Copy the command
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
 
         <section className="mk-stack mk-gap-3 ws-local">
           <div className="mk-stack mk-gap-1">

@@ -7,8 +7,9 @@ import { downloadPlanFile, readPlanFile } from "./planFiles";
 import { toSharedPlan } from "./store";
 import { newId, type PlanModel } from "./usePlans";
 import { copyText, cx } from "./ui";
+import { deletePlanOnDisk, planDefaults } from "./savedStore";
 
-/** Switch between saved applications, and move one between people: share links and plan files. All of them, and the examples, are on /apps. */
+/** Switch between saved projects, and move one between people: share links and plan files. All of them, and the examples, are on /apps. */
 export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (message: string) => void }) {
   const { store, plan, dispatch } = model;
   const menu = useRef<HTMLDetailsElement>(null);
@@ -51,7 +52,7 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
         </span>
       </summary>
       <div className="ws-menu__panel">
-        <span className="mk-eyebrow">Your applications</span>
+        <span className="mk-eyebrow">Your projects</span>
         <div className="ws-menu__list">
           {store.order.map((id) => (
             <button
@@ -71,14 +72,14 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
           ))}
         </div>
         <div className="ws-menu__actions">
-          <button type="button" className="ws-menu__item" onClick={() => (dispatch({ type: "newPlan", id: newId(), now: now() }), close())}>
-            New application
+          <button type="button" className="ws-menu__item" onClick={() => (dispatch({ type: "newPlan", id: newId(), now: now(), defaults: planDefaults() }), close())}>
+            New project
           </button>
-          <Link href="/apps" className="ws-menu__item" onClick={close}>
-            All applications
+          <Link href="/projects" className="ws-menu__item" onClick={close}>
+            All projects
           </Link>
           <button type="button" className="ws-menu__item" onClick={() => (dispatch({ type: "duplicatePlan", id: newId(), now: now() }), close())}>
-            Duplicate this application
+            Duplicate this project
           </button>
           <button type="button" className="ws-menu__item" onClick={shareLink}>
             Copy share link
@@ -92,15 +93,20 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
           <Link href="/review" className="ws-menu__item" onClick={close}>
             Review facts
           </Link>
+          <Link href="/settings" className="ws-menu__item" onClick={close}>
+            Settings
+          </Link>
           <button
             type="button"
             className="ws-menu__item ws-menu__item--danger"
             onClick={() => {
               close();
-              if (window.confirm(`Delete "${nameOf(store.activeId)}"? This can't be undone.`)) dispatch({ type: "deletePlan", now: now(), fallbackId: newId() });
+              if (!window.confirm(`Delete "${nameOf(store.activeId)}"? This can't be undone.`)) return;
+              deletePlanOnDisk(store.activeId);
+              dispatch({ type: "deletePlan", now: now(), fallbackId: newId() });
             }}
           >
-            Delete this application
+            Delete this project
           </button>
         </div>
         <input

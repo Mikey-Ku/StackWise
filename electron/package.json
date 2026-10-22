@@ -1,0 +1,47 @@
+{
+  "name": "stackwise",
+  "productName": "StackWise",
+  "version": "0.1.0",
+  "description": "Plan an app's stack you understand: a sourced rules engine checks every connection, then hands your coding agent the plan over MCP.",
+  "main": "main.cjs",
+  "author": "Michael Ku",
+  "license": "MIT",
+  "private": true,
+  "build": {
+    "appId": "me.michaelkujr.stackwise",
+    "productName": "StackWise",
+    "electronVersion": "44.9.3",
+    "directories": {
+      "output": "../release"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "trayTemplate.png",
+      "trayTemplate@2x.png"
+    ],
+    "afterPack": "after-pack.cjs",
+    "npmRebuild": false,
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "darkModeSupport": true,
+      "identity": null
+    },
+    "artifactName": "StackWise-${version}-arm64.${ext}"
+  }
+}

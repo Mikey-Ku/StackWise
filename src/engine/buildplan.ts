@@ -4,6 +4,7 @@ import { extraResults, LINK_WORDS, linkVerdict, type Link } from "./extras";
 import { buildTask, isOwn } from "./own";
 import type { PlanInput, Selection, SlotId } from "./schema";
 import type { CustomPart, SharedPlan } from "./share";
+import type { TestPlan } from "./testplan";
 import { envForSlot, planEnv } from "./wiring";
 
 /**
@@ -226,7 +227,7 @@ function afterText(task: BuildTask, byId: Map<string, BuildTask>): string {
 }
 
 /** TASKS.md: every task in order, with a box to check. */
-export function buildPlanMarkdown(tasks: BuildTask[], details: { appName: string; generatedOn: string; problems?: boolean }): string {
+export function buildPlanMarkdown(tasks: BuildTask[], details: { appName: string; generatedOn: string; problems?: boolean; tests?: Record<string, TestPlan> }): string {
   const byId = new Map(tasks.map((t) => [t.id, t]));
   const [setup, ...rest] = tasks;
   return [
@@ -248,6 +249,7 @@ export function buildPlanMarkdown(tasks: BuildTask[], details: { appName: string
       // Only lines and hand-added parts say what they wait for; the order already covers the parts.
       ...((task.kind === "link" || task.kind === "extra") && task.after.length ? [`After: ${afterText(task, byId)}.`, ""] : []),
       ...(task.watch.length ? ["Watch:", "", ...task.watch.map((w) => `- ${w}`), ""] : []),
+      ...(details.tests?.[task.id] ? ["Test it:", "", ...details.tests[task.id].checks.map((c) => `- ${c}`), `- ${details.tests[task.id].fakes[0]}`, ""] : []),
       "Done when:",
       "",
       ...task.doneWhen.map((line) => `- ${line}`),
@@ -267,7 +269,7 @@ export function buildPlanDigest(tasks: BuildTask[]): string {
  * One task as a message to a coding agent: what to build and how to know it's done. The note is
  * the person's words about the part, so it's marked as theirs.
  */
-export function taskBrief(tasks: BuildTask[], id: string, appName = ""): string | null {
+export function taskBrief(tasks: BuildTask[], id: string, appName = "", tests?: TestPlan): string | null {
   const task = tasks.find((t) => t.id === id);
   if (!task) return null;
   const byId = new Map(tasks.map((t) => [t.id, t]));
@@ -282,6 +284,7 @@ export function taskBrief(tasks: BuildTask[], id: string, appName = ""): string 
     "",
     "Done when:",
     ...task.doneWhen.map((w) => `- ${w}`),
+    ...(tests ? ["", "Test it:", ...tests.checks.map((c) => `- ${c}`), ...tests.fakes.map((f) => `- ${f}`), ...(tests.limits.length ? [`- Don't: ${tests.limits[0]}`] : [])] : []),
     "",
     `Follow CLAUDE.md or AGENTS.md in the project${task.agent ? ` and the \`${task.agent}\` agent if it's there` : ""}. Check any change to the stack with StackWise first (check_stack), and reply here with what you built.`,
   ].join("\n");

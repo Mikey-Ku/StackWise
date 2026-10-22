@@ -3,3 +3,7 @@ allowBuilds:
   esbuild: true
   unrs-resolver: true
   sharp: false
+  # Electron's install script downloads its binary.
+  electron: true
+  # Windows installer tooling pulled in by electron-builder; the app is built for Mac only.
+  electron-winstaller: false

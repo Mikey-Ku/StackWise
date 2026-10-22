@@ -21,7 +21,6 @@ const KEY_PAGES: Record<string, string> = {
   claude: "https://console.anthropic.com/settings/keys",
   openai: "https://platform.openai.com/api-keys",
   gemini: "https://aistudio.google.com/apikey",
-  deepseek: "https://platform.deepseek.com/api_keys",
 };
 
 export function ConnectPanel({
@@ -141,7 +140,7 @@ export function ConnectPanel({
  * Pasting a built-in AI's key. It goes to StackWise's own .env.local through /api/keys and is used
  * at once; the page never gets it back, only whether the AI is on.
  */
-function KeyForm({
+export function KeyForm({
   recipient,
   keyName,
   keyPage,

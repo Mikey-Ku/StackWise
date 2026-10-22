@@ -19,6 +19,12 @@ export interface ProviderInfo {
   on: boolean;
   model: string;
   keyName: string;
+  /** The variable that picks the model, the models offered (the default first), and the default. */
+  modelEnv?: string;
+  models?: string[];
+  /** What's known about each offered model: a short name, context window, output limit, price. */
+  modelInfo?: { id: string; name: string; note: string; context: string; output: string; price: string; source: string; checked_on: string }[];
+  defaultModel?: string;
   /** What it still needs in .env.local, by name. Older servers leave it out. */
   needs?: string[];
   /** Claude, OpenAI and Gemini are always offered; other models show once they're set up. */
@@ -32,6 +38,9 @@ export interface AiStatus {
   providers?: ProviderInfo[];
   /** Where StackWise runs from, so exported projects can start its MCP server. */
   root?: string;
+  /** In the Mac app: the MCP address exported projects should use. */
+  mcpUrl?: string;
+  desktop?: boolean;
 }
 
 function QuestionRow({ model, need }: { model: PlanModel; need: Need }) {

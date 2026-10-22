@@ -1,12 +1,6 @@
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { detectProject } from "./detect";
 import { envValues, gitignoreCovers, mask, parseEnv, setEnv, springEnvRefs } from "./envfile";
-import { buildProbe, PROBES, safeBody } from "./probes";
-import { runSql } from "./local";
-import { checkReadOnly, postgresFrom, sqliteFrom } from "./sql";
 
 describe("env files", () => {
   const file = "# keys\nSTRIPE_SECRET_KEY=sk_test_123\nexport RESEND_API_KEY=\"re 456\"\nEMPTY=\nNOTE=abc # comment\n";
@@ -55,64 +49,6 @@ describe("detecting a project", () => {
   it("recognizes a Next.js app from package.json and offers its scripts", () => {
     const found = folder({ "package.json": JSON.stringify({ scripts: { dev: "next dev" }, dependencies: { next: "16" } }) });
     expect(found).toMatchObject({ framework: "nextjs", healthUrl: "http://localhost:3000/", commands: [{ command: "npm run dev" }] });
-  });
-});
-
-describe("live checks", () => {
-  it("fills a check from the project's env, masks keys in what the page sees, and says what's missing", () => {
-    const built = buildProbe(PROBES.stripe, { STRIPE_SECRET_KEY: "sk_test_abcdefghijk" });
-    if ("missing" in built) throw new Error("expected a probe");
-    expect(built.headers.authorization).toBe("Bearer sk_test_abcdefghijk");
-    expect(JSON.stringify(built.shown)).not.toContain("abcdefghijk");
-    expect(buildProbe(PROBES.stripe, {})).toEqual({ missing: ["STRIPE_SECRET_KEY"] });
-    expect(buildProbe(PROBES.espn, {})).toMatchObject({ url: expect.stringContaining("site.api.espn.com") });
-    expect(safeBody('{"echo":"sk_test_abcdefghijk"}', ["sk_test_abcdefghijk"])).not.toContain("abcdefghijk");
-  });
-
-  it("only ever reads: every check is a plain GET with no body", () => {
-    for (const def of Object.values(PROBES)) expect(def).not.toHaveProperty("body");
-  });
-});
-
-describe("the read-only SQL console", () => {
-  it("runs one statement that reads, and says why anything else won't run", () => {
-    expect(checkReadOnly("select * from entries limit 5;")).toBeNull();
-    expect(checkReadOnly("-- recent\nWITH x AS (SELECT 1) SELECT * FROM x")).toBeNull();
-    expect(checkReadOnly("SELECT ';' AS semicolon")).toBeNull();
-    expect(checkReadOnly("DELETE FROM entries")).toContain("DELETE changes it");
-    expect(checkReadOnly("SELECT 1; DROP TABLE entries")).toBe("Run one statement at a time.");
-    expect(checkReadOnly("PRAGMA journal_mode = WAL")).toContain("changes the database");
-    expect(checkReadOnly("   ")).toContain("Type a query");
-    // Postgres escape strings and dollar quotes can't hide a second statement.
-    expect(checkReadOnly("SELECT E'\\'' ; COMMIT; DELETE FROM t; SELECT 'x'")).toBe("Run one statement at a time.");
-    expect(checkReadOnly("SELECT $$;$$ AS body")).toBeNull();
-    expect(checkReadOnly("SELECT $q$ x $q$; DROP TABLE t")).toBe("Run one statement at a time.");
-  });
-
-  it("runs SQLite in a worker that gives up on a query that never ends", async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stackwise-sqlite-"));
-    try {
-      const { DatabaseSync } = await import("node:sqlite");
-      const db = new DatabaseSync(path.join(dir, "dev.db"));
-      db.exec("CREATE TABLE entries (id INTEGER, name TEXT); INSERT INTO entries VALUES (1, 'a'), (2, 'b');");
-      db.close();
-      fs.writeFileSync(path.join(dir, ".env"), "DATABASE_URL=file:./dev.db\n");
-      expect(await runSql(dir, "SELECT * FROM entries")).toMatchObject({ columns: ["id", "name"], rows: [[1, "a"], [2, "b"]], truncated: false });
-      const endless = await runSql(dir, "WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT count(*) FROM c");
-      expect(endless).toEqual({ error: "The query took longer than 5 seconds, so it was stopped." });
-      fs.writeFileSync(path.join(dir, ".env"), "DATABASE_URL=file:../outside.db\n");
-      expect(await runSql(dir, "SELECT 1")).toEqual({ error: "That database file is outside the project." });
-    } finally {
-      fs.rmSync(dir, { recursive: true, force: true });
-    }
-  }, 15_000);
-
-  it("builds a Postgres connection from a URL or from Spring's JDBC settings, and finds SQLite files", () => {
-    expect(postgresFrom({ DATABASE_URL: "postgres://u:p@h/db" })).toEqual({ config: { connectionString: "postgres://u:p@h/db" }, from: "DATABASE_URL" });
-    const spring = postgresFrom({ SPRING_DATASOURCE_URL: "jdbc:postgresql://db.example.com:5432/wheel?sslmode=require", SPRING_DATASOURCE_USERNAME: "wh", SPRING_DATASOURCE_PASSWORD: "p@ss" });
-    expect(spring?.config.connectionString).toBe("postgresql://wh:p%40ss@db.example.com:5432/wheel?sslmode=require");
-    expect(postgresFrom({ SPRING_DATASOURCE_URL: "jdbc:h2:file:./data/wheelhouse" })).toBeNull();
-    expect(sqliteFrom({ DATABASE_URL: "file:./dev.db" })).toBe("./dev.db");
   });
 });
 

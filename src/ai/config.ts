@@ -6,7 +6,11 @@ import { setting } from "@/engine/names";
  * keyword guesses and a template summary, and nothing else changes.
  */
 
-export const AI_MODEL = setting("MODEL") || "claude-opus-5";
+/** The Claude model, read on every call: STACKWISE_MODEL, saved from Settings, or the default. */
+export const DEFAULT_MODEL = "claude-opus-5";
+export function aiModel(): string {
+  return setting("MODEL") || DEFAULT_MODEL;
+}
 export const AI_EFFORT = (setting("EFFORT") as "low" | "medium" | "high" | undefined) || "low";
 
 /** Server-side refusal fallback: routes a declined request to Anthropic's recommended model. */

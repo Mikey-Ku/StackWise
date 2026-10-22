@@ -97,6 +97,17 @@ export function saveDefaultAnswerer(id: RecipientId): void {
   } catch {
     // Private windows: the default lasts until the tab closes.
   }
+  // The profile keeps it too, so Settings and the Ask panel agree and a new browser starts with it.
+  void fetch("/api/profile", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ answerer: id }) }).catch(() => undefined);
+}
+
+/** Saves one built-in AI setting (its key, or its model) through /api/keys; returns the new AI status, never a value. */
+export async function saveProviderSetting(name: string, value: string): Promise<AiStatus> {
+  const response = await fetch("/api/keys", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name, value }) });
+  const body = (await response.json()) as { error?: string; providers?: ProviderInfo[] };
+  if (!response.ok || !body.providers) throw new Error(body.error ?? "Couldn't save.");
+  const first = body.providers.find((p) => p.on);
+  return { ai: Boolean(first), model: first?.model ?? "", providers: body.providers };
 }
 
 /**
@@ -122,10 +133,6 @@ const ANSWERER_LOGOS: Record<string, AnswererMark> = {
   "api:claude": { src: "/brand/claude.svg" },
   "api:openai": { src: "/brand/ai/openai.svg", mono: true },
   "api:gemini": { src: "/brand/ai/gemini.svg" },
-  "api:deepseek": { src: "/brand/ai/deepseek.svg" },
-  "api:openrouter": { src: "/logos/openrouter.svg" },
-  "api:groq": { src: "/logos/groq.png" },
-  "api:mistral": { src: "/logos/mistral.svg" },
   "api:ollama": { src: "/brand/ollama.svg" },
   facts: { src: "/icon.svg" },
 };

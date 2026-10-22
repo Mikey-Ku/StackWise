@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { buildPlan, buildPlanMarkdown, connectionsOf, decodeSharedPlan, envFileText, inSentence, isOwn, LINK_WORDS, linkId, ownId, planEnv, SLOT_IDS, taskBrief, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
+import { buildPlan, buildPlanMarkdown, connectionsOf, decodeSharedPlan, narrateChange, testPlan, envFileText, inSentence, isOwn, LINK_WORDS, linkId, ownId, planEnv, SLOT_IDS, taskBrief, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
 import { presence } from "@/mcp/pairing";
 import { AddPart } from "./AddPart";
 import { AnswererMark } from "./AnswererMark";
@@ -30,12 +30,26 @@ import { ProjectPanel } from "./ProjectPanel";
 import { Overview, Planner, SummaryPill, type AiStatus } from "./Planner";
 import { SpecDialog } from "./SpecDialog";
 import { usePairing, type ClaudeActivity } from "./usePairing";
+import { toSharedPlan } from "./store";
 import { newId, usePlans } from "./usePlans";
 import { Logo, copyText, cx, undoHint } from "./ui";
 import { sharedName } from "./planFiles";
 import { Tip } from "./Tip";
 import { migrateLegacyStorage } from "./storage";
+import { planDefaults } from "./savedStore";
 import { useAdvanced } from "./useAdvanced";
+
+/** Whether the chat pane is open: open on a window wide enough for it; closing it lasts for the session. */
+const ASK_OPEN_KEY = "stackwise.ask-open";
+function readAskOpen(): boolean {
+  try {
+    const saved = window.sessionStorage.getItem(ASK_OPEN_KEY);
+    if (saved) return saved === "yes";
+  } catch {
+    // Private windows: decide by the window alone.
+  }
+  return window.innerWidth >= 1100;
+}
 
 /**
  * The workspace is the canvas, full screen, with everything else floating over it:
@@ -60,24 +74,17 @@ const PANELS: { id: Panel; label: string; icon: IconName; hint: string }[] = [
   { id: "overview", label: "Overview", icon: "overview", hint: "Problems, close calls, accounts and cost." },
   { id: "options", label: "Parts", icon: "parts", hint: "Every service StackWise knows, by part. Drag one onto the canvas." },
   { id: "checklist", label: "Checklist", icon: "checklist", hint: "Accounts, keys and the build order, to tick off." },
-  { id: "project", label: "Project", icon: "terminal", hint: "Your project folder: run it, set its keys, test each service." },
+  { id: "project", label: "Project", icon: "terminal", hint: "Your project folder: link it and set its keys." },
 ];
 
 // Saved data from before StackWise's rename moves to its new keys before anything reads it.
 if (typeof window !== "undefined") migrateLegacyStorage();
 
 /** The side panels' widths until someone drags their edge (PanelEdge). */
+const ASK_WIDTH = 340;
 const LEFT_WIDTH = 360;
 const RIGHT_WIDTH = 380;
 
-const CONNECT_SEEN_KEY = "stackwise.connect-seen";
-const readFlag = (key: string) => {
-  try {
-    return window.localStorage.getItem(key) === "yes";
-  } catch {
-    return false;
-  }
-};
 
 const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -91,7 +98,31 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   /** The part at the far end of the connection being looked at, when one is. */
   const [connection, setConnection] = useState<SlotId | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
-  const [ask, setAsk] = useState<{ open: boolean; slot: SlotId; request: AskRequest | null }>({ open: false, slot: "framework", request: null });
+  const [ask, setAsk] = useState<{ open: boolean; slot: SlotId; request: AskRequest | null }>(() => ({ open: readAskOpen(), slot: "framework", request: null }));
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(ASK_OPEN_KEY, ask.open ? "yes" : "no");
+    } catch {
+      // Private windows: the pane's state lasts until the tab closes.
+    }
+  }, [ask.open]);
+  // The chat pane and the left panel share the left side of the canvas: opening one closes the other.
+  const closeAsk = useCallback(() => setAsk((a) => (a.open ? { ...a, open: false, request: null } : a)), []);
+  const openPanel = useCallback(
+    (next: Panel) => {
+      setPanel(next);
+      closeAsk();
+    },
+    [closeAsk],
+  );
+  const togglePanel = (next: Panel) => {
+    if (panel === next) setPanel(null);
+    else openPanel(next);
+  };
+  const toggleAsk = useCallback(() => {
+    if (!ask.open) setPanel(null);
+    setAsk((a) => ({ ...a, open: !a.open, request: null }));
+  }, [ask.open]);
   const [menu, setMenu] = useState<MenuRequest | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -104,16 +135,14 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const [ai, setAi] = useState<AiStatus | null>(null);
   /** Who answers by default, saved in this browser. Shared by the Connect screen, the pill and Ask. */
   const [savedDefault, setSavedDefault] = useState<string | null>(readDefaultAnswerer);
-  /** Connecting the AI comes first, once per browser. */
-  const [connectSeen, setConnectSeen] = useState(() => readFlag(CONNECT_SEEN_KEY));
+  /** The AI popover from the pill in the top bar. Connecting an AI is optional and never comes first. */
   const [connectOpen, setConnectOpen] = useState(false);
-  /** The Connect step, reopened from the steps at the top of the planner sheet. */
-  const [connectAgain, setConnectAgain] = useState(false);
   /** The add-a-part picker, and the part it opened for, if any. */
   const [adding, setAdding] = useState<{ focus: SlotId | null } | null>(null);
   const [customEdit, setCustomEdit] = useState<CustomEdit | null>(null);
   const [extraEdit, setExtraEdit] = useState<ExtraEdit | null>(null);
   const [linkEdit, setLinkEdit] = useState<LinkEdit | null>(null);
+  const [askWidth, setAskWidth] = usePanelWidth("ask", ASK_WIDTH);
   const [leftWidth, setLeftWidth] = usePanelWidth("left", LEFT_WIDTH);
   const [rightWidth, setRightWidth] = usePanelWidth("right", RIGHT_WIDTH);
   const [advanced, setAdvanced] = useAdvanced();
@@ -138,35 +167,33 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     saveDefaultAnswerer(id);
     setSavedDefault(id);
   }, []);
-  const finishConnect = () => {
-    try {
-      window.localStorage.setItem(CONNECT_SEEN_KEY, "yes");
-    } catch {
-      // Private windows: the Connect screen shows again next time.
-    }
-    setConnectSeen(true);
-    setConnectAgain(false);
-  };
-  const showConnect = connectAgain || (!connectSeen && plan.step === "describe");
-  const sheetStep = showConnect ? 0 : plan.step === "describe" ? 1 : 2;
+  const sheetStep = plan.step === "describe" ? 0 : 1;
   const steps = [
-    { label: "Connect", go: () => setConnectAgain(true) },
-    {
-      label: "Describe",
-      go: () => {
-        finishConnect();
-        dispatch({ type: "goTo", step: "describe" });
-      },
-    },
-    {
-      label: "Confirm",
-      go: () => {
-        finishConnect();
-        dispatch({ type: "goTo", step: "confirm" });
-      },
-    },
+    { label: "Describe", go: () => dispatch({ type: "goTo", step: "describe" }) },
+    { label: "Confirm", go: () => dispatch({ type: "goTo", step: "confirm" }) },
   ];
   const mod = isMac() ? "⌘" : "Ctrl+";
+
+  // The chat narrates every change to the plan: what changed, as if typed, then what it did, from the facts.
+  const moment = useRef<{ id: string; plan: SharedPlan; rec: typeof rec } | null>(null);
+  useEffect(() => {
+    const shared = toSharedPlan(plan);
+    const prev = moment.current;
+    moment.current = { id: plan.id, plan: shared, rec };
+    if (!prev || prev.id !== plan.id) return;
+    const story = narrateChange(index, { plan: prev.plan, rec: prev.rec }, { plan: shared, rec });
+    if (!story) return;
+    const at = new Date().toISOString();
+    queueMicrotask(() =>
+      dispatch({
+        type: "addTurns",
+        turns: [
+          { id: newId(), role: "you", text: story.you, at, about: story.about },
+          { id: newId(), role: "facts", text: story.facts, at, about: story.about },
+        ],
+      }),
+    );
+  }, [plan, rec, index, dispatch]);
 
   // A different part or connection starts at the top of its panel, not where the last one was scrolled.
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -227,14 +254,14 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         dispatch({ type: "switchPlan", id: linked.id });
         setToast(`Opened ${linked.appName || name}, already linked to ${folder}.`);
       } else {
-        dispatch({ type: "newPlan", id: newId(), now: new Date().toISOString() });
+        dispatch({ type: "newPlan", id: newId(), now: new Date().toISOString(), defaults: planDefaults() });
         dispatch({ type: "setText", field: "appName", value: name });
         if (project.body.readme) dispatch({ type: "setText", field: "description", value: project.body.readme });
         dispatch({ type: "setFolder", folder: project.body.folder });
         if (project.body.framework) dispatch({ type: "place", slot: "framework", optionId: project.body.framework });
-        setToast(`New application for ${name}, linked to its folder${project.body.framework ? `, built with ${project.body.label}` : ""}.${project.body.readme ? " Its README is the description: check it, then press Read my description." : ""}`);
+        setToast(`New project for ${name}, linked to its folder${project.body.framework ? `, built with ${project.body.label}` : ""}.${project.body.readme ? " Its README is the description: check it, then press Read my description." : ""}`);
       }
-      setPanel("project");
+      openPanel("project");
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per folder in the address
   }, []);
@@ -255,13 +282,13 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         setToast("That share link is broken or incomplete.");
         return;
       }
-      // Named like an application already here? The copy gets " (shared)" so the two can be told apart.
+      // Named like a project already here? The copy gets " (shared)" so the two can be told apart.
       const plan = sharedName(shared, history.store.plans);
       dispatch({ type: "importPlan", id: newId(), now: new Date().toISOString(), plan });
       if (folder && window.confirm(`This link also points at a folder on this computer:\n\n${folder}\n\nLink "${plan.appName || "this plan"}" to it? StackWise only runs or writes files there when you ask it to.`)) {
         dispatch({ type: "setFolder", folder });
       }
-      setToast(`Opened "${plan.appName || "a shared plan"}". It's saved as a new application in this browser.`);
+      setToast(`Opened "${plan.appName || "a shared plan"}". It's saved as a new project.`);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per link; the names only matter at that moment
   }, [dispatch]);
@@ -279,6 +306,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     setConnection(null);
   }, []);
   const openAsk = useCallback((slot: SlotId, question?: string) => {
+    setPanel(null);
     setAsk({ open: true, slot, request: question ? { slot, question, nonce: Date.now() } : null });
   }, []);
   const openAdd = useCallback((slot?: SlotId) => setAdding({ focus: slot ?? null }), []);
@@ -302,14 +330,12 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     [rec.selection, rec.needed, index, dispatch, selectedSlot],
   );
 
-  const togglePanel = (next: Panel) => setPanel((current) => (current === next ? null : next));
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setAsk((a) => ({ ...a, open: !a.open, request: null }));
+        toggleAsk();
         return;
       }
       const typing = e.target instanceof Element && e.target.closest("input, textarea, select, [contenteditable]");
@@ -337,7 +363,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [dispatch, panel, selectedSlot, deselect, openAdd, removePart, plan.step]);
+  }, [dispatch, panel, selectedSlot, deselect, openAdd, removePart, plan.step, toggleAsk]);
 
   const nameOf = useCallback(
     (slot: SlotId) => {
@@ -384,11 +410,14 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         {
           label: `Build this with ${builderAgent.label}`,
           icon: "terminal",
-          onSelect: () => setAsk({ open: true, slot: task.slot, request: { slot: task.slot, question: taskBrief(tasks, taskId, plan.appName)!, nonce: Date.now(), to: builderAgent.id } }),
+          onSelect: () => {
+            setPanel(null);
+            setAsk({ open: true, slot: task.slot, request: { slot: task.slot, question: taskBrief(tasks, taskId, plan.appName, testPlan(index, model.input, rec.selection, task, plan.appName))!, nonce: Date.now(), to: builderAgent.id } });
+          },
         },
       ];
     },
-    [tasks, builderAgent, building, plan.appName],
+    [tasks, builderAgent, building, plan.appName, index, model.input, rec.selection],
   );
 
   /** "Draw a line to…": every other thing on the canvas a line from `from` could reach. */
@@ -468,7 +497,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           ...(advanced && slot !== "framework" && current ? [{ label: `Add another service for ${def.label.toLowerCase()}`, icon: "plus" as const, onSelect: () => setExtraEdit({ id: null, slot }) }] : []),
           ...(advanced && current ? [drawLineMenu(slot === "framework" ? "app" : slot)] : []),
           ...(slot === "framework" && projectPanel
-            ? [{ label: plan.icon ? "Change the app's logo" : "Add a logo for this app", icon: "pin" as const, onSelect: () => setPanel("project") }]
+            ? [{ label: plan.icon ? "Change the app's logo" : "Add a logo for this app", icon: "pin" as const, onSelect: () => openPanel("project") }]
             : []),
           {
             label: `Learn about ${inSentence(def.label)}`,
@@ -591,7 +620,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             icon: "fit",
             disabled: !moved,
             onSelect: () => {
-              dispatch({ type: "moveNodes", spots: tidySpots(visibleParts(rec.selection, rec.needed, showAll), plan.layout, [...Object.keys(plan.extras).map((id) => `extra-${id}`), ...Object.keys(plan.custom)]) });
+              dispatch({ type: "moveNodes", spots: tidySpots(visibleParts(rec.selection, rec.needed, showAll), plan.layout, Object.keys(plan.custom), plan.extras) });
               setFitNonce((n) => n + 1);
             },
           },
@@ -615,7 +644,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
       }
       setMenu({ x, y, items });
     },
-    [mod, history, dispatch, index, rec, catalog, nameOf, openAsk, openAdd, openLearn, saveImage, removePart, select, selectConnection, model, plan.appName, plan.layout, plan.icon, plan.custom, plan.extras, plan.links, drawLineMenu, endName, today, building, showAll, advanced, projectPanel, buildWith, tasks],
+    [mod, history, dispatch, index, rec, catalog, nameOf, openAsk, openAdd, openLearn, openPanel, saveImage, removePart, select, selectConnection, model, plan.appName, plan.layout, plan.icon, plan.custom, plan.extras, plan.links, drawLineMenu, endName, today, building, showAll, advanced, projectPanel, buildWith, tasks],
   );
 
   // The AI pill: who answers, and whether it's there. Nothing connected reads as an invitation.
@@ -624,7 +653,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const answererState = answerer.id === "facts" ? "Connect" : answerer.group === "api" ? "Ready" : STATE_TEXT[answerer.state];
 
   return (
-    <div className={cx("ws", !building && "is-planning")} data-drawer={selectedSlot ? "open" : "closed"} data-panel={panel ?? "none"}>
+    <div className={cx("ws", !building && "is-planning")} data-drawer={selectedSlot ? "open" : "closed"} data-panel={panel ?? "none"} data-ask={ask.open ? "open" : "closed"} style={{ "--ask-w": `${askWidth}px` } as CSSProperties}>
       <ReactFlowProvider>
         <PlanCanvas
           model={model}
@@ -659,8 +688,18 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             <span className="ws-mark__name">StackWise</span>
           </span>
           <PlanMenu model={model} onToast={setToast} />
+          <Tip name="Projects" text="All your plans, and the projects on this computer.">
+            <button type="button" className="ws-bar__nav" aria-label="Projects" onClick={() => router.push("/projects")}>
+              <Icon name="grid" size={15} />
+            </button>
+          </Tip>
+          <Tip name="Settings" text="Models, agents, folders and the look.">
+            <button type="button" className="ws-bar__nav" aria-label="Settings" onClick={() => router.push("/settings")}>
+              <Icon name="tool" size={15} />
+            </button>
+          </Tip>
         </div>
-        {building && <SummaryPill model={model} onOpen={() => setPanel("overview")} />}
+        {building && <SummaryPill model={model} onOpen={() => openPanel("overview")} />}
         <div className="ws-bar__side ws-bar__side--end">
           <button
             type="button"
@@ -675,7 +714,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             <span className="ws-connpill__label">{answererName}</span>
             <span className={cx("ws-connpill__state", answererLive && "is-live", answerer.id === "facts" && "is-cta")}>{answererState}</span>
           </button>
-          <button type="button" className={cx("ws-askbtn", ask.open && "is-on")} onClick={() => setAsk((a) => ({ ...a, open: !a.open, request: null }))} title={`Ask about your plan (${mod}K)`}>
+          <button type="button" className={cx("ws-askbtn", ask.open && "is-on")} onClick={toggleAsk} title={`Ask about your plan (${mod}K)`}>
             <Icon name="sparkle" size={15} />
             <span>Ask</span>
             <kbd>{mod}K</kbd>
@@ -754,12 +793,12 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           <div className="ws-float__body">
             {shown.id === "overview" && (
               <>
-                <Overview model={model} onSelect={select} onOpenChecklist={() => setPanel("checklist")} onExplain={() => openAsk("framework", "Explain my plan")} />
+                <Overview model={model} onSelect={select} onOpenChecklist={() => openPanel("checklist")} onExplain={() => openAsk("framework", "Explain my plan")} />
               </>
             )}
-            {shown.id === "project" && <ProjectPanel model={model} pairing={pairing} onToast={setToast} />}
+            {shown.id === "project" && <ProjectPanel model={model} onToast={setToast} />}
             {shown.id === "options" && <Palette model={model} selectedSlot={selectedSlot} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onToast={setToast} />}
-            {shown.id === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} onOpenProject={projectPanel ? () => setPanel("project") : undefined} />}
+            {shown.id === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} onOpenProject={projectPanel ? () => openPanel("project") : undefined} />}
           </div>
         </aside>
       )}
@@ -781,7 +820,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
                 today={today}
                 onAsk={openAsk}
                 onShowPart={() => setConnection(null)}
-                onOpenChecklist={() => setPanel("checklist")}
+                onOpenChecklist={() => openPanel("checklist")}
                 onToast={setToast}
               />
             ) : (
@@ -816,7 +855,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
 
       {!building && (
         <div className="ws-sheet-wrap">
-          <div className="ws-sheet" role="dialog" aria-label={showConnect ? "Connect your AI" : "Describe your app"}>
+          <div className="ws-sheet" role="dialog" aria-label="Describe your app">
             <nav className="ws-steps" aria-label="Steps">
               {steps.map((step, i) => (
                 <button key={step.label} type="button" className={cx("ws-steps__step", i === sheetStep && "is-on", i < sheetStep && "is-done")} aria-current={i === sheetStep ? "step" : undefined} onClick={step.go}>
@@ -825,11 +864,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
                 </button>
               ))}
             </nav>
-            {showConnect ? (
-              <ConnectPanel ai={ai} pairing={pairing} savedDefault={savedDefault} onChoose={chooseAnswerer} onKeysChanged={updateAi} onDone={finishConnect} onToast={setToast} />
-            ) : (
-              <Planner model={model} ai={ai} />
-            )}
+            <Planner model={model} ai={ai} />
           </div>
         </div>
       )}
@@ -843,6 +878,10 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           pairing={pairing}
           savedDefault={savedDefault}
           onSaveDefault={chooseAnswerer}
+          onAi={updateAi}
+          width={askWidth}
+          fallbackWidth={ASK_WIDTH}
+          onResize={setAskWidth}
           onSlot={(slot) => setAsk((a) => ({ ...a, slot, request: null }))}
           onClose={() => setAsk((a) => ({ ...a, open: false, request: null }))}
           onToast={setToast}
@@ -931,7 +970,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         </div>
       )}
 
-      <SpecDialog model={model} generatedOn={specDate} stackwiseRoot={ai?.root} onClose={() => setSpecDate(null)} onToast={setToast} onSaveImage={saveImage} />
+      <SpecDialog model={model} generatedOn={specDate} stackwiseRoot={ai?.root} mcpUrl={ai?.mcpUrl} onClose={() => setSpecDate(null)} onToast={setToast} onSaveImage={saveImage} />
       <CompareDialog model={model} request={compare} today={today} onClose={() => setCompare(null)} onToast={setToast} />
     </div>
   );

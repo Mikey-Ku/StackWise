@@ -2,7 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { swappable, type TalkBrief } from "@/engine/talk";
-import { AI_EFFORT, AI_MODEL, AiError, FALLBACK_BETA, withoutEmDashes } from "./config";
+import { AI_EFFORT, aiModel, AiError, FALLBACK_BETA, withoutEmDashes } from "./config";
 import { askJson, type FetchLike, type ProviderStatus } from "./providers";
 
 /**
@@ -84,7 +84,7 @@ export function acceptTalk(brief: TalkBrief, output: z.infer<ReturnType<typeof b
 
 export async function aiTalk(client: Anthropic, brief: TalkBrief, history: TalkTurn[], question: string): Promise<TalkReply> {
   const response = await client.beta.messages.parse({
-    model: AI_MODEL,
+    model: aiModel(),
     max_tokens: 16000,
     betas: [FALLBACK_BETA],
     fallbacks: "default",

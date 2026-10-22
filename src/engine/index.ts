@@ -20,3 +20,6 @@ export * from "./own";
 export * from "./extras";
 export * from "./buildplan";
 export * from "./review";
+export * from "./layers";
+export * from "./testplan";
+export * from "./narrate";

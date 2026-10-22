@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ReviewView from "./ReviewView";
-import "../apps/apps.css";
+import "../shell.css";
+import "../projects/projects.css";
 import "./review.css";
 
 export const metadata: Metadata = {

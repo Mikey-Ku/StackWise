@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from "react";
-import { BrandMark } from "@/components/BrandMark";
-import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { Shell, useMe } from "@/components/Shell";
 import { Logo, Seg, cx, useMediaQuery } from "@/components/ui";
 import { reviewCounts, type Logo as LogoFile, type ReviewItem } from "@/engine";
 import type { ReviewFlag } from "@/engine/review-store";
@@ -62,6 +60,7 @@ function StatusBadge({ item }: { item: Item }) {
  * draft and saves the comment for whoever fixes it. J and K move, Y confirms, N flags, O opens the source.
  */
 export default function ReviewView() {
+  const [me] = useMe();
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloads, setReloads] = useState(0);
@@ -195,33 +194,11 @@ export default function ReviewView() {
   const percent = counts.behindDefaults ? Math.round((counts.behindDefaultsReviewed / counts.behindDefaults) * 100) : 0;
 
   return (
-    <div className="apps rv">
-      <header className="apps-top">
-        <div className="apps-top__inner">
-          <Link href="/" className="apps-brand" aria-label="StackWise, back to your plan">
-            <BrandMark size={26} />
-            <span className="apps-brand__name">StackWise</span>
-            <span className="apps-brand__sep" aria-hidden="true">
-              /
-            </span>
-            <span className="apps-brand__page">Review facts</span>
-          </Link>
-          <span className="apps-top__actions">
-            <ThemeSwitch className="mk-btn mk-btn--ghost mk-sm apps-theme" />
-            <Link href="/" className="mk-btn mk-sm apps-back">
-              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-                <path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>Back to your plan</span>
-            </Link>
-          </span>
-        </div>
-      </header>
-
-      <main className="apps-main rv-main">
+    <Shell me={me}>
+      <div className="rv rv-main">
         <div className="rv-head">
           <div className="mk-stack mk-gap-1">
-            <h1 className="apps-title">Review facts</h1>
+            <h1 className="shell-title">Review facts</h1>
             <p className="mk-muted rv-intro">
               Open each fact&apos;s source and check it says the same thing. &ldquo;Matches the source&rdquo; marks the fact verified in <code className="mk-mono">data/options</code> with
               today&apos;s date. &ldquo;Something&apos;s off&rdquo; keeps it a draft and saves your note in <code className="mk-mono">.stackwise/review-flags.json</code>.
@@ -415,13 +392,13 @@ export default function ReviewView() {
             )}
           </>
         )}
-      </main>
+      </div>
 
       {toast && (
         <div className="ws-toast" role="status">
           {toast}
         </div>
       )}
-    </div>
+    </Shell>
   );
 }

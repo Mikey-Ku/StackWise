@@ -19,7 +19,9 @@
     "check:sources": "tsx --env-file-if-exists=.env.local scripts/check-sources.ts",
     "draft:option": "tsx --env-file-if-exists=.env.local scripts/draft-option.ts",
     "build:logos": "tsx scripts/build-logos.ts",
-    "stackwise": "tsx scripts/stackwise.ts"
+    "stackwise": "tsx scripts/stackwise.ts",
+    "app": "electron .",
+    "app:build": "STACKWISE_STANDALONE=1 next build && node electron/pack.cjs && node electron/build.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
@@ -28,16 +30,16 @@
     "fflate": "^0.8.3",
     "html-to-image": "1.11.11",
     "next": "16.3.4",
-    "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/node": "^25.9.5",
-    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^44.9.3",
+    "electron-builder": "^26.15.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "simple-icons": "^16.31.0",
@@ -48,5 +50,6 @@
   "packageManager": "pnpm@12.3.4",
   "bin": {
     "stackwise": "bin/stackwise"
-  }
+  },
+  "main": "electron/main.cjs"
 }

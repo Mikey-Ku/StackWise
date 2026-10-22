@@ -5,6 +5,7 @@ import type { SharedPlan } from "./share";
 import { buildSpecPack, type SpecDetails, type SpecFile } from "./spec";
 import { buildTask, isOwn } from "./own";
 import { buildPlan, buildPlanMarkdown } from "./buildplan";
+import { testPlan, testPlanText } from "./testplan";
 
 /**
  * The project pack: the spec pack plus what an AI builder needs to work through it on its own.
@@ -28,6 +29,8 @@ export interface ProjectDetails extends SpecDetails {
 export interface ProjectOptions {
   /** Where StackWise lives on this machine, so the project can start its MCP server. */
   stackwiseRoot?: string;
+  /** The running StackWise's MCP address. When set, .mcp.json points there instead of starting its own server. */
+  mcpUrl?: string;
 }
 
 const PROBLEM_LEVELS = new Set(["blocked", "missing", "warning", "unknown"]);
@@ -84,14 +87,16 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
   };
 
   // TASKS.md is the canvas as work: parts, extra services, parts added by hand and the lines between them (buildplan.ts).
+  const buildTasks = buildPlan(index, input, selection, details.plan);
+  const tests = Object.fromEntries(buildTasks.map((task) => [task.id, testPlan(index, input, selection, task, name)]));
   const tasks: SpecFile = {
     name: "TASKS.md",
-    content: buildPlanMarkdown(buildPlan(index, input, selection, details.plan), { appName: name, generatedOn: details.generatedOn, problems: problems.length > 0 }),
+    content: buildPlanMarkdown(buildTasks, { appName: name, generatedOn: details.generatedOn, problems: problems.length > 0, tests }),
   };
 
   if (builder?.format !== "claude-md") return [...spec, tasks, planFile];
 
-  const mcpReady = Boolean(options.stackwiseRoot);
+  const mcpReady = Boolean(options.mcpUrl || options.stackwiseRoot);
   const stackwiseSection = [
     "## Working with StackWise",
     "",
@@ -219,6 +224,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
             : []),
           ...(touching.length ? ["## Problems StackWise found", "", ...touching.map(resultLine), ""] : []),
           ...(notes.length ? ["## Good to know", "", ...notes.map(resultLine), ""] : []),
+          ...(tests[`part:${slot}`] ? ["## Test it", "", ...testPlanText(tests[`part:${slot}`]), ""] : []),
           "## Done when",
           "",
           ...doneWhen(slot, true).map((line) => `- ${line}`),
@@ -253,7 +259,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
     ? [
         {
           name: ".mcp.json",
-          content: `${JSON.stringify({ mcpServers: { stackwise: { command: "pnpm", args: ["--silent", "--dir", options.stackwiseRoot!, "mcp"] } } }, null, 2)}\n`,
+          content: `${JSON.stringify({ mcpServers: { stackwise: options.mcpUrl ? { type: "http", url: options.mcpUrl } : { command: "pnpm", args: ["--silent", "--dir", options.stackwiseRoot!, "mcp"] } } }, null, 2)}\n`,
         },
         { name: ".claude/settings.json", content: `${JSON.stringify({ permissions: { allow: ["mcp__stackwise"] } }, null, 2)}\n` },
       ]
