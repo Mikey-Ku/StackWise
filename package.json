@@ -19,7 +19,9 @@
     "check:sources": "tsx --env-file-if-exists=.env.local scripts/check-sources.ts",
     "draft:option": "tsx --env-file-if-exists=.env.local scripts/draft-option.ts",
     "build:logos": "tsx scripts/build-logos.ts",
-    "stackwise": "tsx scripts/stackwise.ts"
+    "stackwise": "tsx scripts/stackwise.ts",
+    "app": "electron .",
+    "app:build": "STACKWISE_STANDALONE=1 next build && node electron/pack.cjs && electron-builder --mac --arm64 --publish never"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
@@ -36,6 +38,8 @@
     "@types/node": "^25.9.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^44.9.3",
+    "electron-builder": "^26.15.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "simple-icons": "^16.31.0",
@@ -46,5 +50,50 @@
   "packageManager": "pnpm@12.3.4",
   "bin": {
     "stackwise": "bin/stackwise"
+  },
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "me.michaelkujr.stackwise",
+    "productName": "StackWise",
+    "directories": {
+      "app": "electron",
+      "buildResources": "electron",
+      "output": "release"
+    },
+    "files": [
+      "**/*",
+      "!pack.cjs",
+      "!icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": ".next/app-standalone",
+        "to": "standalone"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "electron/icon.png",
+      "darkModeSupport": true,
+      "identity": null
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "npmRebuild": false
   }
 }

@@ -2,6 +2,7 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { indexCatalog } from "@/engine/evaluate";
 import { loadCatalog } from "@/engine/load";
 import { localOnly } from "@/mcp/local";
+import { isDesktop, MCP_URL } from "@/local/home";
 import { homeRegistry } from "@/mcp/registry";
 import { createStackWiseServer } from "@/mcp/server";
 
@@ -24,6 +25,7 @@ async function handle(request: Request): Promise<Response> {
     registry,
     planId: () => registry.activeId(),
     stackwiseRoot: root,
+    ...(isDesktop() ? { mcpUrl: MCP_URL } : {}),
     where: "app",
   });
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });

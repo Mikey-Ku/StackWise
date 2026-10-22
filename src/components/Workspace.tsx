@@ -592,7 +592,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             icon: "fit",
             disabled: !moved,
             onSelect: () => {
-              dispatch({ type: "moveNodes", spots: tidySpots(visibleParts(rec.selection, rec.needed, showAll), plan.layout, [...Object.keys(plan.extras).map((id) => `extra-${id}`), ...Object.keys(plan.custom)]) });
+              dispatch({ type: "moveNodes", spots: tidySpots(visibleParts(rec.selection, rec.needed, showAll), plan.layout, Object.keys(plan.custom), plan.extras) });
               setFitNonce((n) => n + 1);
             },
           },
@@ -932,7 +932,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         </div>
       )}
 
-      <SpecDialog model={model} generatedOn={specDate} stackwiseRoot={ai?.root} onClose={() => setSpecDate(null)} onToast={setToast} onSaveImage={saveImage} />
+      <SpecDialog model={model} generatedOn={specDate} stackwiseRoot={ai?.root} mcpUrl={ai?.mcpUrl} onClose={() => setSpecDate(null)} onToast={setToast} onSaveImage={saveImage} />
       <CompareDialog model={model} request={compare} today={today} onClose={() => setCompare(null)} onToast={setToast} />
     </div>
   );

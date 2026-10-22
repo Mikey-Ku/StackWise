@@ -17,6 +17,14 @@ export function stackwiseHome(env: Record<string, string | undefined> = process.
   return setting("HOME", env) || path.join(home, ".stackwise");
 }
 
+/** Running inside the Mac app (electron/main.cjs sets this), where StackWise's own folder isn't a place to write. */
+export function isDesktop(env: Record<string, string | undefined> = process.env): boolean {
+  return setting("DESKTOP", env) === "1";
+}
+
+/** The address agents reach StackWise at. The app always serves it; the desktop app hands it to exported projects. */
+export const MCP_URL = "http://127.0.0.1:4310/api/mcp";
+
 export const profileSchema = z.object({
   /** How StackWise greets you. Left empty, it uses your account name. */
   name: z.string().max(80).default(""),

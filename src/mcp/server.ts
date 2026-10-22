@@ -63,6 +63,8 @@ export interface McpContext {
   /** Where StackWise lives, for the .mcp.json an exported project uses. */
   stackwiseRoot: string;
   where: "app" | "project";
+  /** The running StackWise's MCP address, in the Mac app: exported projects point at it instead of a pnpm command. */
+  mcpUrl?: string;
   /** How long wait_for_message waits and when an idle agent stops listening. Tests shorten these. */
   pair?: PairSettings;
   /** The project folder the agent runs in, when StackWise knows it (stdio gets CLAUDE_PROJECT_DIR). export_project writes there by default. */
@@ -515,7 +517,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
           version: record.version,
           updatedAt: record.updatedAt,
         },
-        { stackwiseRoot: ctx.stackwiseRoot },
+        { stackwiseRoot: ctx.stackwiseRoot, mcpUrl: ctx.mcpUrl },
       );
       if (list_only) return json({ files: files.map((f) => ({ path: f.name, chars: f.content.length })) });
       if (paths) {

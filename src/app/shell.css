@@ -389,3 +389,20 @@ body:has(.shell) {
     width: 100%;
   }
 }
+
+/* Inside the Mac app: the sidebar starts under the traffic lights and drags the window. */
+html[data-desktop] .shell-side {
+  padding-top: 46px;
+  -webkit-app-region: drag;
+}
+html[data-desktop] .shell-side a,
+html[data-desktop] .shell-side button,
+html[data-desktop] .shell-side .shell-me {
+  -webkit-app-region: no-drag;
+}
+@media (max-width: 720px) {
+  html[data-desktop] .shell-side {
+    padding-top: 10px;
+    padding-left: 84px;
+  }
+}

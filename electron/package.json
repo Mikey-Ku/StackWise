@@ -1,0 +1,10 @@
+{
+  "name": "stackwise",
+  "productName": "StackWise",
+  "version": "0.1.0",
+  "description": "Plan an app's stack you understand: a sourced rules engine checks every connection, then hands your coding agent the plan over MCP.",
+  "main": "main.cjs",
+  "author": "Michael Ku",
+  "license": "MIT",
+  "private": true
+}

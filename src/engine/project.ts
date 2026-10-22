@@ -29,6 +29,8 @@ export interface ProjectOptions {
   /** Where StackWise lives on this machine, so the project can start its MCP server. */
   stackwiseRoot?: string;
 }
+  /** The running StackWise's MCP address. When set, .mcp.json points there instead of starting its own server. */
+  mcpUrl?: string;
 
 const PROBLEM_LEVELS = new Set(["blocked", "missing", "warning", "unknown"]);
 
@@ -91,7 +93,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
 
   if (builder?.format !== "claude-md") return [...spec, tasks, planFile];
 
-  const mcpReady = Boolean(options.stackwiseRoot);
+  const mcpReady = Boolean(options.mcpUrl || options.stackwiseRoot);
   const stackwiseSection = [
     "## Working with StackWise",
     "",
@@ -253,7 +255,7 @@ export function buildProjectPack(index: CatalogIndex, input: PlanInput, selectio
     ? [
         {
           name: ".mcp.json",
-          content: `${JSON.stringify({ mcpServers: { stackwise: { command: "pnpm", args: ["--silent", "--dir", options.stackwiseRoot!, "mcp"] } } }, null, 2)}\n`,
+          content: `${JSON.stringify({ mcpServers: { stackwise: options.mcpUrl ? { type: "http", url: options.mcpUrl } : { command: "pnpm", args: ["--silent", "--dir", options.stackwiseRoot!, "mcp"] } } }, null, 2)}\n`,
         },
         { name: ".claude/settings.json", content: `${JSON.stringify({ permissions: { allow: ["mcp__stackwise"] } }, null, 2)}\n` },
       ]

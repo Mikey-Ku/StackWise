@@ -2,6 +2,7 @@ import { z } from "zod";
 import { resetClient } from "@/ai/config";
 import { PROVIDER_KEY_NAMES, providerStatus } from "@/ai/providers";
 import { localOnly, readJson } from "@/mcp/local";
+import { isDesktop, stackwiseHome } from "@/local/home";
 import { writeEnv } from "@/project/local";
 
 /**
@@ -31,7 +32,8 @@ export async function POST(request: Request) {
   if (/[\r\n]/.test(value)) return Response.json({ error: "A key is one line." }, { status: 400 });
 
   try {
-    const { ignored } = writeEnv(process.cwd(), name, value);
+    // In the Mac app StackWise's own folder is inside the app bundle, so keys live with your plans.
+    const { ignored } = writeEnv(isDesktop() ? stackwiseHome() : process.cwd(), name, value);
     if (value) process.env[name] = value;
     else delete process.env[name];
     resetClient();

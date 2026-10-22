@@ -32,6 +32,9 @@ export interface AiStatus {
   providers?: ProviderInfo[];
   /** Where StackWise runs from, so exported projects can start its MCP server. */
   root?: string;
+  /** In the Mac app: the MCP address exported projects should use. */
+  mcpUrl?: string;
+  desktop?: boolean;
 }
 
 function QuestionRow({ model, need }: { model: PlanModel; need: Need }) {

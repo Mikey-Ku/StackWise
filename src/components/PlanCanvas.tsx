@@ -21,14 +21,14 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { connectionLabel, connectionsOf, inSentence, isOwn, LINK_WORDS, linkVerdict, optionStats, planEnv, worstLevel, type CheckResult, type Connection, type Logo as LogoFile, type SlotId } from "@/engine";
+import { connectionLabel, connectionsOf, inSentence, isOwn, LAYERS, layerBox, layeredLayout, layerOf, LINK_WORDS, linkVerdict, optionStats, planEnv, worstLevel, type CheckResult, type Connection, type Extra, type LayerId, type Logo as LogoFile, type SlotId } from "@/engine";
 import { DiagramImage, type ImageRequest } from "./DiagramImage";
 import { Icon } from "./icons";
 import { useTheme } from "./ThemeSwitch";
 import type { Spot } from "./store";
 import type { PlanModel } from "./usePlans";
 import { Logo, VERDICT_UI, VerdictDot, cx, type Verdict } from "./ui";
-import { arrangeInOrder, wireEnds, type Box } from "./wire";
+import { wireEnds, type Box } from "./wire";
 
 /**
  * The canvas is a graph with typed connections (see docs/DECISIONS.md), shown as one app in the
@@ -63,25 +63,23 @@ export type CanvasTarget =
   | { kind: "canvas" };
 
 /**
- * Where StackWise puts the parts when nobody has moved them: on an ellipse around the app,
- * clockwise from the top, spaced evenly among the ones showing, so a small plan is as balanced as
- * a big one. The ellipse grows with the number of parts so cards don't overlap.
+ * Where StackWise puts the parts when nobody has moved them: by layer, around the app (see
+ * src/engine/layers.ts). Where it runs sits above the app, the people-facing services on the
+ * left, the data on the right, and the outside services below, so the plan reads as a system
+ * design. An extra service sits in its part's layer; a part added by hand sits with the outside
+ * services.
  */
-function ellipseFor(count: number): { rx: number; ry: number } {
-  const rx = Math.min(560, Math.max(320, 250 + count * 24));
-  return { rx, ry: Math.round(rx * 0.72) };
+function layerFor(id: string, extras: Record<string, Extra>): LayerId {
+  if (id.startsWith("slot-")) return layerOf(id.slice("slot-".length) as SlotId)?.id ?? "outside";
+  if (id.startsWith("extra-")) {
+    const slot = extras[id.slice("extra-".length)]?.slot;
+    return (slot && layerOf(slot)?.id) ?? "outside";
+  }
+  return "outside";
 }
 
-/** `parts` are node ids in clockwise order: the showing parts, then the person's own. */
-function autoLayout(parts: string[]): Record<string, Spot> {
-  const { rx, ry } = ellipseFor(parts.length);
-  return Object.fromEntries([
-    [APP_NODE, { x: 0, y: 0 }],
-    ...parts.map((id, i) => {
-      const angle = ((-90 + (i * 360) / parts.length) * Math.PI) / 180;
-      return [id, { x: Math.round(rx * Math.cos(angle)), y: Math.round(ry * Math.sin(angle)) }];
-    }),
-  ]);
+function autoLayout(ids: string[], extras: Record<string, Extra>, center: Spot = { x: 0, y: 0 }): Record<string, Spot> {
+  return { [APP_NODE]: center, ...layeredLayout(ids.map((id) => ({ id, layer: layerFor(id, extras) })), center) };
 }
 
 /** The parts showing on the canvas: filled, needed by the answers, or everything when "show all" is on. */
@@ -89,14 +87,11 @@ export function visibleParts(selection: Partial<Record<SlotId, string>>, needed:
   return OUTER.filter((slot) => Boolean(selection[slot]) || needed.includes(slot) || showAll);
 }
 
-/** Spots for "Tidy up": every showing part keeps its place in the order around the app, evenly spaced. */
-export function tidySpots(visible: OuterSlot[], layout: Record<string, Spot>, own: string[] = []): Record<string, Spot> {
-  const ids = [...visible.map(nodeId), ...own];
-  const auto = autoLayout(ids);
-  const center = layout[APP_NODE] ?? auto[APP_NODE];
-  const { rx, ry } = ellipseFor(ids.length);
-  const parts = ids.map((id) => ({ id, ...(layout[id] ?? auto[id]) }));
-  return { [APP_NODE]: center, ...arrangeInOrder(center, parts, rx, ry) };
+/** Spots for "Tidy up": every showing part back in its layer, around wherever the app is. */
+export function tidySpots(visible: OuterSlot[], layout: Record<string, Spot>, own: string[] = [], extras: Record<string, Extra> = {}): Record<string, Spot> {
+  const extraIds = Object.keys(extras);
+  const ids = [...visible.flatMap((slot) => [nodeId(slot), ...extraIds.filter((id) => extras[id].slot === slot).map(extraNode)]), ...own];
+  return autoLayout(ids, extras, layout[APP_NODE] ?? { x: 0, y: 0 });
 }
 
 /** Room for the floating bar on top and the dock below, so a fit never tucks a card under them. */
@@ -438,7 +433,23 @@ function CustomNode({ data }: NodeProps<Node<CustomData>>) {
   );
 }
 
-const nodeTypes = { app: AppNode, slot: SlotNode, custom: CustomNode };
+interface ZoneData extends Record<string, unknown> {
+  label: string;
+  what: string;
+}
+
+/** The zone behind a layer's cards: a label and a soft box. It takes no clicks, so the cards and the pane behind it work as before. */
+function ZoneNode({ data }: NodeProps<Node<ZoneData>>) {
+  return (
+    <div className="ws-zone" title={data.what}>
+      <a className="ws-zone__label nodrag nopan" href="/learn#start-here" title={`${data.what} Click to learn more.`}>
+        {data.label}
+      </a>
+    </div>
+  );
+}
+
+const nodeTypes = { app: AppNode, slot: SlotNode, custom: CustomNode, zone: ZoneNode };
 
 export function PlanCanvas({
   model,
@@ -542,7 +553,7 @@ export function PlanCanvas({
   const spots = useMemo(() => {
     // Extras sit right after their part in the ring, so a cache lands next to its database.
     const ids = [...visible.flatMap((slot) => [nodeId(slot), ...extraIds.filter((id) => plan.extras[id].slot === slot).map(extraNode)]), ...own];
-    const auto = autoLayout(ids);
+    const auto = autoLayout(ids, plan.extras);
     const at = (id: string): Spot => plan.layout[id] ?? auto[id] ?? { x: 0, y: 0 };
     return Object.fromEntries([APP_NODE, ...ids].map((id) => [id, at(id)]));
   }, [visible, own, extraIds, plan.extras, plan.layout]);
@@ -803,6 +814,18 @@ export function PlanCanvas({
     [nodes, dragged, sizes],
   );
 
+  // A zone behind each layer's cards, sized to wherever they are now, so it follows a drag.
+  const withZones = useMemo(() => {
+    const zones: Node[] = [];
+    for (const layer of LAYERS) {
+      const members = placed.filter((n) => n.id !== APP_NODE && layerFor(n.id, plan.extras) === layer.id);
+      const box = layerBox(members.map((n) => ({ ...n.position, width: n.measured?.width ?? 170, height: n.measured?.height ?? 56 })));
+      if (!box) continue;
+      zones.push({ id: `zone-${layer.id}`, type: "zone", position: { x: box.x, y: box.y }, style: { width: box.width, height: box.height }, draggable: false, selectable: false, focusable: false, zIndex: -1, data: { label: layer.label, what: layer.what } satisfies ZoneData });
+    }
+    return [...zones, ...placed];
+  }, [placed, plan.extras]);
+
   const slotAt = (event: DragEvent): SlotId | null => {
     const el = (event.target as HTMLElement).closest("[data-slot]");
     return (el?.getAttribute("data-slot") as SlotId | null) ?? null;
@@ -829,7 +852,8 @@ export function PlanCanvas({
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     const moves = changes.flatMap((c) => (c.type === "position" && c.dragging && c.position ? [[c.id, c.position] as const] : []));
     if (moves.length) setDragged((current) => ({ ...current, ...Object.fromEntries(moves) }));
-    const measured = changes.flatMap((c) => (c.type === "dimensions" && c.dimensions ? [[c.id, c.dimensions] as const] : []));
+    // Zones take their size from the cards, not the other way round.
+    const measured = changes.flatMap((c) => (c.type === "dimensions" && c.dimensions && !c.id.startsWith("zone-") ? [[c.id, c.dimensions] as const] : []));
     if (measured.length) {
       setSizes((current) => {
         const changed = measured.some(([id, d]) => current[id]?.width !== d.width || current[id]?.height !== d.height);
@@ -865,7 +889,7 @@ export function PlanCanvas({
         }}
       >
         <ReactFlow
-          nodes={placed}
+          nodes={withZones}
           edges={edges}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
@@ -895,7 +919,9 @@ export function PlanCanvas({
           }}
           onPaneClick={onDeselect}
           onNodeContextMenu={(e, node) =>
-            actions.menu(
+            node.id.startsWith("zone-")
+              ? actions.menu({ kind: "canvas" }, e)
+              : actions.menu(
               node.id.startsWith("custom-")
                 ? { kind: "custom", id: node.id }
                 : node.id.startsWith("extra-")

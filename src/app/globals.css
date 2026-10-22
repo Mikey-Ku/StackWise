@@ -3352,3 +3352,60 @@ body {
   height: 15px;
   object-fit: contain;
 }
+
+/* ---------- v1: inside the Mac app (electron/preload.cjs sets data-desktop) ---------- */
+/* The window has no title bar: the top strip drags it, and the bar sits past the traffic lights. */
+html[data-desktop] .ws::before {
+  content: "";
+  position: absolute;
+  z-index: 29;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 48px;
+  -webkit-app-region: drag;
+}
+html[data-desktop] .ws-bar {
+  left: 84px;
+}
+html[data-desktop] .ws-bar > * {
+  -webkit-app-region: no-drag;
+}
+
+/* ---------- v1: layers on the canvas ---------- */
+/* A zone behind each layer's cards: where it runs, people, data, outside services. It only draws
+   and labels; everything in it is clicked, dragged and dropped on as before. */
+.react-flow__node-zone {
+  pointer-events: none;
+}
+.ws-zone {
+  box-sizing: border-box;
+  height: 100%;
+  border: 1px dashed color-mix(in srgb, var(--mk-text) 18%, transparent);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--mk-text) 3.5%, transparent);
+}
+.ws-zone__label {
+  position: absolute;
+  top: 10px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--mk-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  pointer-events: auto;
+}
+.ws-zone__label:hover {
+  background: var(--ws-fill);
+  color: var(--mk-text);
+}
+.is-exporting .ws-zone__label {
+  background: none;
+}

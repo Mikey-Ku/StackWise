@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The Mac app runs the built site as a standalone server (electron/main.cjs). pnpm build stays as it is.
+  ...(process.env.STACKWISE_STANDALONE ? { output: "standalone" as const, outputFileTracingRoot: __dirname } : {}),
   devIndicators: false,
   // next dev would otherwise write its own AGENTS.md and CLAUDE.md blocks into this repo.
   agentRules: false,

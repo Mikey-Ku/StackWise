@@ -715,3 +715,13 @@ html:has(.learn) {
     display: none;
   }
 }
+
+/* Inside the Mac app: the header starts past the traffic lights and drags the window. */
+html[data-desktop] .learn-top {
+  padding-left: 72px;
+  -webkit-app-region: drag;
+}
+html[data-desktop] .learn-top a,
+html[data-desktop] .learn-top button {
+  -webkit-app-region: no-drag;
+}

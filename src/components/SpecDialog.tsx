@@ -11,6 +11,7 @@ export function SpecDialog({
   model,
   generatedOn,
   stackwiseRoot,
+  mcpUrl,
   onClose,
   onToast,
   onSaveImage,
@@ -18,6 +19,8 @@ export function SpecDialog({
   model: PlanModel;
   generatedOn: string | null;
   stackwiseRoot: string | undefined;
+  /** The running StackWise's MCP address, in the Mac app: exported projects point at it. */
+  mcpUrl?: string;
   onClose: () => void;
   onToast: (message: string) => void;
   /** Saves the diagram as a PNG, with the page's background or none. */
@@ -52,10 +55,10 @@ export function SpecDialog({
               planId: plan.id,
               plan: toSharedPlan(plan),
             },
-            { stackwiseRoot },
+            { stackwiseRoot, mcpUrl },
           )
         : [],
-    [generatedOn, index, input, rec.selection, plan, stackwiseRoot],
+    [generatedOn, index, input, rec.selection, plan, stackwiseRoot, mcpUrl],
   );
   const file = files.find((f) => f.name === active) ?? files[0];
   const builder = model.catalog.planning.builders.find((b) => b.id === plan.builderId);
@@ -76,8 +79,8 @@ export function SpecDialog({
         </div>
         <p className="mk-muted">
           {files.length} files: the spec, setup steps, tasks and the plan
-          {agents ? `, plus ${agents} Claude Code agents${stackwiseRoot ? " and StackWise's MCP connection" : ""}` : ""}. Unzip it as your project folder.
-          {builder?.format === "claude-md" && !stackwiseRoot ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
+          {agents ? `, plus ${agents} Claude Code agents${stackwiseRoot || mcpUrl ? " and StackWise's MCP connection" : ""}` : ""}. Unzip it as your project folder.
+          {builder?.format === "claude-md" && !stackwiseRoot && !mcpUrl ? " StackWise's folder couldn't be found, so .mcp.json is left out; see docs/MCP.md to add it." : ""}
         </p>
         <label className="mk-field ws-spec__pick">
           <span className="mk-label">File</span>
