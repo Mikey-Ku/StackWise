@@ -2,7 +2,17 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // The Mac app runs the built site as a standalone server (electron/main.cjs). pnpm build stays as it is.
-  ...(process.env.STACKWISE_STANDALONE ? { output: "standalone" as const, outputFileTracingRoot: __dirname } : {}),
+  ...(process.env.STACKWISE_STANDALONE
+    ? {
+        output: "standalone" as const,
+        outputFileTracingRoot: __dirname,
+        // Next copies into the standalone every file a page's fs reads can be traced to. A read whose
+        // folder it can't evaluate (a project folder, the home folder) becomes a `**/<file>` glob over
+        // this repo, which matched the copies of data/ inside release/ (the last app build), the empty
+        // .git and the old .stackwise. None of that belongs in the app; pack.cjs copies data/ itself.
+        outputFileTracingExcludes: { "*": [".git/**", "**/.git", "release/**", ".stackwise/**"] },
+      }
+    : {}),
   devIndicators: false,
   // next dev would otherwise write its own AGENTS.md and CLAUDE.md blocks into this repo.
   agentRules: false,

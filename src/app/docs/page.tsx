@@ -15,6 +15,17 @@ export const metadata: Metadata = {
 // The docs are files in the repo; read them on every request so an edit shows on refresh.
 export const dynamic = "force-dynamic";
 
+/**
+ * Where the Markdown is: the working folder (the repo, or the standalone folder in the Mac app,
+ * where pack.cjs copies the files). Written this way on purpose: Next's output file tracing
+ * follows every `fs.readFileSync(path.join(process.cwd(), ...))` it can evaluate, and with a
+ * variable file name it traced the whole working folder into the standalone build (the git
+ * history, the last dmg, private notes). A plain `a || process.cwd()` was folded back to
+ * `process.cwd()` by the bundler; a lookup in an array is something neither it nor the tracer
+ * evaluates, so the read traces nothing and pack.cjs copies the files itself.
+ */
+const docsRoot = () => [process.env.STACKWISE_DOCS_ROOT, process.cwd()].find(Boolean) as string;
+
 /** The documents, in reading order. Each is a Markdown file in the repo, shown as one section. */
 const DOCS: { id: string; title: string; file: string }[] = [
   { id: "overview", title: "Overview", file: "README.md" },
@@ -90,7 +101,7 @@ export default function DocsPage() {
   const docs: Doc[] = DOCS.flatMap((doc) => {
     let text: string;
     try {
-      text = fs.readFileSync(path.join(process.cwd(), doc.file), "utf8");
+      text = fs.readFileSync(path.join(docsRoot(), doc.file), "utf8");
     } catch {
       return [];
     }
