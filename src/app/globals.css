@@ -2024,9 +2024,15 @@ html[data-desktop] .ws-ask__top {
   gap: 4px;
   min-width: 0;
 }
+/* Focus is quiet here: the caret says it all, like any chat box. */
 .ws-ask__compose:focus-within {
-  border-color: var(--mk-accent);
-  box-shadow: var(--mk-focus-ring);
+  border-color: var(--mk-line-strong);
+}
+.ws-ask__compose textarea:focus,
+.ws-ask__compose textarea:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
 }
 .ws-ask__compose textarea {
   flex: none;
