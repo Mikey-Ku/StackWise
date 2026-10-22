@@ -80,10 +80,10 @@ function createWindow() {
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 16, y: 18 },
     backgroundColor: "#f5f5f7",
-    show: false,
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, sandbox: true },
   });
-  win.once("ready-to-show", () => win && win.show());
+  // The window is visible from the start. Created hidden and shown on ready-to-show, its page
+  // stayed in the hidden state on macOS 26: no layout, no paint, a blank gray window.
   // Links to other sites open in the browser, never in this window.
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (!url.startsWith(URL)) shell.openExternal(url);
@@ -104,13 +104,25 @@ function createWindow() {
   win.on("closed", () => {
     win = null;
   });
-  // The app opens on your projects; the canvas is one click from there.
-  win.loadURL(`${URL}/projects`);
+  // A load that fails because the server is still starting is tried again, up to ten times.
+  let retries = 0;
+  win.webContents.on("did-fail-load", (event, code, description, url, isMainFrame) => {
+    if (!isMainFrame || !url.startsWith(URL) || retries >= 10) return;
+    retries += 1;
+    setTimeout(() => win && win.loadURL(url), 500);
+  });
+}
+
+/** The page the app opens on: your projects; the canvas is one click from there. */
+function loadHome() {
+  win && win.loadURL(`${URL}/projects`);
 }
 
 function showWindow() {
-  if (!win) createWindow();
-  else {
+  if (!win) {
+    createWindow();
+    loadHome();
+  } else {
     win.show();
     win.focus();
   }
@@ -163,8 +175,11 @@ app.whenReady().then(async () => {
   // A StackWise already running (the stackwise command, or pnpm dev) is used as it is.
   if (!(await up())) startServer();
   createTray();
+  // The window comes up at once (gray), and loads the page only when the server answers: a load
+  // sent before that failed with ECONNREFUSED and left the window blank for good.
   createWindow();
-  if (!(await waitForServer())) {
+  if (await waitForServer()) loadHome();
+  else {
     win && win.loadURL(`data:text/html,<meta charset="utf-8"><body style="font-family:-apple-system;padding:40px"><h2>StackWise didn't start</h2><p>Its log is in ${HOME}/app.log.</p></body>`);
   }
 });
