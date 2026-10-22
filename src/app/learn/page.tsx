@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { loadCatalog } from "@/engine/load";
+import { readMe } from "@/local/home";
 import { LearnView, type LearnPart, type LearnTerm } from "./LearnView";
+import "../shell.css";
 import "./learn.css";
 
 // Read /data on every request, like the planner, so edits to learn.json show up on refresh.
@@ -33,5 +35,5 @@ export default function LearnPage() {
     [...(learn.start_here?.read_more ?? []), ...parts.flatMap((p) => p.read_more), ...terms.flatMap((t) => t.read_more)].map((link) => link.source),
   );
 
-  return <LearnView startHere={learn.start_here ?? null} parts={parts} terms={terms} sourceCount={sources.size} />;
+  return <LearnView me={readMe()} startHere={learn.start_here ?? null} parts={parts} terms={terms} sourceCount={sources.size} />;
 }

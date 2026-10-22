@@ -8,6 +8,7 @@ import { AnswererMark } from "./AnswererMark";
 import { answererLogo, providerLabel, providersOf, recipientsFor, pickDefault, saveProviderSetting, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
 import { Icon, type IconName } from "./icons";
+import { PanelEdge } from "./PanelEdge";
 import type { AiStatus, ProviderInfo } from "./Planner";
 import { toSharedPlan, type ChatTurn } from "./store";
 import type { AgentMessage, ClaudeActivity, Pairing } from "./usePairing";
@@ -339,6 +340,9 @@ export function AskPanel({
   savedDefault,
   onSaveDefault,
   onAi,
+  width,
+  fallbackWidth,
+  onResize,
   onSlot,
   onClose,
   onToast,
@@ -353,6 +357,10 @@ export function AskPanel({
   onSaveDefault: (id: RecipientId) => void;
   /** The AI status after a model was picked here. */
   onAi: (ai: AiStatus) => void;
+  /** The pane's width, dragged from its edge and kept per browser. */
+  width: number;
+  fallbackWidth: number;
+  onResize: (width: number) => void;
   onSlot: (slot: SlotId) => void;
   onClose: () => void;
   onToast: (message: string) => void;
@@ -701,6 +709,7 @@ export function AskPanel({
         </div>
       </form>
       <ContextMenu request={menu} onClose={() => setMenu(null)} />
+      <PanelEdge side="left" width={width} fallback={fallbackWidth} onResize={onResize} />
     </section>
   );
 }

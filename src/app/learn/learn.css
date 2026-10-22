@@ -8,7 +8,7 @@ body:has(.learn) {
   overflow: visible;
 }
 html:has(.learn) {
-  scroll-padding-top: 76px;
+  scroll-padding-top: 24px;
 }
 @media (prefers-reduced-motion: no-preference) {
   html:has(.learn) {
@@ -16,12 +16,10 @@ html:has(.learn) {
   }
 }
 
+/* Inside the shell (sidebar, scrolling page), with the table of contents where Settings has its section list. */
 .learn {
-  --learn-top-h: 60px;
-  --learn-toc-w: 248px;
-  --learn-gutter: 32px;
-  min-height: 100vh;
-  background: var(--mk-bg);
+  --learn-top-h: 0px;
+  --learn-toc-w: 196px;
   color: var(--mk-text);
   overflow-wrap: break-word;
 }
@@ -49,89 +47,26 @@ html:has(.learn) {
   top: 12px;
 }
 
-/* ---------- Top bar ---------- */
-.learn-top {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  height: var(--learn-top-h);
-  background: var(--ws-glass);
-  -webkit-backdrop-filter: var(--ws-blur);
-  backdrop-filter: var(--ws-blur);
-  border-bottom: 1px solid var(--ws-glass-line);
-}
-.learn-top__inner {
-  max-width: 1240px;
-  height: 100%;
-  margin: 0 auto;
-  padding: 0 var(--learn-gutter);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.learn-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  text-decoration: none;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-}
-.learn-brand__name {
-  font-size: 16px;
-}
-.learn-brand__sep {
-  color: var(--mk-text-faint);
-  font-weight: 400;
-}
-.learn-brand__page {
-  color: var(--mk-text-muted);
-  font-weight: 500;
-}
-.learn .learn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: none;
-  text-decoration: none;
-}
-
-.learn-top__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: none;
-}
-.learn .learn-theme {
-  width: 30px;
-  padding: 0;
-  justify-content: center;
-}
-
 /* ---------- Layout ---------- */
 .learn-shell {
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 0 var(--learn-gutter);
   display: grid;
   grid-template-columns: var(--learn-toc-w) minmax(0, 1fr);
-  gap: 56px;
+  gap: 40px;
+  align-items: start;
 }
 .learn-main {
   min-width: 0;
   max-width: 780px;
-  padding: 48px 0 96px;
+  padding: 0 0 48px;
 }
 
 /* ---------- Table of contents ---------- */
 .learn-toc__inner {
   position: sticky;
-  top: var(--learn-top-h);
-  max-height: calc(100vh - var(--learn-top-h));
+  top: 44px;
+  max-height: calc(100vh - 60px);
   overflow-y: auto;
-  padding: 40px 8px 40px 0;
+  padding: 0 8px 24px 0;
   overscroll-behavior: contain;
 }
 .learn-toc__heading {
@@ -152,11 +87,12 @@ html:has(.learn) {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  padding: 6px 10px;
-  border-radius: var(--mk-radius-sm);
+  padding: 7px 10px;
+  border-radius: 10px;
   font-size: 14px;
+  font-weight: 500;
   line-height: 1.35;
-  color: var(--mk-text-muted) !important;
+  color: var(--mk-text) !important;
   text-decoration: none;
   transition:
     background var(--mk-dur-fast) var(--mk-ease),
@@ -167,8 +103,8 @@ html:has(.learn) {
   color: var(--mk-text) !important;
 }
 .learn-toc__link.is-active {
-  background: var(--mk-accent-soft);
-  color: var(--accent) !important;
+  background: var(--ws-fill-strong, var(--ws-fill));
+  color: var(--mk-text) !important;
   font-weight: 600;
 }
 .learn-toc__num {
@@ -625,7 +561,7 @@ html:has(.learn) {
   .learn-toc-mobile {
     display: block;
     position: sticky;
-    top: calc(var(--learn-top-h) + 8px);
+    top: 8px;
     z-index: 5;
     margin-top: 24px;
     border-radius: var(--mk-radius-lg);
@@ -674,14 +610,6 @@ html:has(.learn) {
 }
 
 @media (max-width: 640px) {
-  .learn {
-    --learn-gutter: 16px;
-    --learn-top-h: 56px;
-  }
-  .learn-brand__sep,
-  .learn-brand__page {
-    display: none;
-  }
   .learn-lead,
   .learn-what {
     font-size: 17px;
@@ -710,18 +638,3 @@ html:has(.learn) {
   }
 }
 
-@media (max-width: 340px) {
-  .learn-back span {
-    display: none;
-  }
-}
-
-/* Inside the Mac app: the header starts past the traffic lights and drags the window. */
-html[data-desktop] .learn-top {
-  padding-left: 98px;
-  -webkit-app-region: drag;
-}
-html[data-desktop] .learn-top a,
-html[data-desktop] .learn-top button {
-  -webkit-app-region: no-drag;
-}

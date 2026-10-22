@@ -1634,8 +1634,10 @@ body {
 /* The Ask panel. */
 /* A fixed side panel, not a floating card: full height on the left, and the canvas, the bar, the
    planning sheet and the dock all make room for it. */
+.ws {
+  --ask-w: 340px;
+}
 .ws-ask {
-  --ask-w: 400px;
   position: absolute;
   z-index: 28;
   top: 0;
@@ -1647,9 +1649,6 @@ body {
   border-right: 0.5px solid var(--ws-glass-line);
   border-radius: 0;
   box-shadow: none;
-}
-.ws[data-ask="open"] {
-  --ask-w: 400px;
 }
 .ws[data-ask="open"] .ws-canvas,
 .ws[data-ask="open"] .ws-sheet-wrap {
@@ -2492,7 +2491,8 @@ html[data-desktop] .ws-ask {
   .ws[data-ask="open"] .ws-dock {
     left: 50%;
   }
-  .ws-bar__nav {
+  .ws-bar__nav,
+  .ws-ask .ws-edge-grip {
     display: none;
   }
   .ws-sheet-wrap {

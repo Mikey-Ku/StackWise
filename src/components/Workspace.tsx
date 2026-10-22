@@ -80,6 +80,7 @@ const PANELS: { id: Panel; label: string; icon: IconName; hint: string }[] = [
 if (typeof window !== "undefined") migrateLegacyStorage();
 
 /** The side panels' widths until someone drags their edge (PanelEdge). */
+const ASK_WIDTH = 340;
 const LEFT_WIDTH = 360;
 const RIGHT_WIDTH = 380;
 
@@ -140,6 +141,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const [customEdit, setCustomEdit] = useState<CustomEdit | null>(null);
   const [extraEdit, setExtraEdit] = useState<ExtraEdit | null>(null);
   const [linkEdit, setLinkEdit] = useState<LinkEdit | null>(null);
+  const [askWidth, setAskWidth] = usePanelWidth("ask", ASK_WIDTH);
   const [leftWidth, setLeftWidth] = usePanelWidth("left", LEFT_WIDTH);
   const [rightWidth, setRightWidth] = usePanelWidth("right", RIGHT_WIDTH);
   const [advanced, setAdvanced] = useAdvanced();
@@ -629,7 +631,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const answererState = answerer.id === "facts" ? "Connect" : answerer.group === "api" ? "Ready" : STATE_TEXT[answerer.state];
 
   return (
-    <div className={cx("ws", !building && "is-planning")} data-drawer={selectedSlot ? "open" : "closed"} data-panel={panel ?? "none"} data-ask={ask.open ? "open" : "closed"}>
+    <div className={cx("ws", !building && "is-planning")} data-drawer={selectedSlot ? "open" : "closed"} data-panel={panel ?? "none"} data-ask={ask.open ? "open" : "closed"} style={{ "--ask-w": `${askWidth}px` } as CSSProperties}>
       <ReactFlowProvider>
         <PlanCanvas
           model={model}
@@ -855,6 +857,9 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           savedDefault={savedDefault}
           onSaveDefault={chooseAnswerer}
           onAi={updateAi}
+          width={askWidth}
+          fallbackWidth={ASK_WIDTH}
+          onResize={setAskWidth}
           onSlot={(slot) => setAsk((a) => ({ ...a, slot, request: null }))}
           onClose={() => setAsk((a) => ({ ...a, open: false, request: null }))}
           onToast={setToast}

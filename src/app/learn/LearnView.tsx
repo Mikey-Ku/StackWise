@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
-import { BrandMark } from "@/components/BrandMark";
-import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { Shell, type Me } from "@/components/Shell";
 import type { Learn, LearnLink, SlotId } from "@/engine/schema";
 
 type SlotEntry = NonNullable<Learn["slots"][SlotId]>;
@@ -72,7 +71,7 @@ function Toc({ parts, active, showStart, showGlossary, onPick }: { parts: LearnP
   );
 }
 
-export function LearnView({ startHere, parts, terms, sourceCount }: { startHere: StartHere | null; parts: LearnPart[]; terms: LearnTerm[]; sourceCount: number }) {
+export function LearnView({ me, startHere, parts, terms, sourceCount }: { me: Me | null; startHere: StartHere | null; parts: LearnPart[]; terms: LearnTerm[]; sourceCount: number }) {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState("start-here");
   const pendingHash = useRef<string | null>(null);
@@ -147,29 +146,11 @@ export function LearnView({ startHere, parts, terms, sourceCount }: { startHere:
   const nothing = q && !showStart && shownParts.length === 0 && shownTerms.length === 0;
 
   return (
+    <Shell me={me}>
     <div className="learn">
       <a className="learn-skip" href="#learn-content">
         Skip to content
       </a>
-      <header className="learn-top">
-        <div className="learn-top__inner">
-          <Link href="/" className="learn-brand" aria-label="StackWise, back to your plan">
-            <BrandMark size={26} />
-            <span className="learn-brand__name">StackWise</span>
-            <span className="learn-brand__sep" aria-hidden="true">/</span>
-            <span className="learn-brand__page">Learn</span>
-          </Link>
-          <span className="learn-top__actions">
-          <ThemeSwitch className="mk-btn mk-btn--ghost mk-sm learn-theme" />
-          <Link href="/" className="mk-btn mk-sm learn-back" aria-label="Back to your plan">
-            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-              <path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span>Back to your plan</span>
-          </Link>
-          </span>
-        </div>
-      </header>
 
       <div className="learn-shell">
         <aside className="learn-toc" aria-label="Table of contents">
@@ -396,5 +377,6 @@ export function LearnView({ startHere, parts, terms, sourceCount }: { startHere:
         </main>
       </div>
     </div>
+    </Shell>
   );
 }
