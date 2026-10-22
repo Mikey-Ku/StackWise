@@ -45,6 +45,25 @@ describe("the library and the browser", () => {
     expect(merged.plans.a1.updatedAt).toBe(t2);
   });
 
+  it("drops a fresh browser's untouched plan when the library already has plans, and opens the library's plan", () => {
+    const fresh = initialStore("new1", t2);
+    const disk = { activeId: "a1", order: ["a1"], plans: [record(planned("a1", "Fade", t1))] };
+    const merged = mergeStores(fresh, disk, t2);
+    expect(merged.order).toEqual(["a1"]);
+    expect(merged.plans.new1).toBeUndefined();
+    expect(merged.activeId).toBe("a1");
+    // Touched, it's a plan of its own and stays.
+    const typed = reduce({ store: fresh, past: [], future: [] }, { type: "setText", field: "description", value: "A barber shop app" }).store;
+    expect(mergeStores(typed, disk, t2).order).toEqual(["a1", "new1"]);
+  });
+
+  it("keeps the untouched plan on the first run, when the library is empty", () => {
+    const fresh = initialStore("new1", t2);
+    const merged = mergeStores(fresh, { activeId: "", order: [], plans: [] }, t2);
+    expect(merged.order).toEqual(["new1"]);
+    expect(merged.activeId).toBe("new1");
+  });
+
   it("falls back to a plan that exists when the open one was deleted elsewhere", () => {
     const browser = store([planned("gone", "Deleted on disk", t0)]);
     const disk = { activeId: "x1", order: ["x1"], plans: [record(planned("x1", "Kept", t1))] };

@@ -176,6 +176,22 @@ export function blankPlan(id: string, now: string): PlanState {
   };
 }
 
+/** A plan nobody has touched yet: what a fresh browser starts with before the library loads. */
+export function isBlankPlan(plan: PlanState): boolean {
+  return (
+    plan.step === "describe" &&
+    !plan.appName.trim() &&
+    !plan.description.trim() &&
+    !plan.features.trim() &&
+    Object.keys(plan.answers).length === 0 &&
+    Object.keys(plan.pinned).length === 0 &&
+    Object.keys(plan.custom).length === 0 &&
+    Object.keys(plan.extras).length === 0 &&
+    Object.keys(plan.notes).length === 0 &&
+    plan.chat.length === 0
+  );
+}
+
 /** Links that don't touch `end`: removing something takes its lines with it. */
 function withoutLinksTo(links: Record<string, PlanLink>, end: string): Record<string, PlanLink> {
   return Object.fromEntries(Object.entries(links).filter(([, link]) => link.from !== end && link.to !== end));

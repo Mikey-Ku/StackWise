@@ -104,7 +104,8 @@ function createWindow() {
   win.on("closed", () => {
     win = null;
   });
-  win.loadURL(URL);
+  // The app opens on your projects; the canvas is one click from there.
+  win.loadURL(`${URL}/projects`);
 }
 
 function showWindow() {

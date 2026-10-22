@@ -1,5 +1,5 @@
 import type { SharedPlan } from "@/engine";
-import { blankPlan, toSharedPlan, type PlanState, type Store } from "./store";
+import { blankPlan, isBlankPlan, toSharedPlan, type PlanState, type Store } from "./store";
 
 /**
  * The library on disk (~/.stackwise, through /api/library) and the store in this browser, kept
@@ -84,7 +84,10 @@ export function newest(record: DiskPlan): string {
  * open when it still exists.
  */
 export function mergeStores(local: Store, disk: DiskLibrary, now: string): Store {
-  const plans: Record<string, PlanState> = { ...local.plans };
+  // A fresh browser starts with one untouched plan. When the library already has plans, that
+  // plan isn't one more of them: without this, every new window added an "Untitled app".
+  const onDisk = new Set(disk.plans.map((record) => record.id));
+  const plans: Record<string, PlanState> = Object.fromEntries(Object.entries(local.plans).filter(([id, plan]) => onDisk.has(id) || disk.plans.length === 0 || !isBlankPlan(plan)));
   for (const record of disk.plans) {
     const mine = plans[record.id];
     if (!mine || newest(record) > mine.updatedAt) plans[record.id] = joinPlan(record, mine, now);
