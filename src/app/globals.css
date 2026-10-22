@@ -1647,6 +1647,8 @@ body {
   display: flex;
   flex-direction: column;
   width: var(--ask-w);
+  /* The pane's type follows the window: 12px on a small one, 14px on a wide one. */
+  font-size: clamp(12px, 0.7vw + 5.5px, 14px);
   border-right: 0.5px solid var(--ws-glass-line);
   border-radius: 0;
   box-shadow: none;
@@ -1700,7 +1702,9 @@ html[data-desktop] .ws-ask__top {
   gap: 6px;
   height: var(--bar-h);
   padding: 0 10px 0 12px;
-  border-bottom: 0.5px solid var(--ws-glass-line);
+}
+.ws-ask__hide svg {
+  transform: rotate(180deg);
 }
 .ws-ask__new {
   flex: none;
@@ -1711,7 +1715,7 @@ html[data-desktop] .ws-ask__top {
   background: var(--ws-fill);
   color: var(--mk-text);
   font: inherit;
-  font-size: 12px;
+  font-size: 0.86em;
   font-weight: 600;
   cursor: pointer;
 }
@@ -1728,7 +1732,7 @@ html[data-desktop] .ws-ask__top {
   overflow: hidden;
   padding: 0 6px;
   color: var(--mk-text-faint);
-  font-size: 12px;
+  font-size: 0.86em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1748,9 +1752,17 @@ html[data-desktop] .ws-ask__top {
   background: var(--ws-fill);
   color: var(--mk-text);
   font: inherit;
-  font-size: 12px;
+  font-size: 0.86em;
   font-weight: 600;
   cursor: pointer;
+}
+.ws-answerer--model {
+  color: var(--mk-text-muted);
+  font-weight: 500;
+}
+.ws-answerer:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 .ws-answerer:hover {
   background: var(--ws-fill-hover);
@@ -1837,7 +1849,7 @@ html[data-desktop] .ws-ask__top {
   padding: 12px 14px;
   border-radius: 14px;
   background: var(--mk-surface-sunk);
-  font-size: 13px;
+  font-size: 0.93em;
   line-height: 1.45;
 }
 .ws-connect ol {
@@ -1854,31 +1866,6 @@ html[data-desktop] .ws-ask__top {
 .ws-connect .ws-agent__toggle {
   padding: 0;
   background: transparent;
-}
-.ws-ask__about {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  height: 28px;
-  padding: 0 8px;
-  border-radius: 8px;
-  background: var(--ws-fill);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.ws-ask__about select {
-  min-width: 0;
-  max-width: 220px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-overflow: ellipsis;
-  appearance: none;
-  cursor: pointer;
 }
 .ws-ask__body {
   display: flex;
@@ -1897,7 +1884,7 @@ html[data-desktop] .ws-ask__top {
   margin-top: auto;
   padding: 4px 0 6px;
   color: var(--mk-text-muted);
-  font-size: 13px;
+  font-size: 0.93em;
   line-height: 1.45;
 }
 .ws-ask__lead {
@@ -1924,7 +1911,7 @@ html[data-desktop] .ws-ask__top {
   background: var(--mk-surface);
   color: var(--mk-text);
   font: inherit;
-  font-size: 13px;
+  font-size: 1em;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
@@ -1946,7 +1933,7 @@ html[data-desktop] .ws-ask__top {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 14px;
+  font-size: 1em;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -1969,7 +1956,7 @@ html[data-desktop] .ws-ask__top {
 }
 .ws-turn__who {
   color: var(--mk-text-faint);
-  font-size: 11px;
+  font-size: 0.8em;
   font-weight: 600;
 }
 .ws-turn__text {
@@ -2017,7 +2004,7 @@ html[data-desktop] .ws-ask__top {
   border-radius: 10px;
   background: var(--mk-surface-sunk);
   color: var(--mk-text-muted);
-  font-size: 12px;
+  font-size: 0.86em;
   line-height: 1.4;
 }
 .ws-ask__compose {
@@ -2037,32 +2024,6 @@ html[data-desktop] .ws-ask__top {
   gap: 4px;
   min-width: 0;
 }
-.ws-model {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  height: 28px;
-  padding: 0 8px;
-  border-radius: 8px;
-  background: var(--ws-fill);
-  color: var(--mk-text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.ws-model select {
-  min-width: 0;
-  max-width: 150px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-overflow: ellipsis;
-  appearance: none;
-  cursor: pointer;
-}
 .ws-ask__compose:focus-within {
   border-color: var(--mk-accent);
   box-shadow: var(--mk-focus-ring);
@@ -2078,7 +2039,7 @@ html[data-desktop] .ws-ask__top {
   background: transparent;
   color: var(--mk-text);
   font: inherit;
-  font-size: 14px;
+  font-size: 1em;
   line-height: 1.4;
   resize: none;
   field-sizing: content;

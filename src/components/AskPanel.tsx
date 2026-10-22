@@ -19,15 +19,14 @@ import { Logo, VerdictBadge, copyText, cx, undoHint, type Verdict } from "./ui";
  * The one place to talk about the plan: a chat pane docked on the left of the canvas, opened
  * with Cmd+K, the Ask button, a double-click on a part, or "Ask about this" on a right-click.
  *
- * One conversation per plan. The answerer in the composer picks who gets the next message:
- *   - a coding agent in a terminal (Claude Code, Codex, Gemini CLI). The message waits in the
- *     shared plan's inbox until the agent picks it up with wait_for_message; it works in the repo
- *     and answers with send_message.
- *   - a built-in AI with a key (Claude, OpenAI, Gemini and others), with its model picked right
- *     there. It answers from StackWise's facts and checks, never from memory.
- *   - StackWise's facts, with no AI at all.
- * Suggested notes and switches only change the plan when the person accepts them, as one
- * undoable step, and a switch always shows the verdict StackWise's rules give it.
+ * One conversation per plan. The composer picks who answers in two steps, like any chat app:
+ * the provider (Claude, ChatGPT, Gemini, or StackWise's own facts with no AI), then the model
+ * under it, where a coding agent in the terminal (Claude Code, Codex, Gemini CLI) sits next to
+ * the API's models. A message to an agent waits in the shared plan's inbox until the agent
+ * picks it up with wait_for_message; it works in the repo and answers with send_message. A
+ * built-in AI answers from StackWise's facts and checks, never from memory. Suggested notes and
+ * switches only change the plan when the person accepts them, as one undoable step, and a switch
+ * always shows the verdict StackWise's rules give it.
  */
 
 /** A question to send as soon as the panel is showing, from a menu like "Explain this connection". */
@@ -61,6 +60,31 @@ const PART_STARTERS: Starter[] = [
   { label: "Write a note for me", icon: "note" },
 ];
 const AGENT_STARTER: Starter = { label: "Build the next task", icon: "terminal" };
+
+/** The providers in the composer's first bubble, each with its terminal agent and its API. */
+interface Provider {
+  id: string;
+  label: string;
+  mark: RecipientId;
+  agent?: string;
+  api?: string;
+}
+const PROVIDERS: Provider[] = [
+  { id: "claude", label: "Claude", mark: "api:claude", agent: "claude-code", api: "claude" },
+  { id: "openai", label: "ChatGPT", mark: "api:openai", agent: "codex", api: "openai" },
+  { id: "gemini", label: "Gemini", mark: "api:gemini", agent: "gemini-cli", api: "gemini" },
+  { id: "facts", label: "StackWise", mark: "facts" },
+];
+/** The provider a recipient belongs to; an agent or API outside the list gets a provider of its own. */
+function providerFor(id: RecipientId, ai: AiStatus | null): Provider {
+  if (id === "facts") return PROVIDERS[3];
+  if (id.startsWith("api:")) {
+    const api = id.slice("api:".length);
+    return PROVIDERS.find((p) => p.api === api) ?? { id: api, label: providerLabel(ai, api), mark: id, api };
+  }
+  const agent = id.slice("agent:".length);
+  return PROVIDERS.find((p) => p.agent === agent) ?? { id: `agent-${agent}`, label: agentName(agent), mark: id, agent };
+}
 const BUILD_NEXT = "Build the next task: call get_build_plan, take the first task that isn't built yet, build it with its test plan, and reply here with what you did.";
 
 interface TalkResponse {
@@ -365,7 +389,7 @@ export function AskPanel({
   onClose: () => void;
   onToast: (message: string) => void;
 }) {
-  const { plan, rec, index, catalog, dispatch } = model;
+  const { plan, rec, index, dispatch } = model;
   const router = useRouter();
   const [chosen, setChosen] = useState<RecipientId | null>(null);
   const [menu, setMenu] = useState<MenuRequest | null>(null);
@@ -383,8 +407,11 @@ export function AskPanel({
   const recipientId = chosen ?? requested ?? pickDefault(recipients, savedDefault);
   const recipient = recipients.find((r) => r.id === recipientId) ?? recipients.find((r) => r.id === "facts")!;
   const agent = recipient.group === "agent" ? recipient.id.slice("agent:".length) : null;
-  const provider = recipient.group === "api" ? providersOf(ai).find((p) => `api:${p.id}` === recipient.id) : undefined;
-  const models = provider?.models ?? [];
+  const provider = providerFor(recipient.id, ai);
+  const api = provider.api ? providersOf(ai).find((p) => p.id === provider.api) : undefined;
+  const agentRecipientOf = (p: Provider) => (p.agent ? recipients.find((r) => r.id === `agent:${p.agent}`) : undefined);
+  const agentRecipient = agentRecipientOf(provider);
+  const mod = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "\u2318" : "Ctrl+";
 
   const option = rec.selection[slot] ? index.optionsById.get(rec.selection[slot]!) : undefined;
   const aboutLabel = (id: SlotId) => {
@@ -393,8 +420,6 @@ export function AskPanel({
     return picked ? `${picked.name} (${index.slotsById.get(id)?.label})` : (index.slotsById.get(id)?.label ?? id);
   };
   const subject = slot === "framework" ? plan.appName.trim() || "your app" : option ? option.name : inSentence(index.slotsById.get(slot)?.label ?? slot);
-  const parts = catalog.slots.filter((s) => s.id === "framework" || rec.selection[s.id] || rec.needed.includes(s.id));
-  const current = rec.selection[slot];
 
   // One timeline: the built-in AI's turns (in this browser) and the agents' messages and changes (on the server).
   const items = useMemo(() => {
@@ -411,16 +436,17 @@ export function AskPanel({
   const shown = onlyThis ? items.filter((item) => item.about === slot) : items;
   const mixed = new Set(items.map((i) => i.about).filter(Boolean)).size > 1;
 
-  // What the picked agent is doing with the last thing the person wrote to it.
-  const pending = useMemo(() => {
-    if (!agent) return null;
-    const mine = pairing.messages.filter((m) => m.agent === agent);
+  // What the picked agent is doing with the last thing the person wrote to it. Cheap enough to work out each render.
+  const pendingFor = (id: string | null): string | null => {
+    if (!id) return null;
+    const mine = pairing.messages.filter((m) => m.agent === id);
     const lastAsk = [...mine].reverse().find((m) => m.from === "you");
     if (!lastAsk) return null;
     const answered = mine.some((m) => m.from === "agent" && m.at > lastAsk.at && m.status !== "working");
     if (answered) return null;
-    return lastAsk.deliveredAt ? `${agentName(agent)} is working on it...` : `Waiting for ${agentName(agent)} to pick this up.`;
-  }, [agent, pairing.messages]);
+    return lastAsk.deliveredAt ? `${agentName(id)} is working on it...` : `Waiting for ${agentName(id)} to pick this up.`;
+  };
+  const pending = pendingFor(agent);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -514,31 +540,50 @@ export function AskPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per request, not per render of ask
   }, [request, slot]);
 
-  const openMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const pickModel = async (value: string) => {
+    if (!api?.modelEnv) return;
+    setSavingModel(true);
+    try {
+      onAi(await saveProviderSetting(api.modelEnv, value === api.defaultModel ? "" : value));
+      onToast(`${provider.label} answers with ${value}.`);
+    } catch (e) {
+      onToast(e instanceof Error ? e.message : "Couldn't change the model.");
+    } finally {
+      setSavingModel(false);
+    }
+  };
+
+  /** Picking a provider takes its agent when that's listening, else its API. */
+  const pickProvider = (p: Provider) => {
+    const a = agentRecipientOf(p);
+    const live = a && (a.state === "listening" || a.state === "working");
+    setChosen(live ? a.id : p.api ? `api:${p.api}` : a ? a.id : "facts");
+  };
+
+  const openProviderMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
-    const entry = (r: Recipient): MenuItem => ({
-      label: r.group === "api" ? r.label.replace(/ \(.*\)$/, "") : r.label,
-      lead: answererLogo(r.id) ? (
-        <AnswererMark id={r.id} className="ws-menu-logo" />
-      ) : (
-        <StateDot state={r.state} />
-      ),
-      hint: STATE_TEXT[r.state],
-      checked: r.id === recipientId,
-      disabled: r.state === "needs-key",
-      onSelect: () => setChosen(r.id),
-    });
+    const listed = PROVIDERS.some((p) => p.id === provider.id) ? PROVIDERS : [...PROVIDERS, provider];
     const isDefault = savedDefault === recipientId;
+    const hintFor = (p: Provider) => {
+      if (p.id === "facts") return "No AI: the rules and facts alone";
+      const a = agentRecipientOf(p);
+      if (a && (a.state === "listening" || a.state === "working")) return `${a.label} is listening`;
+      if (p.api && providersOf(ai).find((x) => x.id === p.api)?.on) return "Key saved";
+      return "Needs a key, or its agent in your terminal";
+    };
     setMenu({
       x: box.left,
       y: box.top - 6,
       items: [
-        { kind: "header", label: "Terminal agents" },
-        ...recipients.filter((r) => r.group === "agent").map(entry),
-        { kind: "header", label: "AI with a key" },
-        ...recipients.filter((r) => r.group === "api").map(entry),
-        { kind: "header", label: "No AI" },
-        ...recipients.filter((r) => r.group === "facts").map(entry),
+        ...listed.map(
+          (p): MenuItem => ({
+            label: p.label,
+            lead: <AnswererMark id={p.mark} className="ws-menu-logo" />,
+            hint: hintFor(p),
+            checked: p.id === provider.id,
+            onSelect: () => pickProvider(p),
+          }),
+        ),
         { kind: "separator" },
         {
           label: isDefault ? `${recipient.label} is your default` : `Make ${recipient.label} the default`,
@@ -555,25 +600,38 @@ export function AskPanel({
     });
   };
 
-  const pickModel = async (value: string) => {
-    if (!provider?.modelEnv) return;
-    setSavingModel(true);
-    try {
-      onAi(await saveProviderSetting(provider.modelEnv, value === provider.defaultModel ? "" : value));
-      onToast(`${provider.label} answers with ${value}.`);
-    } catch (e) {
-      onToast(e instanceof Error ? e.message : "Couldn't change the model.");
-    } finally {
-      setSavingModel(false);
+  /** The second bubble: the terminal agent, then the API's models, for the picked provider. */
+  const openModelMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    const items: MenuItem[] = [];
+    if (agentRecipient) items.push({ label: `${agentRecipient.label} in your terminal`, icon: "terminal", hint: STATE_TEXT[agentRecipient.state], checked: recipient.id === agentRecipient.id, onSelect: () => setChosen(agentRecipient.id) });
+    if (api) {
+      const models = api.models?.length ? api.models : api.model ? [api.model] : [];
+      const current = api.model || api.defaultModel;
+      if (items.length && models.length) items.push({ kind: "separator" });
+      for (const m of models) {
+        items.push({
+          label: m,
+          hint: m === api.defaultModel ? "Default" : undefined,
+          checked: recipient.id === `api:${api.id}` && current === m,
+          onSelect: () => {
+            setChosen(`api:${api.id}`);
+            if (m !== current) void pickModel(m);
+          },
+        });
+      }
+      items.push({ kind: "separator" }, { label: "Another model, or a key", icon: "tool", onSelect: () => router.push("/settings#models") });
     }
+    if (provider.id === "facts") items.push({ label: "Facts only, no AI", checked: true, onSelect: () => setChosen("facts") });
+    setMenu({ x: box.left, y: box.top - 6, items });
   };
+  const modelLabel = agent ? (agentRecipient?.label ?? agentName(agent)) : provider.id === "facts" ? "Facts only" : api ? (api.on ? api.model || api.defaultModel || "Default model" : "Needs a key") : recipient.label;
 
   const listening = recipient.group === "agent" && (recipient.state === "listening" || recipient.state === "working");
   const starters = [...(slot === "framework" ? APP_STARTERS : PART_STARTERS), ...(listening ? [AGENT_STARTER] : [])];
   const start = (s: Starter) => void ask(s.label === AGENT_STARTER.label ? BUILD_NEXT : s.label);
   const showConnect = recipient.group === "agent" && recipient.state !== "listening" && recipient.state !== "working";
   const needsKey = recipient.group === "api" && recipient.state !== "ready";
-  const answererName = recipient.group === "api" ? recipient.label.replace(/ \(.*\)$/, "").replace(/ API$/, "") : recipient.label;
 
   return (
     <section
@@ -600,16 +658,17 @@ export function AskPanel({
         >
           New chat
         </button>
-        <span className="ws-ask__plan" title="This conversation belongs to this plan">
+        <span className="ws-ask__plan" title={slot === "framework" ? "This conversation belongs to this plan" : `About ${aboutLabel(slot)}. Right-click a part to ask about it; naming a part in a message works too.`}>
           {plan.appName.trim() || "Untitled app"}
+          {slot !== "framework" && ` · ${index.slotsById.get(slot)?.label ?? slot}`}
         </span>
         {mixed && (
           <button type="button" className={cx("ws-iconbtn", onlyThis && "is-on")} aria-pressed={onlyThis} title={onlyThis ? `Showing only ${aboutLabel(slot)}` : `Show only ${aboutLabel(slot)}`} onClick={() => setOnlyThis((v) => !v)}>
             <Icon name="target" size={14} />
           </button>
         )}
-        <button type="button" className="ws-iconbtn" onClick={onClose} aria-label="Close" title="Close (Esc)">
-          <Icon name="close" size={14} />
+        <button type="button" className="ws-iconbtn ws-ask__hide" onClick={onClose} aria-label="Hide the chat" title={`Hide the chat (${mod}K)`}>
+          <Icon name="chevron" size={14} />
         </button>
       </header>
 
@@ -637,7 +696,7 @@ export function AskPanel({
             ))}
             {busy && !agent && (
               <div className="ws-turn ws-turn--claude is-busy">
-                <span className="ws-turn__who">{recipient.group === "api" ? answererName : "StackWise facts"}</span>
+                <span className="ws-turn__who">{recipient.group === "api" ? provider.label : "StackWise facts"}</span>
                 <p>Thinking about {slot === "framework" ? "your plan" : subject}...</p>
               </div>
             )}
@@ -648,7 +707,7 @@ export function AskPanel({
 
       {needsKey && (
         <p className="ws-ask__notice">
-          {answererName} needs a key. <a href="/settings#models">Add it in Settings</a>, or pick another answerer below.
+          {provider.label} needs a key. <a href="/settings#models">Add it in Settings</a>, pick its terminal agent, or StackWise answers from its facts.
         </p>
       )}
       <form
@@ -673,36 +732,16 @@ export function AskPanel({
           }}
         />
         <div className="ws-ask__tools">
-          <button type="button" className="ws-answerer" aria-haspopup="menu" onClick={openMenu} title={`Who answers: ${STATE_TEXT[recipient.state]}`}>
-            {answererLogo(recipient.id) ? <AnswererMark id={recipient.id} className="ws-menu-logo" /> : recipient.group === "agent" ? <Icon name="terminal" size={13} /> : <Icon name="sparkle" size={13} />}
-            <span>{answererName}</span>
+          <button type="button" className="ws-answerer" aria-haspopup="menu" onClick={openProviderMenu} title={`Who answers: ${provider.label}, ${STATE_TEXT[recipient.state].toLowerCase()}`}>
+            {answererLogo(provider.mark) ? <AnswererMark id={provider.mark} className="ws-menu-logo" /> : <Icon name="sparkle" size={13} />}
+            <span>{provider.label}</span>
             <StateDot state={recipient.state} />
             <Icon name="down" size={11} />
           </button>
-          {provider && models.length > 1 && (
-            <label className="ws-model" title="The model that answers">
-              <select aria-label={`${provider.label} model`} value={provider.model || models[0]} disabled={savingModel || !provider.on} onChange={(e) => void pickModel(e.target.value)}>
-                {models.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-                {provider.model && !models.includes(provider.model) && <option value={provider.model}>{provider.model}</option>}
-              </select>
-              <Icon name="down" size={11} />
-            </label>
-          )}
-          <label className="ws-ask__about" title="What you're asking about">
-            {current && <Logo logo={catalog.logos[current]} name={aboutLabel(slot)} size={14} />}
-            <select aria-label="What to ask about" value={slot} onChange={(e) => onSlot(e.target.value as SlotId)}>
-              {parts.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {aboutLabel(s.id)}
-                </option>
-              ))}
-            </select>
+          <button type="button" className="ws-answerer ws-answerer--model" aria-haspopup="menu" disabled={savingModel} onClick={openModelMenu} title="Which model, or the agent in your terminal">
+            <span>{modelLabel}</span>
             <Icon name="down" size={11} />
-          </label>
+          </button>
           <button type="submit" className="ws-ask__send" disabled={busy || !question.trim()} aria-label="Send">
             <Icon name="send" size={15} />
           </button>
