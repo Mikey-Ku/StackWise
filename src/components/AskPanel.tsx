@@ -400,6 +400,20 @@ export function AskPanel({
   const [busy, setBusy] = useState(false);
   const [onlyThis, setOnlyThis] = useState(false);
   const [savingModel, setSavingModel] = useState(false);
+  /** What each terminal agent is set to, from /api/agents: for Claude Code, the model its new sessions start with. */
+  const [agentModels, setAgentModels] = useState<Record<string, string | null>>({});
+  useEffect(() => {
+    let stopped = false;
+    fetch("/api/agents", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { agents?: { id: string; model?: string | null }[] } | null) => {
+        if (!stopped && body?.agents) setAgentModels(Object.fromEntries(body.agents.map((a) => [a.id, a.model ?? null])));
+      })
+      .catch(() => undefined);
+    return () => {
+      stopped = true;
+    };
+  }, []);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const handled = useRef<number | null>(null);
@@ -556,6 +570,22 @@ export function AskPanel({
     }
   };
 
+  /** Sets the model Claude Code starts its next sessions with, in its own settings file. */
+  const setAgentModel = async (value: string) => {
+    setSavingModel(true);
+    try {
+      const r = await fetch("/api/agents", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "model", agent: "claude-code", model: value }) });
+      const body = (await r.json()) as { agents?: { id: string; model?: string | null }[]; error?: string };
+      if (!r.ok || !body.agents) throw new Error(body.error ?? "Couldn't set Claude Code's model.");
+      setAgentModels(Object.fromEntries(body.agents.map((a) => [a.id, a.model ?? null])));
+      onToast(value ? `New Claude Code sessions start with ${modelNameOf(api ?? ({ models: [] } as unknown as ProviderInfo), value)}. A session already open switches with /model.` : "Claude Code is back on its own default model.");
+    } catch (e) {
+      onToast(e instanceof Error ? e.message : "Couldn't set Claude Code's model.");
+    } finally {
+      setSavingModel(false);
+    }
+  };
+
   /** Picking a provider takes its agent when that's listening, else its API. */
   const pickProvider = (p: Provider) => {
     const a = agentRecipientOf(p);
@@ -595,23 +625,40 @@ export function AskPanel({
     });
   };
 
-  /** The second bubble: the terminal agent, then the API's models, for the picked provider. */
+  /**
+   * The second bubble: how the provider is reached (its agent in the terminal, or its API), then
+   * the model. Through the API the model is StackWise's setting; through Claude Code it's the
+   * model Claude Code's own settings start new sessions with, which StackWise can set too.
+   */
+  const agentModel = provider.agent ? (agentModels[provider.agent] ?? null) : null;
   const openModelMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
     const items: MenuItem[] = [];
+    if (agentRecipient || api) items.push({ kind: "header", label: "Through" });
     if (agentRecipient) items.push({ label: `${agentRecipient.label} in your terminal`, icon: "terminal", hint: STATE_TEXT[agentRecipient.state], checked: recipient.id === agentRecipient.id, onSelect: () => setChosen(agentRecipient.id) });
-    if (api) {
-      const models = api.models?.length ? api.models : api.model ? [api.model] : [];
+    if (api) items.push({ label: `The ${provider.label} API`, icon: "sparkle", hint: api.on ? "Key saved" : "Needs a key", checked: recipient.id === `api:${api.id}`, onSelect: () => setChosen(`api:${api.id}`) });
+    const models = api?.models?.length ? api.models : api?.model ? [api.model] : [];
+    const viaAgent = Boolean(agent);
+    const canSet = api && models.length > 0 && (!viaAgent || provider.agent === "claude-code");
+    if (api && canSet) {
       const current = api.model || api.defaultModel;
       const info = (id: string) => api.modelInfo?.find((x) => x.id === id);
-      if (items.length && models.length) items.push({ kind: "separator" });
+      items.push({ kind: "separator" }, { kind: "header", label: viaAgent ? "Model for new Claude Code sessions" : "Model" });
+      if (viaAgent) {
+        const other = agentModel && !models.includes(agentModel) ? agentModel : null;
+        items.push({ label: other ? `As Claude Code has it: ${other}` : "Claude Code's own default", checked: !agentModel || Boolean(other), onSelect: () => void setAgentModel("") });
+      }
       for (const m of models) {
         const known = info(m);
         items.push({
-          label: `${known?.name ?? m}${m === api.defaultModel ? " (default)" : ""}`,
+          label: `${known?.name ?? m}${!viaAgent && m === api.defaultModel ? " (default)" : ""}`,
           hint: known ? `${known.context} context · ${known.price} per M` : undefined,
-          checked: recipient.id === `api:${api.id}` && current === m,
+          checked: viaAgent ? agentModel === m : recipient.id === `api:${api.id}` && current === m,
           onSelect: () => {
+            if (viaAgent) {
+              if (m !== agentModel) void setAgentModel(m);
+              return;
+            }
             setChosen(`api:${api.id}`);
             if (m !== current) void pickModel(m);
           },
@@ -622,7 +669,15 @@ export function AskPanel({
     if (provider.id === "facts") items.push({ label: "Facts only, no AI", checked: true, onSelect: () => setChosen("facts") });
     setMenu({ x: box.left, y: box.top - 6, items });
   };
-  const modelLabel = agent ? (agentRecipient?.label ?? agentName(agent)) : provider.id === "facts" ? "Facts only" : api ? (api.on ? modelNameOf(api, api.model || api.defaultModel || "") || "Default model" : "Needs a key") : recipient.label;
+  const modelLabel = agent
+    ? `${agentRecipient?.label ?? agentName(agent)}${agentModel && api ? ` · ${modelNameOf(api, agentModel)}` : ""}`
+    : provider.id === "facts"
+      ? "Facts only"
+      : api
+        ? api.on
+          ? modelNameOf(api, api.model || api.defaultModel || "") || "Default model"
+          : "Needs a key"
+        : recipient.label;
 
   const listening = recipient.group === "agent" && (recipient.state === "listening" || recipient.state === "working");
   const starters = [...(slot === "framework" ? APP_STARTERS : PART_STARTERS), ...(listening ? [AGENT_STARTER] : [])];

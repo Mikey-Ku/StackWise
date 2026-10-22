@@ -43,6 +43,8 @@ export interface AgentInfo {
   site: string;
   /** For Claude Code: whether it has StackWise as an MCP server, and at which address. */
   mcp?: { connected: boolean; url: string | null };
+  /** For Claude Code: the model its new sessions start with (an id, or an alias like "opus"), null for its own default. */
+  model?: string | null;
 }
 
 export const MCP_URL = "http://127.0.0.1:4310/api/mcp";
@@ -69,8 +71,36 @@ export function readClaudeMcp(configText: string | null): { connected: boolean; 
   }
 }
 
+/** Claude Code's default model for new sessions, from its settings (~/.claude/settings.json, "model"). */
+export function readClaudeModel(settingsText: string | null): string | null {
+  if (!settingsText) return null;
+  try {
+    const settings = JSON.parse(settingsText) as { model?: unknown };
+    return typeof settings.model === "string" && settings.model ? settings.model : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The same settings with the model set, or removed when empty, and everything else kept. Settings that aren't JSON stay untouched (null). */
+export function withClaudeModel(settingsText: string | null, model: string): string | null {
+  let settings: Record<string, unknown> = {};
+  if (settingsText && settingsText.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(settingsText);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+      settings = parsed as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+  if (model) settings.model = model;
+  else delete settings.model;
+  return `${JSON.stringify(settings, null, 2)}\n`;
+}
+
 /** The list the Settings page shows: every known agent, installed or not, Claude Code first. */
-export function describeAgents(found: Record<string, { path: string; version: string | null } | null>, claudeConfig: string | null): AgentInfo[] {
+export function describeAgents(found: Record<string, { path: string; version: string | null } | null>, claudeConfig: string | null, claudeSettings: string | null = null): AgentInfo[] {
   return KNOWN_AGENTS.map((agent) => {
     const command = AGENT_COMMANDS[agent.id];
     const hit = found[agent.id];
@@ -82,7 +112,7 @@ export function describeAgents(found: Record<string, { path: string; version: st
       installed: Boolean(hit),
       ...(hit ? { path: hit.path, ...(hit.version ? { version: hit.version } : {}) } : {}),
       site: AGENT_SITES[agent.id],
-      ...(agent.id === "claude-code" && hit ? { mcp: readClaudeMcp(claudeConfig) } : {}),
+      ...(agent.id === "claude-code" && hit ? { mcp: readClaudeMcp(claudeConfig), model: readClaudeModel(claudeSettings) } : {}),
     };
   });
 }

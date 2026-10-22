@@ -40,6 +40,8 @@ interface Agent {
   version?: string;
   site: string;
   mcp?: { connected: boolean; url: string | null };
+  /** For Claude Code: the model its new sessions start with, null for its own default. */
+  model?: string | null;
 }
 interface Choice {
   id: string;
@@ -224,6 +226,23 @@ export default function SettingsView({ builders, priorities, sizes }: { builders
     }
   };
 
+  /** The model Claude Code starts new sessions with, written to its own settings file. */
+  const setAgentModel = async (model: string) => {
+    setBusy("model");
+    try {
+      const r = await fetch("/api/agents", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "model", agent: "claude-code", model }) });
+      const body = (await r.json()) as { agents?: Agent[]; error?: string };
+      if (!r.ok || !body.agents) throw new Error(body.error ?? "That didn't work.");
+      setAgents(body.agents);
+      setToast(model ? "New Claude Code sessions start with that model. A session already open switches with /model." : "Claude Code is back on its own default model.");
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : "That didn't work.");
+    } finally {
+      setBusy(null);
+    }
+  };
+  const claudeModels = providersOf(ai).find((p) => p.id === "claude");
+
   // No agent presence here: Settings only lists them, so the clock doesn't matter.
   const recipients = recipientsFor(ai, { agents: {}, serverNow: 0 });
   const apis = recipients.filter((r) => r.group === "api");
@@ -274,6 +293,34 @@ export default function SettingsView({ builders, priorities, sizes }: { builders
           </a>
           , then come back here.
         </p>
+      )}
+      {a.installed && a.id === "claude-code" && claudeModels && (
+        <label className="set-field">
+          <span className="mk-label">Model for new sessions</span>
+          <select
+            className="mk-select mk-sm"
+            value={a.model && claudeModels.models?.includes(a.model) ? a.model : a.model ? "other" : ""}
+            disabled={busy !== null}
+            onChange={(e) => {
+              if (e.target.value !== "other") void setAgentModel(e.target.value);
+            }}
+          >
+            <option value="">Claude Code&apos;s own default</option>
+            {a.model && !claudeModels.models?.includes(a.model) && <option value="other">As Claude Code has it: {a.model}</option>}
+            {(claudeModels.models ?? []).map((m) => {
+              const known = claudeModels.modelInfo?.find((x) => x.id === m);
+              return (
+                <option key={m} value={m}>
+                  {known?.name ?? m}
+                  {known ? ` · ${known.context} context · ${known.price} per M tokens` : ""}
+                </option>
+              );
+            })}
+          </select>
+          <span className="mk-hint">
+            Written to <code>~/.claude/settings.json</code> as <code>model</code>. A session that&apos;s already open switches with <code>/model</code>.
+          </span>
+        </label>
       )}
       {a.installed && a.mcp && (
         <div className="shell-actions">

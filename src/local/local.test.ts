@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { describeAgents, parseVersion, readClaudeMcp } from "./agents";
+import { describeAgents, parseVersion, readClaudeMcp, readClaudeModel, withClaudeModel } from "./agents";
 import { DEFAULT_PROFILE, migrateRepoState, readLibraryIndex, readProfile, stackwiseHome, writeLibraryIndex, writeProfile } from "./home";
 import { scanFolder, type ScanFs } from "./scan";
 
@@ -90,6 +90,17 @@ describe("installed agents", () => {
     // Set up before the move to 127.0.0.1: listed, but not connected.
     expect(readClaudeMcp(JSON.stringify({ mcpServers: { stackwise: { url: "http://localhost:4310/api/mcp" } } }))).toEqual({ connected: false, url: "http://localhost:4310/api/mcp" });
     expect(readClaudeMcp(JSON.stringify({ mcpServers: {} }))).toEqual({ connected: false, url: null });
+  });
+
+  it("reads and sets the model Claude Code starts new sessions with, keeping the rest of its settings", () => {
+    expect(readClaudeModel(null)).toBeNull();
+    expect(readClaudeModel('{"model":"opus[1m]","permissions":{}}')).toBe("opus[1m]");
+    const next = withClaudeModel('{"permissions":{"allow":["Bash"]},"model":"opus"}', "claude-opus-5-5")!;
+    expect(JSON.parse(next)).toEqual({ permissions: { allow: ["Bash"] }, model: "claude-opus-5-5" });
+    expect(JSON.parse(withClaudeModel(next, "")!)).toEqual({ permissions: { allow: ["Bash"] } });
+    expect(JSON.parse(withClaudeModel(null, "claude-sonnet-5-5")!)).toEqual({ model: "claude-sonnet-5-5" });
+    expect(withClaudeModel("{not json", "x")).toBeNull();
+    expect(withClaudeModel("[1,2]", "x")).toBeNull();
   });
 
   it("lists every known agent, installed or not, with Claude Code's MCP state", () => {
