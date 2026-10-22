@@ -35,6 +35,7 @@ import { Logo, copyText, cx, undoHint } from "./ui";
 import { sharedName } from "./planFiles";
 import { Tip } from "./Tip";
 import { migrateLegacyStorage } from "./storage";
+import { planDefaults } from "./savedStore";
 import { useAdvanced } from "./useAdvanced";
 
 /**
@@ -227,7 +228,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         dispatch({ type: "switchPlan", id: linked.id });
         setToast(`Opened ${linked.appName || name}, already linked to ${folder}.`);
       } else {
-        dispatch({ type: "newPlan", id: newId(), now: new Date().toISOString() });
+        dispatch({ type: "newPlan", id: newId(), now: new Date().toISOString(), defaults: planDefaults() });
         dispatch({ type: "setText", field: "appName", value: name });
         if (project.body.readme) dispatch({ type: "setText", field: "description", value: project.body.readme });
         dispatch({ type: "setFolder", folder: project.body.folder });

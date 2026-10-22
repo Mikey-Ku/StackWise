@@ -7,7 +7,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { DEMOS } from "@/components/demos";
 import { Icon } from "@/components/icons";
 import { readPlanFile } from "@/components/planFiles";
-import { loadHistory, newId, saveStore } from "@/components/savedStore";
+import { deletePlanOnDisk, loadHistory, newId, planDefaults, pullLibrary, saveStore } from "@/components/savedStore";
 import { migrateLegacyStorage } from "@/components/storage";
 import { reduce, type History, type PlanState, type StoreAction } from "@/components/store";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
@@ -48,6 +48,18 @@ export default function AppsView() {
   const { store } = history;
   const now = () => new Date().toISOString();
 
+  // The library on disk is the record: take anything newer there, once, when the page opens.
+  useEffect(() => {
+    let stopped = false;
+    void pullLibrary(history.store).then((merged) => {
+      if (!stopped && merged) setHistory({ store: merged, past: [], future: [] });
+    });
+    return () => {
+      stopped = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, with whatever the browser had
+  }, []);
+
   useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setToast(null), 3600);
@@ -73,6 +85,7 @@ export default function AppsView() {
     const name = store.plans[id].appName.trim() || "Untitled app";
     if (!window.confirm(`Delete "${name}"? This can't be undone.`)) return;
     const wasOpen = store.activeId;
+    deletePlanOnDisk(id);
     const actions: StoreAction[] = [{ type: "switchPlan", id }, { type: "deletePlan", now: now(), fallbackId: newId() }];
     if (wasOpen !== id) actions.push({ type: "switchPlan", id: wasOpen });
     apply(actions);
@@ -115,7 +128,7 @@ export default function AppsView() {
             <p className="mk-muted">Saved in this browser. Open one to keep planning it.</p>
           </div>
           <div className="apps-actions">
-            <button type="button" className="mk-btn mk-btn--primary mk-sm" onClick={() => apply([{ type: "newPlan", id: newId(), now: now() }], true)}>
+            <button type="button" className="mk-btn mk-btn--primary mk-sm" onClick={() => apply([{ type: "newPlan", id: newId(), now: now(), defaults: planDefaults() }], true)}>
               <Icon name="plus" size={14} /> New application
             </button>
             <button type="button" className="mk-btn mk-btn--secondary mk-sm" onClick={() => fileInput.current?.click()}>

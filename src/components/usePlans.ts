@@ -16,7 +16,7 @@ import {
   type PlanInput,
   type SlotId,
 } from "@/engine";
-import { loadHistory, newId, saveStore } from "./savedStore";
+import { loadHistory, newId, pullLibrary, saveStore } from "./savedStore";
 import { reduce, type Guess, type History, type StoreAction } from "./store";
 
 export { newId };
@@ -35,6 +35,18 @@ export function usePlans(catalog: Catalog) {
   const index = useMemo(() => indexCatalog(catalog), [catalog]);
 
   useEffect(() => saveStore(store), [store]);
+
+  // The library on disk is the record: take anything newer there, once, when the app opens.
+  useEffect(() => {
+    let stopped = false;
+    void pullLibrary(store).then((merged) => {
+      if (!stopped && merged) dispatch({ type: "replaceStore", store: merged });
+    });
+    return () => {
+      stopped = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, with whatever the browser had
+  }, []);
 
   const input: PlanInput = useMemo(
     () => ({ answers: plan.answers, size: plan.size, priority: plan.priority, ...(Object.keys(plan.extras).length ? { extras: plan.extras } : {}) }),

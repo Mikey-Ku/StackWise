@@ -1,5 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 /**
@@ -11,8 +12,9 @@ import path from "node:path";
  *   stackwise stop       stop the StackWise this command started
  *
  * StackWise itself runs from its own folder (this repo) on http://localhost:4310, in the background,
- * with its log in .stackwise/server.log. Opening a folder sends the browser to #open=<folder>, and
- * the page picks the folder's stackwise.plan.json, a plan already linked to it, or a new one.
+ * with its log and pid in ~/.stackwise (or STACKWISE_HOME), beside your plans. Opening a folder
+ * sends the browser to #open=<folder>, and the page picks the folder's stackwise.plan.json, a plan
+ * already linked to it, or a new one.
  */
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -20,9 +22,7 @@ const URL_BASE = "http://localhost:4310";
 // 127.0.0.1, not localhost, for the reason in mcpAddress (src/mcp/pairing.ts). Not imported from
 // there: this runs from any folder, where tsx can't resolve the "@/" paths.
 const MCP_URL = "http://127.0.0.1:4310/api/mcp";
-const STATE = path.join(ROOT, ".stackwise");
-// Carry the log and pid over from when StackWise was called WhyStack.
-if (!fs.existsSync(STATE) && fs.existsSync(path.join(ROOT, ".whystack"))) fs.renameSync(path.join(ROOT, ".whystack"), STATE);
+const STATE = process.env.STACKWISE_HOME || path.join(os.homedir(), ".stackwise");
 const PID_FILE = path.join(STATE, "server.pid");
 const LOG_FILE = path.join(STATE, "server.log");
 

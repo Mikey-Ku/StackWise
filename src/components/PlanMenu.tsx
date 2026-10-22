@@ -7,6 +7,7 @@ import { downloadPlanFile, readPlanFile } from "./planFiles";
 import { toSharedPlan } from "./store";
 import { newId, type PlanModel } from "./usePlans";
 import { copyText, cx } from "./ui";
+import { deletePlanOnDisk, planDefaults } from "./savedStore";
 
 /** Switch between saved applications, and move one between people: share links and plan files. All of them, and the examples, are on /apps. */
 export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (message: string) => void }) {
@@ -71,7 +72,7 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
           ))}
         </div>
         <div className="ws-menu__actions">
-          <button type="button" className="ws-menu__item" onClick={() => (dispatch({ type: "newPlan", id: newId(), now: now() }), close())}>
+          <button type="button" className="ws-menu__item" onClick={() => (dispatch({ type: "newPlan", id: newId(), now: now(), defaults: planDefaults() }), close())}>
             New application
           </button>
           <Link href="/apps" className="ws-menu__item" onClick={close}>
@@ -97,7 +98,9 @@ export function PlanMenu({ model, onToast }: { model: PlanModel; onToast: (messa
             className="ws-menu__item ws-menu__item--danger"
             onClick={() => {
               close();
-              if (window.confirm(`Delete "${nameOf(store.activeId)}"? This can't be undone.`)) dispatch({ type: "deletePlan", now: now(), fallbackId: newId() });
+              if (!window.confirm(`Delete "${nameOf(store.activeId)}"? This can't be undone.`)) return;
+              deletePlanOnDisk(store.activeId);
+              dispatch({ type: "deletePlan", now: now(), fallbackId: newId() });
             }}
           >
             Delete this application

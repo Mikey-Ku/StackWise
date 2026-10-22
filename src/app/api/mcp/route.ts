@@ -2,13 +2,13 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { indexCatalog } from "@/engine/evaluate";
 import { loadCatalog } from "@/engine/load";
 import { localOnly } from "@/mcp/local";
-import { createRegistry } from "@/mcp/registry";
+import { homeRegistry } from "@/mcp/registry";
 import { createStackWiseServer } from "@/mcp/server";
 
 /**
  * StackWise's MCP server over HTTP, for Claude to pair on the plan open in StackWise:
  *   claude mcp add --transport http --scope user stackwise http://127.0.0.1:4310/api/mcp
- * 127.0.0.1, not localhost: see mcpAddress in src/mcp/pairing.ts. Stateless: each request gets a fresh server, and the shared plan lives in .stackwise/.
+ * 127.0.0.1, not localhost: see mcpAddress in src/mcp/pairing.ts. Stateless: each request gets a fresh server, and the plans live in ~/.stackwise/plans.
  */
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ async function handle(request: Request): Promise<Response> {
   const blocked = localOnly(request);
   if (blocked) return blocked;
   const root = process.cwd();
-  const registry = createRegistry(root);
+  const registry = homeRegistry(root);
   const server = createStackWiseServer({
     index: () => indexCatalog(loadCatalog()),
     registry,

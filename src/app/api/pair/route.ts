@@ -3,7 +3,7 @@ import { sharedPlanSchema } from "@/engine/share";
 import { localOnly, readJson } from "@/mcp/local";
 import { SLOT_IDS } from "@/engine/schema";
 import { AGENT_ID } from "@/mcp/pairing";
-import { createRegistry, MESSAGE_MAX, PLAN_ID } from "@/mcp/registry";
+import { homeRegistry, MESSAGE_MAX, PLAN_ID } from "@/mcp/registry";
 
 /**
  * How the StackWise tab and coding agents share a plan. The tab puts the plan you have open (PUT),
@@ -26,7 +26,7 @@ const postSchema = z.object({
 export function GET(request: Request) {
   const blocked = localOnly(request);
   if (blocked) return blocked;
-  const registry = createRegistry(process.cwd());
+  const registry = homeRegistry(process.cwd());
   const since = new URL(request.url).searchParams.get("since");
   const after = since ? Date.parse(since) : 0;
   const records = registry.list().filter((r) => Date.parse(r.touchedAt) > (Number.isNaN(after) ? 0 : after));
@@ -39,7 +39,7 @@ export async function PUT(request: Request) {
   const parsed = putSchema.safeParse(await readJson(request));
   if (!parsed.success) return Response.json({ error: "Send { id, plan, baseVersion } with a valid plan." }, { status: 400 });
   const { id, plan, baseVersion } = parsed.data;
-  const registry = createRegistry(process.cwd());
+  const registry = homeRegistry(process.cwd());
   const current = registry.read(id);
   // Claude changed the plan after this tab last saw it: the tab takes Claude's version first.
   if (current && current.updatedBy === "claude" && current.version > baseVersion && JSON.stringify(current.plan) !== JSON.stringify(plan)) {
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   const parsed = postSchema.safeParse(await readJson(request));
   if (!parsed.success) return Response.json({ error: "Send { id, agent, text } for a shared plan." }, { status: 400 });
   const { id, ...message } = parsed.data;
-  const saved = createRegistry(process.cwd()).postMessage(id, message);
+  const saved = homeRegistry(process.cwd()).postMessage(id, message);
   if (!saved) return Response.json({ error: "That plan isn't shared yet. Turn on sharing first." }, { status: 404 });
   return Response.json({ message: saved });
 }
@@ -65,6 +65,6 @@ export async function POST(request: Request) {
 export function DELETE(request: Request) {
   const blocked = localOnly(request);
   if (blocked) return blocked;
-  createRegistry(process.cwd()).setActive(null);
+  homeRegistry(process.cwd()).setActive(null);
   return Response.json({ ok: true });
 }

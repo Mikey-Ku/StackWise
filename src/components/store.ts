@@ -135,13 +135,15 @@ export type PlanAction =
 
 export type StoreAction =
   | PlanAction
-  | { type: "newPlan"; id: string; now: string }
+  | { type: "newPlan"; id: string; now: string; defaults?: Partial<Pick<PlanState, "size" | "priority" | "builderId">> }
   | { type: "duplicatePlan"; id: string; now: string }
   | { type: "deletePlan"; now: string; fallbackId: string }
   | { type: "switchPlan"; id: string }
   | { type: "importPlan"; id: string; now: string; plan: SharedPlan }
   /** A change Claude made through StackWise's MCP server. On the open plan it can be undone. */
   | { type: "applyRemote"; id: string; plan: SharedPlan }
+  /** The whole store, from the library on disk. Not an undo step: it's where the plans come from. */
+  | { type: "replaceStore"; store: Store }
   | { type: "undo" }
   | { type: "redo" };
 
@@ -335,7 +337,9 @@ export function reduce(history: History, action: StoreAction, now = new Date().t
 
   switch (action.type) {
     case "newPlan":
-      return { store: { ...withPlan(store, blankPlan(action.id, action.now)), activeId: action.id, order: [action.id, ...store.order] }, past: [], future: [] };
+      return { store: { ...withPlan(store, { ...blankPlan(action.id, action.now), ...action.defaults }), activeId: action.id, order: [action.id, ...store.order] }, past: [], future: [] };
+    case "replaceStore":
+      return action.store.plans[action.store.activeId] ? { store: action.store, past: [], future: [] } : history;
     case "duplicatePlan": {
       const copy: PlanState = { ...structuredClone(active), id: action.id, createdAt: action.now, updatedAt: action.now, appName: `${active.appName.trim() || "Untitled app"} (copy)` };
       return { store: { ...withPlan(store, copy), activeId: action.id, order: [action.id, ...store.order] }, past: [], future: [] };

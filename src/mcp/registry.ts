@@ -6,12 +6,15 @@ import { SLOT_IDS } from "@/engine/schema";
 import { sharedPlanSchema, type SharedPlan } from "@/engine/share";
 import { AGENT_ID, agentName, type AgentState } from "./pairing";
 import { LEGACY_STATE_DIR, STATE_DIR } from "@/engine/names";
+import { migrateRepoState, stackwiseHome } from "@/local/home";
 
 /**
- * Plans shared between StackWise's browser tab and Claude, kept as small JSON files in
- * `.stackwise/` (gitignored) so the app's server and the command-line MCP server both see them.
- * The browser shares the plan you have open; Claude reads and changes it through the MCP tools;
- * the browser polls and shows what Claude did. Nothing here leaves the machine.
+ * Every plan on this computer, one JSON file each in `~/.stackwise/plans` (see src/local/home.ts),
+ * so the app, the `stackwise` command and the MCP server all see the same plans. Each record has
+ * the plan as agents read and change it (`plan`, with a version that goes up on every change) and
+ * the parts only the app uses (`local`: the step, the canvas layout, the icon, the conversation).
+ * The app saves here; Claude reads and changes `plan` through the MCP tools; the app polls and
+ * shows what Claude did. Nothing here leaves the machine.
  */
 
 export const PLAN_ID = /^[A-Za-z0-9_-]{1,64}$/;
@@ -79,6 +82,8 @@ export const planRecordSchema = z.object({
   agents: z.record(z.string(), agentStateSchema).default({}),
   /** The plan as it was when a project's stackwise.plan.json and this copy last agreed: the base for merging them. */
   synced: sharedPlanSchema.optional(),
+  /** What only the app keeps: the step, the layout, the icon, the conversation. Agents never read it. */
+  local: z.record(z.string(), z.unknown()).optional(),
 });
 export type PlanRecord = z.infer<typeof planRecordSchema>;
 
@@ -101,6 +106,10 @@ export interface Registry {
   setSynced(id: string, plan: SharedPlan): void;
   /** Updates what StackWise knows about an agent, creating it the first time it's seen. */
   updateAgent(id: string, agent: string, change: (current: AgentState) => AgentState, at: string): AgentState | null;
+  /** Keeps the app's own part of a plan, without touching the shared plan or its version. */
+  setLocal(id: string, local: Record<string, unknown>): PlanRecord | null;
+  /** Deletes a plan's record. */
+  remove(id: string): boolean;
 }
 
 function writeAtomic(file: string, data: unknown) {
@@ -118,8 +127,8 @@ function laterThan(previous: string | undefined): string {
 }
 
 /**
- * StackWise's state folder in `root`. A folder left from when StackWise was called WhyStack is
- * renamed on first use, so shared plans and agent conversations carry over.
+ * StackWise's old state folder in `root`, from before plans moved to the home folder. A folder
+ * left from when StackWise was called WhyStack is renamed on first use.
  */
 export function stateDir(root: string): string {
   const dir = path.join(root, STATE_DIR);
@@ -132,8 +141,16 @@ export function stateDir(root: string): string {
   return dir;
 }
 
-export function createRegistry(root: string): Registry {
-  const dir = stateDir(root);
+/** The registry in the home folder, after moving anything still in StackWise's own folder. */
+export function homeRegistry(repoRoot: string): Registry {
+  const home = stackwiseHome();
+  stateDir(repoRoot);
+  migrateRepoState(repoRoot, home);
+  return createRegistry(home);
+}
+
+/** A registry whose files live directly in `dir`. */
+export function createRegistry(dir: string): Registry {
   const planFile = (id: string) => {
     if (!PLAN_ID.test(id)) throw new Error(`"${id}" isn't a valid plan id`);
     return path.join(dir, "plans", `${id}.json`);
@@ -183,6 +200,7 @@ export function createRegistry(root: string): Registry {
         messages: previous?.messages ?? [],
         agents: previous?.agents ?? {},
         ...(previous?.synced ? { synced: previous.synced } : {}),
+        ...(previous?.local ? { local: previous.local } : {}),
       };
       writeAtomic(planFile(id), record);
       return record;
@@ -237,6 +255,21 @@ export function createRegistry(root: string): Registry {
     setSynced(id, plan) {
       const previous = read(id);
       if (previous) writeAtomic(planFile(id), { ...previous, synced: sharedPlanSchema.parse(plan) });
+    },
+    setLocal(id, local) {
+      const previous = read(id);
+      if (!previous) return null;
+      const record = { ...previous, local };
+      writeAtomic(planFile(id), record);
+      return record;
+    },
+    remove(id) {
+      try {
+        fs.rmSync(planFile(id));
+        return true;
+      } catch {
+        return false;
+      }
     },
     activeId() {
       try {

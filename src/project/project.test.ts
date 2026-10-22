@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 import { detectProject } from "./detect";
 import { envValues, gitignoreCovers, mask, parseEnv, setEnv, springEnvRefs } from "./envfile";

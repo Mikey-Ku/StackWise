@@ -4,7 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { indexCatalog } from "@/engine/evaluate";
 import { loadCatalog } from "@/engine/load";
 import { mergePlans } from "@/engine/merge";
-import { createRegistry, projectPlanFileSchema, toProjectPlanFile, type PlanRecord } from "./registry";
+import { homeRegistry, projectPlanFileSchema, toProjectPlanFile, type PlanRecord } from "./registry";
 import { createStackWiseServer } from "./server";
 import { LEGACY_PLAN_FILE, PLAN_FILE } from "@/engine/names";
 
@@ -26,7 +26,7 @@ if (!fs.existsSync(planPath) && fs.existsSync(legacyPlanPath)) {
   fs.renameSync(legacyPlanPath, planPath);
   console.error(`Renamed ${LEGACY_PLAN_FILE} to ${PLAN_FILE}.`);
 }
-const registry = createRegistry(root);
+const registry = homeRegistry(root);
 
 function readProjectPlan() {
   try {
