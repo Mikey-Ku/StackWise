@@ -38,6 +38,18 @@ import { migrateLegacyStorage } from "./storage";
 import { planDefaults } from "./savedStore";
 import { useAdvanced } from "./useAdvanced";
 
+/** Whether the chat pane is open: what this browser last had, else open on a window wide enough for it. */
+const ASK_OPEN_KEY = "stackwise.ask-open";
+function readAskOpen(): boolean {
+  try {
+    const saved = window.localStorage.getItem(ASK_OPEN_KEY);
+    if (saved) return saved === "yes";
+  } catch {
+    // Private windows: decide by the window alone.
+  }
+  return window.innerWidth >= 1100;
+}
+
 /**
  * The workspace is the canvas, full screen, with everything else floating over it:
  *   - a bar on top: plans, the plan in one line, Ask and Export
@@ -71,14 +83,6 @@ if (typeof window !== "undefined") migrateLegacyStorage();
 const LEFT_WIDTH = 360;
 const RIGHT_WIDTH = 380;
 
-const CONNECT_SEEN_KEY = "stackwise.connect-seen";
-const readFlag = (key: string) => {
-  try {
-    return window.localStorage.getItem(key) === "yes";
-  } catch {
-    return false;
-  }
-};
 
 const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -92,7 +96,14 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   /** The part at the far end of the connection being looked at, when one is. */
   const [connection, setConnection] = useState<SlotId | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
-  const [ask, setAsk] = useState<{ open: boolean; slot: SlotId; request: AskRequest | null }>({ open: false, slot: "framework", request: null });
+  const [ask, setAsk] = useState<{ open: boolean; slot: SlotId; request: AskRequest | null }>(() => ({ open: readAskOpen(), slot: "framework", request: null }));
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(ASK_OPEN_KEY, ask.open ? "yes" : "no");
+    } catch {
+      // Private windows: the pane's state lasts until the tab closes.
+    }
+  }, [ask.open]);
   // The chat pane and the left panel share the left side of the canvas: opening one closes the other.
   const closeAsk = useCallback(() => setAsk((a) => (a.open ? { ...a, open: false, request: null } : a)), []);
   const openPanel = useCallback(
@@ -122,11 +133,8 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const [ai, setAi] = useState<AiStatus | null>(null);
   /** Who answers by default, saved in this browser. Shared by the Connect screen, the pill and Ask. */
   const [savedDefault, setSavedDefault] = useState<string | null>(readDefaultAnswerer);
-  /** Connecting the AI comes first, once per browser. */
-  const [connectSeen, setConnectSeen] = useState(() => readFlag(CONNECT_SEEN_KEY));
+  /** The AI popover from the pill in the top bar. Connecting an AI is optional and never comes first. */
   const [connectOpen, setConnectOpen] = useState(false);
-  /** The Connect step, reopened from the steps at the top of the planner sheet. */
-  const [connectAgain, setConnectAgain] = useState(false);
   /** The add-a-part picker, and the part it opened for, if any. */
   const [adding, setAdding] = useState<{ focus: SlotId | null } | null>(null);
   const [customEdit, setCustomEdit] = useState<CustomEdit | null>(null);
@@ -156,33 +164,10 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     saveDefaultAnswerer(id);
     setSavedDefault(id);
   }, []);
-  const finishConnect = () => {
-    try {
-      window.localStorage.setItem(CONNECT_SEEN_KEY, "yes");
-    } catch {
-      // Private windows: the Connect screen shows again next time.
-    }
-    setConnectSeen(true);
-    setConnectAgain(false);
-  };
-  const showConnect = connectAgain || (!connectSeen && plan.step === "describe");
-  const sheetStep = showConnect ? 0 : plan.step === "describe" ? 1 : 2;
+  const sheetStep = plan.step === "describe" ? 0 : 1;
   const steps = [
-    { label: "Connect", go: () => setConnectAgain(true) },
-    {
-      label: "Describe",
-      go: () => {
-        finishConnect();
-        dispatch({ type: "goTo", step: "describe" });
-      },
-    },
-    {
-      label: "Confirm",
-      go: () => {
-        finishConnect();
-        dispatch({ type: "goTo", step: "confirm" });
-      },
-    },
+    { label: "Describe", go: () => dispatch({ type: "goTo", step: "describe" }) },
+    { label: "Confirm", go: () => dispatch({ type: "goTo", step: "confirm" }) },
   ];
   const mod = isMac() ? "⌘" : "Ctrl+";
 
@@ -679,6 +664,16 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             <span className="ws-mark__name">StackWise</span>
           </span>
           <PlanMenu model={model} onToast={setToast} />
+          <Tip name="Projects" text="All your plans, and the projects on this computer.">
+            <button type="button" className="ws-bar__nav" aria-label="Projects" onClick={() => router.push("/projects")}>
+              <Icon name="grid" size={15} />
+            </button>
+          </Tip>
+          <Tip name="Settings" text="Models, agents, folders and the look.">
+            <button type="button" className="ws-bar__nav" aria-label="Settings" onClick={() => router.push("/settings")}>
+              <Icon name="tool" size={15} />
+            </button>
+          </Tip>
         </div>
         {building && <SummaryPill model={model} onOpen={() => openPanel("overview")} />}
         <div className="ws-bar__side ws-bar__side--end">
@@ -836,7 +831,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
 
       {!building && (
         <div className="ws-sheet-wrap">
-          <div className="ws-sheet" role="dialog" aria-label={showConnect ? "Connect your AI" : "Describe your app"}>
+          <div className="ws-sheet" role="dialog" aria-label="Describe your app">
             <nav className="ws-steps" aria-label="Steps">
               {steps.map((step, i) => (
                 <button key={step.label} type="button" className={cx("ws-steps__step", i === sheetStep && "is-on", i < sheetStep && "is-done")} aria-current={i === sheetStep ? "step" : undefined} onClick={step.go}>
@@ -845,11 +840,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
                 </button>
               ))}
             </nav>
-            {showConnect ? (
-              <ConnectPanel ai={ai} pairing={pairing} savedDefault={savedDefault} onChoose={chooseAnswerer} onKeysChanged={updateAi} onDone={finishConnect} onToast={setToast} />
-            ) : (
-              <Planner model={model} ai={ai} />
-            )}
+            <Planner model={model} ai={ai} />
           </div>
         </div>
       )}

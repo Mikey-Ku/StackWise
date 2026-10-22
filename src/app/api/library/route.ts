@@ -4,6 +4,7 @@ import { z } from "zod";
 import { PLAN_FILE } from "@/engine/names";
 import { sharedPlanSchema } from "@/engine/share";
 import { readLibraryIndex, readProfile, stackwiseHome, writeLibraryIndex } from "@/local/home";
+import { readDiskLibrary } from "@/local/library";
 import { localOnly, readJson } from "@/mcp/local";
 import { homeRegistry, PLAN_ID, projectPlanFileSchema, toProjectPlanFile } from "@/mcp/registry";
 import { resolveRealFolder } from "@/mcp/writeproject";
@@ -43,12 +44,8 @@ const deleteSchema = z.object({ id: z.string().regex(PLAN_ID) });
 export function GET(request: Request) {
   const blocked = localOnly(request);
   if (blocked) return blocked;
-  const root = process.cwd();
-  const registry = homeRegistry(root);
   const dir = stackwiseHome();
-  const index = readLibraryIndex(dir);
-  const plans = registry.list().map((r) => ({ id: r.id, version: r.version, updatedAt: r.updatedAt, updatedBy: r.updatedBy, plan: r.plan, local: r.local ?? null }));
-  return Response.json({ activeId: index.activeId, order: index.order, plans, profile: readProfile(dir), dir });
+  return Response.json({ ...readDiskLibrary(process.cwd()), profile: readProfile(dir), dir });
 }
 
 export async function PUT(request: Request) {

@@ -98,6 +98,11 @@ export function mergeStores(local: Store, disk: DiskLibrary, now: string): Store
   return { version: 2, activeId, order, plans };
 }
 
+/** A store holding only what the library has: what the Projects page renders before the browser's copy joins in. */
+export function storeFromLibrary(disk: DiskLibrary, now: string): Store {
+  return mergeStores({ version: 2, activeId: disk.activeId ?? "", order: [], plans: {} }, disk, now);
+}
+
 /** The changes to send to disk: every plan, split, plus which is open and the order. */
 export function toDiskLibrary(store: Store): { activeId: string; order: string[]; plans: ReturnType<typeof splitPlan>[] } {
   return { activeId: store.activeId, order: store.order, plans: store.order.filter((id) => store.plans[id]).map((id) => splitPlan(store.plans[id])) };

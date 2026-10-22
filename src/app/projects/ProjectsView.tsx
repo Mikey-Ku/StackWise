@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DEMOS } from "@/components/demos";
 import { Icon } from "@/components/icons";
+import { cx } from "@/components/ui";
 import { readPlanFile } from "@/components/planFiles";
-import { deletePlanOnDisk, loadHistory, newId, planDefaults, pullLibrary, saveStore } from "@/components/savedStore";
-import { Shell, shortPath, useMe } from "@/components/Shell";
+import { storeFromLibrary, type DiskLibrary } from "@/components/library";
+import { adoptLibrary, deletePlanOnDisk, flushStore, newId, planDefaults, saveStore } from "@/components/savedStore";
+import { Shell, shortPath, useMe, type Me } from "@/components/Shell";
 import { migrateLegacyStorage } from "@/components/storage";
 import { reduce, type History, type PlanState, type StoreAction } from "@/components/store";
 
@@ -53,12 +55,13 @@ interface FoundFolder {
 /**
  * Your projects: every plan in the library (~/.stackwise, through the same store the canvas
  * uses), the projects StackWise found under your folders, and the examples. Opening one here
- * switches to it on the canvas.
+ * switches to it on the canvas. The page renders on the server from the library on disk, so it
+ * comes up whole; the browser's copy of the store joins in right after.
  */
-export default function ProjectsView() {
+export default function ProjectsView({ initialMe, initialLibrary }: { initialMe: Me | null; initialLibrary: DiskLibrary }) {
   const router = useRouter();
-  const [me] = useMe();
-  const [history, setHistory] = useState<History>(loadHistory);
+  const [me] = useMe(initialMe);
+  const [history, setHistory] = useState<History>(() => ({ store: storeFromLibrary(initialLibrary, new Date().toISOString()), past: [], future: [] }));
   const [toast, setToast] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [folders, setFolders] = useState<FoundFolder[] | null>(null);
@@ -66,11 +69,11 @@ export default function ProjectsView() {
   const { store } = history;
   const now = () => new Date().toISOString();
 
-  // The library on disk is the record: take anything newer there, once, when the page opens.
+  // The page came from the library on disk; what this browser had joins in, once, after the first paint.
   useEffect(() => {
     let stopped = false;
-    void pullLibrary(history.store).then((merged) => {
-      if (!stopped && merged) setHistory({ store: merged, past: [], future: [] });
+    void Promise.resolve().then(() => {
+      if (!stopped) setHistory({ store: adoptLibrary(initialLibrary), past: [], future: [] });
     });
     fetch("/api/projects", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
@@ -90,12 +93,12 @@ export default function ProjectsView() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  /** Run store actions, save, and optionally go to the canvas. */
+  /** Run store actions, save, and optionally go to the canvas (once the save is on disk, so the canvas finds it there). */
   const apply = (actions: StoreAction[], open = false) => {
     const next = actions.reduce((h, action) => reduce(h, action), history);
-    saveStore(next.store);
     setHistory(next);
-    if (open) router.push("/");
+    if (open) void flushStore(next.store).then(() => router.push("/"));
+    else saveStore(next.store);
   };
 
   const open = (id: string) => apply([{ type: "switchPlan", id }], true);
@@ -176,7 +179,7 @@ export default function ProjectsView() {
                   <AppIcon plan={plan} />
                   <span className="apps-card__text">
                     <strong>{name}</strong>
-                    <span className="apps-card__meta">
+                    <span className="apps-card__meta" suppressHydrationWarning>
                       {plan.step === "plan" ? "Planned" : "Draft"} · {updated(plan.updatedAt)}
                       {plan.folder && <span title={plan.folder}>· {shortPath(plan.folder, me?.home).split("/").pop()}</span>}
                       {active && <span className="mk-badge mk-badge--accent">Open now</span>}
@@ -208,9 +211,18 @@ export default function ProjectsView() {
             </p>
           </div>
         </div>
-        {folders === null && <p className="mk-hint">Looking...</p>}
         {folders?.map((f) => f.error && <p key={f.path} className="mk-hint">{f.path}: {f.error}</p>)}
-        <ul className="apps-grid">
+        <ul className={cx("apps-grid", folders === null && "is-looking")} aria-busy={folders === null}>
+          {folders === null &&
+            [0, 1, 2].map((n) => (
+              <li key={n} className="apps-card apps-card--skeleton" aria-hidden>
+                <span className="apps-icon" />
+                <span className="apps-card__text">
+                  <span className="apps-skel apps-skel--title" />
+                  <span className="apps-skel apps-skel--meta" />
+                </span>
+              </li>
+            ))}
           {found.map((p) => {
             const linkedId = p.plan && store.plans[p.plan.id] ? p.plan.id : planByFolder.get(absolute(p.path));
             return (

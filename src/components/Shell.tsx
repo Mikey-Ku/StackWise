@@ -22,9 +22,11 @@ export interface Me {
 }
 
 /** Your profile from ~/.stackwise, or null until it's loaded or when the server is away. */
-export function useMe(): [Me | null, (me: Me) => void] {
-  const [me, setMe] = useState<Me | null>(null);
+export function useMe(initial: Me | null = null): [Me | null, (me: Me) => void] {
+  const [me, setMe] = useState<Me | null>(initial);
   useEffect(() => {
+    // A page rendered with the profile already has it.
+    if (initial) return;
     let stopped = false;
     fetch("/api/profile", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
@@ -35,7 +37,7 @@ export function useMe(): [Me | null, (me: Me) => void] {
     return () => {
       stopped = true;
     };
-  }, []);
+  }, [initial]);
   return [me, setMe];
 }
 

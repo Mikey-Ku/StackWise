@@ -242,3 +242,31 @@ body:has(.apps) {
     display: none;
   }
 }
+
+/* Cards still on their way: the same shape, nothing in it yet. */
+.apps-card--skeleton {
+  pointer-events: none;
+}
+.apps-card--skeleton .apps-icon {
+  background: var(--mk-surface-sunk);
+}
+.apps-skel {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--mk-surface-sunk);
+  animation: apps-shimmer 1.4s ease-in-out infinite;
+}
+.apps-skel--title {
+  width: 55%;
+  height: 14px;
+  margin-bottom: 8px;
+}
+.apps-skel--meta {
+  width: 35%;
+}
+@keyframes apps-shimmer {
+  50% {
+    opacity: 0.45;
+  }
+}

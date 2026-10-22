@@ -51,6 +51,20 @@ function push(store: Store) {
   }, PUSH_DELAY_MS);
 }
 
+/** Saves and sends the store to disk right now, before a page change: a plan made on the Projects page has to be on disk before the canvas pulls the library. */
+export async function flushStore(store: Store): Promise<void> {
+  saveStore(store);
+  window.clearTimeout(pushTimer);
+  pending = null;
+  const body = JSON.stringify(toDiskLibrary(store));
+  lastPushed = body;
+  try {
+    await fetch("/api/library", { method: "PUT", headers: { "content-type": "application/json" }, body, keepalive: true });
+  } catch {
+    lastPushed = "";
+  }
+}
+
 export function saveStore(store: Store): void {
   try {
     window.localStorage.setItem(STORE_KEY, JSON.stringify(store));
@@ -93,6 +107,13 @@ export async function pullLibrary(current: Store): Promise<Store | null> {
   } catch {
     return null;
   }
+}
+
+/** The library the server rendered the page from, joined with this browser's copy; what only the browser had goes to disk. */
+export function adoptLibrary(disk: DiskLibrary): Store {
+  const merged = mergeStores(loadHistory().store, disk, new Date().toISOString());
+  if (JSON.stringify(toDiskLibrary(merged)) !== JSON.stringify({ activeId: disk.activeId, order: disk.order, plans: disk.plans.map((p) => ({ id: p.id, plan: p.plan, local: p.local })) })) push(merged);
+  return merged;
 }
 
 /** Deleting a plan here deletes its record on disk too; the browser's copy goes through the reducer. */

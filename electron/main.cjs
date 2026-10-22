@@ -104,6 +104,7 @@ function createWindow() {
   win.on("closed", () => {
     win = null;
   });
+  win.loadURL(SPLASH);
   // A load that fails because the server is still starting is tried again, up to ten times.
   let retries = 0;
   win.webContents.on("did-fail-load", (event, code, description, url, isMainFrame) => {
@@ -112,6 +113,12 @@ function createWindow() {
     setTimeout(() => win && win.loadURL(url), 500);
   });
 }
+
+const MARK = `<svg width="72" height="72" viewBox="0 0 1254 1254" aria-hidden="true"><rect width="1254" height="1254" rx="270" fill="#0561ee"/><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"><path d="M627 337 L933 520 L627 703 L322 520 Z" stroke-width="62"/><path d="M322 668 L627 848 L932 668" stroke-width="64"/><path d="M322 792 L627 967 L932 792" stroke-width="64"/><circle cx="607" cy="517" r="88" stroke-width="34"/><path d="M562 520 a46 46 0 0 1 40 -40" stroke-width="20"/><path d="M692 570 L735 604" stroke="#0561ee" stroke-width="92"/><path d="M692 570 L735 604" stroke-width="46"/></g></svg>`;
+const PAGE_STYLE = `html,body{height:100%;margin:0}body{display:grid;place-items:center;background:#f5f5f7;color:#6e6e73;font:15px -apple-system,system-ui,sans-serif;-webkit-app-region:drag;-webkit-user-select:none}@media(prefers-color-scheme:dark){body{background:#1c1c1e;color:#98989d}}.m{display:grid;gap:16px;justify-items:center;text-align:center}.m strong{color:#1d1d1f;font-size:17px}@media(prefers-color-scheme:dark){.m strong{color:#f5f5f7}}@keyframes p{50%{opacity:.45}}.t{animation:p 1.6s ease-in-out infinite}code{font:13px ui-monospace,Menlo,monospace}`;
+/** A page of the app's own, shown while the server starts and if it doesn't. */
+const localPage = (body) => `data:text/html;charset=utf-8,${encodeURIComponent(`<!doctype html><meta charset="utf-8"><style>${PAGE_STYLE}</style><body><div class="m">${MARK}${body}</div></body>`)}`;
+const SPLASH = localPage(`<div class="t">Starting StackWise</div>`);
 
 /** The page the app opens on: your projects; the canvas is one click from there. */
 function loadHome() {
@@ -180,7 +187,7 @@ app.whenReady().then(async () => {
   createWindow();
   if (await waitForServer()) loadHome();
   else {
-    win && win.loadURL(`data:text/html,<meta charset="utf-8"><body style="font-family:-apple-system;padding:40px"><h2>StackWise didn't start</h2><p>Its log is in ${HOME}/app.log.</p></body>`);
+    win && win.loadURL(localPage(`<strong>StackWise didn't start</strong><div>Its log is in <code>${HOME}/app.log</code>.</div>`));
   }
 });
 

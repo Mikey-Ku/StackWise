@@ -144,6 +144,7 @@ body:has(.shell) {
 }
 
 .shell-main {
+  animation: ws-fade var(--mk-dur-slow, 240ms) var(--mk-ease, ease);
   display: flex;
   flex-direction: column;
   gap: 36px;

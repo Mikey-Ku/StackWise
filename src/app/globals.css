@@ -1632,25 +1632,65 @@ body {
 }
 
 /* The Ask panel. */
+/* A fixed side panel, not a floating card: full height on the left, and the canvas, the bar, the
+   planning sheet and the dock all make room for it. */
 .ws-ask {
+  --ask-w: 400px;
   position: absolute;
   z-index: 28;
-  top: 64px;
-  bottom: 12px;
-  left: 12px;
+  top: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
-  width: min(400px, calc(100% - 24px));
-  border-radius: 20px;
-  animation: ws-pop var(--mk-dur) var(--mk-ease);
+  width: var(--ask-w);
+  border-right: 0.5px solid var(--ws-glass-line);
+  border-radius: 0;
+  box-shadow: none;
 }
-/* The planning sheet keeps clear of the pane too. */
+.ws[data-ask="open"] {
+  --ask-w: 400px;
+}
+.ws[data-ask="open"] .ws-canvas,
 .ws[data-ask="open"] .ws-sheet-wrap {
-  padding-left: 424px;
+  left: var(--ask-w);
 }
-/* The dock keeps clear of the pane on a narrow window and stays centered on a wide one. */
+.ws[data-ask="open"] .ws-bar,
+html[data-desktop] .ws[data-ask="open"] .ws-bar {
+  left: calc(var(--ask-w) + 12px);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.ws[data-ask="open"] .ws-summary {
+  justify-self: center;
+  max-width: 100%;
+  overflow: hidden;
+}
+/* Beside the pane the AI pill keeps its dot and name; the state is in the title and the popover. */
+.ws[data-ask="open"] .ws-connpill__state:not(.is-cta) {
+  display: none;
+}
 .ws[data-ask="open"] .ws-dock {
-  left: max(50%, 700px);
+  left: calc(var(--ask-w) + (100% - var(--ask-w)) / 2);
+}
+/* In the Mac app the traffic lights sit in the pane's top corner. */
+html[data-desktop] .ws-ask {
+  padding-top: 38px;
+}
+.ws-bar__nav {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--mk-text-muted);
+  cursor: pointer;
+}
+.ws-bar__nav:hover {
+  background: var(--ws-fill);
+  color: var(--mk-text);
 }
 .ws-ask__top {
   display: flex;
@@ -2435,9 +2475,25 @@ body {
     left: 8px;
     width: auto;
     max-height: 70%;
+    border: 0.5px solid var(--ws-glass-line);
+    border-radius: 20px;
+    box-shadow: var(--ws-float-shadow);
+  }
+  html[data-desktop] .ws-ask {
+    padding-top: 0;
+  }
+  .ws[data-ask="open"] .ws-canvas,
+  .ws[data-ask="open"] .ws-sheet-wrap {
+    left: 0;
+  }
+  .ws[data-ask="open"] .ws-bar {
+    left: 12px;
   }
   .ws[data-ask="open"] .ws-dock {
     left: 50%;
+  }
+  .ws-bar__nav {
+    display: none;
   }
   .ws-sheet-wrap {
     padding: 60px 8px 8px;

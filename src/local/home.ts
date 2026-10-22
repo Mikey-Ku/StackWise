@@ -123,3 +123,9 @@ export function migrateRepoState(repoRoot: string, home: string): string[] {
   }
   return moved;
 }
+
+/** Who this is and where things live, as /api/profile reports it and the pages render it. */
+export function readMe(): { profile: Profile; dir: string; home: string; account: string } {
+  const dir = stackwiseHome();
+  return { profile: readProfile(dir), dir, home: os.homedir(), account: accountName() };
+}
