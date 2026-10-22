@@ -1,3 +1,4 @@
+import { DEFAULT_ANSWERER_KEY } from "./answerers";
 import { mergeStores, toDiskLibrary, type DiskLibrary } from "./library";
 import { initialStore, migrate, type History, type PlanState, type Store } from "./store";
 
@@ -75,8 +76,16 @@ export async function pullLibrary(current: Store): Promise<Store | null> {
   try {
     const response = await fetch("/api/library", { cache: "no-store" });
     if (!response.ok) return null;
-    const disk = (await response.json()) as DiskLibrary & { profile?: { size: PlanState["size"]; priority: PlanState["priority"]; builderId: string } };
-    if (disk.profile) profileDefaults = { size: disk.profile.size, priority: disk.profile.priority, builderId: disk.profile.builderId };
+    const disk = (await response.json()) as DiskLibrary & { profile?: { size: PlanState["size"]; priority: PlanState["priority"]; builderId: string; answerer?: string } };
+    if (disk.profile) {
+      profileDefaults = { size: disk.profile.size, priority: disk.profile.priority, builderId: disk.profile.builderId };
+      // A browser that hasn't picked who answers in Ask starts with the profile's choice.
+      try {
+        if (disk.profile.answerer && !window.localStorage.getItem(DEFAULT_ANSWERER_KEY)) window.localStorage.setItem(DEFAULT_ANSWERER_KEY, disk.profile.answerer);
+      } catch {
+        // Private windows: nothing to seed.
+      }
+    }
     const merged = mergeStores(current, disk, new Date().toISOString());
     // What this browser had and disk didn't goes to disk now, so a second browser or the command line sees it.
     if (JSON.stringify(toDiskLibrary(merged)) !== JSON.stringify({ activeId: disk.activeId, order: disk.order, plans: disk.plans.map((p) => ({ id: p.id, plan: p.plan, local: p.local })) })) push(merged);

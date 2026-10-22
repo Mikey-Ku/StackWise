@@ -97,6 +97,8 @@ export function saveDefaultAnswerer(id: RecipientId): void {
   } catch {
     // Private windows: the default lasts until the tab closes.
   }
+  // The profile keeps it too, so Settings and the Ask panel agree and a new browser starts with it.
+  void fetch("/api/profile", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ answerer: id }) }).catch(() => undefined);
 }
 
 /**
