@@ -62,9 +62,9 @@ Everything works without an API key. For an AI that reads your description, answ
 2. **Describe your app**, or pick a kind of app (web, iOS, Android, both, AI app, online store, internal tool). Confirm each guess; StackWise shows the exact words behind every one. Only the follow-up questions that would change the plan are asked. Pick a priority (spend $0, launch fast, learn, ready to grow), an audience size and your builder.
 3. **Read the canvas.** Your app in the middle, with its parts in four layers: where it runs (hosting, domain), people (login, payments, email, a phone app), data (database, files, background jobs), and outside services (AI, scraping, data sources, automations, analytics, monitoring). A check on a line means the connection works, `!` a warning, a cross that it doesn't, `?` that a fact is missing. A light flows along the lines that work. Drag any part where you want it; Tidy up puts the layers back.
 4. **Click anything.** A card opens Details: why it was picked, every check with its reason and fix, the cost at your size, a comparison with the alternatives, and the facts behind it with their sources. A line shows what travels on it: the environment variables your code reads to reach that service. Right-click for everything else: ask, swap, let StackWise pick, learn, build this with your agent.
-5. **Ask** (Cmd+K). One conversation per plan. Pick who answers: a coding agent in your terminal, a model with a key, or StackWise's own facts, which need nothing.
+5. **Ask** (Cmd+K). A chat pane beside the canvas, one conversation per plan. Pick who answers in the composer: a coding agent in your terminal, a built-in AI with a key (and which of its models), or StackWise's own facts, which need nothing.
 6. **The dock.** Overview (problems, close calls, accounts, cost at every size), Parts (every service by part, dragged onto the canvas; 101 options, 80 fully researched), Checklist (accounts, keys and build steps to tick off) and Learn (what each part of an app is, what matters when choosing, a glossary).
-7. **Settings.** Your name and the defaults a new plan starts with, the folders StackWise looks in, your coding agents (one Connect button for Claude Code), AI keys, and the MCP server's status.
+7. **Settings.** Account (your name, where plans live), General (what a new plan starts with, the folders StackWise looks in), Appearance, Models (who answers in Ask; a key and a model per built-in AI) and Agents (your coding agents, one Connect button for Claude Code, and the MCP server's status).
 8. **Build it.** Connect your agent and tell it to build from the plan, or export a project pack: the spec, setup, decisions, tasks with their tests, `.env.example`, and for Claude Code an agent per part, skills and `.mcp.json`.
 
 ## How it works
@@ -91,7 +91,7 @@ The browser keeps a copy of your plans so the canvas opens instantly; the files 
 
 ## Work with a coding agent
 
-StackWise is an MCP server, so your agent uses its rules instead of guessing. In Settings, press **Connect to StackWise** on Claude Code (any agent that speaks MCP can use the same address):
+StackWise is an MCP server, so your agent uses its rules instead of guessing. In Settings, Agents, press **Connect to StackWise** on Claude Code (any agent that speaks MCP can use the same address):
 
 ```bash
 claude mcp add --transport http --scope user stackwise http://127.0.0.1:4310/api/mcp
@@ -166,6 +166,8 @@ Start with [docs/LEARNING.md](docs/LEARNING.md) for how it works, and [docs/DECI
 **macOS says the app is damaged or can't be checked.** It isn't signed with an Apple certificate. Right-click it and choose Open, or run the `xattr` command above.
 
 **Port 4310 is in use.** Another StackWise is running: quit the app, or `stackwise stop`. `pnpm dev` uses the same port.
+
+**Which model answers?** Settings, Models: each built-in AI has a model picker (Claude starts on `claude-opus-5`), and the chat pane shows the model beside the answerer. The choice is saved as `STACKWISE_MODEL`, `OPENAI_MODEL` or `GEMINI_MODEL` in StackWise's `.env.local`.
 
 **Where are my plans?** `~/.stackwise/plans/`, one JSON file each. A plan file you exported (`stackwise.plan.json`) opens with "Open plan file" on the Projects page, and a share link carries the whole plan.
 

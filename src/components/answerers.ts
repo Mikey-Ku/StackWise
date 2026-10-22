@@ -101,6 +101,15 @@ export function saveDefaultAnswerer(id: RecipientId): void {
   void fetch("/api/profile", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ answerer: id }) }).catch(() => undefined);
 }
 
+/** Saves one built-in AI setting (its key, or its model) through /api/keys; returns the new AI status, never a value. */
+export async function saveProviderSetting(name: string, value: string): Promise<AiStatus> {
+  const response = await fetch("/api/keys", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name, value }) });
+  const body = (await response.json()) as { error?: string; providers?: ProviderInfo[] };
+  if (!response.ok || !body.providers) throw new Error(body.error ?? "Couldn't save.");
+  const first = body.providers.find((p) => p.on);
+  return { ai: Boolean(first), model: first?.model ?? "", providers: body.providers };
+}
+
 /**
  * Each answerer's mark: full-color brand marks where the brand has one, and one-color marks
  * (`mono`) that the page tints to the text color so they read in light and dark. Most come from

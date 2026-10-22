@@ -1,6 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { PlanBrief } from "@/engine/summary";
-import { AI_EFFORT, AI_MODEL, AiError, FALLBACK_BETA, withoutEmDashes } from "./config";
+import { AI_EFFORT, aiModel, AiError, FALLBACK_BETA, withoutEmDashes } from "./config";
 import { askText, type FetchLike, type ProviderStatus } from "./providers";
 
 /**
@@ -26,7 +26,7 @@ export async function providerExplain(status: ProviderStatus, brief: PlanBrief, 
 
 export async function aiExplain(client: Anthropic, brief: PlanBrief): Promise<string> {
   const response = await client.beta.messages.create({
-    model: AI_MODEL,
+    model: aiModel(),
     max_tokens: 16000,
     betas: [FALLBACK_BETA],
     fallbacks: "default",

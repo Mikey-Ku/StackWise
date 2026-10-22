@@ -718,7 +718,7 @@ html:has(.learn) {
 
 /* Inside the Mac app: the header starts past the traffic lights and drags the window. */
 html[data-desktop] .learn-top {
-  padding-left: 72px;
+  padding-left: 98px;
   -webkit-app-region: drag;
 }
 html[data-desktop] .learn-top a,

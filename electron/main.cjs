@@ -78,7 +78,7 @@ function createWindow() {
     minHeight: 600,
     title: "StackWise",
     titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 16, y: 18 },
+    trafficLightPosition: { x: 18, y: 26 },
     backgroundColor: "#f5f5f7",
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, sandbox: true },
   });

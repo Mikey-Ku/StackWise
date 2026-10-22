@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AI_MODEL, AiError, aiEnabled } from "./config";
+import { AiError, aiEnabled, DEFAULT_MODEL } from "./config";
 import { setting } from "@/engine/names";
 
 /**
@@ -26,6 +26,8 @@ export interface ProviderDef {
   /** Env name for the model, and the model used when it's unset (none: the preset stays off until it's set). */
   modelEnv: string;
   defaultModel?: string;
+  /** Models to offer in Settings, the default first. Any other id can still be typed in. */
+  models?: string[];
   /** For "openai-chat": where the API lives, or the env name that says so. */
   baseUrl?: string;
   baseUrlEnv?: string;
@@ -34,9 +36,17 @@ export interface ProviderDef {
 }
 
 export const PROVIDERS: ProviderDef[] = [
-  { id: "claude", label: "Claude", kind: "anthropic", keyEnv: ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"], modelEnv: "STACKWISE_MODEL", defaultModel: AI_MODEL },
-  { id: "openai", label: "OpenAI", kind: "openai-chat", keyEnv: ["OPENAI_API_KEY"], modelEnv: "OPENAI_MODEL", defaultModel: "gpt-6-luna", baseUrl: "https://api.openai.com/v1" },
-  { id: "gemini", label: "Gemini", kind: "gemini", keyEnv: ["GEMINI_API_KEY", "GOOGLE_API_KEY"], modelEnv: "GEMINI_MODEL", defaultModel: "gemini-3.8-flash" },
+  {
+    id: "claude",
+    label: "Claude",
+    kind: "anthropic",
+    keyEnv: ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"],
+    modelEnv: "STACKWISE_MODEL",
+    defaultModel: DEFAULT_MODEL,
+    models: [DEFAULT_MODEL, "claude-fable-5-1", "claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"],
+  },
+  { id: "openai", label: "OpenAI", kind: "openai-chat", keyEnv: ["OPENAI_API_KEY"], modelEnv: "OPENAI_MODEL", defaultModel: "gpt-6-luna", models: ["gpt-6-luna"], baseUrl: "https://api.openai.com/v1" },
+  { id: "gemini", label: "Gemini", kind: "gemini", keyEnv: ["GEMINI_API_KEY", "GOOGLE_API_KEY"], modelEnv: "GEMINI_MODEL", defaultModel: "gemini-3.8-flash", models: ["gemini-3.8-flash"] },
   { id: "ollama", label: "Ollama (on this computer)", kind: "openai-chat", keyEnv: [], modelEnv: "OLLAMA_MODEL", baseUrl: "http://localhost:11434/v1", baseUrlEnv: "OLLAMA_BASE_URL" },
 ];
 
@@ -45,6 +55,8 @@ export const FEATURED_PROVIDERS = ["claude", "openai", "gemini"];
 
 /** The only variables the Connect screen may write to StackWise's own .env.local: each provider's first key name. */
 export const PROVIDER_KEY_NAMES = new Set(PROVIDERS.flatMap((p) => p.keyEnv.slice(0, 1)));
+/** And the model names Settings may write, one per provider. */
+export const PROVIDER_MODEL_NAMES = new Set(PROVIDERS.map((p) => p.modelEnv));
 
 export const PROVIDER_IDS = PROVIDERS.map((p) => p.id);
 export type ProviderId = string;
@@ -55,6 +67,10 @@ export interface ProviderStatus {
   kind: ProviderKind;
   on: boolean;
   model: string;
+  /** The variable that picks the model, the models offered, and the one used when it's unset. */
+  modelEnv: string;
+  models: string[];
+  defaultModel?: string;
   /** The variable to set in .env.local. Never the value. */
   keyName: string;
   /** Everything it still needs before it can turn on, by name. */
@@ -84,6 +100,9 @@ export function providerStatus(env: Env = process.env): ProviderStatus[] {
       kind: def.kind,
       on,
       model,
+      modelEnv: def.modelEnv,
+      models: def.models ?? [],
+      ...(def.defaultModel ? { defaultModel: def.defaultModel } : {}),
       keyName: def.keyEnv[0] ?? def.modelEnv,
       needs,
       ...(baseUrl ? { baseUrl } : {}),

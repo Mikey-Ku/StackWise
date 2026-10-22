@@ -93,6 +93,23 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const [connection, setConnection] = useState<SlotId | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [ask, setAsk] = useState<{ open: boolean; slot: SlotId; request: AskRequest | null }>({ open: false, slot: "framework", request: null });
+  // The chat pane and the left panel share the left side of the canvas: opening one closes the other.
+  const closeAsk = useCallback(() => setAsk((a) => (a.open ? { ...a, open: false, request: null } : a)), []);
+  const openPanel = useCallback(
+    (next: Panel) => {
+      setPanel(next);
+      closeAsk();
+    },
+    [closeAsk],
+  );
+  const togglePanel = (next: Panel) => {
+    if (panel === next) setPanel(null);
+    else openPanel(next);
+  };
+  const toggleAsk = useCallback(() => {
+    if (!ask.open) setPanel(null);
+    setAsk((a) => ({ ...a, open: !a.open, request: null }));
+  }, [ask.open]);
   const [menu, setMenu] = useState<MenuRequest | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -235,7 +252,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         if (project.body.framework) dispatch({ type: "place", slot: "framework", optionId: project.body.framework });
         setToast(`New project for ${name}, linked to its folder${project.body.framework ? `, built with ${project.body.label}` : ""}.${project.body.readme ? " Its README is the description: check it, then press Read my description." : ""}`);
       }
-      setPanel("project");
+      openPanel("project");
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per folder in the address
   }, []);
@@ -280,6 +297,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     setConnection(null);
   }, []);
   const openAsk = useCallback((slot: SlotId, question?: string) => {
+    setPanel(null);
     setAsk({ open: true, slot, request: question ? { slot, question, nonce: Date.now() } : null });
   }, []);
   const openAdd = useCallback((slot?: SlotId) => setAdding({ focus: slot ?? null }), []);
@@ -303,14 +321,12 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     [rec.selection, rec.needed, index, dispatch, selectedSlot],
   );
 
-  const togglePanel = (next: Panel) => setPanel((current) => (current === next ? null : next));
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setAsk((a) => ({ ...a, open: !a.open, request: null }));
+        toggleAsk();
         return;
       }
       const typing = e.target instanceof Element && e.target.closest("input, textarea, select, [contenteditable]");
@@ -338,7 +354,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [dispatch, panel, selectedSlot, deselect, openAdd, removePart, plan.step]);
+  }, [dispatch, panel, selectedSlot, deselect, openAdd, removePart, plan.step, toggleAsk]);
 
   const nameOf = useCallback(
     (slot: SlotId) => {
@@ -385,7 +401,10 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         {
           label: `Build this with ${builderAgent.label}`,
           icon: "terminal",
-          onSelect: () => setAsk({ open: true, slot: task.slot, request: { slot: task.slot, question: taskBrief(tasks, taskId, plan.appName, testPlan(index, model.input, rec.selection, task, plan.appName))!, nonce: Date.now(), to: builderAgent.id } }),
+          onSelect: () => {
+            setPanel(null);
+            setAsk({ open: true, slot: task.slot, request: { slot: task.slot, question: taskBrief(tasks, taskId, plan.appName, testPlan(index, model.input, rec.selection, task, plan.appName))!, nonce: Date.now(), to: builderAgent.id } });
+          },
         },
       ];
     },
@@ -469,7 +488,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           ...(advanced && slot !== "framework" && current ? [{ label: `Add another service for ${def.label.toLowerCase()}`, icon: "plus" as const, onSelect: () => setExtraEdit({ id: null, slot }) }] : []),
           ...(advanced && current ? [drawLineMenu(slot === "framework" ? "app" : slot)] : []),
           ...(slot === "framework" && projectPanel
-            ? [{ label: plan.icon ? "Change the app's logo" : "Add a logo for this app", icon: "pin" as const, onSelect: () => setPanel("project") }]
+            ? [{ label: plan.icon ? "Change the app's logo" : "Add a logo for this app", icon: "pin" as const, onSelect: () => openPanel("project") }]
             : []),
           {
             label: `Learn about ${inSentence(def.label)}`,
@@ -616,7 +635,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
       }
       setMenu({ x, y, items });
     },
-    [mod, history, dispatch, index, rec, catalog, nameOf, openAsk, openAdd, openLearn, saveImage, removePart, select, selectConnection, model, plan.appName, plan.layout, plan.icon, plan.custom, plan.extras, plan.links, drawLineMenu, endName, today, building, showAll, advanced, projectPanel, buildWith, tasks],
+    [mod, history, dispatch, index, rec, catalog, nameOf, openAsk, openAdd, openLearn, openPanel, saveImage, removePart, select, selectConnection, model, plan.appName, plan.layout, plan.icon, plan.custom, plan.extras, plan.links, drawLineMenu, endName, today, building, showAll, advanced, projectPanel, buildWith, tasks],
   );
 
   // The AI pill: who answers, and whether it's there. Nothing connected reads as an invitation.
@@ -625,7 +644,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
   const answererState = answerer.id === "facts" ? "Connect" : answerer.group === "api" ? "Ready" : STATE_TEXT[answerer.state];
 
   return (
-    <div className={cx("ws", !building && "is-planning")} data-drawer={selectedSlot ? "open" : "closed"} data-panel={panel ?? "none"}>
+    <div className={cx("ws", !building && "is-planning")} data-drawer={selectedSlot ? "open" : "closed"} data-panel={panel ?? "none"} data-ask={ask.open ? "open" : "closed"}>
       <ReactFlowProvider>
         <PlanCanvas
           model={model}
@@ -661,7 +680,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           </span>
           <PlanMenu model={model} onToast={setToast} />
         </div>
-        {building && <SummaryPill model={model} onOpen={() => setPanel("overview")} />}
+        {building && <SummaryPill model={model} onOpen={() => openPanel("overview")} />}
         <div className="ws-bar__side ws-bar__side--end">
           <button
             type="button"
@@ -676,7 +695,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
             <span className="ws-connpill__label">{answererName}</span>
             <span className={cx("ws-connpill__state", answererLive && "is-live", answerer.id === "facts" && "is-cta")}>{answererState}</span>
           </button>
-          <button type="button" className={cx("ws-askbtn", ask.open && "is-on")} onClick={() => setAsk((a) => ({ ...a, open: !a.open, request: null }))} title={`Ask about your plan (${mod}K)`}>
+          <button type="button" className={cx("ws-askbtn", ask.open && "is-on")} onClick={toggleAsk} title={`Ask about your plan (${mod}K)`}>
             <Icon name="sparkle" size={15} />
             <span>Ask</span>
             <kbd>{mod}K</kbd>
@@ -755,12 +774,12 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           <div className="ws-float__body">
             {shown.id === "overview" && (
               <>
-                <Overview model={model} onSelect={select} onOpenChecklist={() => setPanel("checklist")} onExplain={() => openAsk("framework", "Explain my plan")} />
+                <Overview model={model} onSelect={select} onOpenChecklist={() => openPanel("checklist")} onExplain={() => openAsk("framework", "Explain my plan")} />
               </>
             )}
             {shown.id === "project" && <ProjectPanel model={model} onToast={setToast} />}
             {shown.id === "options" && <Palette model={model} selectedSlot={selectedSlot} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onToast={setToast} />}
-            {shown.id === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} onOpenProject={projectPanel ? () => setPanel("project") : undefined} />}
+            {shown.id === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} onOpenProject={projectPanel ? () => openPanel("project") : undefined} />}
           </div>
         </aside>
       )}
@@ -782,7 +801,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
                 today={today}
                 onAsk={openAsk}
                 onShowPart={() => setConnection(null)}
-                onOpenChecklist={() => setPanel("checklist")}
+                onOpenChecklist={() => openPanel("checklist")}
                 onToast={setToast}
               />
             ) : (
@@ -844,6 +863,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           pairing={pairing}
           savedDefault={savedDefault}
           onSaveDefault={chooseAnswerer}
+          onAi={updateAi}
           onSlot={(slot) => setAsk((a) => ({ ...a, slot, request: null }))}
           onClose={() => setAsk((a) => ({ ...a, open: false, request: null }))}
           onToast={setToast}

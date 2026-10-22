@@ -9,7 +9,7 @@ Everything an agent does shows up in StackWise. A change appears on the canvas w
 | | From the running app | From an exported project |
 |---|---|---|
 | Transport | Streamable HTTP at `http://127.0.0.1:4310/api/mcp` | The project's `.mcp.json`: the same HTTP address when the project was exported from the Mac app, or a command that starts the server over stdio (`pnpm --silent --dir <StackWise> mcp`) when it was exported from a source checkout |
-| Connect | Settings, Coding agents, **Connect to StackWise**, or the command below | Nothing to do |
+| Connect | Settings, Agents, **Connect to StackWise**, or the command below | Nothing to do |
 | The plan it works on | The plan you have open, once it's shared | The project's `stackwise.plan.json`, kept in step with StackWise's copy on every call |
 | Needs StackWise open | Yes | With the HTTP address, yes; with the stdio command, no |
 
@@ -17,7 +17,7 @@ The address is `127.0.0.1`, not `localhost`: StackWise listens only on 127.0.0.1
 
 ## Connect an agent
 
-**Claude Code.** Open Settings, find Claude Code under Coding agents and press **Connect to StackWise**. That runs:
+**Claude Code.** Open Settings, Agents, find Claude Code and press **Connect to StackWise**. That runs:
 
 ```bash
 claude mcp add --transport http --scope user stackwise http://127.0.0.1:4310/api/mcp

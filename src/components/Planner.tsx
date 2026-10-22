@@ -19,6 +19,10 @@ export interface ProviderInfo {
   on: boolean;
   model: string;
   keyName: string;
+  /** The variable that picks the model, the models offered (the default first), and the default. */
+  modelEnv?: string;
+  models?: string[];
+  defaultModel?: string;
   /** What it still needs in .env.local, by name. Older servers leave it out. */
   needs?: string[];
   /** Claude, OpenAI and Gemini are always offered; other models show once they're set up. */

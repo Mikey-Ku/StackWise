@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
-import { AI_EFFORT, AI_MODEL, FALLBACK_BETA, getClient } from "@/ai/config";
+import { AI_EFFORT, aiModel, FALLBACK_BETA, getClient } from "@/ai/config";
 import { checkCatalog } from "@/engine/integrity";
 import type { Option } from "@/engine/schema";
 import { todayIso } from "@/engine/staleness";
@@ -53,7 +53,7 @@ async function main() {
       continue;
     }
     const response = await client.beta.messages.parse({
-      model: AI_MODEL,
+      model: aiModel(),
       max_tokens: 16000,
       betas: [FALLBACK_BETA],
       fallbacks: "default",

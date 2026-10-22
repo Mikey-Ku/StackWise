@@ -2,7 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import type { Catalog } from "@/engine/schema";
-import { AI_EFFORT, AI_MODEL, AiError, FALLBACK_BETA, withoutEmDashes } from "./config";
+import { AI_EFFORT, aiModel, AiError, FALLBACK_BETA, withoutEmDashes } from "./config";
 import { askJson, type FetchLike, type ProviderStatus } from "./providers";
 
 /**
@@ -91,7 +91,7 @@ export async function providerPrefill(status: ProviderStatus, catalog: Catalog, 
 export async function aiPrefill(client: Anthropic, catalog: Catalog, description: string): Promise<PrefillResult> {
   const schema = buildPrefillSchema(catalog.needs.map((n) => n.id));
   const response = await client.beta.messages.parse({
-    model: AI_MODEL,
+    model: aiModel(),
     max_tokens: 16000,
     betas: [FALLBACK_BETA],
     fallbacks: "default",

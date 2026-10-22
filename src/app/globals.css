@@ -1635,25 +1635,63 @@ body {
 .ws-ask {
   position: absolute;
   z-index: 28;
-  bottom: 72px;
-  left: 50%;
-  translate: -50% 0;
+  top: 64px;
+  bottom: 12px;
+  left: 12px;
   display: flex;
   flex-direction: column;
-  width: min(600px, calc(100% - 24px));
-  max-height: min(560px, calc(100% - 150px));
+  width: min(400px, calc(100% - 24px));
   border-radius: 20px;
   animation: ws-pop var(--mk-dur) var(--mk-ease);
 }
-.ws.is-planning .ws-ask {
-  bottom: 16px;
+/* The planning sheet keeps clear of the pane too. */
+.ws[data-ask="open"] .ws-sheet-wrap {
+  padding-left: 424px;
 }
-.ws-ask__head {
+/* The dock keeps clear of the pane on a narrow window and stays centered on a wide one. */
+.ws[data-ask="open"] .ws-dock {
+  left: max(50%, 700px);
+}
+.ws-ask__top {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 10px 10px 8px 12px;
+}
+.ws-ask__new {
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ws-fill);
+  color: var(--mk-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ws-ask__new:hover:not(:disabled) {
+  background: var(--ws-fill-hover);
+}
+.ws-ask__new:disabled {
+  color: var(--mk-text-faint);
+  cursor: default;
+}
+.ws-ask__plan {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 6px;
+  color: var(--mk-text-faint);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-iconbtn.is-on {
+  background: var(--mk-accent);
+  color: #fff;
 }
 .ws-answerer {
   display: inline-flex;
@@ -1661,7 +1699,6 @@ body {
   gap: 6px;
   min-width: 0;
   height: 28px;
-  margin-right: auto;
   padding: 0 10px;
   border: 0;
   border-radius: 8px;
@@ -1801,20 +1838,61 @@ body {
   cursor: pointer;
 }
 .ws-ask__body {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-height: 60px;
-  padding: 4px 18px 12px;
+  padding: 4px 14px 12px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+/* Nothing said yet: the starters sit low, near the composer, like a fresh chat. */
 .ws-ask__empty {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 4px 0;
+  gap: 10px;
+  margin-top: auto;
+  padding: 4px 0 6px;
   color: var(--mk-text-muted);
   font-size: 13px;
   line-height: 1.45;
+}
+.ws-ask__lead {
+  margin: 0 0 4px;
+  color: var(--mk-text);
+  font-weight: 600;
+  text-align: center;
+}
+.ws-ask__empty .mk-hint {
+  text-align: center;
+}
+.ws-starts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ws-start {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border: 0.5px solid var(--mk-line-strong);
+  border-radius: 999px;
+  background: var(--mk-surface);
+  color: var(--mk-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--mk-dur-fast) var(--mk-ease);
+}
+.ws-start:hover {
+  background: var(--ws-fill-hover);
+}
+.ws-start svg {
+  flex: none;
+  color: var(--mk-text-muted);
 }
 .ws-thread {
   display: flex;
@@ -1890,26 +1968,68 @@ body {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.ws-ask__notice {
+  margin: 0 12px 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--mk-surface-sunk);
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
 .ws-ask__compose {
   display: flex;
   flex: none;
-  align-items: flex-end;
-  gap: 8px;
-  margin: 0 12px;
-  padding: 5px 5px 5px 14px;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 12px 12px;
+  padding: 10px 10px 8px 14px;
   border: 0.5px solid var(--mk-line-strong);
-  border-radius: 20px;
+  border-radius: 18px;
   background: var(--mk-surface);
+}
+.ws-ask__tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.ws-model {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--ws-fill);
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ws-model select {
+  min-width: 0;
+  max-width: 150px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-overflow: ellipsis;
+  appearance: none;
+  cursor: pointer;
 }
 .ws-ask__compose:focus-within {
   border-color: var(--mk-accent);
   box-shadow: var(--mk-focus-ring);
 }
 .ws-ask__compose textarea {
-  flex: 1;
+  flex: none;
+  width: 100%;
   min-width: 0;
-  max-height: 120px;
-  padding: 5px 0;
+  max-height: 140px;
+  padding: 2px 0;
   border: 0;
   outline: 0;
   background: transparent;
@@ -1924,8 +2044,9 @@ body {
   display: grid;
   flex: none;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
   border: 0;
   border-radius: 50%;
   background: var(--mk-accent);
@@ -1936,18 +2057,6 @@ body {
   background: var(--ws-fill);
   color: var(--mk-text-faint);
   cursor: default;
-}
-.ws-ask__foot {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 18px 12px;
-  color: var(--mk-text-faint);
-  font-size: 11px;
-}
-.ws-ask__clear {
-  margin-left: auto;
 }
 .ws-chips {
   display: flex;
@@ -2320,8 +2429,15 @@ body {
     bottom: 10px;
   }
   .ws-ask {
+    top: auto;
+    right: 8px;
     bottom: 64px;
-    width: calc(100% - 16px);
+    left: 8px;
+    width: auto;
+    max-height: 70%;
+  }
+  .ws[data-ask="open"] .ws-dock {
+    left: 50%;
   }
   .ws-sheet-wrap {
     padding: 60px 8px 8px;
@@ -3366,7 +3482,7 @@ html[data-desktop] .ws::before {
   -webkit-app-region: drag;
 }
 html[data-desktop] .ws-bar {
-  left: 84px;
+  left: 98px;
 }
 html[data-desktop] .ws-bar > * {
   -webkit-app-region: no-drag;
