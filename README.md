@@ -1,10 +1,15 @@
+<p align="center"><img src="src/app/icon.svg" width="72" alt=""></p>
+
 # StackWise
 
-Plan a web app stack you actually understand.
+**Plan an app's stack you understand, then hand it to your coding agent.**
 
-You describe your app in a paragraph. StackWise works out what it needs (logins, payments, uploads, email, live updates, background jobs, data from other websites, your own domain), asks you to confirm each guess, and fills a canvas with a host, domain, database, login, file storage, payments, email, AI provider, web scraper, jobs service, analytics, error monitoring and, if you want one, a phone app. A rules engine checks every connection against sourced facts, so each verdict comes with a reason and a link. When the plan looks right, StackWise hands your AI builder (Lovable, Bolt, Replit, Claude Code, Cursor) a spec pack: the spec, an ordered setup checklist, a prompt or agent file, and a decision record.
+[![CI](https://github.com/Mikey-Ku/StackWise/actions/workflows/ci.yml/badge.svg)](https://github.com/Mikey-Ku/StackWise/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-The AI never decides whether two services work together. Rules do, from facts with a source and a date. AI reads your description, explains the plan and drafts new facts for a person to review.
+StackWise is a planning tool for people building their first web apps with AI builders (Lovable, Bolt, Replit, Claude Code, Cursor). You describe the app in a paragraph. StackWise works out what it needs, asks you to confirm each guess, and lays the plan out on a canvas: your app in the middle, a card for every service it needs, a line for every connection. A rules engine checks each connection against sourced facts, so every verdict comes with a reason and a link. When the plan looks right, your coding agent gets it over MCP: the stack, the reasons, an ordered build plan and a test plan for every task.
+
+The AI never decides whether two services work together. Rules do, from facts with a source and a date. AI reads your description, explains the plan, and drafts new facts for a person to review.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/stackwise-plan-dark.png">
@@ -15,46 +20,105 @@ The AI never decides whether two services work together. Rules do, from facts wi
 
 **[Watch the 85-second demo](https://michaelkujr.me/projects/stackwise/)** (captioned, no sound needed), or read the write-up on the same page: the problem it solves, how it teaches, and what the rules catch. A two-minute walkthrough for giving the demo yourself is in [docs/DEMO.md](docs/DEMO.md).
 
-## Start in two minutes
+## Install
 
-You need Node 22.9 or newer and pnpm. Claude Code is optional, for working with an agent.
+### The Mac app
+
+Download `StackWise-<version>-arm64.dmg` from [Releases](https://github.com/Mikey-Ku/StackWise/releases), open it, and drag StackWise into Applications. It's built for Apple Silicon.
+
+The app isn't signed with an Apple developer certificate, so the first time macOS says it can't check it for malware. Right-click StackWise in Applications and choose Open, or run:
+
+```bash
+xattr -d com.apple.quarantine /Applications/StackWise.app
+```
+
+StackWise lives in the menu bar. Its server runs at `http://127.0.0.1:4310` while the app is open, so a coding agent keeps its connection when you close the window; Quit stops everything. Your plans, profile and keys are in `~/.stackwise`.
+
+### From source
+
+You need Node 22.9 or newer and pnpm.
 
 ```bash
 git clone https://github.com/Mikey-Ku/StackWise.git stackwise && cd stackwise
 pnpm install
-pnpm link --global     # adds the `stackwise` command
-stackwise setup        # once: lets Claude Code talk to StackWise
+pnpm dev
 ```
 
-Then, in any project folder:
+Open http://localhost:4310. Then, if you like:
 
 ```bash
-stackwise
+pnpm link --global   # adds the `stackwise` command
+stackwise setup      # once: connects Claude Code to StackWise
+stackwise            # in any project folder: starts StackWise in the background and opens that project's plan
+stackwise stop
+pnpm app:build       # builds the Mac app yourself, into release/
 ```
 
-StackWise starts in the background (on http://localhost:4310) and opens your browser on that project. If the folder has a `stackwise.plan.json`, that plan opens; if you've opened the folder before, its plan comes back; otherwise a new plan starts, named after the folder, with its README as the description and its framework recognized. `stackwise stop` stops it.
+Everything works without an API key. For an AI that reads your description, answers questions and explains your plan, add a key in Settings, or set `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` or `GEMINI_API_KEY` in `.env.local` (see `.env.example`).
 
-To build with an agent, open Claude Code in the same folder and run `/mcp__stackwise__pair`. Write to it from **Ask** in StackWise (Cmd+K); it works in your repo and answers there.
+## Five minutes in
 
-Or just run the app: `pnpm dev` and open http://localhost:4310.
+1. **Projects.** The first page: your plans, the projects StackWise found under your folders (plan one in a click), and examples to open.
+2. **Describe your app**, or pick a kind of app (web, iOS, Android, both, AI app, online store, internal tool). Confirm each guess; StackWise shows the exact words behind every one. Only the follow-up questions that would change the plan are asked. Pick a priority (spend $0, launch fast, learn, ready to grow), an audience size and your builder.
+3. **Read the canvas.** Your app in the middle, with its parts in four layers: where it runs (hosting, domain), people (login, payments, email, a phone app), data (database, files, background jobs), and outside services (AI, scraping, data sources, automations, analytics, monitoring). A check on a line means the connection works, `!` a warning, a cross that it doesn't, `?` that a fact is missing. A light flows along the lines that work. Drag any part where you want it; Tidy up puts the layers back.
+4. **Click anything.** A card opens Details: why it was picked, every check with its reason and fix, the cost at your size, a comparison with the alternatives, and the facts behind it with their sources. A line shows what travels on it: the environment variables your code reads to reach that service. Right-click for everything else: ask, swap, let StackWise pick, learn, build this with your agent.
+5. **Ask** (Cmd+K). One conversation per plan. Pick who answers: a coding agent in your terminal, a model with a key, or StackWise's own facts, which need nothing.
+6. **The dock.** Overview (problems, close calls, accounts, cost at every size), Parts (every service by part, dragged onto the canvas; 101 options, 80 fully researched), Checklist (accounts, keys and build steps to tick off) and Learn (what each part of an app is, what matters when choosing, a glossary).
+7. **Settings.** Your name and the defaults a new plan starts with, the folders StackWise looks in, your coding agents (one Connect button for Claude Code), AI keys, and the MCP server's status.
+8. **Build it.** Connect your agent and tell it to build from the plan, or export a project pack: the spec, setup, decisions, tasks with their tests, `.env.example`, and for Claude Code an agent per part, skills and `.mcp.json`.
 
-Everything works without an API key. To have an AI read your description, answer questions and explain your plan, copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY`, `GEMINI_API_KEY`, or any model listed there).
+## How it works
 
-## Using it
+1. **Facts.** Every service is a JSON file in `data/options/` with facts a person can check: a free plan's limit, a price, whether it can push live updates to browsers. Each fact has a source URL, the date it was checked, and a status. New facts are drafts until someone reviews them on `/review`.
+2. **Rules.** `data/rules/` say what the facts mean together: a host that falls asleep can't run background jobs; a framework that renders on the server needs a host that runs servers; two Firebase parts share one project. A rule reads at most two parts, and a missing fact makes a check "unknown", never "works".
+3. **Search.** For your answers, size and priority, StackWise scores every stack (branch and bound, tested against brute force) and shows the best one with its close calls, so you see what nearly won and why.
+4. **The canvas** is a view of that result. Swap a part and the rules run again; every line's mark is a verdict, not a drawing.
+5. **AI, optionally**, has three jobs: read your description (its guesses must quote words that are really there), explain the computed plan, and draft new facts for review. It never decides compatibility.
+6. **Your agent** gets the plan over MCP: the same engine, 15 tools, no verdicts of its own.
 
-1. **Connect your AI.** The first screen: a coding agent in your terminal or an API key. The pill in the top bar always says what's connected.
-2. **Say what you're building.** Pick a kind of app (web, iOS, Android, both, AI app, store, internal tool) or describe it, then confirm each guess.
-3. **Read the canvas.** Your app in the middle, a card per part, and a line per connection: a check means it works, `!` a warning, a cross that it doesn't. A light flows along the lines that work. Click a card for why it was picked; right-click anything for everything else; press A to add a part.
-4. **Ask.** Cmd+K opens one conversation per plan. Pick who answers: an agent in your terminal, a model with a key, or StackWise's own facts.
-5. **Turn on Advanced tools when you need them.** The wrench in the dock adds a second service in one part (a cache next to the database), lines between two parts (Stripe sends webhooks to your app), parts you build yourself and parts StackWise doesn't list, and the Project panel.
-6. **Link your project.** The Project panel links the plan to its folder: see which of the plan's keys the project has set, set the missing ones into its `.env.local` without opening a file, and keep its `stackwise.plan.json` current. Values never come back to the page.
-7. **Export.** A spec pack for your AI builder as a zip, or straight into the project over MCP. "Copy the build plan" on the canvas menu gives the tasks alone, in order.
+On disk:
+
+```
+~/.stackwise/
+  profile.json      your name, theme, defaults, folders
+  library.json      which plans you have and their order
+  plans/<id>.json   one file per plan, shared with agents
+  .env.local        AI keys, in the Mac app (from source they're in the repo's .env.local)
+  server.log        the server started by `stackwise` or the app
+```
+
+The browser keeps a copy of your plans so the canvas opens instantly; the files are the record, and the newer side wins when they differ.
+
+## Work with a coding agent
+
+StackWise is an MCP server, so your agent uses its rules instead of guessing. In Settings, press **Connect to StackWise** on Claude Code (any agent that speaks MCP can use the same address):
 
 ```bash
-pnpm test             # engine, AI (with a fake client), store, scripts and data checks
+claude mcp add --transport http --scope user stackwise http://127.0.0.1:4310/api/mcp
+```
+
+Then, in Claude Code: "check my StackWise plan and fix the warnings", "add web scraping and compare the options", "build the payments task". The agent can check any stack, compare options, price a plan, get setup steps, read the plan you have open and change it (its changes appear on the canvas with its reason; Undo reverses them), and get every task's build brief and test plan. Run `/mcp__stackwise__pair` and you can write to it from Ask while it works in your repo.
+
+Every task comes with a test plan: what to check, how to keep the real service out of the tests, what not to test, and the limits StackWise knows for that service, so a test never charges a card, sends real mail or spends AI credit. The same plan is in the exported TASKS.md and in each part's build agent.
+
+The tool reference, with an example call and response for each tool, is in [docs/MCP.md](docs/MCP.md).
+
+## Keeping the facts true
+
+- Facts live in `data/` as reviewed JSON with a source, a date and a status. `/review` lists the facts the rules read first, and confirming one is a two-line diff.
+- A weekly GitHub workflow rereads every source with Claude and opens a pull request with anything that changed.
+- `pnpm draft:option` researches a new service into a draft file for review; `pnpm check:options -- --id <id>` checks it before it joins the catalog.
+
+## Commands
+
+```bash
+pnpm dev              # http://localhost:4310
+pnpm test             # engine, AI (with a fake client), store, MCP, scripts and data checks
 pnpm check:data       # only the data checks: schemas, sources, every pair gets a verdict
 pnpm check:options -- --id firecrawl   # check one option file while you write it
 pnpm typecheck && pnpm lint && pnpm build
+pnpm app              # the Mac app in development, on top of pnpm dev
+pnpm app:build        # the dmg, into release/
 
 pnpm eval:questions   # the question ids eval cases can grade, no AI
 pnpm eval:prefill     # AI pre-fill vs the keyword baseline (needs cases in evals/)
@@ -62,86 +126,8 @@ pnpm eval:plain-llm   # how often a plain LLM picks a stack that breaks a rule
 pnpm check:sources    # reread every fact's source page with Claude; --apply to update
 pnpm draft:option -- --id resend --name "Resend" --slot email --website https://resend.com
 pnpm build:logos      # refetch logos into public/logos; -- --only <id,id> for a few
-pnpm mcp              # StackWise's MCP server over stdio (exported projects start it themselves)
+pnpm mcp              # StackWise's MCP server over stdio
 ```
-
-## Pair with a coding agent
-
-StackWise is also an MCP server, so your coding agent uses its rules instead of guessing. Open **Ask** (Cmd+K), pick your agent in the Answering menu, then add StackWise to Claude Code once (any agent that speaks MCP can connect to the same address) and run `/mcp__stackwise__pair` so you can write to it from StackWise:
-
-```bash
-claude mcp add --transport http --scope user stackwise http://127.0.0.1:4310/api/mcp
-```
-
-Claude can check stacks, compare options, estimate costs and change the plan you share; its changes appear on the canvas with its reasons, and Undo reverses them. **Export project** gives Claude Code a ready project: tasks, an agent per part, `/next-step`, and an `.mcp.json` that starts StackWise's server. See [docs/MCP.md](docs/MCP.md).
-
-## What it does
-
-**Planning**
-- Describe your app, or start from an example. Claude (or keywords, without a key) guesses what it needs and shows the exact words behind every guess. Guesses whose quoted words aren't really in your description are thrown out.
-- Only the follow-up questions that would change your plan are asked.
-- Pick a priority (spend $0, launch fast, learn, ready to grow), an audience size and your builder.
-
-**Getting started**
-- Connect your AI first: a coding agent in your terminal (Claude Code, Codex, Gemini CLI) or an API key (Claude, OpenAI or Gemini). A pill in the top bar always shows what's connected, and you can change it there. StackWise's facts work with nothing connected.
-- Start from a kind of app (web, iOS, Android, iOS and Android, AI app, online store, internal tool) or describe yours. A template's answers are guesses you confirm like any other.
-
-**The canvas**
-- The canvas fills the window. A bar on top holds your plans, the plan in one line (monthly cost, accounts, checks) and Ask; a dock at the bottom opens Overview, Parts, Checklist and Learn, with undo, redo and fit to screen. Light and dark follow your system.
-- Add parts the way you add nodes in n8n: press A, the + in the dock or the + on your app, search every service, and pick one. The dot beside each shows what the rules say it would do to your plan. Hover a card to ask about it, swap it or remove it; Delete removes the selected one.
-- Every line starts with a mark that says whether it's connected: a check, a warning, a cross, or a question mark when it isn't verified. When a line is made or changes, a pulse runs along it and the mark pops, so you see the change as it happens.
-- Cards stay small: a logo, a name and a dot for its verdict. Click one for Details, double-click to ask about it, right-click for everything else (ask, swap, let StackWise pick, learn, clear). Right-click a line to explain the connection or copy its variable names, and the empty canvas to add parts, show all parts, tidy up, undo or edit your answers.
-- Your app in the middle, with slots for hosting, domain name, database, login, email, file storage, payments, AI, web scraping, background jobs, analytics, error monitoring and a phone app. Optional parts stay hidden until you need them, drag something that fits, or show all parts.
-- Drag options from a palette of 101 (80 fully researched), or press Use. Every option has its logo, a dot for what would happen if you used it, and quick stats at your audience size: cost now, the first paid plan, how far the free plan goes, and the trait that matters for that part (a domain's renewal price, whether a scraper charges extra for JavaScript pages, whether analytics needs cookies, whether a free host falls asleep, download fees, sales tax, whether iPhone builds need a Mac). Dropping something in the wrong slot is refused with a reason.
-- Drag any part where you want it: the lines follow it as it moves. The layout is saved with the plan, and "Tidy up" puts everything back.
-- Every line between the app and a service says what runs along it: the environment variables your code reads to reach that service. Click a line to see each name, where its value comes from, which ones the browser can read, and the checks on that connection. The line to your host carries every variable in the plan, because the host needs them all.
-- Swap a service without leaving the canvas: right-click any part and "Swap for" lists the others that fit it.
-- Describing your app and confirming the guesses happen in a sheet over the canvas. In a small window, panels slide up from the bottom.
-- Lines stay grey when they work, so the ones with a warning, a problem or an unverified fact stand out in color.
-- Undo and redo (Cmd or Ctrl+Z).
-
-**Notes and asking**
-- Write a note on any part and the line to it: how it should work, what you decided, what whoever builds it should know. A dot on the card and the line shows it, and a note written before you swapped the service is flagged.
-- Ask (Cmd+K, the Ask button, or right-click "Ask about this") opens one floating panel and one conversation per plan. The Answering menu picks who answers: a coding agent in your terminal (Claude Code, Codex, Gemini CLI), the Claude API, or StackWise's own facts. It defaults to Claude, and you can save your own default. Ask how to set it up, which keys it needs, what could go wrong or what else would work. Claude answers from StackWise's facts and checks for that part, not from memory. Without a key, StackWise answers the same questions from its own facts.
-- Claude (or StackWise's facts) can suggest a note or a switch. A suggested switch shows the verdict StackWise's rules give it right now, and nothing changes until you accept, as one step Undo reverses.
-- Notes travel with the plan: share links, plan files, SPEC.md, each part's build agent, and pairing, where Claude Code can read and write them too.
-
-**Your project, live**
-- Link a plan to its project folder in the Project panel. StackWise reads what it is (Next.js, Spring Boot, Django, Rails and more), how to run it, and which Java or Node it needs.
-- Start and stop the app from StackWise and watch its log. Its health check shows whether it's up.
-- Every environment variable the plan needs, marked set, missing or readable by the browser. Paste a value to write it into the project's `.env.local`; StackWise never shows it again or sends it anywhere.
-- Check every service with your own keys: one read-only request each, shown with the keys masked, what came back, an example of what travels on that connection, and a link to the service's status page.
-- The plan file in the project and StackWise's copy merge instead of overwriting each other, so an agent in your terminal and you in the app can both change the plan.
-
-**Understanding**
-- Details for every part: its stats, every check with its reason and fix, the cost at your size, how it scored for your priority, a comparison table, and the sourced facts behind it, flagged when they may be out of date.
-- Compare two or three options side by side, stat by stat, each with its note and source.
-- "Explain my plan": a plain-language summary written only from the computed plan.
-- Learn: what each part of an app is, what matters when choosing, where beginners slip, and a glossary of 50 terms.
-- Close calls, and what would change if a "not sure" answer turned out to be yes.
-- Cost at every audience size, and a line for each part of the plan, so you see each free plan run out before it happens. Domains are counted by the year, app store accounts as yearly and one-time fees, hosting shows the traffic each plan includes, and one subscription that covers several parts (like a Supabase plan) is counted once.
-
-**Leaving with a plan**
-- Project pack, as a zip: SPEC.md, SETUP.md, TASKS.md, DECISIONS.md with the reasoning for every part, the plan file, `.env.example` with every variable name grouped by service, a `.gitignore` that keeps the values out of git, and PROMPT.txt, AGENTS.md or CLAUDE.md for your builder. For Claude Code it adds `.mcp.json`, a build agent per part, a stack guard, a setup guide, a reviewer and a `/next-step` skill. Environment variable names follow your framework.
-- Or write the same files straight into a folder on this computer, plus a `.env.local` with the names and no values, ready to open with `claude`. StackWise only writes inside your home folder, never writes over an existing `.env.local`, and tells you which names yours is missing.
-- A build plan from the canvas: every part, extra service, part added by hand and line between two things becomes a task, in an order where each only needs the ones above it, with the person's notes and what "done" means. It's TASKS.md in the export, "Copy the build plan" on the canvas, and `get_build_plan` over MCP; right-click a part or a line and "Build this with Claude Code" (or any paired agent) sends that one task.
-- Pair a coding agent through StackWise's MCP server: 14 tools, a shared plan, and two-way chat. Run `/mcp__stackwise__pair` in Claude Code, write to it from StackWise, and it works in your project and answers in the Ask panel, with the files it changed.
-- Build checklist: every account, key and build step in order, checked off as you go.
-- Copy the reasoning for one part, to paste into a proposal or pull request.
-- Several saved plans, share links (the whole plan lives in the link, no account needed), and plan files to export and import.
-
-**Keeping the facts true**
-- Facts live in `data/` as reviewed JSON with a source, a date and a status.
-- A weekly GitHub workflow rereads every source with Claude and opens a pull request with anything that changed.
-- `draft:option` researches a new service into a draft file for review.
-
-## Not built yet
-
-- Accounts and syncing plans across devices (plans live in your browser; share links and plan files move them)
-- Checks for services StackWise doesn't list, and for lines between two parts that no rule reads (they say "not checked")
-- Planning a phone app on its own (a phone app can be added to a web plan today)
-- The eval cases: `evals/prefill-cases.json` is empty on purpose, see [evals/README.md](evals/README.md)
-- Reviewed facts: every fact is still a draft until someone checks it on `/review` (plan menu, Review facts), see [docs/DATA.md](docs/DATA.md)
 
 ## Where things are
 
@@ -156,27 +142,62 @@ data/                 everything StackWise knows, as JSON
   logos.json          where each option's logo comes from
   planning.json       sizes, priorities and weights, builders
 public/logos/         the logo files, committed
-src/engine/           the logic, no React, fully tested
-src/ai/               Claude pre-fill and explanations, optional
-src/components/       the workspace UI
-src/app/api/          status, prefill, explain, talk, keys, mcp, pair, project and local routes
+src/engine/           rules, search, cost, wiring, layers, build and test plans: no React, fully tested
+src/ai/               Claude, OpenAI and Gemini: pre-fill, explain, talk (optional)
+src/components/       the canvas, its panels, and the plan store
+src/app/              the pages (projects, settings, learn, review) and the API routes
+src/local/            ~/.stackwise: profile, library, found projects, installed agents
 src/project/          a linked project folder: what it is, its env variable names, its icon
-src/mcp/              the MCP server, its stdio command, and shared plans in .stackwise/
+src/mcp/              the MCP server, its stdio command, shared plans and pairing
+electron/             the Mac app
 scripts/              evals, source checker, option drafter, logo fetcher
 evals/                eval cases (written by a person) and how to run them
-docs/                 DECISIONS.md, LEARNING.md, DATA.md, MCP.md, DEMO.md, images/
+docs/                 MCP.md, LEARNING.md, DECISIONS.md, DATA.md, DEMO.md, images/
 ```
 
 Start with [docs/LEARNING.md](docs/LEARNING.md) for how it works, and [docs/DECISIONS.md](docs/DECISIONS.md) for why it's shaped this way.
 
+## Questions
+
+**My agent says ECONNREFUSED, or Settings says it isn't connected.** StackWise has to be open: the Mac app, `stackwise`, or `pnpm dev`. The address must be `127.0.0.1:4310`, not `localhost` (on macOS `localhost` resolves to `::1` first, and StackWise listens only on 127.0.0.1). Settings shows each agent's connection; Connect again fixes a wrong address.
+
+**"No plan is shared yet."** Open Ask (Cmd+K) and send the agent a message, or pick "Share this plan with agents" in the Answering menu.
+
+**macOS says the app is damaged or can't be checked.** It isn't signed with an Apple certificate. Right-click it and choose Open, or run the `xattr` command above.
+
+**Port 4310 is in use.** Another StackWise is running: quit the app, or `stackwise stop`. `pnpm dev` uses the same port.
+
+**Where are my plans?** `~/.stackwise/plans/`, one JSON file each. A plan file you exported (`stackwise.plan.json`) opens with "Open plan file" on the Projects page, and a share link carries the whole plan.
+
+**Can I use it without any AI?** Yes. Every verdict, cost, checklist, export and MCP tool works from the facts. Ask answers from the facts too.
+
+**How do I add a service or fix a fact?** Each service is a file in `data/options/`. `pnpm draft:option` writes a first draft with Claude, `pnpm check:options` checks it, and every fact needs a source URL and a date. See [docs/DATA.md](docs/DATA.md).
+
+**Does it send anything anywhere?** No. It listens on 127.0.0.1. The only outside calls are to an AI provider you added a key for, when you use it, and the logo fetcher when you run it.
+
+**Intel Mac, Linux, Windows?** Run from source (the dmg is Apple Silicon only). Linux works; Windows isn't tested.
+
 ## Safety
 
-StackWise runs on your computer and can run your app, write project files, save AI keys to its own `.env.local` and read your database, so it only answers you:
+StackWise runs on your computer, writes project files, saves AI keys for you and runs your agent's connect command, so it only answers you:
 
 - It listens on 127.0.0.1, never on your network.
 - Its API answers only StackWise's own page (checked with the Origin and Sec-Fetch-Site headers) and programs on this computer, like Claude Code. Every POST must be JSON.
-- It never shows a key or env value back to the page, runs your app with a clean environment, and opens databases read-only.
+- It never shows a key or env value back to the page. The Project panel writes values into your project's `.env.local` and only reports which names are set.
 - Don't put it behind a proxy or on a server: it has no accounts. `STACKWISE_PAIRING=off` turns off pairing and everything that writes files.
+
+## Not built yet
+
+- Syncing plans between computers (plans are files in `~/.stackwise`; share links and plan files move them)
+- Checks for services StackWise doesn't list, and for lines between two parts that no rule reads (they say "not checked")
+- Planning a phone app on its own (a phone app can be added to a web plan today)
+- A Windows or Intel Mac build of the app
+- The eval cases: `evals/prefill-cases.json` is empty on purpose, see [evals/README.md](evals/README.md)
+- Reviewed facts: every fact is still a draft until someone checks it on `/review`, see [docs/DATA.md](docs/DATA.md)
+
+## Contributing
+
+Pull requests are welcome. `pnpm test && pnpm typecheck && pnpm lint` has to pass; the data tests check every fact has a source, a date and a status, every pair of options gets a verdict, and nothing uses an em dash. A new service is one file in `data/options/`; a new rule reads at most two parts and can only tighten a verdict. Facts are reviewed by a person, never confirmed by an AI.
 
 ## License
 
