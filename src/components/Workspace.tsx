@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { buildPlan, buildPlanMarkdown, connectionsOf, decodeSharedPlan, envFileText, inSentence, isOwn, LINK_WORDS, linkId, ownId, planEnv, SLOT_IDS, taskBrief, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
+import { buildPlan, buildPlanMarkdown, connectionsOf, decodeSharedPlan, testPlan, envFileText, inSentence, isOwn, LINK_WORDS, linkId, ownId, planEnv, SLOT_IDS, taskBrief, todayIso, type Catalog, type SharedPlan, type SlotId } from "@/engine";
 import { presence } from "@/mcp/pairing";
 import { AddPart } from "./AddPart";
 import { AnswererMark } from "./AnswererMark";
@@ -385,11 +385,11 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         {
           label: `Build this with ${builderAgent.label}`,
           icon: "terminal",
-          onSelect: () => setAsk({ open: true, slot: task.slot, request: { slot: task.slot, question: taskBrief(tasks, taskId, plan.appName)!, nonce: Date.now(), to: builderAgent.id } }),
+          onSelect: () => setAsk({ open: true, slot: task.slot, request: { slot: task.slot, question: taskBrief(tasks, taskId, plan.appName, testPlan(index, model.input, rec.selection, task, plan.appName))!, nonce: Date.now(), to: builderAgent.id } }),
         },
       ];
     },
-    [tasks, builderAgent, building, plan.appName],
+    [tasks, builderAgent, building, plan.appName, index, model.input, rec.selection],
   );
 
   /** "Draw a line to…": every other thing on the canvas a line from `from` could reach. */

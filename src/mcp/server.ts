@@ -4,6 +4,7 @@ import type { ServerNotification, ServerRequest } from "@modelcontextprotocol/sd
 import { z } from "zod";
 import {
   todayIso,
+  testPlan,
   buildPlan,
   buildPlanDigest,
   taskBrief,
@@ -62,9 +63,9 @@ export interface McpContext {
   afterSave?: (record: PlanRecord) => void;
   /** Where StackWise lives, for the .mcp.json an exported project uses. */
   stackwiseRoot: string;
-  where: "app" | "project";
   /** The running StackWise's MCP address, in the Mac app: exported projects point at it instead of a pnpm command. */
   mcpUrl?: string;
+  where: "app" | "project";
   /** How long wait_for_message waits and when an idle agent stops listening. Tests shorten these. */
   pair?: PairSettings;
   /** The project folder the agent runs in, when StackWise knows it (stdio gets CLAUDE_PROJECT_DIR). export_project writes there by default. */
@@ -431,12 +432,39 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const input = planInput(record.plan);
       const tasks = buildPlan(index, input, recommend(index, input, record.plan.pinned).selection, record.plan);
       if (!task) return json({ plan_id: record.id, version: record.version, tasks: buildPlanDigest(tasks) });
-      const brief = taskBrief(tasks, task, record.plan.appName);
+      const found = tasks.find((t) => t.id === task);
+      const brief = found ? taskBrief(tasks, task, record.plan.appName, testPlan(index, input, recommend(index, input, record.plan.pinned).selection, found, record.plan.appName)) : null;
       if (!brief) {
         const guesses = nearest(task, tasks.map((t) => t.id));
         return fail(`There's no task "${task}".${guesses.length ? ` Did you mean ${guesses.map((g) => `"${g}"`).join(" or ")}?` : ""} Leave out task for the list.`);
       }
       return json({ plan_id: record.id, version: record.version, task: brief });
+    },
+  );
+
+  server.registerTool(
+    "get_test_plan",
+    {
+      title: "Get the test plan for a task",
+      description:
+        "How to test one task of the build plan: what to check (one test each), how to keep the real service out of the tests, what not to test, and the limits StackWise knows for that service so the first test covers the edge the plan will hit. " +
+        'task is an id from get_build_plan, like "part:payments" or "link:payments>app". Write the tests before building the task.',
+      inputSchema: { plan_id: planIdSchema, task: z.string().max(200).describe("A task id from get_build_plan.") },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ plan_id, task }) => {
+      const record = sharedPlan(plan_id);
+      if (typeof record === "string") return fail(record);
+      const index = ctx.index();
+      const input = planInput(record.plan);
+      const selection = recommend(index, input, record.plan.pinned).selection;
+      const tasks = buildPlan(index, input, selection, record.plan);
+      const found = tasks.find((t) => t.id === task);
+      if (!found) {
+        const guesses = nearest(task, tasks.map((t) => t.id));
+        return fail(`There's no task "${task}".${guesses.length ? ` Did you mean ${guesses.map((g) => `"${g}"`).join(" or ")}?` : ""} get_build_plan lists them.`);
+      }
+      return json({ plan_id: record.id, version: record.version, ...testPlan(index, input, selection, found, record.plan.appName) });
     },
   );
 

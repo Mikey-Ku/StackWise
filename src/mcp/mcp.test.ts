@@ -93,6 +93,7 @@ describe("MCP server", () => {
         "get_build_plan",
         "get_option",
         "get_plan",
+        "get_test_plan",
         "list_parts",
         "recommend_stack",
         "search_options",
