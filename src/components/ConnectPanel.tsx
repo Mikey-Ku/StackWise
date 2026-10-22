@@ -140,7 +140,7 @@ export function ConnectPanel({
  * Pasting a built-in AI's key. It goes to StackWise's own .env.local through /api/keys and is used
  * at once; the page never gets it back, only whether the AI is on.
  */
-function KeyForm({
+export function KeyForm({
   recipient,
   keyName,
   keyPage,

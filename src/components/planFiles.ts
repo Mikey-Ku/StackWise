@@ -3,8 +3,8 @@ import { toSharedPlan, type PlanState, type Store, type StoreAction } from "./st
 import { downloadText } from "./ui";
 
 /**
- * Moving applications in and out of this browser: plan files and shared plans. The plan menu and
- * the applications page both use these, so an import reads the same wherever it starts.
+ * Moving projects between computers and people: plan files and shared plans. The plan menu and
+ * the Projects page both use these, so an import reads the same wherever it starts.
  */
 
 /** A shared plan named like one already here gets " (shared)", so the two can be told apart. */
@@ -37,18 +37,18 @@ export async function readPlanFile(file: File, store: Store, newId: () => string
             { type: "switchPlan", id: raw.id },
             { type: "applyRemote", id: raw.id, plan: parsed.data },
           ],
-          message: `Updated ${parsed.data.appName || "the application"} from its project file.`,
+          message: `Updated ${parsed.data.appName || "the project"} from its project file.`,
         };
       }
       return {
         actions: [{ type: "importPlan", id: /^[A-Za-z0-9_-]{1,64}$/.test(raw.id) ? raw.id : newId(), now, plan: parsed.data }],
-        message: `Opened ${parsed.data.appName || "an application"} from its project file.`,
+        message: `Opened ${parsed.data.appName || "a project"} from its project file.`,
       };
     }
     const parsed = sharedPlanSchema.safeParse(raw);
     if (!parsed.success) throw new Error("not a plan");
     const plan = sharedName(parsed.data, store.plans);
-    return { actions: [{ type: "importPlan", id: newId(), now, plan }], message: `Opened ${plan.appName || "an application"}.` };
+    return { actions: [{ type: "importPlan", id: newId(), now, plan }], message: `Opened ${plan.appName || "a project"}.` };
   } catch {
     return { actions: [], message: "That file isn't a StackWise plan." };
   }

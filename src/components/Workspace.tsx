@@ -233,7 +233,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         if (project.body.readme) dispatch({ type: "setText", field: "description", value: project.body.readme });
         dispatch({ type: "setFolder", folder: project.body.folder });
         if (project.body.framework) dispatch({ type: "place", slot: "framework", optionId: project.body.framework });
-        setToast(`New application for ${name}, linked to its folder${project.body.framework ? `, built with ${project.body.label}` : ""}.${project.body.readme ? " Its README is the description: check it, then press Read my description." : ""}`);
+        setToast(`New project for ${name}, linked to its folder${project.body.framework ? `, built with ${project.body.label}` : ""}.${project.body.readme ? " Its README is the description: check it, then press Read my description." : ""}`);
       }
       setPanel("project");
     })();
@@ -256,13 +256,13 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
         setToast("That share link is broken or incomplete.");
         return;
       }
-      // Named like an application already here? The copy gets " (shared)" so the two can be told apart.
+      // Named like a project already here? The copy gets " (shared)" so the two can be told apart.
       const plan = sharedName(shared, history.store.plans);
       dispatch({ type: "importPlan", id: newId(), now: new Date().toISOString(), plan });
       if (folder && window.confirm(`This link also points at a folder on this computer:\n\n${folder}\n\nLink "${plan.appName || "this plan"}" to it? StackWise only runs or writes files there when you ask it to.`)) {
         dispatch({ type: "setFolder", folder });
       }
-      setToast(`Opened "${plan.appName || "a shared plan"}". It's saved as a new application in this browser.`);
+      setToast(`Opened "${plan.appName || "a shared plan"}". It's saved as a new project.`);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per link; the names only matter at that moment
   }, [dispatch]);

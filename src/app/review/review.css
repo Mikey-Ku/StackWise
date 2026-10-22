@@ -1,9 +1,11 @@
-/* The fact review (/review): the applications page's frame (apps.css: top bar, width, gutters),
+/* The fact review (/review): inside the shell (shell.css: sidebar, width, gutters),
    with one fact card and the list of facts in the view. Beside each other from 900px, the list
    scrolling on its own; stacked below that. Tokens come from theme-apple.css, so light and dark
    match the rest of StackWise. */
 
-.rv .rv-main {
+.rv-main {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
 }
 .rv-head {
