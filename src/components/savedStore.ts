@@ -34,9 +34,16 @@ export function loadHistory(): History {
 let pushTimer = 0;
 let pending: Store | null = null;
 let lastPushed = "";
+/**
+ * Nothing goes to disk until this page has taken the library once. A fresh browser starts with a
+ * blank plan and saves it a moment after it mounts; pushed before the pull came back, that blank
+ * plan joined the library as one more "Untitled app". After the pull, what's pushed is the merge.
+ */
+let synced = false;
 
 /** Writes the library to disk, a moment after the last change, and only when something changed. */
 function push(store: Store) {
+  if (!synced) return;
   pending = store;
   window.clearTimeout(pushTimer);
   pushTimer = window.setTimeout(() => {
@@ -53,6 +60,7 @@ function push(store: Store) {
 
 /** Saves and sends the store to disk right now, before a page change: a plan made on the Projects page has to be on disk before the canvas pulls the library. */
 export async function flushStore(store: Store): Promise<void> {
+  synced = true;
   saveStore(store);
   window.clearTimeout(pushTimer);
   pending = null;
@@ -101,6 +109,7 @@ export async function pullLibrary(current: Store): Promise<Store | null> {
       }
     }
     const merged = mergeStores(current, disk, new Date().toISOString());
+    synced = true;
     // What this browser had and disk didn't goes to disk now, so a second browser or the command line sees it.
     if (JSON.stringify(toDiskLibrary(merged)) !== JSON.stringify({ activeId: disk.activeId, order: disk.order, plans: disk.plans.map((p) => ({ id: p.id, plan: p.plan, local: p.local })) })) push(merged);
     return JSON.stringify(merged) === JSON.stringify(current) ? null : merged;
@@ -112,6 +121,7 @@ export async function pullLibrary(current: Store): Promise<Store | null> {
 /** The library the server rendered the page from, joined with this browser's copy; what only the browser had goes to disk. */
 export function adoptLibrary(disk: DiskLibrary): Store {
   const merged = mergeStores(loadHistory().store, disk, new Date().toISOString());
+  synced = true;
   if (JSON.stringify(toDiskLibrary(merged)) !== JSON.stringify({ activeId: disk.activeId, order: disk.order, plans: disk.plans.map((p) => ({ id: p.id, plan: p.plan, local: p.local })) })) push(merged);
   return merged;
 }
