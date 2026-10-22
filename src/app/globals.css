@@ -1735,38 +1735,31 @@ html[data-desktop] .ws-ask__top {
   height: var(--bar-h);
   padding: 0 10px 0 12px;
 }
-.ws-ask__hide svg {
-  transform: rotate(180deg);
-}
-.ws-ask__new {
-  flex: none;
-  height: 28px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--ws-fill);
-  color: var(--mk-text);
-  font: inherit;
-  font-size: 0.86em;
-  font-weight: 600;
-  cursor: pointer;
-}
-.ws-ask__new:hover:not(:disabled) {
-  background: var(--ws-fill-hover);
-}
-.ws-ask__new:disabled {
-  color: var(--mk-text-faint);
-  cursor: default;
-}
+/* The header: the plan's name, then new chat and hide as plain icons, like a sidebar's own controls. */
 .ws-ask__plan {
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  padding: 0 6px;
-  color: var(--mk-text-faint);
-  font-size: 0.86em;
+  padding: 0 4px;
+  color: var(--mk-text);
+  font-size: 0.93em;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.ws-ask__top .ws-iconbtn {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+}
+.ws-ask__top .ws-iconbtn:hover:not(:disabled) {
+  background: var(--ws-fill);
+  color: var(--mk-text);
+}
+.ws-ask__top .ws-iconbtn:disabled {
+  color: var(--mk-text-faint);
+  opacity: 0.5;
+  cursor: default;
 }
 .ws-iconbtn.is-on {
   background: var(--mk-accent);

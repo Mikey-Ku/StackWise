@@ -669,8 +669,11 @@ export function AskPanel({
     if (provider.id === "facts") items.push({ label: "Facts only, no AI", checked: true, onSelect: () => setChosen("facts") });
     setMenu({ x: box.left, y: box.top - 6, items });
   };
+  // The bubble names the model alone; the provider bubble already says whose it is.
   const modelLabel = agent
-    ? `${agentRecipient?.label ?? agentName(agent)}${agentModel && api ? ` · ${modelNameOf(api, agentModel)}` : ""}`
+    ? agentModel && api
+      ? modelNameOf(api, agentModel)
+      : "Default model"
     : provider.id === "facts"
       ? "Facts only"
       : api
@@ -698,29 +701,30 @@ export function AskPanel({
       }}
     >
       <header className="ws-ask__top">
+        <span className="ws-ask__plan" title={slot === "framework" ? "This conversation belongs to this plan" : `About ${aboutLabel(slot)}. Right-click a part to ask about it; naming a part in a message works too.`}>
+          {plan.appName.trim() || "Untitled app"}
+          {slot !== "framework" && ` · ${index.slotsById.get(slot)?.label ?? slot}`}
+        </span>
         <button
           type="button"
-          className="ws-ask__new"
+          className="ws-iconbtn ws-ask__new"
           disabled={plan.chat.length === 0}
-          title="Clears the built-in AI's answers in this browser. Agent messages stay with the shared plan."
+          aria-label="New chat"
+          title="New chat. Clears the built-in AI's answers in this browser; agent messages stay with the shared plan."
           onClick={() => {
             dispatch({ type: "clearChat" });
             onToast("New chat. Agent messages stay with the shared plan.");
           }}
         >
-          New chat
+          <Icon name="plus" size={15} />
         </button>
-        <span className="ws-ask__plan" title={slot === "framework" ? "This conversation belongs to this plan" : `About ${aboutLabel(slot)}. Right-click a part to ask about it; naming a part in a message works too.`}>
-          {plan.appName.trim() || "Untitled app"}
-          {slot !== "framework" && ` · ${index.slotsById.get(slot)?.label ?? slot}`}
-        </span>
         {mixed && (
           <button type="button" className={cx("ws-iconbtn", onlyThis && "is-on")} aria-pressed={onlyThis} title={onlyThis ? `Showing only ${aboutLabel(slot)}` : `Show only ${aboutLabel(slot)}`} onClick={() => setOnlyThis((v) => !v)}>
             <Icon name="target" size={14} />
           </button>
         )}
         <button type="button" className="ws-iconbtn ws-ask__hide" onClick={onClose} aria-label="Hide the chat" title={`Hide the chat (${mod}K)`}>
-          <Icon name="chevron" size={14} />
+          <Icon name="sidebar" size={16} />
         </button>
       </header>
 
