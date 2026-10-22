@@ -343,6 +343,28 @@ body:has(.shell) {
   margin-top: 12px;
 }
 
+/* A page's own sections in the sidebar, under the pages. */
+.shell-subnav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 6px;
+  border-top: 0.5px solid var(--ws-glass-line);
+}
+.shell-subnav__title {
+  margin: 8px 0 4px;
+  padding: 0 10px;
+  color: var(--mk-text-faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.shell-subnav__item {
+  width: 100%;
+  font-size: 13.5px;
+}
+
 /* Found under your folders: a quieter card than a plan. */
 .apps-card--found .apps-icon {
   background: var(--mk-surface-sunk);
@@ -413,6 +435,9 @@ html[data-desktop] .shell-side .shell-me {
   grid-template-columns: 196px minmax(0, 1fr);
   gap: 40px;
   align-items: start;
+}
+.set-layout--one {
+  grid-template-columns: minmax(0, 1fr);
 }
 .set-nav {
   position: sticky;

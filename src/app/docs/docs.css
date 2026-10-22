@@ -1,0 +1,184 @@
+/* The documentation page: the repo's Markdown as readable documents, one section per file. */
+.doc {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 780px;
+  padding-top: 28px;
+  border-top: 0.5px solid var(--ws-glass-line);
+  scroll-margin-top: 24px;
+}
+.doc:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+.doc__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.doc__title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.doc__file code {
+  color: var(--mk-text-faint);
+  font-family: var(--mk-font-mono);
+  font-size: 12px;
+}
+.doc__toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.doc__toc a {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--ws-fill);
+  color: var(--mk-text-muted);
+  font-size: 12.5px;
+  text-decoration: none;
+}
+.doc__toc a:hover {
+  background: var(--ws-fill-hover);
+  color: var(--mk-text);
+}
+.doc__contents summary {
+  cursor: pointer;
+  color: var(--mk-text-muted);
+  font-size: 13px;
+  user-select: none;
+}
+.doc__contents[open] summary {
+  margin-bottom: 10px;
+}
+
+/* The body: the Markdown's own structure, in the app's type. */
+.doc__body {
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.doc__body > :first-child {
+  margin-top: 0;
+}
+.doc__body h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.doc__body h3 {
+  margin: 32px 0 8px;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  scroll-margin-top: 24px;
+}
+.doc__body h4 {
+  margin: 24px 0 6px;
+  font-size: 15px;
+  font-weight: 650;
+  scroll-margin-top: 24px;
+}
+.doc__body h5,
+.doc__body h6 {
+  margin: 18px 0 4px;
+  font-size: 14px;
+  font-weight: 650;
+}
+.doc__body p {
+  margin: 0 0 14px;
+}
+.doc__body ul,
+.doc__body ol {
+  margin: 0 0 14px;
+  padding-left: 1.4em;
+}
+.doc__body li {
+  margin: 4px 0;
+}
+.doc__body li > p {
+  margin: 0;
+}
+.doc__body a {
+  color: var(--mk-accent);
+  text-decoration: none;
+}
+.doc__body a:hover {
+  text-decoration: underline;
+}
+.doc__body strong {
+  font-weight: 650;
+}
+.doc__body code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--mk-surface-sunk);
+  font-family: var(--mk-font-mono);
+  font-size: 0.86em;
+}
+.doc__body pre {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 12px;
+  background: var(--mk-surface-sunk);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.doc__body pre code {
+  padding: 0;
+  background: transparent;
+  font-size: inherit;
+}
+.doc__body blockquote {
+  margin: 0 0 14px;
+  padding: 2px 14px;
+  border-left: 3px solid var(--mk-line-strong);
+  color: var(--mk-text-muted);
+}
+.doc__body table {
+  width: 100%;
+  margin: 0 0 18px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.doc__body th,
+.doc__body td {
+  padding: 8px 10px;
+  border-bottom: 0.5px solid var(--ws-glass-line);
+  text-align: left;
+  vertical-align: top;
+}
+.doc__body th {
+  color: var(--mk-text-muted);
+  font-weight: 600;
+}
+.doc__body img {
+  max-width: 100%;
+  height: auto;
+  margin: 4px 0 16px;
+  border-radius: 12px;
+  border: 0.5px solid var(--ws-glass-line);
+}
+.doc__body hr {
+  margin: 24px 0;
+  border: 0;
+  border-top: 0.5px solid var(--ws-glass-line);
+}
+.doc__body p:has(> img:only-child) {
+  text-align: center;
+}
+@media (max-width: 720px) {
+  .doc__body {
+    font-size: 14.5px;
+  }
+  .doc__title {
+    font-size: 22px;
+  }
+}

@@ -21,10 +21,15 @@ Facts about services live in JSON files; rules read those facts to decide whethe
 | 9 | `src/engine/summary.ts`, `src/ai/explain.ts` | The plan brief, explained by a template or by Claude. |
 | 10 | `src/engine/spec.ts`, `decisions.ts`, `checklist.ts` | The spec pack, the decision record and the build checklist. |
 | 10b | `src/engine/wiring.ts` | What runs along each line: the environment variables the app reads to reach each service, and the `.env` file text. |
-| 10c | `src/engine/talk.ts`, `src/ai/talk.ts` | Talking one part through: the brief for that part, answers from StackWise's facts, or Claude answering from the brief. |
-| 11 | `src/components/store.ts` | Every saved plan, undo and redo, share links and imports, as a pure reducer. |
-| 12 | `src/components/*` | The workspace: planner, canvas, options, details, Learn, Checklist. |
-| 13 | `scripts/*` | Evals, the source checker and the option drafter. |
+| 10c | `src/engine/talk.ts`, `src/ai/talk.ts` | Talking one part through: the brief for that part, answers from StackWise's facts, or a model answering from the brief. |
+| 10d | `src/engine/buildplan.ts`, `testplan.ts` | The canvas as ordered build tasks, and a test plan for each: what to check, how to keep the real service out, what not to test. |
+| 10e | `src/engine/narrate.ts` | What a change did, for the chat pane: the parts that changed and why, the checks that appeared or went away, the cost before and after. |
+| 10f | `src/engine/layers.ts` | The four layers the canvas groups parts into: where it runs, people, data, outside services. |
+| 11 | `src/components/store.ts` | Every saved plan, undo and redo, share links and imports, as a pure reducer; `~/.stackwise` on disk is the record (`src/local/`). |
+| 12 | `src/components/*`, `src/app/*` | The workspace (canvas, chat pane, panels) and the pages (Projects, Settings, Learn, Documentation, Review). |
+| 13 | `src/mcp/*` | The MCP server: 15 tools over the engine, pairing with a coding agent, shared plans. |
+| 14 | `electron/*` | The Mac app around it all. |
+| 15 | `scripts/*` | Evals, the source checker and the option drafter. |
 
 ## Following one app through
 
@@ -35,7 +40,7 @@ Say the description is: *"A booking app for my barber shop. Customers log in, pi
 3. **Needed slots.** `neededSlots` turns yes answers into parts: login adds Login and Database, paying adds Payments, uploads add File storage, email adds Email, your own address adds Domain name, pulling data from other websites adds Web scraping, and wanting usage numbers or error alerts adds Analytics or Error monitoring. Framework and Hosting are always needed. Background jobs and a phone app are optional parts you add yourself.
 4. **Search.** `recommend` tries combinations of fully researched options for those parts and keeps the best total. A blocked pair costs 1000 points, so it loses unless nothing else works.
 5. **Verdicts.** For the winning plan, `evaluatePlan` runs every rule. If the host can't run scheduled jobs and there's no jobs service, "No built-in way to run things on a schedule" appears; drag a jobs service onto the canvas and it clears.
-6. **Canvas.** Each card shows the worst verdict touching that part. The line from the app shows that part's own checks. Problems between two parts get their own dashed line.
+6. **Canvas.** Each card shows the worst verdict touching that part, in one of four layers around the app. The line from the app shows that part's own checks. Problems between two parts get their own dashed line. Every change lands in the chat pane as a line from you and an explanation from the facts (`narrate.ts`).
 7. **Leaving.** The spec pack lists the stack with its strongest reasons, turns every warning and note with builder guidance into a rule, orders the build, renames environment variables for your framework, and writes a decision record for every part. The Checklist panel tracks the same steps as you do them.
 
 ## Ideas to be able to explain

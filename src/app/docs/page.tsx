@@ -1,0 +1,101 @@
+import fs from "node:fs";
+import path from "node:path";
+import type { Metadata } from "next";
+import { Marked, type Tokens } from "marked";
+import { readMe } from "@/local/home";
+import DocsView, { type Doc } from "./DocsView";
+import "../shell.css";
+import "./docs.css";
+
+export const metadata: Metadata = {
+  title: "Documentation | StackWise",
+  description: "StackWise's documentation: the overview, the MCP tools, the facts and rules, how it works, the decisions and the demo.",
+};
+
+// The docs are files in the repo; read them on every request so an edit shows on refresh.
+export const dynamic = "force-dynamic";
+
+/** The documents, in reading order. Each is a Markdown file in the repo, shown as one section. */
+const DOCS: { id: string; title: string; file: string }[] = [
+  { id: "overview", title: "Overview", file: "README.md" },
+  { id: "mcp", title: "MCP and agents", file: "docs/MCP.md" },
+  { id: "data", title: "Facts and rules", file: "docs/DATA.md" },
+  { id: "how", title: "How it works", file: "docs/LEARNING.md" },
+  { id: "decisions", title: "Decisions", file: "docs/DECISIONS.md" },
+  { id: "demo", title: "The demo", file: "docs/DEMO.md" },
+];
+
+const REPO = "https://github.com/Mikey-Ku/StackWise";
+const RAW = "https://raw.githubusercontent.com/Mikey-Ku/StackWise/main";
+
+const slug = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/<[^>]+>/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+/**
+ * A link inside a doc: another doc becomes its section here (its own anchors too), a repo file
+ * opens on GitHub, the web stays the web. Heading ids carry the document's id, so a `#heading`
+ * link inside a document points at that document's heading.
+ */
+function rewriteHref(href: string, from: string): string {
+  if (/^(https?:|mailto:)/.test(href)) return href;
+  const [file, anchor] = href.split("#");
+  if (!file) return `#${from}-${anchor ?? ""}`;
+  const clean = file.replace(/^(\.\.?\/)+/, "");
+  const doc = DOCS.find((d) => d.file === clean || d.file === `docs/${clean}`);
+  if (doc) return `/docs#${anchor ? `${doc.id}-${anchor}` : doc.id}`;
+  return `${REPO}/blob/main/${clean.replace(/^\//, "")}`;
+}
+
+/** An image in a doc: the app's own icon is served by the app; anything else in the repo comes from GitHub. */
+const imageSrc = (href: string) => (/^(https?:|data:)/.test(href) ? href : href.replace(/^\.?\//, "") === "src/app/icon.svg" ? "/icon.svg" : `${RAW}/${href.replace(/^\.?\//, "")}`);
+
+function render(id: string, markdown: string): { html: string; headings: { id: string; text: string }[] } {
+  const headings: { id: string; text: string }[] = [];
+  const marked = new Marked({ gfm: true });
+  marked.use({
+    renderer: {
+      heading({ tokens, depth }: Tokens.Heading) {
+        const text = this.parser.parseInline(tokens);
+        const anchor = `${id}-${slug(text)}`;
+        if (depth === 2) headings.push({ id: anchor, text: text.replace(/<[^>]+>/g, "") });
+        // The file's own title is the section's title in the sidebar; inside, start one level down.
+        const level = Math.min(6, depth + 1);
+        return `<h${level} id="${anchor}">${text}</h${level}>\n`;
+      },
+      link({ href, title, tokens }: Tokens.Link) {
+        const text = this.parser.parseInline(tokens);
+        const to = rewriteHref(href, id);
+        const external = /^https?:/.test(to);
+        return `<a href="${to}"${title ? ` title="${title}"` : ""}${external ? ' target="_blank" rel="noreferrer"' : ""}>${text}</a>`;
+      },
+      image({ href, title, text }: Tokens.Image) {
+        return `<img src="${imageSrc(href)}" alt="${text}"${title ? ` title="${title}"` : ""} loading="lazy">`;
+      },
+    },
+  });
+  // GitHub's <picture> blocks (light and dark screenshots) are plain HTML in the file: keep the
+  // light one. Raw <img> tags point at files in the repo too, so their src gets the same treatment.
+  const source = markdown
+    .replace(/<picture>[\s\S]*?(<img [^>]*>)[\s\S]*?<\/picture>/g, "$1")
+    .replace(/(<img [^>]*?src=")([^"]+)(")/g, (_m, before: string, src: string, after: string) => `${before}${imageSrc(src)}${after}`);
+  const html = marked.parse(source) as string;
+  return { html, headings };
+}
+
+export default function DocsPage() {
+  const docs: Doc[] = DOCS.flatMap((doc) => {
+    let text: string;
+    try {
+      text = fs.readFileSync(path.join(process.cwd(), doc.file), "utf8");
+    } catch {
+      return [];
+    }
+    const { html, headings } = render(doc.id, text);
+    return [{ id: doc.id, title: doc.title, file: doc.file, html, headings }];
+  });
+  return <DocsView me={readMe()} docs={docs} repo={REPO} />;
+}

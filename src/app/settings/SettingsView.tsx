@@ -6,7 +6,7 @@ import { providersOf, recipientsFor, saveDefaultAnswerer, saveProviderSetting, S
 import { KeyForm } from "@/components/ConnectPanel";
 import { Icon, type IconName } from "@/components/icons";
 import type { AiStatus, ProviderInfo } from "@/components/Planner";
-import { Shell, shortPath, useMe, type Me } from "@/components/Shell";
+import { Shell, shortPath, useMe, type Me, type ShellSections } from "@/components/Shell";
 import { useTheme, type Theme } from "@/components/ThemeSwitch";
 import { copyText, cx } from "@/components/ui";
 import { FEATURED_AGENTS, pairInstructions } from "@/mcp/pairing";
@@ -351,30 +351,19 @@ export default function SettingsView({ builders, priorities, sizes }: { builders
     </Card>
   );
 
+  const sidebar: ShellSections = { title: "Settings", items: SECTIONS.map((s) => ({ id: s.id, label: s.label, href: `/settings#${s.id}`, icon: s.icon, active: section === s.id, onSelect: () => show(s.id) })) };
+
   return (
-    <Shell me={me}>
+    <Shell me={me} sections={sidebar}>
       <div className="shell-head">
         <div className="mk-stack mk-gap-1">
-          <h1 className="shell-title">Settings</h1>
-          <p className="mk-muted">Saved in {me ? shortPath(me.dir, me.home) : "~/.stackwise"} on this computer.</p>
+          <h1 className="shell-title">{current.label}</h1>
+          <p className="mk-muted">{current.blurb}</p>
         </div>
       </div>
 
-      <div className="set-layout">
-        <nav className="set-nav" aria-label="Settings sections">
-          {SECTIONS.map((s) => (
-            <button key={s.id} type="button" className={cx("set-nav__item", section === s.id && "is-on")} aria-current={section === s.id ? "page" : undefined} onClick={() => show(s.id)}>
-              <Icon name={s.icon} size={16} />
-              <span>{s.label}</span>
-            </button>
-          ))}
-        </nav>
-
+      <div className="set-layout set-layout--one">
         <div className="set-pane" key={section}>
-          <div className="set-pane__head">
-            <h2 className="shell-h2">{current.label}</h2>
-            <p className="mk-muted">{current.blurb}</p>
-          </div>
 
           {section === "account" && (
             <>

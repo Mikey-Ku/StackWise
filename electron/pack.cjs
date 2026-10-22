@@ -27,6 +27,10 @@ for (const [from, to] of [
   fs.rmSync(path.join(out, to), { recursive: true, force: true });
   fs.cpSync(path.join(root, from), path.join(out, to), { recursive: true, dereference: true });
 }
+// The Documentation page reads the repo's Markdown, so it comes along (the text, not the images).
+fs.mkdirSync(path.join(out, "docs"), { recursive: true });
+fs.copyFileSync(path.join(root, "README.md"), path.join(out, "README.md"));
+for (const name of fs.readdirSync(path.join(root, "docs")).filter((f) => f.endsWith(".md"))) fs.copyFileSync(path.join(root, "docs", name), path.join(out, "docs", name));
 // Nothing of the person's goes into the bundle: no keys, no state.
 for (const stray of [".env.local", ".env", ".stackwise"]) fs.rmSync(path.join(out, stray), { recursive: true, force: true });
 
