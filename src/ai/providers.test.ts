@@ -116,7 +116,7 @@ describe("Gemini", () => {
   });
 
   it("can't be used for Claude, which keeps its own client", async () => {
-    const claude: ProviderStatus = { id: "claude", label: "Claude", kind: "anthropic", on: true, model: "claude-opus-5", modelEnv: "STACKWISE_MODEL", models: [], keyName: "ANTHROPIC_API_KEY", needs: [], featured: true };
+    const claude: ProviderStatus = { id: "claude", label: "Claude", kind: "anthropic", on: true, model: "claude-opus-5", modelEnv: "STACKWISE_MODEL", models: [], modelInfo: [], keyName: "ANTHROPIC_API_KEY", needs: [], featured: true };
     await expect(providerTalk(claude, brief, [], "q", env, fakeFetch({}).fetchImpl)).rejects.toThrow("its own client");
   });
 });

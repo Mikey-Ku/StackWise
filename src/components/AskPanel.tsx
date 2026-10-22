@@ -75,6 +75,9 @@ const PROVIDERS: Provider[] = [
   { id: "gemini", label: "Gemini", mark: "api:gemini", agent: "gemini-cli", api: "gemini" },
   { id: "facts", label: "StackWise", mark: "facts" },
 ];
+/** A model's short name as the provider's page gives it, else its id. */
+const modelNameOf = (api: ProviderInfo, id: string) => api.modelInfo?.find((x) => x.id === id)?.name ?? id;
+
 /** The provider a recipient belongs to; an agent or API outside the list gets a provider of its own. */
 function providerFor(id: RecipientId, ai: AiStatus | null): Provider {
   if (id === "facts") return PROVIDERS[3];
@@ -564,13 +567,6 @@ export function AskPanel({
     const box = e.currentTarget.getBoundingClientRect();
     const listed = PROVIDERS.some((p) => p.id === provider.id) ? PROVIDERS : [...PROVIDERS, provider];
     const isDefault = savedDefault === recipientId;
-    const hintFor = (p: Provider) => {
-      if (p.id === "facts") return "No AI: the rules and facts alone";
-      const a = agentRecipientOf(p);
-      if (a && (a.state === "listening" || a.state === "working")) return `${a.label} is listening`;
-      if (p.api && providersOf(ai).find((x) => x.id === p.api)?.on) return "Key saved";
-      return "Needs a key, or its agent in your terminal";
-    };
     setMenu({
       x: box.left,
       y: box.top - 6,
@@ -579,7 +575,6 @@ export function AskPanel({
           (p): MenuItem => ({
             label: p.label,
             lead: <AnswererMark id={p.mark} className="ws-menu-logo" />,
-            hint: hintFor(p),
             checked: p.id === provider.id,
             onSelect: () => pickProvider(p),
           }),
@@ -608,11 +603,13 @@ export function AskPanel({
     if (api) {
       const models = api.models?.length ? api.models : api.model ? [api.model] : [];
       const current = api.model || api.defaultModel;
+      const info = (id: string) => api.modelInfo?.find((x) => x.id === id);
       if (items.length && models.length) items.push({ kind: "separator" });
       for (const m of models) {
+        const known = info(m);
         items.push({
-          label: m,
-          hint: m === api.defaultModel ? "Default" : undefined,
+          label: `${known?.name ?? m}${m === api.defaultModel ? " (default)" : ""}`,
+          hint: known ? `${known.context} context · ${known.price} per M` : undefined,
           checked: recipient.id === `api:${api.id}` && current === m,
           onSelect: () => {
             setChosen(`api:${api.id}`);
@@ -625,7 +622,7 @@ export function AskPanel({
     if (provider.id === "facts") items.push({ label: "Facts only, no AI", checked: true, onSelect: () => setChosen("facts") });
     setMenu({ x: box.left, y: box.top - 6, items });
   };
-  const modelLabel = agent ? (agentRecipient?.label ?? agentName(agent)) : provider.id === "facts" ? "Facts only" : api ? (api.on ? api.model || api.defaultModel || "Default model" : "Needs a key") : recipient.label;
+  const modelLabel = agent ? (agentRecipient?.label ?? agentName(agent)) : provider.id === "facts" ? "Facts only" : api ? (api.on ? modelNameOf(api, api.model || api.defaultModel || "") || "Default model" : "Needs a key") : recipient.label;
 
   const listening = recipient.group === "agent" && (recipient.state === "listening" || recipient.state === "working");
   const starters = [...(slot === "framework" ? APP_STARTERS : PART_STARTERS), ...(listening ? [AGENT_STARTER] : [])];

@@ -2257,15 +2257,22 @@ html[data-desktop] .ws-ask__top {
 .ws-cmenu__icon .ws-logo {
   border: 0;
 }
+/* The name always shows whole; a hint takes what's left and trims itself. */
 .ws-cmenu__label {
-  flex: 1;
-  min-width: 0;
+  flex: none;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .ws-cmenu__hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
   color: var(--mk-text-faint);
   font-size: 12px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ws-cmenu__item:not(:disabled):hover .ws-cmenu__hint,
 .ws-cmenu__item:not(:disabled):focus-visible .ws-cmenu__hint {

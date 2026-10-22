@@ -50,6 +50,38 @@ export const PROVIDERS: ProviderDef[] = [
   { id: "ollama", label: "Ollama (on this computer)", kind: "openai-chat", keyEnv: [], modelEnv: "OLLAMA_MODEL", baseUrl: "http://localhost:11434/v1", baseUrlEnv: "OLLAMA_BASE_URL" },
 ];
 
+/**
+ * What each offered model is, as the pickers show it: a short name, its context window, its
+ * output limit and its price per million tokens, from the provider's own page on the date given.
+ * Like every fact in StackWise, a number here has a source; a model without an entry shows its id.
+ */
+export interface ModelInfo {
+  id: string;
+  name: string;
+  /** What it's for, in the provider's words. */
+  note: string;
+  context: string;
+  output: string;
+  /** Input / output, per million tokens. */
+  price: string;
+  source: string;
+  checked_on: string;
+}
+const CLAUDE_MODELS = "https://platform.claude.com/docs/en/models/overview";
+export const MODEL_INFO: Record<string, ModelInfo> = {
+  "claude-opus-5": { id: "claude-opus-5", name: "Opus 5", note: "The Opus before 5.5, still available.", context: "1M", output: "128K", price: "$5 / $25", source: "https://platform.claude.com/docs/en/models/opus-5/overview", checked_on: "2026-10-22" },
+  "claude-fable-5-1": { id: "claude-fable-5-1", name: "Fable 5.1", note: "For demanding reasoning and long-horizon agentic work.", context: "1M", output: "128K", price: "$10 / $50", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
+  "claude-opus-5-5": { id: "claude-opus-5-5", name: "Opus 5.5", note: "For long-running agentic coding and knowledge work.", context: "1M", output: "128K", price: "$4 / $20", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
+  "claude-sonnet-5-5": { id: "claude-sonnet-5-5", name: "Sonnet 5.5", note: "The best combination of speed and intelligence.", context: "1M", output: "128K", price: "$2 / $10", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
+  "claude-haiku-5-5": { id: "claude-haiku-5-5", name: "Haiku 5.5", note: "For high-volume, latency-sensitive tasks.", context: "1M", output: "128K", price: "from $0.10 / $0.50", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
+  "gpt-6-luna": { id: "gpt-6-luna", name: "GPT-6 Luna", note: "OpenAI's most efficient model for focused, high-volume tasks.", context: "1.05M", output: "128K", price: "$0.10 / $0.50", source: "https://developers.openai.com/api/docs/models/gpt-6-luna", checked_on: "2026-10-22" },
+  "gemini-3.8-flash": { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", note: "Google's most intelligent Flash model, for long-horizon software engineering and agents.", context: "1M", output: "64K", price: "$0.75 / $3.75", source: "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash", checked_on: "2026-10-22" },
+};
+/** The short name the pickers show for a model id, or the id itself. */
+export function modelName(id: string): string {
+  return MODEL_INFO[id]?.name ?? id;
+}
+
 /** Always offered on the Connect screen, where a key can be pasted in; the rest show once they're set up. */
 export const FEATURED_PROVIDERS = ["claude", "openai", "gemini"];
 
@@ -67,9 +99,10 @@ export interface ProviderStatus {
   kind: ProviderKind;
   on: boolean;
   model: string;
-  /** The variable that picks the model, the models offered, and the one used when it's unset. */
+  /** The variable that picks the model, the models offered (with what's known about each), and the one used when it's unset. */
   modelEnv: string;
   models: string[];
+  modelInfo: ModelInfo[];
   defaultModel?: string;
   /** The variable to set in .env.local. Never the value. */
   keyName: string;
@@ -102,6 +135,7 @@ export function providerStatus(env: Env = process.env): ProviderStatus[] {
       model,
       modelEnv: def.modelEnv,
       models: def.models ?? [],
+      modelInfo: (def.models ?? []).flatMap((id) => (MODEL_INFO[id] ? [MODEL_INFO[id]] : [])),
       ...(def.defaultModel ? { defaultModel: def.defaultModel } : {}),
       keyName: def.keyEnv[0] ?? def.modelEnv,
       needs,

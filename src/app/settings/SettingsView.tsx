@@ -125,12 +125,16 @@ function ModelPicker({ provider, onSaved, onToast }: { provider: ProviderInfo; o
             void save(e.target.value === provider.defaultModel ? "" : e.target.value);
           }}
         >
-          {models.map((m) => (
-            <option key={m} value={m}>
-              {m}
-              {m === provider.defaultModel ? " (default)" : ""}
-            </option>
-          ))}
+          {models.map((m) => {
+            const known = provider.modelInfo?.find((x) => x.id === m);
+            return (
+              <option key={m} value={m}>
+                {known?.name ?? m}
+                {m === provider.defaultModel ? " (default)" : ""}
+                {known ? ` · ${known.context} context · ${known.price} per M tokens` : ""}
+              </option>
+            );
+          })}
           <option value="other">Other...</option>
         </select>
         {other && (
@@ -149,7 +153,7 @@ function ModelPicker({ provider, onSaved, onToast }: { provider: ProviderInfo; o
         )}
       </div>
       <span className="mk-hint">
-        {provider.defaultModel ? `Default: ${provider.defaultModel}. ` : ""}Saved as <code>{provider.modelEnv}</code> in StackWise&apos;s .env.local.
+        {provider.modelInfo?.find((x) => x.id === (provider.model || provider.defaultModel))?.note ?? ""} Prices are input / output per million tokens, from the provider&apos;s own page. Saved as <code>{provider.modelEnv}</code> in StackWise&apos;s .env.local.
       </span>
     </div>
   );
