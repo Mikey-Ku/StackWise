@@ -46,18 +46,21 @@ export const shortPath = (p: string, home: string | undefined) => (home && p.sta
 
 const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/projects", label: "Projects", icon: "grid" },
-  { href: "/learn", label: "Learn", icon: "learn" },
   { href: "/docs", label: "Documentation", icon: "info" },
   { href: "/review", label: "Review facts", icon: "checklist" },
 ];
 
-/** A page's own sections, shown in the sidebar under the pages: Settings' Account, General and so on. */
+/**
+ * A page's own sections, shown in the sidebar under the pages: Settings' Account, General and so
+ * on. A page can have more than one group (the documentation: Learn, then the project's docs).
+ */
 export interface ShellSections {
   title: string;
   items: { id: string; label: string; href: string; active?: boolean; icon?: IconName; onSelect?: () => void }[];
 }
 
-export function Shell({ me, sections, children }: { me: Me | null; sections?: ShellSections; children: React.ReactNode }) {
+export function Shell({ me, sections, children }: { me: Me | null; sections?: ShellSections | ShellSections[]; children: React.ReactNode }) {
+  const groups = sections ? [sections].flat() : [];
   const pathname = usePathname() ?? "";
   const name = me?.profile.name.trim() || me?.account || "";
   const initial = (name || "S").slice(0, 1).toUpperCase();
@@ -85,10 +88,10 @@ export function Shell({ me, sections, children }: { me: Me | null; sections?: Sh
             </Link>
           ))}
         </nav>
-        {sections && (
-          <nav className="shell-subnav" aria-label={sections.title}>
-            <p className="shell-subnav__title">{sections.title}</p>
-            {sections.items.map((item) =>
+        {groups.map((group) => (
+          <nav key={group.title} className="shell-subnav" aria-label={group.title}>
+            <p className="shell-subnav__title">{group.title}</p>
+            {group.items.map((item) =>
               item.onSelect ? (
                 <button key={item.id} type="button" className={cx("shell-nav__item shell-subnav__item", item.active && "is-on")} aria-current={item.active ? "page" : undefined} onClick={item.onSelect}>
                   {item.icon && <Icon name={item.icon} size={15} />}
@@ -102,7 +105,7 @@ export function Shell({ me, sections, children }: { me: Me | null; sections?: Sh
               ),
             )}
           </nav>
-        )}
+        ))}
         <div className="shell-side__foot">
           <a href="https://github.com/Mikey-Ku/StackWise" target="_blank" rel="noreferrer" className="shell-nav__item" title="The code, on GitHub">
             <Icon name="web" size={16} />

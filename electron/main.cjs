@@ -168,7 +168,7 @@ function appMenu() {
       { role: "editMenu" },
       { role: "viewMenu" },
       { role: "windowMenu" },
-      { label: "Help", submenu: [{ label: "Documentation", click: () => shell.openExternal("https://github.com/Mikey-Ku/StackWise#readme") }, { label: "Learn", click: () => (showWindow(), win && win.loadURL(`${URL}/learn`)) }] },
+      { label: "Help", submenu: [{ label: "Documentation", click: () => (showWindow(), win && win.loadURL(`${URL}/docs`)) }, { label: "StackWise on GitHub", click: () => shell.openExternal("https://github.com/Mikey-Ku/StackWise") }] },
     ]),
   );
 }

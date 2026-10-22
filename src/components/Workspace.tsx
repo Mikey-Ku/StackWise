@@ -91,8 +91,8 @@ const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(n
 export default function Workspace({ catalog, problems }: { catalog: Catalog; problems: string[] }) {
   const model = usePlans(catalog);
   const router = useRouter();
-  /** Learn is its own page; a part opens at its section there. The plan waits in this browser. */
-  const openLearn = useCallback((slot?: SlotId | null) => router.push(`/learn${slot ? `#part-${slot}` : ""}`), [router]);
+  /** Learn is the first part of the Documentation page; a part opens at its entry there. The plan waits in this browser. */
+  const openLearn = useCallback((slot?: SlotId | null) => router.push(`/docs#${slot ? `part-${slot}` : "start-here"}`), [router]);
   const { plan, dispatch, history, rec, index } = model;
   const [selectedSlot, setSelectedSlot] = useState<SlotId | null>(null);
   /** The part at the far end of the connection being looked at, when one is. */
@@ -766,7 +766,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
           ))}
           <span className="ws-dock__sep" aria-hidden />
           <Tip name="Learn" text="What each part of an app does, in plain words.">
-            <a className="ws-dock__btn" href="/learn">
+            <a className="ws-dock__btn" href="/docs#start-here">
               <Icon name="learn" size={16} />
               <span>Learn</span>
             </a>

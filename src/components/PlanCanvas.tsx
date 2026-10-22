@@ -442,7 +442,7 @@ interface ZoneData extends Record<string, unknown> {
 function ZoneNode({ data }: NodeProps<Node<ZoneData>>) {
   return (
     <div className="ws-zone" title={data.what}>
-      <a className="ws-zone__label nodrag nopan" href="/learn#start-here" title={`${data.what} Click to learn more.`}>
+      <a className="ws-zone__label nodrag nopan" href="/docs#start-here" title={`${data.what} Click to learn more.`}>
         {data.label}
       </a>
     </div>

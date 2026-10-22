@@ -2,17 +2,18 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Metadata } from "next";
 import { Marked, type Tokens } from "marked";
+import { loadCatalog } from "@/engine/load";
 import { readMe } from "@/local/home";
-import DocsView, { type Doc } from "./DocsView";
+import DocsView, { type Doc, type LearnContent, type LearnPart, type LearnTerm } from "./DocsView";
 import "../shell.css";
 import "./docs.css";
 
 export const metadata: Metadata = {
   title: "Documentation | StackWise",
-  description: "StackWise's documentation: the overview, the MCP tools, the facts and rules, how it works, the decisions and the demo.",
+  description: "How a web app fits together, in plain words: every part, how to choose one, the mistakes beginners make, a glossary. Then StackWise's own docs: the overview, the MCP tools, the facts and rules, the decisions and the demo.",
 };
 
-// The docs are files in the repo; read them on every request so an edit shows on refresh.
+// The docs are files in the repo (data/learn.json, the Markdown); read them on every request so an edit shows on refresh.
 export const dynamic = "force-dynamic";
 
 /**
@@ -26,7 +27,7 @@ export const dynamic = "force-dynamic";
  */
 const docsRoot = () => [process.env.STACKWISE_DOCS_ROOT, process.cwd()].find(Boolean) as string;
 
-/** The documents, in reading order. Each is a Markdown file in the repo, shown as one section. */
+/** The project's documents, in reading order. Each is a Markdown file in the repo, shown as one section. */
 const DOCS: { id: string; title: string; file: string }[] = [
   { id: "overview", title: "Overview", file: "README.md" },
   { id: "mcp", title: "MCP and agents", file: "docs/MCP.md" },
@@ -97,6 +98,21 @@ function render(id: string, markdown: string): { html: string; headings: { id: s
   return { html, headings };
 }
 
+/** The teaching content from data/learn.json: the layers to start with, one entry per part, the glossary. */
+function learnContent(): LearnContent {
+  const catalog = loadCatalog();
+  const { learn } = catalog;
+  const parts: LearnPart[] = catalog.slots.flatMap((slot) => {
+    const entry = learn.slots[slot.id];
+    return entry ? [{ id: slot.id, label: slot.label, ...entry }] : [];
+  });
+  // Each term lists the parts that use it, so the glossary links back to them.
+  const terms: LearnTerm[] = Object.entries(learn.terms)
+    .map(([id, t]) => ({ id, ...t, usedIn: parts.filter((p) => p.terms.includes(id)).map((p) => ({ id: p.id, label: p.label })) }))
+    .sort((a, b) => a.term.localeCompare(b.term, "en", { sensitivity: "base" }));
+  return { startHere: learn.start_here ?? null, parts, terms };
+}
+
 export default function DocsPage() {
   const docs: Doc[] = DOCS.flatMap((doc) => {
     let text: string;
@@ -108,5 +124,5 @@ export default function DocsPage() {
     const { html, headings } = render(doc.id, text);
     return [{ id: doc.id, title: doc.title, file: doc.file, html, headings }];
   });
-  return <DocsView me={readMe()} docs={docs} repo={REPO} />;
+  return <DocsView me={readMe()} learn={learnContent()} docs={docs} repo={REPO} />;
 }
