@@ -61,6 +61,8 @@ export interface ModelInfo {
   /** What it's for, in the provider's words. */
   note: string;
   context: string;
+  /** The same window as a number of tokens, for the ring that shows how much of it a conversation uses. */
+  contextTokens: number;
   output: string;
   /** Input / output, per million tokens. */
   price: string;
@@ -69,13 +71,13 @@ export interface ModelInfo {
 }
 const CLAUDE_MODELS = "https://platform.claude.com/docs/en/models/overview";
 export const MODEL_INFO: Record<string, ModelInfo> = {
-  "claude-opus-5": { id: "claude-opus-5", name: "Opus 5", note: "The Opus before 5.5, still available.", context: "1M", output: "128K", price: "$5 / $25", source: "https://platform.claude.com/docs/en/models/opus-5/overview", checked_on: "2026-10-22" },
-  "claude-fable-5-1": { id: "claude-fable-5-1", name: "Fable 5.1", note: "For demanding reasoning and long-horizon agentic work.", context: "1M", output: "128K", price: "$10 / $50", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
-  "claude-opus-5-5": { id: "claude-opus-5-5", name: "Opus 5.5", note: "For long-running agentic coding and knowledge work.", context: "1M", output: "128K", price: "$4 / $20", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
-  "claude-sonnet-5-5": { id: "claude-sonnet-5-5", name: "Sonnet 5.5", note: "The best combination of speed and intelligence.", context: "1M", output: "128K", price: "$2 / $10", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
-  "claude-haiku-5-5": { id: "claude-haiku-5-5", name: "Haiku 5.5", note: "For high-volume, latency-sensitive tasks.", context: "1M", output: "128K", price: "from $0.10 / $0.50", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
-  "gpt-6-luna": { id: "gpt-6-luna", name: "GPT-6 Luna", note: "OpenAI's most efficient model for focused, high-volume tasks.", context: "1.05M", output: "128K", price: "$0.10 / $0.50", source: "https://developers.openai.com/api/docs/models/gpt-6-luna", checked_on: "2026-10-22" },
-  "gemini-3.8-flash": { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", note: "Google's most intelligent Flash model, for long-horizon software engineering and agents.", context: "1M", output: "64K", price: "$0.75 / $3.75", source: "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash", checked_on: "2026-10-22" },
+  "claude-opus-5": { id: "claude-opus-5", name: "Opus 5", note: "The Opus before 5.5, still available.", context: "1M", contextTokens: 1_000_000, output: "128K", price: "$5 / $25", source: "https://platform.claude.com/docs/en/models/opus-5/overview", checked_on: "2026-10-22" },
+  "claude-fable-5-1": { id: "claude-fable-5-1", name: "Fable 5.1", note: "For demanding reasoning and long-horizon agentic work.", context: "1M", contextTokens: 1_000_000, output: "128K", price: "$10 / $50", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
+  "claude-opus-5-5": { id: "claude-opus-5-5", name: "Opus 5.5", note: "For long-running agentic coding and knowledge work.", context: "1M", contextTokens: 1_000_000, output: "128K", price: "$4 / $20", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
+  "claude-sonnet-5-5": { id: "claude-sonnet-5-5", name: "Sonnet 5.5", note: "The best combination of speed and intelligence.", context: "1M", contextTokens: 1_000_000, output: "128K", price: "$2 / $10", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
+  "claude-haiku-5-5": { id: "claude-haiku-5-5", name: "Haiku 5.5", note: "For high-volume, latency-sensitive tasks.", context: "1M", contextTokens: 1_000_000, output: "128K", price: "from $0.10 / $0.50", source: CLAUDE_MODELS, checked_on: "2026-10-22" },
+  "gpt-6-luna": { id: "gpt-6-luna", name: "GPT-6 Luna", note: "OpenAI's most efficient model for focused, high-volume tasks.", context: "1.05M", contextTokens: 1_050_000, output: "128K", price: "$0.10 / $0.50", source: "https://developers.openai.com/api/docs/models/gpt-6-luna", checked_on: "2026-10-22" },
+  "gemini-3.8-flash": { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", note: "Google's most intelligent Flash model, for long-horizon software engineering and agents.", context: "1M", contextTokens: 1_048_576, output: "64K", price: "$0.75 / $3.75", source: "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash", checked_on: "2026-10-22" },
 };
 /** The short name the pickers show for a model id, or the id itself. */
 export function modelName(id: string): string {

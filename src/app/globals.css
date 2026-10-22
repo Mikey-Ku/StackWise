@@ -1785,6 +1785,17 @@ html[data-desktop] .ws-ask__top {
   color: var(--mk-text-muted);
   font-weight: 500;
 }
+.ws-ask__ctx {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 28px;
+  color: var(--mk-text-muted);
+}
+.ws-ask__ctx.is-full {
+  color: var(--mk-warn);
+}
 .ws-answerer:disabled {
   cursor: default;
   opacity: 0.6;

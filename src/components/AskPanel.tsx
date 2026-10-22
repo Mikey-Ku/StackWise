@@ -40,6 +40,9 @@ export interface AskRequest {
 
 const EXPLAIN = "Explain my plan";
 const HISTORY_TURNS = 20;
+/** What a question carries besides the conversation: the part's brief (facts, checks, setup), about this many characters. */
+const BRIEF_CHARS = 6000;
+const CHARS_PER_TOKEN = 4;
 
 interface Starter {
   label: string;
@@ -128,6 +131,22 @@ function Formatted({ text }: { text: string }) {
     }
   }
   return <>{blocks}</>;
+}
+
+/** How much of the model's context window the next message would use, as a ring that fills. */
+function ContextRing({ used, window: limit }: { used: number; window: number }) {
+  const share = Math.min(1, used / limit);
+  const r = 5.5;
+  const round = r * 2 * Math.PI;
+  const label = `Context: about ${used < 1000 ? used : `${Math.round(used / 1000)}K`} of ${limit >= 1_000_000 ? `${(limit / 1_000_000).toFixed(limit % 1_000_000 ? 2 : 0)}M` : `${Math.round(limit / 1000)}K`} tokens`;
+  return (
+    <span className={cx("ws-ask__ctx", share > 0.8 && "is-full")} title={label} aria-label={label} role="img">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+        <circle cx="8" cy="8" r={r} fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2" />
+        <circle cx="8" cy="8" r={r} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray={`${Math.max(0.6, share * round)} ${round}`} transform="rotate(-90 8 8)" />
+      </svg>
+    </span>
+  );
 }
 
 function StateDot({ state }: { state: Recipient["state"] }) {
@@ -652,7 +671,7 @@ export function AskPanel({
         const known = info(m);
         items.push({
           label: `${known?.name ?? m}${!viaAgent && m === api.defaultModel ? " (default)" : ""}`,
-          hint: known ? `${known.context} context · ${known.price} per M` : undefined,
+          hint: known?.price,
           checked: viaAgent ? agentModel === m : recipient.id === `api:${api.id}` && current === m,
           onSelect: () => {
             if (viaAgent) {
@@ -669,6 +688,18 @@ export function AskPanel({
     if (provider.id === "facts") items.push({ label: "Facts only, no AI", checked: true, onSelect: () => setChosen("facts") });
     setMenu({ x: box.left, y: box.top - 6, items });
   };
+  // The ring: what the next message would send (this part's brief, the recent turns, the draft) against the model's window.
+  const apiModelInfo = api && !agent ? api.modelInfo?.find((x) => x.id === (api.model || api.defaultModel)) : undefined;
+  const contextUsed = Math.round(
+    (BRIEF_CHARS +
+      question.length +
+      plan.chat
+        .filter((t) => t.about === slot)
+        .slice(-HISTORY_TURNS)
+        .reduce((n, t) => n + t.text.length, 0)) /
+      CHARS_PER_TOKEN,
+  );
+
   // The bubble names the model alone; the provider bubble already says whose it is.
   const modelLabel = agent
     ? agentModel && api
@@ -798,6 +829,7 @@ export function AskPanel({
             <span>{modelLabel}</span>
             <Icon name="down" size={11} />
           </button>
+          {apiModelInfo && <ContextRing used={contextUsed} window={apiModelInfo.contextTokens} />}
           <button type="submit" className="ws-ask__send" disabled={busy || !question.trim()} aria-label="Send">
             <Icon name="send" size={15} />
           </button>
