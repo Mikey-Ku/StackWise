@@ -910,20 +910,10 @@ a.ws-costlines__row {
 .ws-envlist code {
   overflow-wrap: anywhere;
 }
-/* Writing the project into a folder on this computer. */
+/* The sections under the files in the export dialog. */
 .ws-local {
   padding-top: var(--mk-4);
   border-top: 1px solid var(--mk-line);
-}
-.ws-local__row {
-  align-items: flex-end;
-}
-.ws-local__row .mk-field {
-  min-width: 240px;
-}
-.ws-local__cmd {
-  padding: var(--mk-2) var(--mk-3);
-  overflow-wrap: anywhere;
 }
 .ws-local code {
   font-family: var(--mk-font-mono);
@@ -3121,7 +3111,7 @@ body {
   color: #fff;
 }
 
-/* ---------- v0.9: the project panel: run, check, set variables, read the database ---------- */
+/* ---------- v0.9: the project panel: link a folder, set its variables ---------- */
 .ws-proj {
   display: flex;
   flex-direction: column;
@@ -3205,46 +3195,9 @@ body {
   align-items: center;
   gap: 6px;
 }
-.ws-proj__health {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--mk-text-muted);
-  font-size: 12px;
-}
-.ws-proj__health.is-ok {
-  color: var(--mk-ok);
-}
-.ws-proj__health.is-bad {
-  color: var(--mk-danger);
-}
-.ws-proj__runrow {
-  display: flex;
-  gap: 8px;
-}
-.ws-proj__cmd {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--mk-font-mono);
-  font-size: 12px;
-}
 .ws-chip.is-on {
   background: var(--mk-accent);
   color: #fff;
-}
-.ws-proj__log {
-  max-height: 220px;
-  margin: 0;
-  padding: 10px 12px;
-  overflow: auto;
-  border-radius: 10px;
-  background: #1c1c1e;
-  color: #e5e5ea;
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 .ws-proj__envs {
   display: flex;
@@ -3289,84 +3242,6 @@ body {
   flex: 1;
   min-width: 0;
   font-family: var(--mk-font-mono);
-}
-.ws-proj__probe {
-  border-radius: 12px;
-  background: var(--mk-surface-sunk);
-}
-.ws-proj__probe > summary,
-.ws-proj__probe.is-idle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  list-style: none;
-  cursor: pointer;
-}
-.ws-proj__probe > summary::-webkit-details-marker {
-  display: none;
-}
-.ws-proj__probe.is-bad {
-  background: var(--mk-danger-soft);
-}
-.ws-proj__probetext {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-}
-.ws-proj__probetext strong {
-  font-size: 13px;
-}
-.ws-proj__probetext span {
-  color: var(--mk-text-muted);
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-.ws-proj__code {
-  flex: none;
-  color: var(--mk-text-faint);
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-}
-.ws-proj__probebody {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 0 10px 10px;
-}
-.ws-proj__probebody pre,
-.ws-proj__sample pre {
-  max-height: 200px;
-  margin: 0;
-  padding: 8px 10px;
-  overflow: auto;
-  border-radius: 8px;
-  background: var(--mk-surface);
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.ws-proj__sample {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
-}
-.ws-proj__sql {
-  font-family: var(--mk-font-mono);
-  font-size: 12px;
-}
-.ws-proj__table {
-  max-height: 260px;
-  overflow: auto;
-}
-.ws-proj__table td,
-.ws-proj__table th {
-  padding: 4px 8px;
-  font-size: 11px;
-  white-space: nowrap;
 }
 .ws-node__icon {
   flex: none;
@@ -3421,41 +3296,6 @@ body {
   font-family: var(--mk-font-mono);
   font-size: 11px;
   overflow-wrap: anywhere;
-}
-.ws-proj__agent {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--mk-surface-sunk);
-}
-.ws-proj__branch {
-  font-family: var(--mk-font-mono);
-  font-size: 11px;
-  color: var(--mk-text-muted);
-}
-.ws-proj__files ul {
-  margin: 4px 0 0;
-  padding-left: 1.1em;
-  font-size: 11px;
-}
-.ws-proj__files summary {
-  color: var(--mk-text-muted);
-  font-size: 12px;
-  cursor: pointer;
-}
-.ws-proj__addagent {
-  display: flex;
-  gap: 6px;
-}
-.ws-proj__addagent .mk-select {
-  width: auto;
-  flex: none;
-}
-.ws-proj__addagent .mk-input {
-  flex: 1;
-  min-width: 0;
 }
 .ws-conn__logo {
   position: relative;

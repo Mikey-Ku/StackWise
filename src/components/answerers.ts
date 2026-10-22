@@ -122,10 +122,6 @@ const ANSWERER_LOGOS: Record<string, AnswererMark> = {
   "api:claude": { src: "/brand/claude.svg" },
   "api:openai": { src: "/brand/ai/openai.svg", mono: true },
   "api:gemini": { src: "/brand/ai/gemini.svg" },
-  "api:deepseek": { src: "/brand/ai/deepseek.svg" },
-  "api:openrouter": { src: "/logos/openrouter.svg" },
-  "api:groq": { src: "/logos/groq.png" },
-  "api:mistral": { src: "/logos/mistral.svg" },
   "api:ollama": { src: "/brand/ollama.svg" },
   facts: { src: "/icon.svg" },
 };

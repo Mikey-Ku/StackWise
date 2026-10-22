@@ -60,7 +60,7 @@ const PANELS: { id: Panel; label: string; icon: IconName; hint: string }[] = [
   { id: "overview", label: "Overview", icon: "overview", hint: "Problems, close calls, accounts and cost." },
   { id: "options", label: "Parts", icon: "parts", hint: "Every service StackWise knows, by part. Drag one onto the canvas." },
   { id: "checklist", label: "Checklist", icon: "checklist", hint: "Accounts, keys and the build order, to tick off." },
-  { id: "project", label: "Project", icon: "terminal", hint: "Your project folder: run it, set its keys, test each service." },
+  { id: "project", label: "Project", icon: "terminal", hint: "Your project folder: link it and set its keys." },
 ];
 
 // Saved data from before StackWise's rename moves to its new keys before anything reads it.
@@ -757,7 +757,7 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
                 <Overview model={model} onSelect={select} onOpenChecklist={() => setPanel("checklist")} onExplain={() => openAsk("framework", "Explain my plan")} />
               </>
             )}
-            {shown.id === "project" && <ProjectPanel model={model} pairing={pairing} onToast={setToast} />}
+            {shown.id === "project" && <ProjectPanel model={model} onToast={setToast} />}
             {shown.id === "options" && <Palette model={model} selectedSlot={selectedSlot} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onToast={setToast} />}
             {shown.id === "checklist" && <ChecklistPanel model={model} today={today} onToast={setToast} onOpenProject={projectPanel ? () => setPanel("project") : undefined} />}
           </div>

@@ -58,7 +58,6 @@ Details:
 
 Unzip it as a new project folder and run `claude` there. Claude Code asks once whether to trust the project's MCP server.
 
-Or skip the zip: **Or write it into a folder on this computer** in the same dialog writes the files straight into a folder, plus a `.env.local` with the names and no values, and gives you the `cd ... && claude` line. It only writes inside your home folder, never inside StackWise's own folder, and never over an existing `.env.local`: your values are yours, and StackWise has no copy of them. Anything else already in the folder stays until you tick "Replace files that are already there". See `src/app/api/local/route.ts` and `src/mcp/localfiles.ts`.
 
 To bring a project's plan back into StackWise in another browser, use **Import plan file** on its `stackwise.plan.json`. It keeps the plan's id, so changes Claude makes in that project keep showing up.
 

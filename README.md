@@ -47,8 +47,8 @@ Everything works without an API key. To have an AI read your description, answer
 3. **Read the canvas.** Your app in the middle, a card per part, and a line per connection: a check means it works, `!` a warning, a cross that it doesn't. A light flows along the lines that work. Click a card for why it was picked; right-click anything for everything else; press A to add a part.
 4. **Ask.** Cmd+K opens one conversation per plan. Pick who answers: an agent in your terminal, a model with a key, or StackWise's own facts.
 5. **Turn on Advanced tools when you need them.** The wrench in the dock adds a second service in one part (a cache next to the database), lines between two parts (Stripe sends webhooks to your app), parts you build yourself and parts StackWise doesn't list, and the Project panel.
-6. **Link your project.** The Project panel runs the app, sets environment variables, checks every service with your keys, reads the database (read only) and gives extra agents their own git worktree.
-7. **Export.** A spec pack for your AI builder, or the files written straight into the project. "Copy the build plan" on the canvas menu gives the tasks alone, in order.
+6. **Link your project.** The Project panel links the plan to its folder: see which of the plan's keys the project has set, set the missing ones into its `.env.local` without opening a file, and keep its `stackwise.plan.json` current. Values never come back to the page.
+7. **Export.** A spec pack for your AI builder as a zip, or straight into the project over MCP. "Copy the build plan" on the canvas menu gives the tasks alone, in order.
 
 ```bash
 pnpm test             # engine, AI (with a fake client), store, scripts and data checks
@@ -111,8 +111,7 @@ Claude can check stacks, compare options, estimate costs and change the plan you
 - Start and stop the app from StackWise and watch its log. Its health check shows whether it's up.
 - Every environment variable the plan needs, marked set, missing or readable by the browser. Paste a value to write it into the project's `.env.local`; StackWise never shows it again or sends it anywhere.
 - Check every service with your own keys: one read-only request each, shown with the keys masked, what came back, an example of what travels on that connection, and a link to the service's status page.
-- A read-only SQL console for the project's Postgres or SQLite database.
-- The plan file in the project and StackWise's copy merge instead of overwriting each other, so an agent in your terminal and you in the browser can both change the plan.
+- The plan file in the project and StackWise's copy merge instead of overwriting each other, so an agent in your terminal and you in the app can both change the plan.
 
 **Understanding**
 - Details for every part: its stats, every check with its reason and fix, the cost at your size, how it scored for your priority, a comparison table, and the sourced facts behind it, flagged when they may be out of date.
@@ -161,7 +160,7 @@ src/engine/           the logic, no React, fully tested
 src/ai/               Claude pre-fill and explanations, optional
 src/components/       the workspace UI
 src/app/api/          status, prefill, explain, talk, keys, mcp, pair, project and local routes
-src/project/          a linked project folder: run it, its env files, live checks, read-only SQL, git
+src/project/          a linked project folder: what it is, its env variable names, its icon
 src/mcp/              the MCP server, its stdio command, and shared plans in .stackwise/
 scripts/              evals, source checker, option drafter, logo fetcher
 evals/                eval cases (written by a person) and how to run them

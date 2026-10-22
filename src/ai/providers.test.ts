@@ -122,23 +122,15 @@ describe("Gemini", () => {
 });
 
 describe("more models", () => {
-  it("keeps a preset off until both its key and its model are set, so no model name is guessed", () => {
-    const groq = (env: Record<string, string>) => providerStatus(env).find((p) => p.id === "groq")!;
-    expect(groq({ GROQ_API_KEY: "g" })).toMatchObject({ on: false, needs: ["GROQ_MODEL"], featured: false });
-    expect(groq({ GROQ_API_KEY: "g", GROQ_MODEL: "some-model" })).toMatchObject({ on: true, needs: [], baseUrl: "https://api.groq.com/openai/v1" });
-    const ollama = providerStatus({ OLLAMA_MODEL: "llama4" }).find((p) => p.id === "ollama")!;
-    expect(ollama).toMatchObject({ on: true, baseUrl: "http://localhost:11434/v1" });
-  });
-
-  it("sends a custom OpenAI-compatible endpoint the same prompt, asks for a JSON object, and checks the answer the same way", async () => {
-    const env = { CUSTOM_AI_BASE_URL: "https://llm.example.com/v1/", CUSTOM_AI_API_KEY: "ck", CUSTOM_AI_MODEL: "house-model", CUSTOM_AI_LABEL: "House model" };
-    const custom = providerStatus(env).find((p) => p.id === "custom")!;
-    expect(custom).toMatchObject({ on: true, label: "House model" });
+  it("keeps Ollama off until its model is set, so no model name is guessed, then talks to it on this computer", async () => {
+    const ollama = (env: Record<string, string>) => providerStatus(env).find((p) => p.id === "ollama")!;
+    expect(ollama({})).toMatchObject({ on: false, needs: ["OLLAMA_MODEL"], featured: false });
+    const env = { OLLAMA_MODEL: "llama4" };
+    expect(ollama(env)).toMatchObject({ on: true, needs: [], baseUrl: "http://localhost:11434/v1" });
     const { fetchImpl, calls } = fakeFetch(openaiSays(JSON.stringify(answer)));
-    const reply = await providerTalk(custom, brief, [], "Will my data survive?", env, fetchImpl);
+    const reply = await providerTalk(ollama(env), brief, [], "Will my data survive?", env, fetchImpl);
     expect(reply.reply).toContain("hosted database");
-    expect(calls[0].url).toBe("https://llm.example.com/v1/chat/completions");
-    expect(calls[0].headers.authorization).toBe("Bearer ck");
-    expect(calls[0].body).toMatchObject({ model: "house-model", response_format: { type: "json_object" } });
+    expect(calls[0].url).toBe("http://localhost:11434/v1/chat/completions");
+    expect(calls[0].body).toMatchObject({ model: "llama4", response_format: { type: "json_object" } });
   });
 });

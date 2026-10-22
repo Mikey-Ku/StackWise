@@ -21,7 +21,6 @@ const KEY_PAGES: Record<string, string> = {
   claude: "https://console.anthropic.com/settings/keys",
   openai: "https://platform.openai.com/api-keys",
   gemini: "https://aistudio.google.com/apikey",
-  deepseek: "https://platform.deepseek.com/api_keys",
 };
 
 export function ConnectPanel({

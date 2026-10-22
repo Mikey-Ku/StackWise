@@ -1,20 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { planEnv, type SlotId } from "@/engine";
-import { agentName, pairInstructions, presence } from "@/mcp/pairing";
-import { STATE_TEXT } from "./answerers";
+import { planEnv } from "@/engine";
 import { Icon } from "./icons";
-import type { Pairing } from "./usePairing";
 import type { PlanModel } from "./usePlans";
-import { Logo, copyText, cx, imageToIcon } from "./ui";
+import { cx, imageToIcon } from "./ui";
 
 /**
- * The plan's project folder, live: run the app and watch its log, set environment variables
- * without opening a file, check every service with the project's own keys, and read the database.
- * Everything goes through /api/project, which only this computer can call. Values go from this
- * page into the project's .env.local and never come back: the page only ever sees names, whether
- * each is set, and masked requests.
+ * The plan's project folder: link it, see which of the plan's environment variables it has set,
+ * and set the missing ones without opening a file. Everything goes through /api/project, which
+ * only this computer can call. Values go from this page into the project's .env.local and never
+ * come back: the page only ever sees names and whether each is set.
  */
 
 interface Inspection {
@@ -22,40 +18,12 @@ interface Inspection {
   exists: boolean;
   framework: string | null;
   label: string;
-  commands: { label: string; command: string }[];
-  healthUrl: string | null;
   env: { name: string; set: boolean; files: string[] }[];
   configRefs: string[];
   envIgnored: boolean;
   issues: string[];
-  probes: string[];
-  javaVersion?: string;
   icon: string | null;
 }
-
-interface RunInfo {
-  id: string;
-  command: string;
-  running: boolean;
-  exitCode: number | null;
-  startedAt: string;
-}
-
-interface ProbeResult {
-  id: string;
-  title: string;
-  ok: boolean;
-  status?: number;
-  ms?: number;
-  request?: { url: string; headers: Record<string, string> };
-  body?: string;
-  missing?: string[];
-  error?: string;
-  statusPage?: string;
-  sample?: { sends: unknown; gets: unknown };
-}
-
-type SqlResult = { columns: string[]; rows: unknown[][]; truncated: boolean; ms: number; database: string } | { error: string };
 
 async function call<T>(body: Record<string, unknown>): Promise<T> {
   const response = await fetch("/api/project", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -78,7 +46,7 @@ function Section({ title, icon, children, right }: { title: string; icon: Parame
   );
 }
 
-/** The app's own logo: found in the project, or chosen by the person. Kept with the plan in this browser. */
+/** The app's own logo: found in the project, or chosen by the person. Kept with the plan. */
 function AppLogo({ model, path, found, onToast }: { model: PlanModel; path: string; found: string | null; onToast: (message: string) => void }) {
   const { plan, dispatch } = model;
   const input = useRef<HTMLInputElement>(null);
@@ -116,7 +84,7 @@ function AppLogo({ model, path, found, onToast }: { model: PlanModel; path: stri
           </button>
           {found && (
             <>
-              {" \u00b7 "}
+              {" · "}
               <button type="button" className="ws-link" onClick={() => void fromProject()}>
                 Use {found.split("/").pop()}
               </button>
@@ -124,7 +92,7 @@ function AppLogo({ model, path, found, onToast }: { model: PlanModel; path: stri
           )}
           {plan.icon && (
             <>
-              {" \u00b7 "}
+              {" · "}
               <button type="button" className="ws-link" onClick={() => dispatch({ type: "setIcon", icon: null })}>
                 Remove
               </button>
@@ -149,112 +117,6 @@ function AppLogo({ model, path, found, onToast }: { model: PlanModel; path: stri
         }}
       />
     </div>
-  );
-}
-
-function Runner({ path, project, appOk, onChecked }: { path: string; project: Inspection; appOk: boolean | null; onChecked: () => void }) {
-  const [command, setCommand] = useState(project.commands[0]?.command ?? "");
-  const [runs, setRuns] = useState<RunInfo[]>([]);
-  const [log, setLog] = useState<string[]>([]);
-  const [busy, setBusy] = useState(false);
-  const logRef = useRef<HTMLPreElement>(null);
-  const seen = useRef(0);
-  const current = runs.find((r) => r.running) ?? runs[runs.length - 1];
-
-  // While a run is open, ask for new log lines every second and a half.
-  useEffect(() => {
-    let stopped = false;
-    let timer = 0;
-    const tick = async () => {
-      try {
-        const body = await call<{ runs: RunInfo[]; log: { lines: string[]; total: number } | null }>({ action: "runs", path, logFor: current?.id, after: seen.current });
-        if (stopped) return;
-        setRuns(body.runs);
-        if (body.log && body.log.lines.length) {
-          seen.current = body.log.total;
-          setLog((l) => [...l, ...body.log!.lines].slice(-600));
-        }
-      } catch {
-        // The next tick tries again.
-      }
-      if (!stopped) timer = window.setTimeout(tick, 1500);
-    };
-    void tick();
-    return () => {
-      stopped = true;
-      window.clearTimeout(timer);
-    };
-  }, [path, current?.id]);
-
-  useEffect(() => {
-    logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
-  }, [log.length]);
-
-  const start = async () => {
-    setBusy(true);
-    seen.current = 0;
-    setLog([]);
-    try {
-      const { run } = await call<{ run: RunInfo }>({ action: "start", path, command });
-      setRuns((r) => [...r.filter((x) => x.id !== run.id), run]);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Section
-      title="Run"
-      icon="terminal"
-      right={
-        <span className={cx("ws-proj__health", appOk === true && "is-ok", appOk === false && "is-bad")} title={project.healthUrl ?? undefined}>
-          <span className={cx("ws-status-dot", appOk && "is-on")} aria-hidden />
-          {appOk === null ? "Checking" : appOk ? "App is up" : "Not running"}
-          <button type="button" className="ws-link" onClick={onChecked}>
-            Check
-          </button>
-        </span>
-      }
-    >
-      <div className="ws-proj__runrow">
-        <input className="mk-input mk-sm ws-proj__cmd" list="ws-proj-commands" value={command} onChange={(e) => setCommand(e.target.value)} spellCheck={false} aria-label="Command to run" />
-        <datalist id="ws-proj-commands">
-          {project.commands.map((c) => (
-            <option key={c.command} value={c.command}>
-              {c.label}
-            </option>
-          ))}
-        </datalist>
-        {current?.running ? (
-          <button type="button" className="mk-btn mk-btn--secondary mk-sm" onClick={() => void call({ action: "stop", path, id: current.id })}>
-            Stop
-          </button>
-        ) : (
-          <button type="button" className="mk-btn mk-btn--primary mk-sm" disabled={busy || !command.trim()} onClick={() => void start()}>
-            Start
-          </button>
-        )}
-      </div>
-      {project.commands.length > 1 && (
-        <div className="ws-chips">
-          {project.commands.map((c) => (
-            <button key={c.command} type="button" className={cx("ws-chip", c.command === command && "is-on")} onClick={() => setCommand(c.command)} title={c.command}>
-              {c.label}
-            </button>
-          ))}
-        </div>
-      )}
-      {current && (
-        <p className="mk-hint">
-          {current.running ? `Running since ${new Date(current.startedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : `Stopped${current.exitCode === null ? "" : `, exit code ${current.exitCode}`}`}.
-        </p>
-      )}
-      {log.length > 0 && (
-        <pre className="ws-proj__log nowheel" ref={logRef}>
-          {log.join("\n")}
-        </pre>
-      )}
-    </Section>
   );
 }
 
@@ -297,315 +159,27 @@ function EnvRow({ name, service, set, browser, planned, onSave }: { name: string
   );
 }
 
-function ProbeRow({ result, logo, name }: { result: ProbeResult; logo: React.ReactNode; name: string }) {
-  return (
-    <details className={cx("ws-proj__probe", result.ok ? "is-ok" : "is-bad")}>
-      <summary>
-        {logo}
-        <span className="ws-proj__probetext">
-          <strong>{name}</strong>
-          <span>{result.ok ? result.title : (result.error ?? `Answered ${result.status}`)}</span>
-        </span>
-        <span className={cx("ws-sig", result.ok ? "ws-sig--works" : "ws-sig--blocked")} aria-label={result.ok ? "Works" : "Failed"}>
-          {result.ok ? "✓" : "×"}
-        </span>
-        {result.status !== undefined && (
-          <span className="ws-proj__code">
-            {result.status} &middot; {result.ms} ms
-          </span>
-        )}
-      </summary>
-      <div className="ws-proj__probebody">
-        {result.request && (
-          <>
-            <span className="mk-eyebrow">Request (keys masked)</span>
-            <pre>{`GET ${result.request.url}${Object.entries(result.request.headers)
-              .map(([k, v]) => `\n${k}: ${v}`)
-              .join("")}`}</pre>
-          </>
-        )}
-        {result.body && (
-          <>
-            <span className="mk-eyebrow">What came back</span>
-            <pre className="nowheel">{result.body}</pre>
-          </>
-        )}
-        {result.sample && (
-          <>
-            <span className="mk-eyebrow">What travels on this connection (example)</span>
-            <div className="ws-proj__sample">
-              <div>
-                <span className="mk-hint">Your app sends</span>
-                <pre>{JSON.stringify(result.sample.sends, null, 2)}</pre>
-              </div>
-              <div>
-                <span className="mk-hint">It gets back</span>
-                <pre>{JSON.stringify(result.sample.gets, null, 2)}</pre>
-              </div>
-            </div>
-          </>
-        )}
-        {result.statusPage && (
-          <a href={result.statusPage} target="_blank" rel="noreferrer" className="ws-small-link">
-            Their status page
-          </a>
-        )}
-      </div>
-    </details>
-  );
-}
-
-interface GitWorktree {
-  path: string;
-  branch: string | null;
-  main: boolean;
-  agent: string | null;
-  changes: { uncommitted: string[]; ahead: number; committed: string[] } | null;
-}
-
-interface GitInfo {
-  repo: boolean;
-  branch: string | null;
-  clean: boolean;
-  worktrees: GitWorktree[];
-}
-
-const AGENT_KINDS = [
-  { id: "claude-code", label: "Claude Code" },
-  { id: "codex", label: "Codex" },
-  { id: "gemini-cli", label: "Gemini CLI" },
-];
-
-/**
- * More than one agent at once: each gets its own copy of the repo (a git worktree beside it, on
- * its own branch), listens for its own messages, and gets merged back when the person says so.
- */
-function Agents({ path, pairing, onToast }: { path: string; pairing: Pairing; onToast: (message: string) => void }) {
-  const [info, setInfo] = useState<GitInfo | null>(null);
-  const [kind, setKind] = useState("codex");
-  const [suffix, setSuffix] = useState("");
-  const [confirm, setConfirm] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const load = useCallback(async () => {
-    try {
-      setInfo(await call<GitInfo>({ action: "git", path }));
-    } catch {
-      setInfo({ repo: false, branch: null, clean: false, worktrees: [] });
-    }
-  }, [path]);
-
-  useEffect(() => {
-    let stopped = false;
-    let timer = 0;
-    const tick = async () => {
-      await load();
-      if (!stopped) timer = window.setTimeout(tick, 5000);
-    };
-    timer = window.setTimeout(tick, 0);
-    return () => {
-      stopped = true;
-      window.clearTimeout(timer);
-    };
-  }, [load]);
-
-  const act = async (body: Record<string, unknown>, done: (result: Record<string, unknown>) => string) => {
-    setBusy(true);
-    try {
-      const result = await call<Record<string, unknown>>({ path, ...body });
-      onToast(typeof result.error === "string" ? `${result.error}${Array.isArray(result.conflicts) && result.conflicts.length ? ` Clashing files: ${result.conflicts.join(", ")}.` : ""}` : done(result));
-      await load();
-    } catch (e) {
-      onToast(e instanceof Error ? e.message : "That didn't work.");
-    } finally {
-      setBusy(false);
-      setConfirm(null);
-    }
-  };
-
-  if (!info) return null;
-  const agentId = suffix.trim() ? `${kind}-${suffix.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}` : kind;
-  const copies = info.worktrees.filter((w) => !w.main && w.agent);
-
-  return (
-    <Section title="Agents" icon="terminal" right={<span className="mk-hint">Each works in its own copy</span>}>
-      {!info.repo ? (
-        <p className="mk-hint">This folder isn&apos;t a git repository, so agents can&apos;t get their own copies. Run git init in it to use this.</p>
-      ) : (
-        <>
-          <p className="mk-hint">
-            Your copy is on <code>{info.branch ?? "a detached commit"}</code>
-            {info.clean ? ", with nothing uncommitted." : ", with uncommitted changes. Commit them before merging an agent's work."}
-          </p>
-          {copies.map((w) => {
-            const state = pairing.agents[w.agent!];
-            const listening = state ? presence(state, pairing.serverNow) : "not-connected";
-            const changed = w.changes ? [...new Set([...w.changes.committed, ...w.changes.uncommitted])] : [];
-            const claude = w.agent!.startsWith("claude-code");
-            const start = claude ? `cd ${w.path} && claude "/mcp__stackwise__pair ${w.agent}"` : `cd ${w.path}`;
-            return (
-              <div key={w.path} className="ws-proj__agent">
-                <div className="ws-proj__envtop">
-                  <span className={cx("ws-status-dot", (listening === "listening" || listening === "working") && "is-on")} aria-hidden />
-                  <strong>{agentName(w.agent!)}</strong>
-                  <code className="ws-proj__branch">{w.branch}</code>
-                  <span className="ws-proj__tag">{STATE_TEXT[listening]}</span>
-                </div>
-                <span className="mk-hint">
-                  {w.path.replace(/^\/Users\/[^/]+/, "~")}. {w.changes?.ahead ?? 0} commit{w.changes?.ahead === 1 ? "" : "s"} ahead, {changed.length} file{changed.length === 1 ? "" : "s"} changed
-                  {w.changes?.uncommitted.length ? `, ${w.changes.uncommitted.length} not committed yet` : ""}.
-                </span>
-                {changed.length > 0 && (
-                  <details className="ws-proj__files">
-                    <summary>Files</summary>
-                    <ul>
-                      {changed.map((f) => (
-                        <li key={f}>
-                          <code>{f}</code>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
-                <div className="mk-row mk-gap-2 mk-wrap mk-sm">
-                  <button
-                    type="button"
-                    className="mk-btn mk-btn--secondary"
-                    onClick={async () => {
-                      const text = claude ? start : `${start}\n\n${pairInstructions(w.agent!)}`;
-                      onToast((await copyText(text)) ? (claude ? "Copied. Paste it into a new terminal." : `Copied. Run the cd, start ${agentName(w.agent!)}, and paste the rest.`) : text);
-                    }}
-                  >
-                    Copy start command
-                  </button>
-                  {confirm === w.path ? (
-                    <button type="button" className="mk-btn mk-btn--primary" disabled={busy} onClick={() => void act({ action: "merge", branch: w.branch }, (r) => `Merged ${w.branch} into ${info.branch}. ${String(r.summary ?? "")}`)}>
-                      Merge {w.changes?.ahead ?? 0} commit{w.changes?.ahead === 1 ? "" : "s"} into {info.branch}?
-                    </button>
-                  ) : (
-                    <button type="button" className="mk-btn mk-btn--secondary" disabled={!w.changes?.ahead} onClick={() => setConfirm(w.path)} title={w.changes?.ahead ? undefined : "Nothing committed to merge yet"}>
-                      Merge into {info.branch}
-                    </button>
-                  )}
-                  <button type="button" className="ws-link" disabled={busy} onClick={() => void act({ action: "worktree-remove", worktree: w.path }, () => `Removed ${agentName(w.agent!)}'s copy. Its branch ${w.branch} is kept.`)}>
-                    Remove copy
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-          <form
-            className="ws-proj__addagent"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void act({ action: "worktree-add", agent: agentId }, (r) => `Made a copy for ${agentName(agentId)} at ${String(r.path)}, on ${String(r.branch)}. Start the agent there and pair it.`);
-            }}
-          >
-            <select className="mk-select mk-sm" value={kind} onChange={(e) => setKind(e.target.value)} aria-label="Which agent">
-              {AGENT_KINDS.map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.label}
-                </option>
-              ))}
-            </select>
-            <input className="mk-input mk-sm" value={suffix} onChange={(e) => setSuffix(e.target.value)} placeholder="name (optional), like frontend" aria-label="Name for this agent" />
-            <button type="submit" className="mk-btn mk-btn--primary mk-sm" disabled={busy}>
-              Add
-            </button>
-          </form>
-        </>
-      )}
-    </Section>
-  );
-}
-
-function SqlConsole({ path }: { path: string }) {
-  const [query, setQuery] = useState("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY 1");
-  const [result, setResult] = useState<SqlResult | null>(null);
-  const [busy, setBusy] = useState(false);
-  const run = async () => {
-    setBusy(true);
-    try {
-      setResult(await call<SqlResult>({ action: "sql", path, query }));
-    } catch (error) {
-      setResult({ error: error instanceof Error ? error.message : "The query failed." });
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <Section title="Database" icon="overview" right={<span className="mk-hint">Read-only</span>}>
-      <textarea
-        className="mk-textarea ws-proj__sql"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        spellCheck={false}
-        rows={3}
-        aria-label="SQL query"
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            void run();
-          }
-        }}
-      />
-      <div className="mk-row mk-gap-2 mk-sm">
-        <button type="button" className="mk-btn mk-btn--primary" disabled={busy} onClick={() => void run()}>
-          {busy ? "Running..." : "Run query"}
-        </button>
-        <span className="mk-hint">Cmd+Enter runs it. Read-only: SELECT, WITH, SHOW and EXPLAIN.</span>
-      </div>
-      {result && "error" in result && <p className="ws-proj__error">{result.error}</p>}
-      {result && !("error" in result) && (
-        <div className="ws-proj__table nowheel">
-          <p className="mk-hint">
-            {result.rows.length} row{result.rows.length === 1 ? "" : "s"}
-            {result.truncated ? " (first 200)" : ""} from {result.database} in {result.ms} ms
-          </p>
-          <table className="mk-table">
-            <thead>
-              <tr>
-                {result.columns.map((c) => (
-                  <th key={c}>{c}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {result.rows.map((row, i) => (
-                <tr key={i}>
-                  {row.map((cell, j) => (
-                    <td key={j}>{cell === null ? <span className="mk-faint">null</span> : typeof cell === "object" ? JSON.stringify(cell) : String(cell)}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </Section>
-  );
-}
-
-export function ProjectPanel({ model, pairing, onToast }: { model: PlanModel; pairing: Pairing; onToast: (message: string) => void }) {
-  const { plan, dispatch, index, rec, catalog } = model;
+export function ProjectPanel({ model, onToast }: { model: PlanModel; onToast: (message: string) => void }) {
+  const { plan, dispatch, index, rec } = model;
   const [draft, setDraft] = useState(plan.folder ?? "");
   const [project, setProject] = useState<Inspection | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [probes, setProbes] = useState<Record<string, ProbeResult>>({});
-  const [checking, setChecking] = useState(false);
   const path = plan.folder;
 
-  const load = useCallback(async (folder: string) => {
-    try {
-      const found = await call<Inspection>({ action: "inspect", path: folder });
-      setProject(found);
-      // Keep the full path, so a later `stackwise` in that folder finds this plan.
-      if (found.folder !== folder) dispatch({ type: "setFolder", folder: found.folder });
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't read that folder.");
-    }
-  }, [dispatch]);
+  const load = useCallback(
+    async (folder: string) => {
+      try {
+        const found = await call<Inspection>({ action: "inspect", path: folder });
+        setProject(found);
+        // Keep the full path, so a later `stackwise` in that folder finds this plan.
+        if (found.folder !== folder) dispatch({ type: "setFolder", folder: found.folder });
+        setError(null);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Couldn't read that folder.");
+      }
+    },
+    [dispatch],
+  );
 
   useEffect(() => {
     if (!path) return;
@@ -613,42 +187,12 @@ export function ProjectPanel({ model, pairing, onToast }: { model: PlanModel; pa
     return () => window.clearTimeout(timer);
   }, [path, load]);
 
-  const env = useMemo(() => planEnv(index, rec.selection), [index, rec.selection]);
-  // Every service in the plan that has a live check, plus the app itself.
-  const checkable = useMemo(
-    () => (Object.entries(rec.selection) as [SlotId, string | undefined][]).flatMap(([slot, id]) => (id && project?.probes.includes(id) ? [{ slot, id }] : [])),
-    [rec.selection, project?.probes],
-  );
-
-  const check = useCallback(
-    async (ids: string[]) => {
-      if (!path || !ids.length) return;
-      setChecking(true);
-      try {
-        const { results } = await call<{ results: ProbeResult[] }>({ action: "probe", path, ids, ...(project?.healthUrl ? { healthUrl: project.healthUrl } : {}) });
-        setProbes((p) => ({ ...p, ...Object.fromEntries(results.map((r) => [r.id, r])) }));
-      } finally {
-        setChecking(false);
-      }
-    },
-    [path, project?.healthUrl],
-  );
-
-  // The app's own health, every 10 seconds while the panel is open.
-  useEffect(() => {
-    if (!project?.healthUrl) return;
-    const first = window.setTimeout(() => void check(["app"]), 0);
-    const timer = window.setInterval(() => void check(["app"]), 10_000);
-    return () => {
-      window.clearTimeout(first);
-      window.clearInterval(timer);
-    };
-  }, [project?.healthUrl, check]);
+  const env = useMemo(() => planEnv(index, rec.selection, plan.extras), [index, rec.selection, plan.extras]);
 
   if (!path || !project) {
     return (
       <div className="ws-proj">
-        <p className="mk-muted">Link your project folder to run the app, set its environment variables, test each service with your keys and read the database. Nothing leaves this computer.</p>
+        <p className="mk-muted">Link your project folder to see which of the plan&apos;s keys it has, set the missing ones, and keep its plan file up to date. Nothing leaves this computer.</p>
         <form
           className="ws-proj__link"
           onSubmit={(e) => {
@@ -675,7 +219,6 @@ export function ProjectPanel({ model, pairing, onToast }: { model: PlanModel; pa
   ];
   const missing = rows.filter((r) => r.planned && !r.set).length;
   const frameworkMismatch = project.framework && rec.selection.framework && project.framework !== rec.selection.framework ? project.framework : null;
-  const appResult = probes.app;
 
   return (
     <div className="ws-proj">
@@ -691,7 +234,6 @@ export function ProjectPanel({ model, pairing, onToast }: { model: PlanModel; pa
           onClick={() => {
             dispatch({ type: "setFolder", folder: null });
             setProject(null);
-            setProbes({});
           }}
         >
           Unlink
@@ -719,31 +261,6 @@ export function ProjectPanel({ model, pairing, onToast }: { model: PlanModel; pa
         </ul>
       )}
 
-      <Runner path={path} project={project} appOk={appResult ? appResult.ok : null} onChecked={() => void check(["app"])} />
-
-      <Section title="Live tests" icon="checklist" right={checkable.length > 0 && <button type="button" className="mk-btn mk-btn--secondary mk-sm" disabled={checking} onClick={() => void check(["app", ...checkable.map((c) => c.id)])}>{checking ? "Testing..." : "Test all"}</button>}>
-        {appResult && <ProbeRow result={appResult} name={plan.appName.trim() || "Your app"} logo={<Icon name="web" size={20} />} />}
-        {checkable.map(({ id }) => {
-          const option = index.optionsById.get(id);
-          const result = probes[id];
-          return result ? (
-            <ProbeRow key={id} result={result} name={option?.name ?? id} logo={<Logo logo={catalog.logos[id]} name={option?.name ?? id} size={20} />} />
-          ) : (
-            <div key={id} className="ws-proj__probe is-idle">
-              <Logo logo={catalog.logos[id]} name={option?.name ?? id} size={20} />
-              <span className="ws-proj__probetext">
-                <strong>{option?.name}</strong>
-                <span>Not tested yet</span>
-              </span>
-              <button type="button" className="ws-link" onClick={() => void check([id])}>
-                Test
-              </button>
-            </div>
-          );
-        })}
-        {checkable.length === 0 && !appResult && <p className="mk-hint">No live test for these services yet.</p>}
-      </Section>
-
       <Section title={`Environment${missing ? `, ${missing} missing` : ""}`} icon="note" right={<span className="mk-hint">Writes to .env.local</span>}>
         {!project.envIgnored && !project.issues.some((issue) => issue.includes(".gitignore")) && <p className="ws-proj__error">.env.local isn&apos;t in .gitignore. Add it before you set any keys, so they never get committed.</p>}
         <ul className="ws-proj__envs">
@@ -765,10 +282,6 @@ export function ProjectPanel({ model, pairing, onToast }: { model: PlanModel; pa
         </ul>
         {project.configRefs.length > 0 && <p className="mk-hint">The app&apos;s config also reads: {project.configRefs.join(", ")}.</p>}
       </Section>
-
-      <Agents path={path} pairing={pairing} onToast={onToast} />
-
-      <SqlConsole path={path} />
     </div>
   );
 }
