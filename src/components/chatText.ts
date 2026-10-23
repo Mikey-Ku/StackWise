@@ -107,3 +107,34 @@ export function isLong(text: string): boolean {
   const lines = text.split("\n").filter((line) => line.trim()).length;
   return words > LONG_WORDS || lines > LONG_LINES;
 }
+
+/**
+ * What an agent did, as the chat shows it. A change to the plan or the project (update_plan, a
+ * merged plan file, files written) keeps a card of its own. Everything else is the agent looking
+ * things up in StackWise, which the person doesn't need a card for: a run of lookups with nothing
+ * between them folds into one quiet line, each summary once.
+ */
+export function isChangeActivity(activity: { tool: string; summary: string }): boolean {
+  return activity.tool === "update_plan" || activity.tool === "sync_plan_file" || (activity.tool === "export_project" && /^Wrote /.test(activity.summary));
+}
+
+/** A lookup's summary as part of a sentence. Older entries said "(not applied)". */
+export function lookupPhrase(summary: string): string {
+  const plain = summary.replace(/\s*\(not applied\)$/, " in the plan without changing it").trim();
+  return plain.charAt(0).toLowerCase() + plain.slice(1);
+}
+
+/** Timeline entries with lookups folded: adjacent lookups become one entry listing each phrase once. */
+export function foldLookups<T extends { at: string; key: string }>(entries: (T | { at: string; key: string; lookup: string })[]): (T | { at: string; key: string; lookups: string[] })[] {
+  const out: (T | { at: string; key: string; lookups: string[] })[] = [];
+  for (const entry of entries) {
+    if ("lookup" in entry) {
+      const phrase = lookupPhrase(entry.lookup);
+      const last = out[out.length - 1];
+      if (last && "lookups" in last) {
+        if (!last.lookups.includes(phrase)) last.lookups.push(phrase);
+      } else out.push({ at: entry.at, key: entry.key, lookups: [phrase] });
+    } else out.push(entry);
+  }
+  return out;
+}

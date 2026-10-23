@@ -1935,6 +1935,14 @@ html[data-desktop] .ws-ask__top {
   margin: 0;
   padding-left: 1.1em;
 }
+/* The agent's lookups in StackWise: one quiet line, not a card. */
+.ws-lookup {
+  margin: 0;
+  padding: 0 2px;
+  color: var(--mk-text-faint);
+  font-size: 0.82em;
+  line-height: 1.45;
+}
 .ws-connect {
   display: flex;
   flex-direction: column;

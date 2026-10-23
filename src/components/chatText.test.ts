@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLong, parseChatText, parseInline } from "./chatText";
+import { foldLookups, isChangeActivity, isLong, lookupPhrase, parseChatText, parseInline } from "./chatText";
 
 // The shape of a long reply an agent sent: headings in capitals, a bullet list, paragraphs.
 const LONG_REPLY = [
@@ -80,5 +80,31 @@ describe("isLong", () => {
   it("folds a long reply and leaves a short one open", () => {
     expect(isLong(LONG_REPLY)).toBe(true);
     expect(isLong("Hello! Paired and listening.\n\n- One thing.\n- Another.\n\nWhat would you like me to do?")).toBe(false);
+  });
+});
+
+describe("agent activity in the chat", () => {
+  it("keeps a card only for changes to the plan or the project", () => {
+    expect(isChangeActivity({ tool: "update_plan", summary: "Added Inngest" })).toBe(true);
+    expect(isChangeActivity({ tool: "export_project", summary: "Wrote 12 project files to ~/app" })).toBe(true);
+    expect(isChangeActivity({ tool: "export_project", summary: "Read 4 project files" })).toBe(false);
+    expect(isChangeActivity({ tool: "compare_options", summary: "Compared A and B for login" })).toBe(false);
+  });
+
+  it("folds a run of lookups into one line, each once, and says what an old summary meant", () => {
+    const entries = [
+      { at: "1", key: "a", lookup: "Compared Inngest and Temporal for background jobs" },
+      { at: "2", key: "b", lookup: "Compared Inngest and Temporal for background jobs" },
+      { at: "3", key: "c", lookup: "Tried Inngest (not applied)" },
+      { at: "4", key: "m", text: "a reply" },
+      { at: "5", key: "d", lookup: "Compared Inngest and Temporal for background jobs" },
+    ];
+    const folded = foldLookups(entries);
+    expect(folded.map((e) => ("lookups" in e ? e.lookups : e.key))).toEqual([
+      ["compared Inngest and Temporal for background jobs", "tried Inngest in the plan without changing it"],
+      "m",
+      ["compared Inngest and Temporal for background jobs"],
+    ]);
+    expect(lookupPhrase("Estimated the cost: For up to 1,000 people: about $0/month")).toBe("estimated the cost: For up to 1,000 people: about $0/month");
   });
 });

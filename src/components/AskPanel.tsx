@@ -6,7 +6,7 @@ import { answerFromFacts, evaluatePlan, inSentence, planInput, questionFocus, ta
 import { agentName, mcpAddress, pairInstructions } from "@/mcp/pairing";
 import { AnswererMark } from "./AnswererMark";
 import { describeAgentModel, wantsLongContext, answererLogo, providerLabel, providersOf, recipientsFor, pickDefault, saveProviderSetting, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
-import { isLong, parseChatText, type Inline } from "./chatText";
+import { foldLookups, isChangeActivity, isLong, parseChatText, type Inline } from "./chatText";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
 import { Icon, type IconName } from "./icons";
 import { PanelEdge } from "./PanelEdge";
@@ -319,13 +319,14 @@ function AgentTurn({ message }: { message: AgentMessage }) {
 
 const TOOL_LABELS: Record<string, string> = {
   update_plan: "Changed the plan",
-  check_stack: "Checked a stack",
-  recommend_stack: "Recommended a stack",
-  compare_options: "Compared options",
-  estimate_costs: "Estimated costs",
-  export_project: "Exported the project",
+  export_project: "Wrote the project",
   sync_plan_file: "Merged the plan file",
 };
+
+/** The agent asking StackWise instead of guessing, as one quiet line: "Checked StackWise: compared ...". */
+function LookupLine({ phrases }: { phrases: string[] }) {
+  return <p className="ws-lookup">Checked StackWise: {phrases.join("; ")}.</p>;
+}
 
 function ActivityRow({ activity }: { activity: ClaudeActivity }) {
   return (
@@ -512,8 +513,14 @@ export function AskPanel({
       if (message.from === "you") lastAbout[message.agent] = message.about;
       list.push({ at: message.at, key: `m-${message.id}`, about: message.from === "you" ? message.about : lastAbout[message.agent], node: <AgentTurn message={message} /> });
     }
-    for (const item of agentItems) if (item.kind === "activity") list.push({ at: item.activity.at, key: `a-${item.activity.id}`, node: <ActivityRow activity={item.activity} /> });
-    return list.sort((a, b) => a.at.localeCompare(b.at));
+    // A change to the plan or the project gets a card; the agent's lookups fold into one quiet line.
+    const lookups: { at: string; key: string; lookup: string }[] = [];
+    for (const item of agentItems) {
+      if (item.kind !== "activity") continue;
+      if (isChangeActivity(item.activity)) list.push({ at: item.activity.at, key: `a-${item.activity.id}`, node: <ActivityRow activity={item.activity} /> });
+      else lookups.push({ at: item.activity.at, key: `a-${item.activity.id}`, lookup: item.activity.summary });
+    }
+    return foldLookups<Item>([...list, ...lookups].sort((a, b) => a.at.localeCompare(b.at))).map((entry): Item => ("lookups" in entry ? { at: entry.at, key: entry.key, node: <LookupLine phrases={entry.lookups} /> } : entry));
   }, [plan.chat, agentItems, model, ai, onToast]);
   const shown = onlyThis ? items.filter((item) => item.about === slot) : items;
   const mixed = new Set(items.map((i) => i.about).filter(Boolean)).size > 1;

@@ -27,6 +27,7 @@ import {
   planDigest,
   nearest,
   PlanUpdateError,
+  inSentence,
   planUpdateSchema,
   PRIORITY_IDS,
   recommend,
@@ -141,6 +142,8 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
     if (id) ctx.registry.addActivity(id, { tool, summary, changes: [], ...(verdict ? { verdict } : {}) });
   };
 
+  /** "A, B and C", for activity lines a person reads. */
+  const andList = (items: string[]) => (items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`);
   const names = (index: CatalogIndex, stack: Selection) =>
     stackReport(index, stack)
       .map((p) => p.option)
@@ -258,7 +261,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const results = evaluatePlan(index, checked, input);
       const verdict = worstLevel(results);
       // Only a what-if on the shared plan shows in its activity, and it says it wasn't applied.
-      if (!stack && swap) log("check_stack", `Tried ${names(index, swap)} (not applied)`, verdict, plan_id);
+      if (!stack && swap) log("check_stack", `Tried ${names(index, swap)} in the plan without changing it`, verdict, plan_id);
       return json({ stack: stackReport(index, checked), verdict, checks: checkReport(index, results), cost: costReport(index, checked, input, "summary") });
     },
   );
@@ -312,7 +315,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const input: PlanInput = { answers: answers ?? basis.input.answers, size: size ?? basis.input.size, priority: priority ?? basis.input.priority };
       const ranked = alternativesFor(index, input, basis.stack, part);
       const alternatives = option_ids ? ranked.filter((a) => option_ids.includes(a.option.id)) : ranked.slice(0, 5);
-      log("compare_options", `Compared ${alternatives.map((a) => a.option.name).join(", ")} for ${index.slotsById.get(part)?.label ?? part}`, undefined, plan_id);
+      log("compare_options", `Compared ${andList(alternatives.map((a) => a.option.name))} for ${inSentence(index.slotsById.get(part)?.label ?? part)}`, undefined, plan_id);
       return json({
         part,
         ...(againstNothing ? { compared_against: "nothing: no plan is shared and no stack was given, so each option is checked on its own" } : {}),
@@ -345,7 +348,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
       const problems = checkStackIds(index, basis.stack);
       if (problems.length) return fail(problems.join(" "));
       const report = costReport(index, basis.stack, { ...basis.input, size: size ?? basis.input.size });
-      log("estimate_costs", `Estimated costs for ${names(index, basis.stack)}: ${report.now}`, undefined, plan_id);
+      log("estimate_costs", `Estimated the cost: ${report.now}`, undefined, plan_id);
       return json(report);
     },
   );
