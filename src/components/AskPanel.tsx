@@ -748,10 +748,10 @@ export function AskPanel({
       }}
     >
       <header className="ws-ask__top">
-        <span className="ws-ask__plan" title={slot === "framework" ? "This conversation belongs to this plan" : `About ${aboutLabel(slot)}. Right-click a part to ask about it; naming a part in a message works too.`}>
-          {plan.appName.trim() || "Untitled app"}
-          {slot !== "framework" && ` · ${index.slotsById.get(slot)?.label ?? slot}`}
-        </span>
+        <button type="button" className="ws-iconbtn ws-ask__hide" onClick={onClose} aria-label="Hide the chat" title={`Hide the chat (${mod}K)`}>
+          <Icon name="sidebar" size={16} />
+        </button>
+        <span className="ws-ask__spacer" title={slot === "framework" ? `About ${plan.appName.trim() || "Untitled app"}` : `About ${aboutLabel(slot)}. Right-click a part to ask about it; naming a part in a message works too.`} />
         <button
           type="button"
           className="ws-iconbtn ws-ask__new"
@@ -770,9 +770,6 @@ export function AskPanel({
             <Icon name="target" size={14} />
           </button>
         )}
-        <button type="button" className="ws-iconbtn ws-ask__hide" onClick={onClose} aria-label="Hide the chat" title={`Hide the chat (${mod}K)`}>
-          <Icon name="sidebar" size={16} />
-        </button>
       </header>
 
       <div className="ws-ask__body" ref={listRef}>
@@ -853,7 +850,7 @@ export function AskPanel({
         </div>
       </form>
       <ContextMenu request={menu} onClose={() => setMenu(null)} />
-      <PanelEdge side="right" width={width} fallback={fallbackWidth} onResize={onResize} />
+      <PanelEdge side="left" width={width} fallback={fallbackWidth} onResize={onResize} />
     </section>
   );
 }

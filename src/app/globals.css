@@ -1642,24 +1642,28 @@ body {
   position: absolute;
   z-index: 28;
   top: 0;
-  right: 0;
   bottom: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
   width: var(--ask-w);
   /* The pane's type follows the window: 12px on a small one, 14px on a wide one. */
   font-size: clamp(12px, 0.7vw + 5.5px, 14px);
-  border-left: 0.5px solid var(--ws-glass-line);
+  border-right: 0.5px solid var(--ws-glass-line);
   border-radius: 0;
   box-shadow: none;
 }
 .ws[data-ask="open"] .ws-canvas,
 .ws[data-ask="open"] .ws-sheet-wrap {
-  right: var(--ask-w);
+  left: var(--ask-w);
 }
+/* Beside the pane the bar keeps its mark; the traffic lights are in the pane's header in the app. */
 .ws[data-ask="open"] .ws-bar {
-  right: var(--ask-w);
+  left: var(--ask-w);
   grid-template-columns: auto minmax(0, 1fr) auto;
+}
+html[data-desktop] .ws[data-ask="open"] .ws-bar {
+  padding-left: 12px;
 }
 .ws[data-ask="open"] .ws-summary {
   justify-self: center;
@@ -1671,28 +1675,26 @@ body {
   display: none;
 }
 .ws[data-ask="open"] .ws-dock {
-  left: calc((100% - var(--ask-w)) / 2);
+  left: calc(var(--ask-w) + (100% - var(--ask-w)) / 2);
 }
-/* Details opens beside the pane, not under it. */
-.ws[data-ask="open"] .ws-float--right {
-  right: calc(var(--ask-w) + 12px);
+/* A left panel opens beside the pane, not over it. */
+.ws[data-ask="open"] .ws-float--left {
+  left: calc(var(--ask-w) + 12px);
 }
-/* The pane slides in from the right, and while it opens or closes everything that makes room for it glides. */
+/* The pane slides in, and while it opens or closes everything that makes room for it glides. */
 .ws-ask {
   animation: ws-slide-in 240ms var(--mk-ease);
 }
 @keyframes ws-slide-in {
   from {
-    transform: translateX(100%);
+    transform: translateX(-100%);
   }
 }
 .ws[data-settling="yes"] .ws-canvas,
 .ws[data-settling="yes"] .ws-sheet-wrap,
 .ws[data-settling="yes"] .ws-bar,
-.ws[data-settling="yes"] .ws-float--right {
-  transition: right 240ms var(--mk-ease);
-}
-.ws[data-settling="yes"] .ws-dock {
+.ws[data-settling="yes"] .ws-dock,
+.ws[data-settling="yes"] .ws-float--left {
   transition: left 240ms var(--mk-ease);
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1703,13 +1705,17 @@ body {
   .ws[data-settling="yes"] .ws-sheet-wrap,
   .ws[data-settling="yes"] .ws-bar,
   .ws[data-settling="yes"] .ws-dock,
-  .ws[data-settling="yes"] .ws-float--right {
+  .ws[data-settling="yes"] .ws-float--left {
     transition: none;
   }
 }
-/* The hide glyph points the way the pane goes: right. */
-.ws-ask__hide svg {
-  transform: scaleX(-1);
+/* The pane's header, like a sidebar's: the hide toggle (after the traffic lights in the app), then new chat at the right. */
+.ws-ask__spacer {
+  flex: 1;
+  min-width: 0;
+}
+html[data-desktop] .ws-ask__top {
+  padding-left: 84px;
 }
 .ws-bar__nav {
   display: grid;
@@ -1736,17 +1742,6 @@ body {
   padding: 0 10px 0 12px;
 }
 /* The header: the plan's name, then new chat and hide as plain icons, like a sidebar's own controls. */
-.ws-ask__plan {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  padding: 0 4px;
-  color: var(--mk-text);
-  font-size: 0.93em;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .ws-ask__top .ws-iconbtn {
   width: 28px;
   height: 28px;
@@ -2497,18 +2492,21 @@ body {
     border-radius: 20px;
     box-shadow: var(--ws-float-shadow);
   }
+  html[data-desktop] .ws-ask__top {
+    padding-left: 12px;
+  }
   .ws[data-ask="open"] .ws-canvas,
   .ws[data-ask="open"] .ws-sheet-wrap {
-    right: 0;
+    left: 0;
   }
   .ws[data-ask="open"] .ws-bar {
-    right: 0;
+    left: 0;
   }
   .ws[data-ask="open"] .ws-dock {
     left: 50%;
   }
-  .ws[data-ask="open"] .ws-float--right {
-    right: 8px;
+  .ws[data-ask="open"] .ws-float--left {
+    left: 8px;
   }
   .ws-ask {
     animation: ws-pop var(--mk-dur) var(--mk-ease);
