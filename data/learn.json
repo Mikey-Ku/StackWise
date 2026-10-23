@@ -82,7 +82,7 @@
       "what": "Your app's own address, like yourapp.com, instead of the free one your host gives you.",
       "why": "People trust and remember a real name, and email services need a verified domain to send as you.",
       "choosing": [
-        "The renewal price, not just the discounted first year.",
+        "The renewal price, after the discounted first year.",
         "Is WHOIS privacy free?",
         "Can you manage DNS records in the same account for free?",
         "How easy is it to transfer out later?"
@@ -147,7 +147,7 @@
       "why": "Uploads need a durable home and a way to serve them only to the people allowed to see them.",
       "choosing": [
         "Can browsers upload straight to storage with a signed URL?",
-        "Does it charge for downloads (egress), not just storage?",
+        "Does it charge for downloads (egress) as well as storage?",
         "Are files served through a CDN?",
         "How do you keep private files private?"
       ],
@@ -174,7 +174,7 @@
       ],
       "watch_for": [
         "Putting the secret key in browser code.",
-        "Unlocking access on the checkout redirect instead of the webhook. Redirects get skipped; webhooks arrive.",
+        "Granting access on the checkout redirect instead of the webhook. Redirects get skipped; webhooks arrive.",
         "Not verifying webhook signatures, so anyone can fake a payment."
       ],
       "terms": ["merchant-of-record", "sales-tax", "subscription", "secret-key", "publishable-key", "webhook", "environment-variable", "portability"],
@@ -275,7 +275,7 @@
       "why": "It replaces guesses with numbers: are people finding the app, and where do they give up?",
       "choosing": [
         "Does it use cookies? That decides whether you need a consent banner.",
-        "Can it track events like sign-ups, not just page views?",
+        "Can it track events like sign-ups as well as page views?",
         "Is the free plan permanent or a trial?",
         "Can you export your data if you switch?"
       ],
@@ -316,7 +316,7 @@
       "what": "Whether your app could also ship as a phone app in the App Store or Google Play.",
       "why": "Phone apps are built differently, and not every login or database service works from one.",
       "choosing": [
-        "Do your login and database have phone SDKs, not just web ones?",
+        "Do your login and database have phone SDKs as well as web ones?",
         "React Native (shares patterns with web code) or fully native?",
         "What do store rules say about your payments?",
         "Does sign-in with Google or Apple work inside the app?"
@@ -430,7 +430,7 @@
     "webhook": {
       "term": "Webhook",
       "plain": "A message another service sends to your server when something happens, like a payment succeeding.",
-      "matters": "Unlocking what someone paid for usually depends on handling this message correctly.",
+      "matters": "Giving people what they paid for depends on handling this message correctly.",
       "read_more": [{ "title": "What are webhooks?", "url": "https://zapier.com/blog/what-are-webhooks/", "source": "Zapier" }]
     },
     "relational-database": {
@@ -566,7 +566,7 @@
     "app-store": {
       "term": "App store",
       "plain": "Apple's App Store or Google Play. Both review every app, including how it takes payments and handles data.",
-      "matters": "Shipping a phone app means planning for review, not just finishing the code.",
+      "matters": "Shipping a phone app means planning for the store review as well as finishing the code.",
       "read_more": [{ "title": "App Review Guidelines: payments", "url": "https://developer.apple.com/app-store/review/guidelines/#payments", "source": "Apple Developer" }]
     },
     "oauth": {
@@ -634,7 +634,7 @@
     "event": {
       "term": "Event",
       "plain": "One action someone takes, like signing up or clicking Buy, tracked on its own.",
-      "matters": "Events tell you whether a feature is used, not just visited."
+      "matters": "Events tell you whether a feature is used, where page views only say it was opened."
     },
     "cookie-consent": {
       "term": "Cookie consent",

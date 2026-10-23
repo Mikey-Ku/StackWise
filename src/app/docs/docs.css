@@ -21,7 +21,7 @@
 }
 .doc__title {
   margin: 0;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -57,10 +57,10 @@
   margin-bottom: 10px;
 }
 
-/* The body: the Markdown's own structure, in the app's type. */
+/* The body: the Markdown's own structure, in the app's type, the same size as the other pages' text. */
 .doc__body {
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .doc__body > :first-child {
@@ -68,19 +68,19 @@
 }
 .doc__body h2 {
   margin: 0 0 6px;
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 .doc__body h3 {
-  margin: 32px 0 8px;
-  font-size: 18px;
+  margin: 28px 0 8px;
+  font-size: 17px;
   font-weight: 650;
   letter-spacing: -0.01em;
   scroll-margin-top: 24px;
 }
 .doc__body h4 {
-  margin: 24px 0 6px;
+  margin: 22px 0 6px;
   font-size: 15px;
   font-weight: 650;
   scroll-margin-top: 24px;
@@ -88,7 +88,7 @@
 .doc__body h5,
 .doc__body h6 {
   margin: 18px 0 4px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 650;
 }
 .doc__body p {
@@ -147,6 +147,7 @@
   margin: 0 0 18px;
   border-collapse: collapse;
   font-size: 14px;
+  line-height: 1.45;
 }
 .doc__body th,
 .doc__body td {
@@ -174,20 +175,12 @@
 .doc__body p:has(> img:only-child) {
   text-align: center;
 }
-@media (max-width: 720px) {
-  .doc__body {
-    font-size: 14.5px;
-  }
-  .doc__title {
-    font-size: 22px;
-  }
-}
+/* The text keeps its size at every width; only the columns change. */
 
 /* ---------- The Learn sections (data/learn.json), in the same body style ---------- */
 .doc__body .doc-lead {
   margin: 0 0 14px;
-  font-size: 17px;
-  line-height: 1.5;
+  font-weight: 500;
   color: var(--mk-text);
   text-wrap: pretty;
 }
@@ -257,7 +250,6 @@
   position: relative;
   margin: 0;
   padding-left: 26px;
-  font-size: 14.5px;
   line-height: 1.5;
 }
 .doc-list li::before {
@@ -320,7 +312,6 @@
   color: var(--mk-text-muted);
 }
 .doc-link__title {
-  font-size: 14px;
   font-weight: 500;
   line-height: 1.35;
 }
@@ -366,13 +357,12 @@
 }
 .doc__body .doc-layer__name {
   margin: 4px 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 .doc__body .doc-layer p {
   margin: 0;
-  font-size: 14.5px;
   line-height: 1.5;
   color: var(--mk-text-muted);
 }
@@ -403,7 +393,6 @@
   border-bottom-color: transparent;
 }
 .doc-term dt {
-  font-size: 15.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
@@ -412,8 +401,7 @@
 }
 .doc__body .doc-term dd p {
   margin: 0;
-  font-size: 14.5px;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 .doc-term__matters {
   margin-top: 8px !important;

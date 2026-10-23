@@ -713,6 +713,11 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               <Icon name="tool" size={15} />
             </button>
           </Tip>
+          <Tip name="Docs" text="How a web app fits together, and StackWise's own docs.">
+            <button type="button" className="ws-bar__nav" aria-label="Documentation" onClick={() => router.push("/docs")}>
+              <Icon name="learn" size={15} />
+            </button>
+          </Tip>
         </div>
         {building && <SummaryPill model={model} onOpen={() => openPanel("overview")} />}
         <div className="ws-bar__side ws-bar__side--end">
@@ -764,13 +769,6 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               </button>
             </Tip>
           ))}
-          <span className="ws-dock__sep" aria-hidden />
-          <Tip name="Learn" text="What each part of an app does, in plain words.">
-            <a className="ws-dock__btn" href="/docs#start-here">
-              <Icon name="learn" size={16} />
-              <span>Learn</span>
-            </a>
-          </Tip>
           <span className="ws-dock__sep" aria-hidden />
           <Tip name="Undo" keys={`${mod}Z`} text="Take back the last change to the plan.">
             <button type="button" className="ws-dock__btn ws-dock__btn--icon" disabled={history.past.length === 0} aria-label="Undo" onClick={() => dispatch({ type: "undo" })}>

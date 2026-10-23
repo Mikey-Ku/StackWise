@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { answerFromFacts, evaluatePlan, inSentence, planInput, questionFocus, talkBrief, worstLevel, type SlotId } from "@/engine";
 import { agentName, mcpAddress, pairInstructions } from "@/mcp/pairing";
 import { AnswererMark } from "./AnswererMark";
-import { answererLogo, providerLabel, providersOf, recipientsFor, pickDefault, saveProviderSetting, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
+import { describeAgentModel, wantsLongContext, answererLogo, providerLabel, providersOf, recipientsFor, pickDefault, saveProviderSetting, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
 import { Icon, type IconName } from "./icons";
 import { PanelEdge } from "./PanelEdge";
@@ -597,7 +597,8 @@ export function AskPanel({
       const body = (await r.json()) as { agents?: { id: string; model?: string | null }[]; error?: string };
       if (!r.ok || !body.agents) throw new Error(body.error ?? "Couldn't set Claude Code's model.");
       setAgentModels(Object.fromEntries(body.agents.map((a) => [a.id, a.model ?? null])));
-      onToast(value ? `New Claude Code sessions start with ${modelNameOf(api ?? ({ models: [] } as unknown as ProviderInfo), value)}. A session already open switches with /model.` : "Claude Code is back on its own default model.");
+      const d = describeAgentModel(value, api?.modelInfo ?? []);
+      onToast(d ? `New Claude Code sessions start with ${d.name}${d.note ? ` (${d.note})` : ""}. A session already open switches with /model.` : "Claude Code is back on its own default model.");
     } catch (e) {
       onToast(e instanceof Error ? e.message : "Couldn't set Claude Code's model.");
     } finally {
@@ -650,6 +651,8 @@ export function AskPanel({
    * model Claude Code's own settings start new sessions with, which StackWise can set too.
    */
   const agentModel = provider.agent ? (agentModels[provider.agent] ?? null) : null;
+  const agentPick = api ? describeAgentModel(agentModel, api.modelInfo ?? []) : null;
+  const longContext = wantsLongContext(agentModel);
   const openModelMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
     const items: MenuItem[] = [];
@@ -663,25 +666,37 @@ export function AskPanel({
       const current = api.model || api.defaultModel;
       const info = (id: string) => api.modelInfo?.find((x) => x.id === id);
       items.push({ kind: "separator" }, { kind: "header", label: viaAgent ? "Model for new Claude Code sessions" : "Model" });
+      // Through Claude Code the setting is its own (an alias or an id, "[1m]" for the 1M window); the
+      // menu reads it and writes it back the same way, so a pick keeps the window and the window keeps the pick.
+      const picked = viaAgent ? (agentPick?.id ?? null) : null;
       if (viaAgent) {
-        const other = agentModel && !models.includes(agentModel) ? agentModel : null;
-        items.push({ label: other ? `As Claude Code has it: ${other}` : "Claude Code's own default", checked: !agentModel || Boolean(other), onSelect: () => void setAgentModel("") });
+        items.push({ label: "Claude Code's own default", checked: !picked, onSelect: () => void setAgentModel("") });
+        if (picked && !models.includes(picked)) items.push({ label: `As Claude Code has it: ${agentPick!.raw}`, checked: true, onSelect: () => {} });
       }
       for (const m of models) {
         const known = info(m);
         items.push({
           label: `${known?.name ?? m}${!viaAgent && m === api.defaultModel ? " (default)" : ""}`,
           hint: known?.price,
-          checked: viaAgent ? agentModel === m : recipient.id === `api:${api.id}` && current === m,
+          checked: viaAgent ? picked === m : recipient.id === `api:${api.id}` && current === m,
           onSelect: () => {
             if (viaAgent) {
-              if (m !== agentModel) void setAgentModel(m);
+              const next = `${m}${longContext ? "[1m]" : ""}`;
+              if (next !== agentModel) void setAgentModel(next);
               return;
             }
             setChosen(`api:${api.id}`);
             if (m !== current) void pickModel(m);
           },
         });
+      }
+      if (viaAgent && picked) {
+        items.push(
+          { kind: "separator" },
+          { kind: "header", label: "Context window" },
+          { label: "Standard", checked: !longContext, onSelect: () => void (longContext && setAgentModel(picked)) },
+          { label: "1M tokens", hint: "[1m]", checked: longContext, onSelect: () => void (!longContext && setAgentModel(`${picked}[1m]`)) },
+        );
       }
       items.push({ kind: "separator" }, { label: "Another model, or a key", icon: "tool", onSelect: () => router.push("/settings#models") });
     }
@@ -700,18 +715,19 @@ export function AskPanel({
       CHARS_PER_TOKEN,
   );
 
-  // The bubble names the model alone; the provider bubble already says whose it is.
-  const modelLabel = agent
-    ? agentModel && api
-      ? modelNameOf(api, agentModel)
-      : "Default model"
+  // The bubble names the model alone, with a note for its window or mode; the provider bubble
+  // already says whose it is. A placeholder (no key, facts only) reads quieter than a name.
+  const modelShown: { name: string; note: string | null; placeholder: boolean } = agent
+    ? agentPick?.id
+      ? { name: agentPick.name, note: agentPick.note, placeholder: false }
+      : { name: "Default model", note: null, placeholder: true }
     : provider.id === "facts"
-      ? "Facts only"
+      ? { name: "Facts only", note: null, placeholder: true }
       : api
         ? api.on
-          ? modelNameOf(api, api.model || api.defaultModel || "") || "Default model"
-          : "Needs a key"
-        : recipient.label;
+          ? { name: modelNameOf(api, api.model || api.defaultModel || "") || "Default model", note: null, placeholder: !(api.model || api.defaultModel) }
+          : { name: "Needs a key", note: null, placeholder: true }
+        : { name: recipient.label, note: null, placeholder: true };
 
   const listening = recipient.group === "agent" && (recipient.state === "listening" || recipient.state === "working");
   const starters = [...(slot === "framework" ? APP_STARTERS : PART_STARTERS), ...(listening ? [AGENT_STARTER] : [])];
@@ -825,8 +841,9 @@ export function AskPanel({
             <StateDot state={recipient.state} />
             <Icon name="down" size={11} />
           </button>
-          <button type="button" className="ws-answerer ws-answerer--model" aria-haspopup="menu" disabled={savingModel} onClick={openModelMenu} title="Which model, or the agent in your terminal">
-            <span>{modelLabel}</span>
+          <button type="button" className={cx("ws-answerer ws-answerer--model", modelShown.placeholder && "is-placeholder")} aria-haspopup="menu" disabled={savingModel} onClick={openModelMenu} title="Which model, or the agent in your terminal">
+            <span>{modelShown.name}</span>
+            {modelShown.note && <span className="ws-answerer__note">{modelShown.note}</span>}
             <Icon name="down" size={11} />
           </button>
           {apiModelInfo && <ContextRing used={contextUsed} window={apiModelInfo.contextTokens} />}

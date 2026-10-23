@@ -143,3 +143,48 @@ export function answererLogo(id: RecipientId): AnswererMark | null {
   const family = Object.keys(ANSWERER_LOGOS).find((key) => key.startsWith("agent:") && id.startsWith(key));
   return family ? ANSWERER_LOGOS[family] : null;
 }
+
+/**
+ * What Claude Code's model setting means, for the model bubble. Claude Code takes an alias
+ * ("opus", "sonnet", "haiku", "fable", "opusplan") or a model id, with "[1m]" after either for
+ * the 1M context window. StackWise shows the name it knows for the model and a note for the
+ * rest, and the raw value when it knows neither.
+ */
+export interface AgentModel {
+  /** The model id the setting resolves to, null for Claude Code's own default. */
+  id: string | null;
+  name: string;
+  /** "1M" for the 1M context window, "plan" for opusplan, both or null. */
+  note: string | null;
+  raw: string;
+}
+
+const MODEL_ALIASES: Record<string, string> = { opus: "claude-opus-5-5", sonnet: "claude-sonnet-5-5", haiku: "claude-haiku-5-5", fable: "claude-fable-5-1" };
+
+/** "claude-opus-5-5" reads as "Opus 5.5" when StackWise has no entry for the id. */
+function prettyModelId(id: string): string | null {
+  const m = /^claude-([a-z]+)-(\d+)(?:-(\d+))?(?:-\d{8})?$/i.exec(id);
+  return m ? `${m[1][0].toUpperCase()}${m[1].slice(1).toLowerCase()} ${m[2]}${m[3] ? `.${m[3]}` : ""}` : null;
+}
+
+export function describeAgentModel(raw: string | null | undefined, known: { id: string; name: string }[]): AgentModel | null {
+  if (!raw?.trim()) return null;
+  let value = raw.trim();
+  const notes: string[] = [];
+  if (/\[1m\]$/i.test(value)) {
+    notes.push("1M");
+    value = value.slice(0, -4);
+  }
+  const alias = value.toLowerCase();
+  let id = value;
+  if (alias === "opusplan") {
+    id = MODEL_ALIASES.opus;
+    notes.push("plan");
+  } else if (MODEL_ALIASES[alias]) id = MODEL_ALIASES[alias];
+  else if (alias === "default" || alias === "") id = "";
+  const name = id ? (known.find((k) => k.id === id)?.name ?? prettyModelId(id) ?? value) : "Default model";
+  return { id: id || null, name, note: notes.join(" ") || null, raw };
+}
+
+/** Whether a Claude Code model setting asks for the 1M context window. */
+export const wantsLongContext = (raw: string | null | undefined) => /\[1m\]$/i.test(raw?.trim() ?? "");

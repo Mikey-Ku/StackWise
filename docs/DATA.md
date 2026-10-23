@@ -121,32 +121,32 @@ All facts are drafts. Research agents wrote the service files on 2026-09-15 and 
 - **Lemon Squeezy** relies on secondary sources (its site blocked automated reads) and is in maintenance mode after the Stripe acquisition.
 - **Google Gemini `free_plan_covers`** is null because Google doesn't publish fixed free limits, which is why it's `partial`.
 - **Fly.io** has no free plan and no monthly plan since 2024; the null price is intentional.
-- **Supabase key names**: current quickstarts use `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The storage file was corrected to match.
-- **MongoDB Atlas `mobile_sdk: false`**: Atlas Device SDK reached end of life on 2025-09-30.
-- **Supabase Auth `builtin_email_production_ready: false`**: its built-in email is capped at a few messages an hour and marked not for production.
-- **Amazon SES and SendGrid `free_plan_covers: "none"`**: SES's free tier is now time-limited for new accounts, and SendGrid's permanent free plan was replaced by a trial. SES also starts in a sandbox that can only email verified addresses.
+- Supabase key names: current quickstarts use `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The storage file was corrected to match.
+- MongoDB Atlas `mobile_sdk: false`: Atlas Device SDK reached end of life on 2025-09-30.
+- Supabase Auth `builtin_email_production_ready: false`: its built-in email is capped at a few messages an hour and marked not for production.
+- Amazon SES and SendGrid `free_plan_covers: "none"`: SES's free tier is now time-limited for new accounts, and SendGrid's permanent free plan was replaced by a trial. SES also starts in a sandbox that can only email verified addresses.
 - **Postmark's free plan** is 100 emails a month, meant for testing.
-- **Upstash QStash `long_running: false`**: it calls your own endpoint, so your host's request time limit still applies, unlike Inngest and Trigger.dev.
+- Upstash QStash `long_running: false`: it calls your own endpoint, so your host's request time limit still applies, unlike Inngest and Trigger.dev.
 - **Expo's free plan** caps builds per month and blocks further builds instead of charging.
-- **App store fees in `mobile-app-store-fees`**: $99 a year for the Apple Developer Program and a one-time $25 for Google Play, with sources in the rule.
+- App store fees in `mobile-app-store-fees`: $99 a year for the Apple Developer Program and a one-time $25 for Google Play, with sources in the rule.
 
 Flagged in the second research round (scraping, domains, analytics, error monitoring, hosting costs, PayPal and Polar):
 
 - **Render's free plan changed.** Render's 2026 pricing update cut the free workspace's bandwidth from 100 GB to 5 GB a month, so `free_plan_covers` moved from `up_to_1000` to `up_to_100`. Starter compute is still $7/month; more bandwidth needs the $25 Pro workspace.
-- **Railway `custom_domain_free: false`**: the pricing page says the Free plan gets 0 custom domains, while a forum moderator said 1.
-- **Vercel, Netlify and Cloudflare `free_plan_sleeps: false`**: request-based functions have cold starts but the app itself never pauses; Fly.io and Cloudflare `custom_domain_free` were inferred from the absence of any domain fee.
-- **Polar `first_paid_usd_month: null`**: its paid tiers only lower the fee and are optional. Polar, Lemon Squeezy and Paddle all list 5% + 50 cents.
+- Railway `custom_domain_free: false`: the pricing page says the Free plan gets 0 custom domains, while a forum moderator said 1.
+- Vercel, Netlify and Cloudflare `free_plan_sleeps: false`: request-based functions have cold starts but the app itself never pauses; Fly.io and Cloudflare `custom_domain_free` were inferred from the absence of any domain fee.
+- Polar `first_paid_usd_month: null`: its paid tiers only lower the fee and are optional. Polar, Lemon Squeezy and Paddle all list 5% + 50 cents.
 - **Scraping free plans** are credits, mapped to audience sizes by judgment: Firecrawl (1,000 credits a month), Apify ($5 of monthly credit, 1,000 to 25,000 pages), ScrapingBee (a one-time 1,000-credit trial, not stated as one-time on the page).
 - **Browserbase `ai_ready_output: true`** comes from its separate Fetch API, not the hosted browser itself, and its price per 1,000 pages uses Browserbase's own "100 hours is roughly 3,000 page tasks".
-- **Jina Reader is `partial`**: its Reader price is behind a login.
-- **Vercel Domains is `partial`**: its prices only show in a live search that blocked automated use.
+- Jina Reader is `partial`: its Reader price is behind a login.
+- Vercel Domains is `partial`: its prices only show in a live search that blocked automated use.
 - **Namecheap's $11.28 first year** is a standing sale (list $14.98); Cloudflare's community docs mention a wholesale price increase on 2026-11-01.
-- **Monitoring free plans**: Sentry, Rollbar and Honeybadger allow 5,000 errors a month; LogRocket's pricing page now shows only a 14-day trial; Sentry's $29 monthly price was corroborated by trackers because the page only rendered the yearly price; Rollbar's $9 came from its official pricing-for-agents page.
+- Monitoring free plans: Sentry, Rollbar and Honeybadger allow 5,000 errors a month; LogRocket's pricing page now shows only a 14-day trial; Sentry's $29 monthly price was corroborated by trackers because the page only rendered the yearly price; Rollbar's $9 came from its official pricing-for-agents page.
 - **Google Analytics `cookies: required`** reflects the standard gtag.js setup; Google's docs say the libraries can run without cookies.
 
 Found while building the wiring view on 2026-09-15:
 
-- **Twelve researched options have setup steps but name no environment variable**, so the canvas can only say "no environment variable is written down" for them: Cloudflare R2, Crawlee, Expo, Fathom Analytics, Firebase Auth, Firestore, Flutter, Google Analytics 4, LogRocket, Native (Swift and Kotlin), Plausible and Umami Cloud. Firebase and R2 certainly need keys, and the analytics services need a site or measurement id. The names belong in the `env` array of the setup step that hands you the value, taken from the official quickstart. Hosts, frameworks and domain registrars are different: they hold your variables or need none, so an empty list is right for them.
+- **Twelve researched options have setup steps but name no environment variable**, so the canvas can only say "no environment variable is written down" for them: Cloudflare R2, Crawlee, Expo, Fathom Analytics, Firebase Auth, Firestore, Flutter, Google Analytics 4, LogRocket, Native (Swift and Kotlin), Plausible and Umami Cloud. Firebase and R2 need keys, and the analytics services need a site or measurement id. The names belong in the `env` array of the setup step that hands you the value, taken from the official quickstart. Hosts, frameworks and domain registrars are different: they hold your variables or need none, so an empty list is right for them.
 - **Honeybadger `NEXT_PUBLIC_HONEYBADGER_API_KEY`** is public by design (a write-only project key), as Honeybadger's Next.js guide names it.
 
 The framework files (`nextjs`, `react-vite`, `sveltekit`) and `sqlite-file` were written by Claude from each project's docs; their links were checked and all resolve, but the facts are still drafts.

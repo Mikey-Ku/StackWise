@@ -323,8 +323,8 @@ Other builders get the spec, setup, tasks, decisions and plan file, without the 
 
 ## Troubleshooting
 
-- **ECONNREFUSED, or Claude Code lists StackWise as failed**: StackWise isn't open, or the address uses `localhost`. Open the app (or run `stackwise`), then press Connect in Settings again, which rewrites the address.
-- **"No plan is shared yet"**: open Ask, send the agent a message, or pick "Share this plan with agents" in the Answering menu.
-- **Claude Code doesn't list StackWise's tools**: `claude mcp list`. For a project exported from a source checkout, check that `.mcp.json` points at StackWise's folder and that `pnpm` is on your PATH.
-- **Try the stdio command yourself**: `CLAUDE_PROJECT_DIR=/path/to/project pnpm --silent --dir /path/to/stackwise mcp` prints "StackWise MCP server running" to stderr and waits for input.
-- **Start over**: quit StackWise and delete `~/.stackwise/plans/`. Your profile and library stay.
+- ECONNREFUSED, or Claude Code lists StackWise as failed: StackWise isn't open, or the address uses `localhost`. Open the app (or run `stackwise`), then press Connect in Settings again, which rewrites the address.
+- "No plan is shared yet": open Ask, send the agent a message, or pick "Share this plan with agents" in the Answering menu.
+- Claude Code doesn't list StackWise's tools: `claude mcp list`. For a project exported from a source checkout, check that `.mcp.json` points at StackWise's folder and that `pnpm` is on your PATH.
+- Try the stdio command yourself: `CLAUDE_PROJECT_DIR=/path/to/project pnpm --silent --dir /path/to/stackwise mcp` prints "StackWise MCP server running" to stderr and waits for input.
+- Start over: quit StackWise and delete `~/.stackwise/plans/`. Your profile and library stay.

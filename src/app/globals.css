@@ -1782,8 +1782,15 @@ html[data-desktop] .ws-ask__top {
   cursor: pointer;
 }
 .ws-answerer--model {
-  color: var(--mk-text-muted);
+  color: var(--mk-text);
   font-weight: 500;
+}
+.ws-answerer--model.is-placeholder {
+  color: var(--mk-text-muted);
+}
+.ws-answerer__note {
+  color: var(--mk-text-muted);
+  font-weight: 400;
 }
 .ws-ask__ctx {
   display: inline-grid;
@@ -3544,7 +3551,9 @@ html[data-desktop] .ws-ask__top {
 }
 
 /* ---------- v1: inside the Mac app (electron/preload.cjs sets data-desktop) ---------- */
-/* The window has no title bar: the top strip drags it, and the bar sits past the traffic lights. */
+/* The window has no title bar: the top strip drags it, and the bar sits past the traffic lights.
+   The strip takes no clicks: it sat over the chat pane's header and ate the hide button's. The
+   drag region comes from its box, and the no-drag controls under it are cut out of that region. */
 html[data-desktop] .ws::before {
   content: "";
   position: absolute;
@@ -3553,6 +3562,7 @@ html[data-desktop] .ws::before {
   right: 0;
   left: 0;
   height: 48px;
+  pointer-events: none;
   -webkit-app-region: drag;
 }
 html[data-desktop] .ws-bar {
