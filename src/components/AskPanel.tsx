@@ -1,16 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { answerFromFacts, evaluatePlan, inSentence, planInput, questionFocus, talkBrief, worstLevel, type SlotId } from "@/engine";
 import { agentName, mcpAddress, pairInstructions } from "@/mcp/pairing";
 import { AnswererMark } from "./AnswererMark";
 import { describeAgentModel, wantsLongContext, answererLogo, providerLabel, providersOf, recipientsFor, pickDefault, saveProviderSetting, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
+import { isLong, parseChatText, type Inline } from "./chatText";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
 import { Icon, type IconName } from "./icons";
 import { PanelEdge } from "./PanelEdge";
 import type { AiStatus, ProviderInfo } from "./Planner";
-import { toSharedPlan, type ChatTurn } from "./store";
+import { toSharedPlan, type ChatAgentItem, type ChatTurn } from "./store";
 import type { AgentMessage, ClaudeActivity, Pairing } from "./usePairing";
 import { newId, type PlanModel } from "./usePlans";
 import { Logo, VerdictBadge, copyText, cx, undoHint, type Verdict } from "./ui";
@@ -109,30 +110,64 @@ interface TalkResponse {
 
 const now = () => new Date().toISOString();
 
-/** Plain text with "- " and "1. " lines shown as lists. Nothing else is interpreted. */
-function Formatted({ text }: { text: string }) {
-  const blocks: ReactNode[] = [];
-  const lines = text.split("\n").map((line) => line.trim());
-  let i = 0;
-  while (i < lines.length) {
-    const ordered = /^\d+\.\s/.test(lines[i]);
-    if (ordered || /^[-*]\s/.test(lines[i])) {
-      const items: string[] = [];
-      while (i < lines.length && (ordered ? /^\d+\.\s/ : /^[-*]\s/).test(lines[i])) items.push(lines[i++].replace(/^(\d+\.|[-*])\s+/, ""));
-      const Tag = ordered ? "ol" : "ul";
-      blocks.push(
-        <Tag key={blocks.length}>
-          {items.map((item, n) => (
-            <li key={n}>{item}</li>
-          ))}
-        </Tag>,
-      );
-    } else {
-      if (lines[i]) blocks.push(<p key={blocks.length}>{lines[i]}</p>);
-      i++;
-    }
-  }
-  return <>{blocks}</>;
+function Inlines({ parts }: { parts: Inline[] }) {
+  return (
+    <>
+      {parts.map((part, n) => (part.kind === "strong" ? <strong key={n}>{part.text}</strong> : part.kind === "code" ? <code key={n}>{part.text}</code> : <Fragment key={n}>{part.text}</Fragment>))}
+    </>
+  );
+}
+
+/**
+ * A message as the pane shows it: headings, lists, bold and code read from the text (chatText.ts),
+ * built as elements so nothing in it can inject markup. With `fold`, a long reply shows its first
+ * screen and a "Show more" link.
+ */
+function Formatted({ text, fold = false }: { text: string; fold?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const folds = fold && isLong(text);
+  return (
+    <>
+      <div className={cx("ws-rich", folds && !open && "is-folded")}>
+        {parseChatText(text).map((block, n) =>
+          block.kind === "heading" ? (
+            <p key={n} className={cx("ws-rich__h", block.caps && "is-caps")}>
+              <Inlines parts={block.text} />
+            </p>
+          ) : block.kind === "list" ? (
+            block.ordered ? (
+              <ol key={n}>
+                {block.items.map((item, k) => (
+                  <li key={k}>
+                    <Inlines parts={item} />
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <ul key={n}>
+                {block.items.map((item, k) => (
+                  <li key={k}>
+                    <Inlines parts={item} />
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : block.kind === "code" ? (
+            <pre key={n}>{block.text}</pre>
+          ) : (
+            <p key={n}>
+              <Inlines parts={block.text} />
+            </p>
+          ),
+        )}
+      </div>
+      {folds && (
+        <button type="button" className="ws-rich__more" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          {open ? "Show less" : "Show more"}
+        </button>
+      )}
+    </>
+  );
 }
 
 /** How much of the model's context window the next message would use, as a ring that fills. */
@@ -178,9 +213,9 @@ function Turn({ model, turn, ai, onToast }: { model: PlanModel; turn: ChatTurn; 
 
   return (
     <div className={cx("ws-turn", `ws-turn--${turn.role}`)}>
-      <span className="ws-turn__who">{turn.role === "claude" ? providerLabel(ai, turn.by) : "StackWise facts"}</span>
+      <span className="ws-turn__who">{turn.by === "summary" ? "Earlier chat, compacted" : turn.role === "claude" ? providerLabel(ai, turn.by) : "StackWise facts"}</span>
       <div className="ws-turn__text">
-        <Formatted text={turn.text} />
+        <Formatted text={turn.text} fold />
       </div>
 
       {turn.proposal && turn.proposal.status === "open" && (
@@ -256,11 +291,8 @@ function AgentTurn({ message }: { message: AgentMessage }) {
   const name = agentName(message.agent);
   if (message.from === "you") {
     return (
-      <div className="ws-turn ws-turn--you ws-turn--to-agent">
+      <div className={cx("ws-turn ws-turn--you ws-turn--to-agent", !message.deliveredAt && "is-waiting")} title={message.deliveredAt ? `${name} picked this up` : `Waiting for ${name} to pick this up`}>
         <Formatted text={message.text} />
-        <span className="ws-turn__meta">
-          To {name}, {message.deliveredAt ? "picked up" : "waiting"}
-        </span>
       </div>
     );
   }
@@ -272,7 +304,7 @@ function AgentTurn({ message }: { message: AgentMessage }) {
         {message.status === "needs_you" && " needs you"}
       </span>
       <div className="ws-turn__text">
-        <Formatted text={message.text} />
+        <Formatted text={message.text} fold />
       </div>
       {message.files && message.files.length > 0 && (
         <div className="ws-files">
@@ -459,18 +491,30 @@ export function AskPanel({
   };
   const subject = slot === "framework" ? plan.appName.trim() || "your app" : option ? option.name : inSentence(index.slotsById.get(slot)?.label ?? slot);
 
+  // What agents said and did in this chat: what a reopened past chat carried, then everything since the chat began.
+  // New chat starts the clock again, so the pane clears without touching the shared plan's messages.
+  const agentItems = useMemo((): ChatAgentItem[] => {
+    const since = plan.chatSince ?? "";
+    return [
+      ...(plan.chatAgent ?? []),
+      ...pairing.messages.filter((message) => message.at >= since).map((message): ChatAgentItem => ({ kind: "message", message })),
+      ...pairing.activity.filter((activity) => activity.at >= since).map((activity): ChatAgentItem => ({ kind: "activity", activity })),
+    ];
+  }, [plan.chatSince, plan.chatAgent, pairing.messages, pairing.activity]);
+
   // One timeline: the built-in AI's turns (in this browser) and the agents' messages and changes (on the server).
   const items = useMemo(() => {
     const list: Item[] = plan.chat.map((turn) => ({ at: turn.at, key: `t-${turn.id}`, about: turn.about, node: <Turn model={model} turn={turn} ai={ai} onToast={onToast} /> }));
     // An agent's reply is about whatever the person last asked that agent.
     const lastAbout: Record<string, SlotId | undefined> = {};
-    for (const message of pairing.messages) {
+    const messages = agentItems.flatMap((item) => (item.kind === "message" ? [item.message] : [])).sort((a, b) => a.at.localeCompare(b.at));
+    for (const message of messages) {
       if (message.from === "you") lastAbout[message.agent] = message.about;
       list.push({ at: message.at, key: `m-${message.id}`, about: message.from === "you" ? message.about : lastAbout[message.agent], node: <AgentTurn message={message} /> });
     }
-    for (const activity of pairing.activity) list.push({ at: activity.at, key: `a-${activity.id}`, node: <ActivityRow activity={activity} /> });
+    for (const item of agentItems) if (item.kind === "activity") list.push({ at: item.activity.at, key: `a-${item.activity.id}`, node: <ActivityRow activity={item.activity} /> });
     return list.sort((a, b) => a.at.localeCompare(b.at));
-  }, [plan.chat, pairing.messages, pairing.activity, model, ai, onToast]);
+  }, [plan.chat, agentItems, model, ai, onToast]);
   const shown = onlyThis ? items.filter((item) => item.about === slot) : items;
   const mixed = new Set(items.map((i) => i.about).filter(Boolean)).size > 1;
 
@@ -712,10 +756,10 @@ export function AskPanel({
     for (const past of plan.pastChats) {
       items.push({
         label: past.title || "Untitled chat",
-        hint: when(past.endedAt),
+        hint: past.summary !== undefined ? `${when(past.endedAt)}, compacted` : when(past.endedAt),
         onSelect: () => {
-          dispatch({ type: "openChat", id: past.id });
-          onToast(plan.chat.length ? "Opened a past chat. The one you were in is in Past chats now." : "Opened a past chat.");
+          dispatch({ type: "openChat", id: past.id, at: now(), agent: agentItems });
+          onToast(items.length ? "Opened a past chat. The one you were in is in Past chats now." : "Opened a past chat.");
         },
       });
     }
@@ -788,11 +832,11 @@ export function AskPanel({
         <button
           type="button"
           className="ws-iconbtn ws-ask__new"
-          disabled={plan.chat.length === 0}
+          disabled={items.length === 0}
           aria-label="New chat"
-          title="New chat. This one goes to Past chats; agent messages stay with the shared plan."
+          title="New chat. This one goes to Past chats; the agent keeps its own history."
           onClick={() => {
-            dispatch({ type: "newChat" });
+            dispatch({ type: "newChat", at: now(), agent: agentItems });
             onToast("New chat. The last one is in Past chats.");
           }}
         >

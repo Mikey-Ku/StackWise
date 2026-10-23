@@ -1842,10 +1842,69 @@ html[data-desktop] .ws-ask__top {
   gap: 4px;
   color: var(--mk-accent);
 }
-.ws-turn__meta {
+/* A message the agent hasn't picked up yet is a little quieter; its state is in the tooltip. */
+.ws-turn--to-agent.is-waiting {
+  opacity: 0.72;
+}
+/* A message's text (chatText.ts): headings, lists, bold, code, and a fold for long replies. */
+.ws-rich {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.ws-rich.is-folded {
+  max-height: 15em;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 65%, transparent);
+  mask-image: linear-gradient(#000 65%, transparent);
+}
+.ws-rich__h {
+  margin-top: 4px !important;
+  font-weight: 650;
+}
+.ws-rich__h.is-caps {
+  color: var(--mk-text-muted);
+  font-size: 0.78em;
+  letter-spacing: 0.05em;
+}
+.ws-rich li + li {
+  margin-top: 3px;
+}
+.ws-rich code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--ws-fill);
+  font-family: var(--mk-font-mono);
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
+}
+.ws-turn--you .ws-rich code {
+  background: rgba(255, 255, 255, 0.18);
+}
+.ws-rich pre {
+  margin: 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--ws-fill);
+  font-family: var(--mk-font-mono);
+  font-size: 0.85em;
+  white-space: pre;
+}
+.ws-rich__more {
+  align-self: flex-start;
   margin-top: 2px;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 11px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mk-accent);
+  font: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+.ws-rich__more:hover {
+  text-decoration: underline;
 }
 .ws-files {
   display: flex;

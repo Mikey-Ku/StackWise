@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CHAT_LIMIT, initialStore, migrate, reduce, toSharedPlan, type ChatTurn, type History, type StoreAction } from "./store";
+import { CHAT_LIMIT, compactSummary, initialStore, migrate, reduce, toSharedPlan, type ChatAgentItem, type ChatTurn, type History, type StoreAction } from "./store";
 
 const NOW = "2026-09-15T12:00:00.000Z";
 
@@ -168,7 +168,7 @@ describe("plan store", () => {
 
     const dismissed = run(h, { type: "dismissSuggestion", turnId: "last", what: "proposal" });
     expect(active(dismissed).chat.at(-1)!.proposal!.status).toBe("dismissed");
-    expect(active(run(dismissed, { type: "newChat" })).chat).toEqual([]);
+    expect(active(run(dismissed, { type: "newChat", at: NOW })).chat).toEqual([]);
   });
 
   it("merges the per-part conversations saved before into one, in time order, each tagged with its part", () => {
@@ -241,7 +241,7 @@ describe("past chats", () => {
   const say = (id: string, role: ChatTurn["role"], text: string, at = NOW): ChatTurn => ({ id, role, text, at, about: "framework" });
 
   it("keeps the old conversation when a new one starts, titled by its first message", () => {
-    const h = run(start(), { type: "addTurns", turns: [say("u1", "you", "Which keys does Stripe need?"), say("a1", "facts", "Three.")] }, { type: "newChat" });
+    const h = run(start(), { type: "addTurns", turns: [say("u1", "you", "Which keys does Stripe need?"), say("a1", "facts", "Three.")] }, { type: "newChat", at: NOW });
     expect(active(h).chat).toEqual([]);
     expect(active(h).pastChats.map((past) => [past.id, past.title, past.turns.length])).toEqual([["u1", "Which keys does Stripe need?", 2]]);
   });
@@ -249,18 +249,18 @@ describe("past chats", () => {
   it("doesn't keep an empty conversation, and reopens a past one in place of the current", () => {
     const h = run(
       start(),
-      { type: "newChat" },
+      { type: "newChat", at: NOW },
       { type: "addTurns", turns: [say("u1", "you", "First chat")] },
-      { type: "newChat" },
+      { type: "newChat", at: NOW },
       { type: "addTurns", turns: [say("u2", "you", "Second chat")] },
-      { type: "openChat", id: "u1" },
+      { type: "openChat", id: "u1", at: NOW },
     );
     expect(active(h).chat.map((turn) => turn.id)).toEqual(["u1"]);
     expect(active(h).pastChats.map((past) => past.title)).toEqual(["Second chat"]);
   });
 
   it("forgets past chats on request, and never shares them", () => {
-    const h = run(start(), { type: "addTurns", turns: [say("u1", "you", "Hello")] }, { type: "newChat" });
+    const h = run(start(), { type: "addTurns", turns: [say("u1", "you", "Hello")] }, { type: "newChat", at: NOW });
     expect("pastChats" in toSharedPlan(active(h))).toBe(false);
     expect(active(run(h, { type: "forgetChats" })).pastChats).toEqual([]);
   });
@@ -270,5 +270,50 @@ describe("past chats", () => {
     for (const plan of Object.values(saved.plans)) delete plan.pastChats;
     const back = migrate(saved, "x", NOW)!;
     expect(back.plans[back.activeId].pastChats).toEqual([]);
+  });
+});
+
+describe("new chat and compacting", () => {
+  const say = (id: string, role: ChatTurn["role"], text: string, at = NOW): ChatTurn => ({ id, role, text, at, about: "framework" });
+  const message = (id: string, from: "you" | "agent", text: string, at: string): ChatAgentItem => ({ kind: "message", message: { id, at, from, agent: "claude-code", text } });
+
+  it("starts an empty chat from now, and keeps what the agent said with the old one", () => {
+    const agent = [message("m1", "you", "What is this project?", "2026-10-22T10:00:00.000Z"), message("m2", "agent", "A proposal writer. More below.", "2026-10-22T10:00:05.000Z")];
+    const h = run(start(), { type: "newChat", at: "2026-10-22T11:00:00.000Z", agent });
+    const plan = active(h);
+    expect(plan.chatSince).toBe("2026-10-22T11:00:00.000Z");
+    expect(plan.chat).toEqual([]);
+    expect(plan.pastChats[0]).toMatchObject({ id: "m-m1", title: "What is this project?", agent });
+  });
+
+  it("brings a reopened chat's agent messages back with it", () => {
+    const agent = [message("m1", "you", "Hello", "2026-10-22T10:00:00.000Z")];
+    const h = run(start(), { type: "newChat", at: "2026-10-22T11:00:00.000Z", agent }, { type: "openChat", id: "m-m1", at: "2026-10-22T12:00:00.000Z" });
+    expect(active(h).chatAgent).toEqual(agent);
+    expect(active(h).chatSince).toBe("2026-10-22T12:00:00.000Z");
+  });
+
+  it("keeps the newest three past chats whole and compacts older ones to their questions", () => {
+    let h = start();
+    for (let n = 1; n <= 4; n++) h = run(h, { type: "addTurns", turns: [say(`u${n}`, "you", `Question ${n}?`), say(`a${n}`, "facts", `Answer ${n}. With more detail after.`)] }, { type: "newChat", at: NOW });
+    const past = active(h).pastChats;
+    expect(past.map((p) => p.summary === undefined)).toEqual([true, true, true, false]);
+    expect(past[3].turns).toEqual([]);
+    expect(past[3].summary).toBe("An earlier chat, compacted to its questions and the first line of each answer.\n- You: Question 1?\n- StackWise: Answer 1.");
+  });
+
+  it("reopens a compacted chat as its summary", () => {
+    let h = start();
+    for (let n = 1; n <= 4; n++) h = run(h, { type: "addTurns", turns: [say(`u${n}`, "you", `Question ${n}?`)] }, { type: "newChat", at: NOW });
+    h = run(h, { type: "openChat", id: "u1", at: NOW });
+    expect(active(h).chat).toHaveLength(1);
+    expect(active(h).chat[0]).toMatchObject({ by: "summary", role: "facts" });
+  });
+
+  it("caps a summary at six questions", () => {
+    const turns = Array.from({ length: 8 }, (_, n) => say(`u${n}`, "you", `Q${n}`));
+    const summary = compactSummary({ turns, agent: [] });
+    expect(summary.split("\n").filter((line) => line.startsWith("- You:"))).toHaveLength(6);
+    expect(summary).toContain("And 2 more questions.");
   });
 });

@@ -40,7 +40,7 @@ import {
   type Selection,
   type SlotId,
 } from "@/engine";
-import { agentId, agentName, pairInstructions, pairSettings, type PairSettings } from "./pairing";
+import { agentId, agentName, pairInstructions, pairSettings, REPLY_STYLE, type PairSettings } from "./pairing";
 import { MESSAGE_MAX, type PlanRecord, type Registry } from "./registry";
 import { NEVER_REPLACE } from "./localfiles";
 import { writeProjectFolder } from "./writeproject";
@@ -656,7 +656,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
                 })),
               }
             : {}),
-          next: "Do what they ask, then send_message with then_wait. get_plan has the full plan.",
+          next: `Do what they ask, then send_message with then_wait. get_plan has the full plan. ${REPLY_STYLE}`,
         });
       }
       if (Date.now() - start >= waitMs) break;
@@ -701,7 +701,7 @@ export function createStackWiseServer(ctx: McpContext): McpServer {
         "then_wait: true also waits for their next message, like wait_for_message, saving a call.",
       inputSchema: {
         agent: agentSchema,
-        text: z.string().min(1).max(MESSAGE_MAX).describe("Plain text. Lines starting with - or 1. show as lists."),
+        text: z.string().min(1).max(MESSAGE_MAX).describe(`${REPLY_STYLE} Lines starting with - or 1. show as lists.`),
         files: z.array(z.string().max(300)).max(50).optional().describe("Paths you changed, relative to the project."),
         status: z.enum(["working", "done", "needs_you"]).optional(),
         then_wait: z.boolean().optional(),
