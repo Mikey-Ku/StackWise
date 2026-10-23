@@ -425,6 +425,15 @@ html[data-desktop] .shell-side button,
 html[data-desktop] .shell-side .shell-me {
   -webkit-app-region: no-drag;
 }
+/* Full screen hides the traffic lights (preload.cjs sets data-fullscreen; the media query is the fallback). */
+html[data-desktop][data-fullscreen] .shell-side {
+  padding-top: 14px;
+}
+@media (display-mode: fullscreen) {
+  html[data-desktop] .shell-side {
+    padding-top: 14px;
+  }
+}
 @media (max-width: 720px) {
   html[data-desktop] .shell-side {
     padding-top: 10px;

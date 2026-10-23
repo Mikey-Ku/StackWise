@@ -168,7 +168,7 @@ describe("plan store", () => {
 
     const dismissed = run(h, { type: "dismissSuggestion", turnId: "last", what: "proposal" });
     expect(active(dismissed).chat.at(-1)!.proposal!.status).toBe("dismissed");
-    expect(active(run(dismissed, { type: "clearChat" })).chat).toEqual([]);
+    expect(active(run(dismissed, { type: "newChat" })).chat).toEqual([]);
   });
 
   it("merges the per-part conversations saved before into one, in time order, each tagged with its part", () => {
@@ -234,5 +234,41 @@ describe("saved data from the first release", () => {
     expect(active(run(h, { type: "undo" })).step).toBe("describe");
     const typed = run(start(), { type: "setText", field: "description", value: "My own words" }, { type: "applyTemplate", label: "Web app", description: "A web app.", answers: {} });
     expect(active(typed).description).toBe("My own words");
+  });
+});
+
+describe("past chats", () => {
+  const say = (id: string, role: ChatTurn["role"], text: string, at = NOW): ChatTurn => ({ id, role, text, at, about: "framework" });
+
+  it("keeps the old conversation when a new one starts, titled by its first message", () => {
+    const h = run(start(), { type: "addTurns", turns: [say("u1", "you", "Which keys does Stripe need?"), say("a1", "facts", "Three.")] }, { type: "newChat" });
+    expect(active(h).chat).toEqual([]);
+    expect(active(h).pastChats.map((past) => [past.id, past.title, past.turns.length])).toEqual([["u1", "Which keys does Stripe need?", 2]]);
+  });
+
+  it("doesn't keep an empty conversation, and reopens a past one in place of the current", () => {
+    const h = run(
+      start(),
+      { type: "newChat" },
+      { type: "addTurns", turns: [say("u1", "you", "First chat")] },
+      { type: "newChat" },
+      { type: "addTurns", turns: [say("u2", "you", "Second chat")] },
+      { type: "openChat", id: "u1" },
+    );
+    expect(active(h).chat.map((turn) => turn.id)).toEqual(["u1"]);
+    expect(active(h).pastChats.map((past) => past.title)).toEqual(["Second chat"]);
+  });
+
+  it("forgets past chats on request, and never shares them", () => {
+    const h = run(start(), { type: "addTurns", turns: [say("u1", "you", "Hello")] }, { type: "newChat" });
+    expect("pastChats" in toSharedPlan(active(h))).toBe(false);
+    expect(active(run(h, { type: "forgetChats" })).pastChats).toEqual([]);
+  });
+
+  it("gives an older saved plan an empty list of past chats", () => {
+    const saved = JSON.parse(JSON.stringify(start().store)) as { plans: Record<string, Record<string, unknown>> };
+    for (const plan of Object.values(saved.plans)) delete plan.pastChats;
+    const back = migrate(saved, "x", NOW)!;
+    expect(back.plans[back.activeId].pastChats).toEqual([]);
   });
 });

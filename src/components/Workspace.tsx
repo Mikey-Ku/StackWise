@@ -718,8 +718,8 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               <Icon name="learn" size={15} />
             </button>
           </Tip>
+          {building && <SummaryPill model={model} onOpen={() => openPanel("overview")} />}
         </div>
-        {building && <SummaryPill model={model} onOpen={() => openPanel("overview")} />}
         <div className="ws-bar__side ws-bar__side--end">
           <button
             type="button"

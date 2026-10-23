@@ -82,6 +82,10 @@ function createWindow() {
     backgroundColor: "#f5f5f7",
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, sandbox: true },
   });
+  // In full screen macOS hides the traffic lights; the page drops the room it leaves for them (preload.cjs sets data-fullscreen).
+  const tellFullScreen = () => win && !win.isDestroyed() && win.webContents.send("fullscreen", win.isFullScreen());
+  for (const event of ["enter-full-screen", "leave-full-screen", "enter-html-full-screen", "leave-html-full-screen"]) win.on(event, tellFullScreen);
+  win.webContents.on("did-finish-load", tellFullScreen);
   // The window is visible from the start. Created hidden and shown on ready-to-show, its page
   // stayed in the hidden state on macOS 26: no layout, no paint, a blank gray window.
   // Links to other sites open in the browser, never in this window.

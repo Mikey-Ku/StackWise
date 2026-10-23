@@ -43,6 +43,18 @@ export interface ChatTurn {
 
 export const CHAT_LIMIT = 80;
 export const TURN_MAX = 4000;
+export const PAST_CHATS_LIMIT = 20;
+
+/** A conversation New chat put away: it can be reopened from Past chats. Only in this browser, like `chat`. */
+export interface PastChat {
+  /** The id of its first turn. */
+  id: string;
+  /** Its first message, shortened. */
+  title: string;
+  startedAt: string;
+  endedAt: string;
+  turns: ChatTurn[];
+}
 
 export interface PlanState {
   id: string;
@@ -74,6 +86,8 @@ export interface PlanState {
   links: Record<string, PlanLink>;
   /** The conversation about this plan. Only in this browser: the notes are what's kept. */
   chat: ChatTurn[];
+  /** Earlier conversations, newest first, from New chat. */
+  pastChats: PastChat[];
   /** A folder on this computer the project files were written into, if there is one. */
   folder?: string;
   /** The app's own logo, as a small data URL. Only in this browser, like the layout. */
@@ -114,7 +128,11 @@ export type PlanAction =
   | { type: "useSwap"; slot: SlotId; optionId: string; turnId: string }
   | { type: "addTurns"; turns: ChatTurn[] }
   | { type: "dismissSuggestion"; turnId: string; what: "proposal" | "swap" }
-  | { type: "clearChat" }
+  /** Puts the conversation in Past chats (an empty one isn't kept) and starts an empty one. */
+  | { type: "newChat" }
+  /** Brings a past conversation back, putting the current one away the same way. */
+  | { type: "openChat"; id: string }
+  | { type: "forgetChats" }
   | { type: "moveNodes"; spots: Record<string, Spot> }
   | { type: "tidyLayout" }
   | { type: "setFolder"; folder: string | null }
@@ -173,6 +191,7 @@ export function blankPlan(id: string, now: string): PlanState {
     extras: {},
     links: {},
     chat: [],
+    pastChats: [],
   };
 }
 
@@ -188,7 +207,8 @@ export function isBlankPlan(plan: PlanState): boolean {
     Object.keys(plan.custom).length === 0 &&
     Object.keys(plan.extras).length === 0 &&
     Object.keys(plan.notes).length === 0 &&
-    plan.chat.length === 0
+    plan.chat.length === 0 &&
+    plan.pastChats.length === 0
   );
 }
 
@@ -202,6 +222,20 @@ function withNote(plan: PlanState, slot: SlotId, note: Note | null): PlanState {
   if (note && note.text.trim()) notes[slot] = { ...note, text: note.text.slice(0, NOTE_MAX) };
   else delete notes[slot];
   return { ...plan, notes };
+}
+
+/** The conversation, put away at the top of the past ones, titled by its first message. An empty one isn't kept. */
+function putAway(plan: PlanState): PastChat[] {
+  if (plan.chat.length === 0) return plan.pastChats;
+  const first = plan.chat.find((turn) => turn.role === "you") ?? plan.chat[0];
+  const entry: PastChat = {
+    id: plan.chat[0].id,
+    title: first.text.replace(/\s+/g, " ").trim().slice(0, 60),
+    startedAt: plan.chat[0].at,
+    endedAt: plan.chat[plan.chat.length - 1].at,
+    turns: plan.chat,
+  };
+  return [entry, ...plan.pastChats.filter((past) => past.id !== entry.id)].slice(0, PAST_CHATS_LIMIT);
 }
 
 function mapTurn(plan: PlanState, turnId: string | undefined, change: (turn: ChatTurn) => ChatTurn): PlanState {
@@ -282,8 +316,15 @@ function reducePlan(plan: PlanState, action: PlanAction): PlanState {
             ? { ...turn, swap: { ...turn.swap, status: "dismissed" } }
             : turn,
       );
-    case "clearChat":
-      return { ...plan, chat: [] };
+    case "newChat":
+      return { ...plan, chat: [], pastChats: putAway(plan) };
+    case "openChat": {
+      const past = plan.pastChats.find((entry) => entry.id === action.id);
+      if (!past) return plan;
+      return { ...plan, chat: past.turns, pastChats: putAway(plan).filter((entry) => entry.id !== action.id) };
+    }
+    case "forgetChats":
+      return { ...plan, pastChats: [] };
     case "moveNodes":
       return { ...plan, layout: { ...plan.layout, ...action.spots } };
     case "tidyLayout":

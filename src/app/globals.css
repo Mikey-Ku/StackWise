@@ -1039,7 +1039,7 @@ body {
   right: 0;
   left: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   height: var(--bar-h);
@@ -1059,7 +1059,7 @@ body {
   height: var(--bar-h);
 }
 .ws-bar__side--end {
-  grid-column: 3;
+  grid-column: 2;
   justify-self: end;
   gap: 4px;
 }
@@ -1099,11 +1099,14 @@ body {
   background: var(--ws-fill);
 }
 
+/* The summary follows the plan and the nav in the left cluster; only the actions sit at the right. */
 .ws-summary {
   display: inline-flex;
-  grid-column: 2;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  margin-left: 6px;
+  overflow: hidden;
   height: 32px;
   padding: 0 14px;
   border: 0;
@@ -1660,15 +1663,9 @@ body {
 /* Beside the pane the bar keeps its mark; the traffic lights are in the pane's header in the app. */
 .ws[data-ask="open"] .ws-bar {
   left: var(--ask-w);
-  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 html[data-desktop] .ws[data-ask="open"] .ws-bar {
   padding-left: 12px;
-}
-.ws[data-ask="open"] .ws-summary {
-  justify-self: center;
-  max-width: 100%;
-  overflow: hidden;
 }
 /* Beside the pane the AI pill keeps its dot and name; the state is in the title and the popover. */
 .ws[data-ask="open"] .ws-connpill__state:not(.is-cta) {
@@ -3563,6 +3560,17 @@ html[data-desktop] .ws::before {
 html[data-desktop] .ws-bar {
   padding-left: 98px;
   -webkit-app-region: drag;
+}
+/* Full screen hides the traffic lights, so the room for them goes (preload.cjs sets data-fullscreen; the media query is the fallback). */
+html[data-desktop][data-fullscreen] .ws-bar,
+html[data-desktop][data-fullscreen] .ws-ask__top {
+  padding-left: 12px;
+}
+@media (display-mode: fullscreen) {
+  html[data-desktop] .ws-bar,
+  html[data-desktop] .ws-ask__top {
+    padding-left: 12px;
+  }
 }
 html[data-desktop] .ws-bar > *,
 html[data-desktop] .ws-ask__top > * {

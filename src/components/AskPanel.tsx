@@ -80,6 +80,8 @@ const PROVIDERS: Provider[] = [
 ];
 /** A model's short name as the provider's page gives it, else its id. */
 const modelNameOf = (api: ProviderInfo, id: string) => api.modelInfo?.find((x) => x.id === id)?.name ?? id;
+/** "Oct 22, 3:41 PM": when a past chat ended. */
+const when = (iso: string) => new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 /** The provider a recipient belongs to; an agent or API outside the list gets a provider of its own. */
 function providerFor(id: RecipientId, ai: AiStatus | null): Provider {
@@ -703,6 +705,23 @@ export function AskPanel({
     if (provider.id === "facts") items.push({ label: "Facts only, no AI", checked: true, onSelect: () => setChosen("facts") });
     setMenu({ x: box.left, y: box.top - 6, items });
   };
+  // Past chats: the conversations New chat put away, newest first; opening one puts the current away the same way.
+  const openHistoryMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    const items: MenuItem[] = [{ kind: "header", label: "Past chats" }];
+    for (const past of plan.pastChats) {
+      items.push({
+        label: past.title || "Untitled chat",
+        hint: when(past.endedAt),
+        onSelect: () => {
+          dispatch({ type: "openChat", id: past.id });
+          onToast(plan.chat.length ? "Opened a past chat. The one you were in is in Past chats now." : "Opened a past chat.");
+        },
+      });
+    }
+    items.push({ kind: "separator" }, { label: "Forget past chats", icon: "trash", danger: true, onSelect: () => dispatch({ type: "forgetChats" }) });
+    setMenu({ x: box.left, y: box.bottom + 6, items });
+  };
   // The ring: what the next message would send (this part's brief, the recent turns, the draft) against the model's window.
   const apiModelInfo = api && !agent ? api.modelInfo?.find((x) => x.id === (api.model || api.defaultModel)) : undefined;
   const contextUsed = Math.round(
@@ -751,25 +770,34 @@ export function AskPanel({
         <button type="button" className="ws-iconbtn ws-ask__hide" onClick={onClose} aria-label="Hide the chat" title={`Hide the chat (${mod}K)`}>
           <Icon name="sidebar" size={16} />
         </button>
-        <span className="ws-ask__spacer" title={slot === "framework" ? `About ${plan.appName.trim() || "Untitled app"}` : `About ${aboutLabel(slot)}. Right-click a part to ask about it; naming a part in a message works too.`} />
-        <button
-          type="button"
-          className="ws-iconbtn ws-ask__new"
-          disabled={plan.chat.length === 0}
-          aria-label="New chat"
-          title="New chat. Clears the built-in AI's answers in this browser; agent messages stay with the shared plan."
-          onClick={() => {
-            dispatch({ type: "clearChat" });
-            onToast("New chat. Agent messages stay with the shared plan.");
-          }}
-        >
-          <Icon name="plus" size={15} />
+        <button type="button" className="ws-iconbtn" aria-label="Back" title="Back" onClick={() => router.back()}>
+          <Icon name="back" size={15} />
         </button>
+        <button type="button" className="ws-iconbtn" aria-label="Forward" title="Forward" onClick={() => router.forward()}>
+          <Icon name="forward" size={15} />
+        </button>
+        <span className="ws-ask__spacer" title={slot === "framework" ? `About ${plan.appName.trim() || "Untitled app"}` : `About ${aboutLabel(slot)}. Right-click a part to ask about it; naming a part in a message works too.`} />
         {mixed && (
           <button type="button" className={cx("ws-iconbtn", onlyThis && "is-on")} aria-pressed={onlyThis} title={onlyThis ? `Showing only ${aboutLabel(slot)}` : `Show only ${aboutLabel(slot)}`} onClick={() => setOnlyThis((v) => !v)}>
             <Icon name="target" size={14} />
           </button>
         )}
+        <button type="button" className="ws-iconbtn" aria-haspopup="menu" disabled={plan.pastChats.length === 0} aria-label="Past chats" title={plan.pastChats.length ? `Past chats (${plan.pastChats.length})` : "Past chats: none yet. New chat keeps the old one here."} onClick={openHistoryMenu}>
+          <Icon name="history" size={15} />
+        </button>
+        <button
+          type="button"
+          className="ws-iconbtn ws-ask__new"
+          disabled={plan.chat.length === 0}
+          aria-label="New chat"
+          title="New chat. This one goes to Past chats; agent messages stay with the shared plan."
+          onClick={() => {
+            dispatch({ type: "newChat" });
+            onToast("New chat. The last one is in Past chats.");
+          }}
+        >
+          <Icon name="plus" size={15} />
+        </button>
       </header>
 
       <div className="ws-ask__body" ref={listRef}>
