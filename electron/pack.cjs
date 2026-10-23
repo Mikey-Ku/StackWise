@@ -27,8 +27,20 @@ for (const [from, to] of [
   fs.rmSync(path.join(out, to), { recursive: true, force: true });
   fs.cpSync(path.join(root, from), path.join(out, to), { recursive: true, dereference: true });
 }
+// The Documentation page reads the repo's Markdown, so it comes along (the text, not the images).
+fs.mkdirSync(path.join(out, "docs"), { recursive: true });
+fs.copyFileSync(path.join(root, "README.md"), path.join(out, "README.md"));
+for (const name of fs.readdirSync(path.join(root, "docs")).filter((f) => f.endsWith(".md"))) fs.copyFileSync(path.join(root, "docs", name), path.join(out, "docs", name));
 // Nothing of the person's goes into the bundle: no keys, no state.
 for (const stray of [".env.local", ".env", ".stackwise"]) fs.rmSync(path.join(out, stray), { recursive: true, force: true });
+// Next's file tracing follows fs reads it can evaluate. A read of `path.join(process.cwd(), <variable>)`
+// once traced the whole repo into the standalone (`.git`, `release/` with the last dmg, private
+// notes) and the dmg grew four times. If any of these is here, a page is reading files that way.
+const leaked = [".git", "release", "CLAUDE.local.md", "CLAUDE.md", "evals", "scripts", "electron"].filter((name) => fs.existsSync(path.join(out, name)));
+if (leaked.length) {
+  console.error(`The standalone build contains the repo (${leaked.join(", ")}): a page reads files from process.cwd() with a variable path, so Next traced the whole folder. Read through a root the tracer can't evaluate (see docsRoot in src/app/docs/page.tsx).`);
+  process.exit(1);
+}
 
 let relinked = 0;
 const bad = [];

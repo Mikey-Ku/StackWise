@@ -58,23 +58,23 @@ Everything works without an API key. For an AI that reads your description, answ
 
 ## Five minutes in
 
-1. **Projects.** The first page: your plans, the projects StackWise found under your folders (plan one in a click), and examples to open.
-2. **Describe your app**, or pick a kind of app (web, iOS, Android, both, AI app, online store, internal tool). Confirm each guess; StackWise shows the exact words behind every one. Only the follow-up questions that would change the plan are asked. Pick a priority (spend $0, launch fast, learn, ready to grow), an audience size and your builder.
-3. **Read the canvas.** Your app in the middle, with its parts in four layers: where it runs (hosting, domain), people (login, payments, email, a phone app), data (database, files, background jobs), and outside services (AI, scraping, data sources, automations, analytics, monitoring). A check on a line means the connection works, `!` a warning, a cross that it doesn't, `?` that a fact is missing. A light flows along the lines that work. Drag any part where you want it; Tidy up puts the layers back.
-4. **Click anything.** A card opens Details: why it was picked, every check with its reason and fix, the cost at your size, a comparison with the alternatives, and the facts behind it with their sources. A line shows what travels on it: the environment variables your code reads to reach that service. Right-click for everything else: ask, swap, let StackWise pick, learn, build this with your agent.
-5. **Ask** (Cmd+K). A chat pane beside the canvas, one conversation per plan. Pick who answers in the composer: a coding agent in your terminal, a built-in AI with a key (and which of its models), or StackWise's own facts, which need nothing.
-6. **The dock.** Overview (problems, close calls, accounts, cost at every size), Parts (every service by part, dragged onto the canvas; 101 options, 80 fully researched), Checklist (accounts, keys and build steps to tick off) and Learn (what each part of an app is, what matters when choosing, a glossary).
-7. **Settings.** Account (your name, where plans live), General (what a new plan starts with, the folders StackWise looks in), Appearance, Models (who answers in Ask; a key and a model per built-in AI) and Agents (your coding agents, one Connect button for Claude Code, and the MCP server's status).
-8. **Build it.** Connect your agent and tell it to build from the plan, or export a project pack: the spec, setup, decisions, tasks with their tests, `.env.example`, and for Claude Code an agent per part, skills and `.mcp.json`.
+1. Projects. The first page: your plans, the projects StackWise found under your folders (plan one in a click), and examples to open.
+2. Describe your app, or pick a kind of app (web, iOS, Android, both, AI app, online store, internal tool). Confirm each guess; StackWise shows the exact words behind every one. Only the follow-up questions that would change the plan are asked. Pick a priority (spend $0, launch fast, learn, ready to grow), an audience size and your builder.
+3. Read the canvas. Your app in the middle, with its parts in four layers: where it runs (hosting, domain), people (login, payments, email, a phone app), data (database, files, background jobs), and outside services (AI, scraping, data sources, automations, analytics, monitoring). A check on a line means the connection works, `!` a warning, a cross that it doesn't, `?` that a fact is missing. A light flows along the lines that work. Drag any part where you want it; Tidy up puts the layers back.
+4. Click anything. A card opens Details: why it was picked, every check with its reason and fix, the cost at your size, a comparison with the alternatives, and the facts behind it with their sources. A line shows what travels on it: the environment variables your code reads to reach that service. Right-click for everything else: ask, swap, let StackWise pick, learn, build this with your agent.
+5. Ask (Cmd+K). A chat pane beside the canvas, one conversation per plan. Pick who answers in the composer: a coding agent in your terminal, a built-in AI with a key (and which of its models), or StackWise's own facts, which need nothing.
+6. The dock. Overview (problems, close calls, accounts, cost at every size), Parts (every service by part, dragged onto the canvas; 101 options, 80 fully researched) and Checklist (accounts, keys and build steps to tick off).
+7. Settings. Account (your name, where plans live), General (what a new plan starts with, the folders StackWise looks in), Appearance, Models (who answers in Ask; a key and a model per built-in AI) and Agents (your coding agents, one Connect button for Claude Code, and the MCP server's status).
+8. Build it. Connect your agent and tell it to build from the plan, or export a project pack: the spec, setup, decisions, tasks with their tests, `.env.example`, and for Claude Code an agent per part, skills and `.mcp.json`.
 
 ## How it works
 
-1. **Facts.** Every service is a JSON file in `data/options/` with facts a person can check: a free plan's limit, a price, whether it can push live updates to browsers. Each fact has a source URL, the date it was checked, and a status. New facts are drafts until someone reviews them on `/review`.
-2. **Rules.** `data/rules/` say what the facts mean together: a host that falls asleep can't run background jobs; a framework that renders on the server needs a host that runs servers; two Firebase parts share one project. A rule reads at most two parts, and a missing fact makes a check "unknown", never "works".
-3. **Search.** For your answers, size and priority, StackWise scores every stack (branch and bound, tested against brute force) and shows the best one with its close calls, so you see what nearly won and why.
-4. **The canvas** is a view of that result. Swap a part and the rules run again; every line's mark is a verdict, not a drawing.
-5. **AI, optionally**, has three jobs: read your description (its guesses must quote words that are really there), explain the computed plan, and draft new facts for review. It never decides compatibility.
-6. **Your agent** gets the plan over MCP: the same engine, 15 tools, no verdicts of its own.
+1. Facts. Every service is a JSON file in `data/options/` with facts a person can check: a free plan's limit, a price, whether it can push live updates to browsers. Each fact has a source URL, the date it was checked, and a status. New facts are drafts until someone reviews them on `/review`.
+2. Rules. `data/rules/` say what the facts mean together: a host that falls asleep can't run background jobs; a framework that renders on the server needs a host that runs servers; two Firebase parts share one project. A rule reads at most two parts, and a missing fact makes a check "unknown", never "works".
+3. Search. For your answers, size and priority, StackWise scores every stack (branch and bound, tested against brute force) and shows the best one with its close calls, so you see what nearly won and why.
+4. The canvas is a view of that result. Swap a part and the rules run again; every line's mark is a verdict, not a drawing.
+5. AI, optionally, has three jobs: read your description (its guesses must quote words that are really there), explain the computed plan, and draft new facts for review. It never decides compatibility.
+6. Your agent gets the plan over MCP: the same engine, 15 tools, no verdicts of its own.
 
 On disk:
 

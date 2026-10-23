@@ -91,8 +91,8 @@ const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(n
 export default function Workspace({ catalog, problems }: { catalog: Catalog; problems: string[] }) {
   const model = usePlans(catalog);
   const router = useRouter();
-  /** Learn is its own page; a part opens at its section there. The plan waits in this browser. */
-  const openLearn = useCallback((slot?: SlotId | null) => router.push(`/learn${slot ? `#part-${slot}` : ""}`), [router]);
+  /** Learn is the first part of the Documentation page; a part opens at its entry there. The plan waits in this browser. */
+  const openLearn = useCallback((slot?: SlotId | null) => router.push(`/docs#${slot ? `part-${slot}` : "start-here"}`), [router]);
   const { plan, dispatch, history, rec, index } = model;
   const [selectedSlot, setSelectedSlot] = useState<SlotId | null>(null);
   /** The part at the far end of the connection being looked at, when one is. */
@@ -713,8 +713,13 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               <Icon name="tool" size={15} />
             </button>
           </Tip>
+          <Tip name="Docs" text="How a web app fits together, and StackWise's own docs.">
+            <button type="button" className="ws-bar__nav" aria-label="Documentation" onClick={() => router.push("/docs")}>
+              <Icon name="learn" size={15} />
+            </button>
+          </Tip>
+          {building && <SummaryPill model={model} onOpen={() => openPanel("overview")} />}
         </div>
-        {building && <SummaryPill model={model} onOpen={() => openPanel("overview")} />}
         <div className="ws-bar__side ws-bar__side--end">
           <button
             type="button"
@@ -764,13 +769,6 @@ export default function Workspace({ catalog, problems }: { catalog: Catalog; pro
               </button>
             </Tip>
           ))}
-          <span className="ws-dock__sep" aria-hidden />
-          <Tip name="Learn" text="What each part of an app does, in plain words.">
-            <a className="ws-dock__btn" href="/learn">
-              <Icon name="learn" size={16} />
-              <span>Learn</span>
-            </a>
-          </Tip>
           <span className="ws-dock__sep" aria-hidden />
           <Tip name="Undo" keys={`${mod}Z`} text="Take back the last change to the plan.">
             <button type="button" className="ws-dock__btn ws-dock__btn--icon" disabled={history.past.length === 0} aria-label="Undo" onClick={() => dispatch({ type: "undo" })}>

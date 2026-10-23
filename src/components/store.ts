@@ -1,4 +1,7 @@
 import { NOTE_MAX, type Answer, type CustomPart, type Extra, type Note, type PlanLink, type PriorityId, type Selection, type SharedPlan, type SizeId, type SlotId } from "@/engine";
+import type { Message } from "@/mcp/registry";
+import { agentName } from "@/mcp/pairing";
+import type { ClaudeActivity } from "./usePairing";
 
 /**
  * Every plan the person has, kept in their browser. Pure functions only, so the rules for undo,
@@ -33,7 +36,7 @@ export interface ChatTurn {
   at: string;
   /** The part of the plan it's about. Suggestions apply to this part. */
   about: SlotId;
-  /** Which built-in AI wrote it, when one did. Older turns are Claude's. */
+  /** Which built-in AI wrote it, when one did ("summary" for a compacted past chat). Older turns are Claude's. */
   by?: string;
   /** A note the answer suggested, until it's used or dismissed. */
   proposal?: { text: string; summary: string; status: "open" | "used" | "added" | "dismissed" };
@@ -43,6 +46,30 @@ export interface ChatTurn {
 
 export const CHAT_LIMIT = 80;
 export const TURN_MAX = 4000;
+export const PAST_CHATS_LIMIT = 20;
+/** The newest past chats are kept whole; older ones are compacted to a summary. */
+export const PAST_CHATS_WHOLE = 3;
+
+/**
+ * An agent's message or change as a chat showed it. A past chat keeps its own copies: the shared
+ * plan keeps only the latest messages, and a reopened chat should read the way it did.
+ */
+export type ChatAgentItem = { kind: "message"; message: Message } | { kind: "activity"; activity: ClaudeActivity };
+
+/** A conversation New chat put away: it can be reopened from Past chats. Only in this browser, like `chat`. */
+export interface PastChat {
+  /** The id of its first turn or message. */
+  id: string;
+  /** Its first message, shortened. */
+  title: string;
+  startedAt: string;
+  endedAt: string;
+  turns: ChatTurn[];
+  /** What agents said and did in it. */
+  agent?: ChatAgentItem[];
+  /** Set once it's compacted: its questions and the first line of each answer, in place of the turns. */
+  summary?: string;
+}
 
 export interface PlanState {
   id: string;
@@ -74,6 +101,12 @@ export interface PlanState {
   links: Record<string, PlanLink>;
   /** The conversation about this plan. Only in this browser: the notes are what's kept. */
   chat: ChatTurn[];
+  /** Earlier conversations, newest first, from New chat. */
+  pastChats: PastChat[];
+  /** Agents' messages and changes from before this show in a past chat, not in this one. */
+  chatSince?: string;
+  /** What agents said in a past chat that was reopened, carried with it. */
+  chatAgent?: ChatAgentItem[];
   /** A folder on this computer the project files were written into, if there is one. */
   folder?: string;
   /** The app's own logo, as a small data URL. Only in this browser, like the layout. */
@@ -114,7 +147,11 @@ export type PlanAction =
   | { type: "useSwap"; slot: SlotId; optionId: string; turnId: string }
   | { type: "addTurns"; turns: ChatTurn[] }
   | { type: "dismissSuggestion"; turnId: string; what: "proposal" | "swap" }
-  | { type: "clearChat" }
+  /** Puts the conversation in Past chats (an empty one isn't kept) and starts an empty one. `agent` is what agents said in it, as the pane showed it. */
+  | { type: "newChat"; at: string; agent?: ChatAgentItem[] }
+  /** Brings a past conversation back, putting the current one away the same way. */
+  | { type: "openChat"; id: string; at: string; agent?: ChatAgentItem[] }
+  | { type: "forgetChats" }
   | { type: "moveNodes"; spots: Record<string, Spot> }
   | { type: "tidyLayout" }
   | { type: "setFolder"; folder: string | null }
@@ -173,6 +210,7 @@ export function blankPlan(id: string, now: string): PlanState {
     extras: {},
     links: {},
     chat: [],
+    pastChats: [],
   };
 }
 
@@ -188,7 +226,8 @@ export function isBlankPlan(plan: PlanState): boolean {
     Object.keys(plan.custom).length === 0 &&
     Object.keys(plan.extras).length === 0 &&
     Object.keys(plan.notes).length === 0 &&
-    plan.chat.length === 0
+    plan.chat.length === 0 &&
+    plan.pastChats.length === 0
   );
 }
 
@@ -202,6 +241,64 @@ function withNote(plan: PlanState, slot: SlotId, note: Note | null): PlanState {
   if (note && note.text.trim()) notes[slot] = { ...note, text: note.text.slice(0, NOTE_MAX) };
   else delete notes[slot];
   return { ...plan, notes };
+}
+
+const oneLine = (text: string, max: number) => {
+  const flat = text.replace(/\s+/g, " ").replace(/[*`#]/g, "").trim();
+  return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}\u2026` : flat;
+};
+const firstSentence = (text: string, max: number) => oneLine(/^(.+?[.!?])(\s|$)/.exec(text.replace(/\s+/g, " ").trim())?.[1] ?? text, max);
+
+/** Everything a chat holds, in order: who wrote each message and what it said. Changes agents made are left out. */
+function chatLines(turns: ChatTurn[], agent: ChatAgentItem[]): { at: string; you: boolean; who: string; text: string; id: string }[] {
+  return [
+    ...turns.map((turn) => ({ at: turn.at, you: turn.role === "you", who: turn.role === "facts" ? "StackWise" : "AI", text: turn.text, id: turn.id })),
+    ...agent.flatMap((item) => (item.kind === "message" ? [{ at: item.message.at, you: item.message.from === "you", who: agentName(item.message.agent), text: item.message.text, id: `m-${item.message.id}` }] : [])),
+  ].sort((a, b) => a.at.localeCompare(b.at));
+}
+
+const SUMMARY_EXCHANGES = 6;
+
+/** A past chat compacted: each question and the first sentence of the answer to it, at most six of them. */
+export function compactSummary(chat: Pick<PastChat, "turns" | "agent">): string {
+  const lines = chatLines(chat.turns, chat.agent ?? []);
+  const out: string[] = [];
+  let exchanges = 0;
+  let answered = true;
+  for (const line of lines) {
+    if (line.you) {
+      exchanges += 1;
+      if (exchanges > SUMMARY_EXCHANGES) continue;
+      out.push(`- You: ${oneLine(line.text, 90)}`);
+      answered = false;
+    } else if (!answered && exchanges <= SUMMARY_EXCHANGES) {
+      out.push(`- ${line.who}: ${firstSentence(line.text, 140)}`);
+      answered = true;
+    }
+  }
+  const more = exchanges - SUMMARY_EXCHANGES;
+  return [`An earlier chat, compacted to its questions and the first line of each answer.`, ...out, ...(more > 0 ? [`- And ${more} more ${more === 1 ? "question" : "questions"}.`] : [])].join("\n");
+}
+
+function compact(past: PastChat): PastChat {
+  if (past.summary !== undefined) return past;
+  return { ...past, summary: compactSummary(past), turns: [], agent: [] };
+}
+
+/** The conversation, put away at the top of the past ones and titled by its first message; older ones compact. An empty one isn't kept. */
+function putAway(plan: PlanState, agent: ChatAgentItem[]): PastChat[] {
+  const lines = chatLines(plan.chat, agent);
+  if (lines.length === 0) return plan.pastChats;
+  const first = lines.find((line) => line.you) ?? lines[0];
+  const entry: PastChat = {
+    id: lines[0].id,
+    title: oneLine(first.text, 60),
+    startedAt: lines[0].at,
+    endedAt: lines[lines.length - 1].at,
+    turns: plan.chat,
+    agent,
+  };
+  return [entry, ...plan.pastChats.filter((past) => past.id !== entry.id)].slice(0, PAST_CHATS_LIMIT).map((past, n) => (n < PAST_CHATS_WHOLE ? past : compact(past)));
 }
 
 function mapTurn(plan: PlanState, turnId: string | undefined, change: (turn: ChatTurn) => ChatTurn): PlanState {
@@ -282,8 +379,17 @@ function reducePlan(plan: PlanState, action: PlanAction): PlanState {
             ? { ...turn, swap: { ...turn.swap, status: "dismissed" } }
             : turn,
       );
-    case "clearChat":
-      return { ...plan, chat: [] };
+    case "newChat":
+      return { ...plan, chat: [], chatAgent: [], chatSince: action.at, pastChats: putAway(plan, action.agent ?? []) };
+    case "openChat": {
+      const past = plan.pastChats.find((entry) => entry.id === action.id);
+      if (!past) return plan;
+      // A compacted chat comes back as its summary; agents' messages after this moment show as usual.
+      const chat: ChatTurn[] = past.summary !== undefined ? [{ id: past.id, role: "facts", text: past.summary, at: past.endedAt, about: "framework", by: "summary" }] : past.turns;
+      return { ...plan, chat, chatAgent: past.summary !== undefined ? [] : (past.agent ?? []), chatSince: action.at, pastChats: putAway(plan, action.agent ?? []).filter((entry) => entry.id !== action.id) };
+    }
+    case "forgetChats":
+      return { ...plan, pastChats: [] };
     case "moveNodes":
       return { ...plan, layout: { ...plan.layout, ...action.spots } };
     case "tidyLayout":

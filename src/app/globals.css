@@ -1039,7 +1039,7 @@ body {
   right: 0;
   left: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   height: var(--bar-h);
@@ -1059,7 +1059,7 @@ body {
   height: var(--bar-h);
 }
 .ws-bar__side--end {
-  grid-column: 3;
+  grid-column: 2;
   justify-self: end;
   gap: 4px;
 }
@@ -1099,11 +1099,14 @@ body {
   background: var(--ws-fill);
 }
 
+/* The summary follows the plan and the nav in the left cluster; only the actions sit at the right. */
 .ws-summary {
   display: inline-flex;
-  grid-column: 2;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  margin-left: 6px;
+  overflow: hidden;
   height: 32px;
   padding: 0 14px;
   border: 0;
@@ -1657,16 +1660,12 @@ body {
 .ws[data-ask="open"] .ws-sheet-wrap {
   left: var(--ask-w);
 }
-.ws[data-ask="open"] .ws-bar,
-html[data-desktop] .ws[data-ask="open"] .ws-bar {
+/* Beside the pane the bar keeps its mark; the traffic lights are in the pane's header in the app. */
+.ws[data-ask="open"] .ws-bar {
   left: var(--ask-w);
-  padding-left: 12px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
 }
-.ws[data-ask="open"] .ws-summary {
-  justify-self: center;
-  max-width: 100%;
-  overflow: hidden;
+html[data-desktop] .ws[data-ask="open"] .ws-bar {
+  padding-left: 12px;
 }
 /* Beside the pane the AI pill keeps its dot and name; the state is in the title and the popover. */
 .ws[data-ask="open"] .ws-connpill__state:not(.is-cta) {
@@ -1707,7 +1706,11 @@ html[data-desktop] .ws[data-ask="open"] .ws-bar {
     transition: none;
   }
 }
-/* In the Mac app the traffic lights sit in the pane's top row, or in the bar when the pane is closed. */
+/* The pane's header, like a sidebar's: the hide toggle (after the traffic lights in the app), then new chat at the right. */
+.ws-ask__spacer {
+  flex: 1;
+  min-width: 0;
+}
 html[data-desktop] .ws-ask__top {
   padding-left: 84px;
 }
@@ -1736,17 +1739,6 @@ html[data-desktop] .ws-ask__top {
   padding: 0 10px 0 12px;
 }
 /* The header: the plan's name, then new chat and hide as plain icons, like a sidebar's own controls. */
-.ws-ask__plan {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  padding: 0 4px;
-  color: var(--mk-text);
-  font-size: 0.93em;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .ws-ask__top .ws-iconbtn {
   width: 28px;
   height: 28px;
@@ -1782,8 +1774,15 @@ html[data-desktop] .ws-ask__top {
   cursor: pointer;
 }
 .ws-answerer--model {
-  color: var(--mk-text-muted);
+  color: var(--mk-text);
   font-weight: 500;
+}
+.ws-answerer--model.is-placeholder {
+  color: var(--mk-text-muted);
+}
+.ws-answerer__note {
+  color: var(--mk-text-muted);
+  font-weight: 400;
 }
 .ws-ask__ctx {
   display: inline-grid;
@@ -1843,10 +1842,69 @@ html[data-desktop] .ws-ask__top {
   gap: 4px;
   color: var(--mk-accent);
 }
-.ws-turn__meta {
+/* A message the agent hasn't picked up yet is a little quieter; its state is in the tooltip. */
+.ws-turn--to-agent.is-waiting {
+  opacity: 0.72;
+}
+/* A message's text (chatText.ts): headings, lists, bold, code, and a fold for long replies. */
+.ws-rich {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.ws-rich.is-folded {
+  max-height: 15em;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 65%, transparent);
+  mask-image: linear-gradient(#000 65%, transparent);
+}
+.ws-rich__h {
+  margin-top: 4px !important;
+  font-weight: 650;
+}
+.ws-rich__h.is-caps {
+  color: var(--mk-text-muted);
+  font-size: 0.78em;
+  letter-spacing: 0.05em;
+}
+.ws-rich li + li {
+  margin-top: 3px;
+}
+.ws-rich code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--ws-fill);
+  font-family: var(--mk-font-mono);
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
+}
+.ws-turn--you .ws-rich code {
+  background: rgba(255, 255, 255, 0.18);
+}
+.ws-rich pre {
+  margin: 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--ws-fill);
+  font-family: var(--mk-font-mono);
+  font-size: 0.85em;
+  white-space: pre;
+}
+.ws-rich__more {
+  align-self: flex-start;
   margin-top: 2px;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 11px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mk-accent);
+  font: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+.ws-rich__more:hover {
+  text-decoration: underline;
 }
 .ws-files {
   display: flex;
@@ -1876,6 +1934,14 @@ html[data-desktop] .ws-ask__top {
 .ws-activity-row ul {
   margin: 0;
   padding-left: 1.1em;
+}
+/* The agent's lookups in StackWise: one quiet line, not a card. */
+.ws-lookup {
+  margin: 0;
+  padding: 0 2px;
+  color: var(--mk-text-faint);
+  font-size: 0.82em;
+  line-height: 1.45;
 }
 .ws-connect {
   display: flex;
@@ -3544,7 +3610,9 @@ html[data-desktop] .ws-ask__top {
 }
 
 /* ---------- v1: inside the Mac app (electron/preload.cjs sets data-desktop) ---------- */
-/* The window has no title bar: the top strip drags it, and the bar sits past the traffic lights. */
+/* The window has no title bar: the top strip drags it, and the bar sits past the traffic lights.
+   The strip takes no clicks: it sat over the chat pane's header and ate the hide button's. The
+   drag region comes from its box, and the no-drag controls under it are cut out of that region. */
 html[data-desktop] .ws::before {
   content: "";
   position: absolute;
@@ -3553,11 +3621,23 @@ html[data-desktop] .ws::before {
   right: 0;
   left: 0;
   height: 48px;
+  pointer-events: none;
   -webkit-app-region: drag;
 }
 html[data-desktop] .ws-bar {
   padding-left: 98px;
   -webkit-app-region: drag;
+}
+/* Full screen hides the traffic lights, so the room for them goes (preload.cjs sets data-fullscreen; the media query is the fallback). */
+html[data-desktop][data-fullscreen] .ws-bar,
+html[data-desktop][data-fullscreen] .ws-ask__top {
+  padding-left: 12px;
+}
+@media (display-mode: fullscreen) {
+  html[data-desktop] .ws-bar,
+  html[data-desktop] .ws-ask__top {
+    padding-left: 12px;
+  }
 }
 html[data-desktop] .ws-bar > *,
 html[data-desktop] .ws-ask__top > * {

@@ -1,0 +1,441 @@
+/* The documentation page: the repo's Markdown as readable documents, one section per file. */
+.doc {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 780px;
+  padding-top: 28px;
+  border-top: 0.5px solid var(--ws-glass-line);
+  scroll-margin-top: 24px;
+}
+.doc:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+.doc__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.doc__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.doc__file code {
+  color: var(--mk-text-faint);
+  font-family: var(--mk-font-mono);
+  font-size: 12px;
+}
+.doc__toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.doc__toc a {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--ws-fill);
+  color: var(--mk-text-muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+.doc__toc a:hover {
+  background: var(--ws-fill-hover);
+  color: var(--mk-text);
+}
+.doc__contents summary {
+  cursor: pointer;
+  color: var(--mk-text-muted);
+  font-size: 13px;
+  user-select: none;
+}
+.doc__contents[open] summary {
+  margin-bottom: 10px;
+}
+
+/* The body: the Markdown's own structure, in the app's type, the same size as the other pages' text. */
+.doc__body {
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.doc__body > :first-child {
+  margin-top: 0;
+}
+.doc__body h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.doc__body h3 {
+  margin: 28px 0 8px;
+  font-size: 15.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  scroll-margin-top: 24px;
+}
+.doc__body h4 {
+  margin: 22px 0 6px;
+  font-size: 14px;
+  font-weight: 650;
+  scroll-margin-top: 24px;
+}
+.doc__body h5,
+.doc__body h6 {
+  margin: 18px 0 4px;
+  font-size: 14px;
+  font-weight: 650;
+}
+.doc__body p {
+  margin: 0 0 14px;
+}
+.doc__body ul,
+.doc__body ol {
+  margin: 0 0 14px;
+  padding-left: 1.4em;
+}
+.doc__body li {
+  margin: 4px 0;
+}
+.doc__body li > p {
+  margin: 0;
+}
+.doc__body a {
+  color: var(--mk-accent);
+  text-decoration: none;
+}
+.doc__body a:hover {
+  text-decoration: underline;
+}
+.doc__body strong {
+  font-weight: 650;
+}
+.doc__body code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--mk-surface-sunk);
+  font-family: var(--mk-font-mono);
+  font-size: 0.86em;
+}
+.doc__body pre {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 12px;
+  background: var(--mk-surface-sunk);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.doc__body pre code {
+  padding: 0;
+  background: transparent;
+  font-size: inherit;
+}
+.doc__body blockquote {
+  margin: 0 0 14px;
+  padding: 2px 14px;
+  border-left: 3px solid var(--mk-line-strong);
+  color: var(--mk-text-muted);
+}
+.doc__body table {
+  width: 100%;
+  margin: 0 0 18px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.doc__body th,
+.doc__body td {
+  padding: 8px 10px;
+  border-bottom: 0.5px solid var(--ws-glass-line);
+  text-align: left;
+  vertical-align: top;
+}
+.doc__body th {
+  color: var(--mk-text-muted);
+  font-weight: 600;
+}
+.doc__body img {
+  max-width: 100%;
+  height: auto;
+  margin: 4px 0 16px;
+  border-radius: 12px;
+  border: 0.5px solid var(--ws-glass-line);
+}
+.doc__body hr {
+  margin: 24px 0;
+  border: 0;
+  border-top: 0.5px solid var(--ws-glass-line);
+}
+.doc__body p:has(> img:only-child) {
+  text-align: center;
+}
+/* The text keeps its size at every width; only the columns change. */
+
+/* ---------- The Learn sections (data/learn.json), in the same body style ---------- */
+.doc__body .doc-lead {
+  margin: 0 0 14px;
+  font-weight: 500;
+  color: var(--mk-text);
+  text-wrap: pretty;
+}
+.doc-eyebrow {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.doc-block {
+  margin-top: 24px;
+}
+.doc-block > p {
+  margin: 0;
+  color: var(--mk-text-muted);
+}
+.doc__body .doc-label {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--mk-text-muted);
+}
+.doc-anchor {
+  color: inherit !important;
+}
+.doc-anchor:hover {
+  text-decoration: none !important;
+}
+
+/* One part: its own block under the section, with the heading the deep links point at. */
+.doc-part {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 0.5px solid var(--ws-glass-line);
+  scroll-margin-top: 24px;
+}
+.doc__body .doc-part h3 {
+  margin-top: 0;
+}
+
+.doc-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.doc-card {
+  padding: 18px 20px 16px;
+  border-radius: var(--mk-radius-lg);
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-line);
+  box-shadow: var(--mk-shadow-1);
+}
+.doc-card--warn {
+  background: color-mix(in srgb, var(--mk-warn) 5%, var(--mk-surface));
+  border-color: color-mix(in srgb, var(--mk-warn) 22%, var(--mk-line));
+}
+.doc__body .doc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.doc__body .doc-list li {
+  position: relative;
+  margin: 0;
+  padding-left: 26px;
+  line-height: 1.5;
+}
+.doc-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 10px;
+}
+.doc-list--check li::before {
+  background-color: var(--mk-accent-soft);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 5.2 4.1 7.2 8 3' fill='none' stroke='%23007aff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.doc-list--warn li::before {
+  background-color: var(--mk-warn-soft);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M5 2.2v3.4' stroke='%23e07b00' stroke-width='1.6' stroke-linecap='round'/%3E%3Ccircle cx='5' cy='7.7' r='0.9' fill='%23e07b00'/%3E%3C/svg%3E");
+}
+
+/* Further reading: a card per link, the publisher above the title. */
+.doc__body .doc-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.doc__body .doc-links li {
+  margin: 0;
+}
+.doc__body .doc-link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  padding: 12px 38px 12px 14px;
+  border-radius: var(--mk-radius-lg);
+  border: 1px solid var(--mk-line);
+  background: var(--mk-surface);
+  color: var(--mk-text);
+  text-decoration: none;
+  transition:
+    border-color var(--mk-dur-fast) var(--mk-ease),
+    box-shadow var(--mk-dur-fast) var(--mk-ease);
+}
+.doc__body .doc-link:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--mk-line));
+  box-shadow: var(--mk-shadow-1);
+  text-decoration: none;
+}
+.doc-link__source {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mk-text-muted);
+}
+.doc-link__title {
+  font-weight: 500;
+  line-height: 1.35;
+}
+.doc-link__arrow {
+  position: absolute;
+  right: 12px;
+  top: 14px;
+  color: var(--mk-text-faint);
+}
+.doc-link:hover .doc-link__arrow {
+  color: var(--accent);
+}
+
+/* Start here: the layers, numbered. */
+.doc__body .doc-layers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.doc__body .doc-layer {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 16px;
+  margin: 0;
+  padding: 16px 20px;
+  border-radius: var(--mk-radius-lg);
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-line);
+  box-shadow: var(--mk-shadow-1);
+}
+.doc-layer__num {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mk-accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 14px;
+}
+.doc__body .doc-layer__name {
+  margin: 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.doc__body .doc-layer p {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--mk-text-muted);
+}
+.doc__body .doc-layer .doc-layer__rule {
+  margin-top: 8px;
+  color: var(--mk-text);
+  font-weight: 500;
+}
+
+/* The glossary: a definition list, each term the target of a deep link. */
+.doc__body .doc-terms {
+  margin: 0;
+  border-top: 1px solid var(--mk-line);
+}
+.doc-term {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 24px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--mk-line);
+  scroll-margin-top: 24px;
+}
+.doc-term:target {
+  margin: 0 -16px;
+  padding: 18px 16px;
+  border-radius: var(--mk-radius-lg);
+  background: var(--mk-accent-soft);
+  border-bottom-color: transparent;
+}
+.doc-term dt {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.doc-term dd {
+  margin: 0;
+}
+.doc__body .doc-term dd p {
+  margin: 0;
+  line-height: 1.5;
+}
+.doc-term__matters {
+  margin-top: 8px !important;
+  color: var(--mk-text-muted);
+}
+.doc-term__label {
+  font-weight: 600;
+  color: var(--mk-text);
+}
+.doc-term__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--mk-text-muted);
+}
+.doc-term__foot a {
+  color: var(--mk-text-muted);
+}
+.doc-term__foot a:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .doc-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .doc-term {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .doc-term:target {
+    margin: 0;
+    padding: 18px 12px;
+  }
+}

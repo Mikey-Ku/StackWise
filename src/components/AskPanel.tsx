@@ -1,16 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { answerFromFacts, evaluatePlan, inSentence, planInput, questionFocus, talkBrief, worstLevel, type SlotId } from "@/engine";
 import { agentName, mcpAddress, pairInstructions } from "@/mcp/pairing";
 import { AnswererMark } from "./AnswererMark";
-import { answererLogo, providerLabel, providersOf, recipientsFor, pickDefault, saveProviderSetting, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
+import { describeAgentModel, wantsLongContext, answererLogo, providerLabel, providersOf, recipientsFor, pickDefault, saveProviderSetting, STATE_TEXT, type Recipient, type RecipientId } from "./answerers";
+import { foldLookups, isChangeActivity, isLong, parseChatText, type Inline } from "./chatText";
 import { ContextMenu, type MenuItem, type MenuRequest } from "./ContextMenu";
 import { Icon, type IconName } from "./icons";
 import { PanelEdge } from "./PanelEdge";
 import type { AiStatus, ProviderInfo } from "./Planner";
-import { toSharedPlan, type ChatTurn } from "./store";
+import { toSharedPlan, type ChatAgentItem, type ChatTurn } from "./store";
 import type { AgentMessage, ClaudeActivity, Pairing } from "./usePairing";
 import { newId, type PlanModel } from "./usePlans";
 import { Logo, VerdictBadge, copyText, cx, undoHint, type Verdict } from "./ui";
@@ -80,6 +81,8 @@ const PROVIDERS: Provider[] = [
 ];
 /** A model's short name as the provider's page gives it, else its id. */
 const modelNameOf = (api: ProviderInfo, id: string) => api.modelInfo?.find((x) => x.id === id)?.name ?? id;
+/** "Oct 22, 3:41 PM": when a past chat ended. */
+const when = (iso: string) => new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 /** The provider a recipient belongs to; an agent or API outside the list gets a provider of its own. */
 function providerFor(id: RecipientId, ai: AiStatus | null): Provider {
@@ -107,30 +110,64 @@ interface TalkResponse {
 
 const now = () => new Date().toISOString();
 
-/** Plain text with "- " and "1. " lines shown as lists. Nothing else is interpreted. */
-function Formatted({ text }: { text: string }) {
-  const blocks: ReactNode[] = [];
-  const lines = text.split("\n").map((line) => line.trim());
-  let i = 0;
-  while (i < lines.length) {
-    const ordered = /^\d+\.\s/.test(lines[i]);
-    if (ordered || /^[-*]\s/.test(lines[i])) {
-      const items: string[] = [];
-      while (i < lines.length && (ordered ? /^\d+\.\s/ : /^[-*]\s/).test(lines[i])) items.push(lines[i++].replace(/^(\d+\.|[-*])\s+/, ""));
-      const Tag = ordered ? "ol" : "ul";
-      blocks.push(
-        <Tag key={blocks.length}>
-          {items.map((item, n) => (
-            <li key={n}>{item}</li>
-          ))}
-        </Tag>,
-      );
-    } else {
-      if (lines[i]) blocks.push(<p key={blocks.length}>{lines[i]}</p>);
-      i++;
-    }
-  }
-  return <>{blocks}</>;
+function Inlines({ parts }: { parts: Inline[] }) {
+  return (
+    <>
+      {parts.map((part, n) => (part.kind === "strong" ? <strong key={n}>{part.text}</strong> : part.kind === "code" ? <code key={n}>{part.text}</code> : <Fragment key={n}>{part.text}</Fragment>))}
+    </>
+  );
+}
+
+/**
+ * A message as the pane shows it: headings, lists, bold and code read from the text (chatText.ts),
+ * built as elements so nothing in it can inject markup. With `fold`, a long reply shows its first
+ * screen and a "Show more" link.
+ */
+function Formatted({ text, fold = false }: { text: string; fold?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const folds = fold && isLong(text);
+  return (
+    <>
+      <div className={cx("ws-rich", folds && !open && "is-folded")}>
+        {parseChatText(text).map((block, n) =>
+          block.kind === "heading" ? (
+            <p key={n} className={cx("ws-rich__h", block.caps && "is-caps")}>
+              <Inlines parts={block.text} />
+            </p>
+          ) : block.kind === "list" ? (
+            block.ordered ? (
+              <ol key={n}>
+                {block.items.map((item, k) => (
+                  <li key={k}>
+                    <Inlines parts={item} />
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <ul key={n}>
+                {block.items.map((item, k) => (
+                  <li key={k}>
+                    <Inlines parts={item} />
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : block.kind === "code" ? (
+            <pre key={n}>{block.text}</pre>
+          ) : (
+            <p key={n}>
+              <Inlines parts={block.text} />
+            </p>
+          ),
+        )}
+      </div>
+      {folds && (
+        <button type="button" className="ws-rich__more" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          {open ? "Show less" : "Show more"}
+        </button>
+      )}
+    </>
+  );
 }
 
 /** How much of the model's context window the next message would use, as a ring that fills. */
@@ -176,9 +213,9 @@ function Turn({ model, turn, ai, onToast }: { model: PlanModel; turn: ChatTurn; 
 
   return (
     <div className={cx("ws-turn", `ws-turn--${turn.role}`)}>
-      <span className="ws-turn__who">{turn.role === "claude" ? providerLabel(ai, turn.by) : "StackWise facts"}</span>
+      <span className="ws-turn__who">{turn.by === "summary" ? "Earlier chat, compacted" : turn.role === "claude" ? providerLabel(ai, turn.by) : "StackWise facts"}</span>
       <div className="ws-turn__text">
-        <Formatted text={turn.text} />
+        <Formatted text={turn.text} fold />
       </div>
 
       {turn.proposal && turn.proposal.status === "open" && (
@@ -254,11 +291,8 @@ function AgentTurn({ message }: { message: AgentMessage }) {
   const name = agentName(message.agent);
   if (message.from === "you") {
     return (
-      <div className="ws-turn ws-turn--you ws-turn--to-agent">
+      <div className={cx("ws-turn ws-turn--you ws-turn--to-agent", !message.deliveredAt && "is-waiting")} title={message.deliveredAt ? `${name} picked this up` : `Waiting for ${name} to pick this up`}>
         <Formatted text={message.text} />
-        <span className="ws-turn__meta">
-          To {name}, {message.deliveredAt ? "picked up" : "waiting"}
-        </span>
       </div>
     );
   }
@@ -270,7 +304,7 @@ function AgentTurn({ message }: { message: AgentMessage }) {
         {message.status === "needs_you" && " needs you"}
       </span>
       <div className="ws-turn__text">
-        <Formatted text={message.text} />
+        <Formatted text={message.text} fold />
       </div>
       {message.files && message.files.length > 0 && (
         <div className="ws-files">
@@ -285,13 +319,14 @@ function AgentTurn({ message }: { message: AgentMessage }) {
 
 const TOOL_LABELS: Record<string, string> = {
   update_plan: "Changed the plan",
-  check_stack: "Checked a stack",
-  recommend_stack: "Recommended a stack",
-  compare_options: "Compared options",
-  estimate_costs: "Estimated costs",
-  export_project: "Exported the project",
+  export_project: "Wrote the project",
   sync_plan_file: "Merged the plan file",
 };
+
+/** The agent asking StackWise instead of guessing, as one quiet line: "Checked StackWise: compared ...". */
+function LookupLine({ phrases }: { phrases: string[] }) {
+  return <p className="ws-lookup">Checked StackWise: {phrases.join("; ")}.</p>;
+}
 
 function ActivityRow({ activity }: { activity: ClaudeActivity }) {
   return (
@@ -457,18 +492,36 @@ export function AskPanel({
   };
   const subject = slot === "framework" ? plan.appName.trim() || "your app" : option ? option.name : inSentence(index.slotsById.get(slot)?.label ?? slot);
 
+  // What agents said and did in this chat: what a reopened past chat carried, then everything since the chat began.
+  // New chat starts the clock again, so the pane clears without touching the shared plan's messages.
+  const agentItems = useMemo((): ChatAgentItem[] => {
+    const since = plan.chatSince ?? "";
+    return [
+      ...(plan.chatAgent ?? []),
+      ...pairing.messages.filter((message) => message.at >= since).map((message): ChatAgentItem => ({ kind: "message", message })),
+      ...pairing.activity.filter((activity) => activity.at >= since).map((activity): ChatAgentItem => ({ kind: "activity", activity })),
+    ];
+  }, [plan.chatSince, plan.chatAgent, pairing.messages, pairing.activity]);
+
   // One timeline: the built-in AI's turns (in this browser) and the agents' messages and changes (on the server).
   const items = useMemo(() => {
     const list: Item[] = plan.chat.map((turn) => ({ at: turn.at, key: `t-${turn.id}`, about: turn.about, node: <Turn model={model} turn={turn} ai={ai} onToast={onToast} /> }));
     // An agent's reply is about whatever the person last asked that agent.
     const lastAbout: Record<string, SlotId | undefined> = {};
-    for (const message of pairing.messages) {
+    const messages = agentItems.flatMap((item) => (item.kind === "message" ? [item.message] : [])).sort((a, b) => a.at.localeCompare(b.at));
+    for (const message of messages) {
       if (message.from === "you") lastAbout[message.agent] = message.about;
       list.push({ at: message.at, key: `m-${message.id}`, about: message.from === "you" ? message.about : lastAbout[message.agent], node: <AgentTurn message={message} /> });
     }
-    for (const activity of pairing.activity) list.push({ at: activity.at, key: `a-${activity.id}`, node: <ActivityRow activity={activity} /> });
-    return list.sort((a, b) => a.at.localeCompare(b.at));
-  }, [plan.chat, pairing.messages, pairing.activity, model, ai, onToast]);
+    // A change to the plan or the project gets a card; the agent's lookups fold into one quiet line.
+    const lookups: { at: string; key: string; lookup: string }[] = [];
+    for (const item of agentItems) {
+      if (item.kind !== "activity") continue;
+      if (isChangeActivity(item.activity)) list.push({ at: item.activity.at, key: `a-${item.activity.id}`, node: <ActivityRow activity={item.activity} /> });
+      else lookups.push({ at: item.activity.at, key: `a-${item.activity.id}`, lookup: item.activity.summary });
+    }
+    return foldLookups<Item>([...list, ...lookups].sort((a, b) => a.at.localeCompare(b.at))).map((entry): Item => ("lookups" in entry ? { at: entry.at, key: entry.key, node: <LookupLine phrases={entry.lookups} /> } : entry));
+  }, [plan.chat, agentItems, model, ai, onToast]);
   const shown = onlyThis ? items.filter((item) => item.about === slot) : items;
   const mixed = new Set(items.map((i) => i.about).filter(Boolean)).size > 1;
 
@@ -597,7 +650,8 @@ export function AskPanel({
       const body = (await r.json()) as { agents?: { id: string; model?: string | null }[]; error?: string };
       if (!r.ok || !body.agents) throw new Error(body.error ?? "Couldn't set Claude Code's model.");
       setAgentModels(Object.fromEntries(body.agents.map((a) => [a.id, a.model ?? null])));
-      onToast(value ? `New Claude Code sessions start with ${modelNameOf(api ?? ({ models: [] } as unknown as ProviderInfo), value)}. A session already open switches with /model.` : "Claude Code is back on its own default model.");
+      const d = describeAgentModel(value, api?.modelInfo ?? []);
+      onToast(d ? `New Claude Code sessions start with ${d.name}${d.note ? ` (${d.note})` : ""}. A session already open switches with /model.` : "Claude Code is back on its own default model.");
     } catch (e) {
       onToast(e instanceof Error ? e.message : "Couldn't set Claude Code's model.");
     } finally {
@@ -650,6 +704,8 @@ export function AskPanel({
    * model Claude Code's own settings start new sessions with, which StackWise can set too.
    */
   const agentModel = provider.agent ? (agentModels[provider.agent] ?? null) : null;
+  const agentPick = api ? describeAgentModel(agentModel, api.modelInfo ?? []) : null;
+  const longContext = wantsLongContext(agentModel);
   const openModelMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
     const items: MenuItem[] = [];
@@ -663,19 +719,23 @@ export function AskPanel({
       const current = api.model || api.defaultModel;
       const info = (id: string) => api.modelInfo?.find((x) => x.id === id);
       items.push({ kind: "separator" }, { kind: "header", label: viaAgent ? "Model for new Claude Code sessions" : "Model" });
+      // Through Claude Code the setting is its own (an alias or an id, "[1m]" for the 1M window); the
+      // menu reads it and writes it back the same way, so a pick keeps the window and the window keeps the pick.
+      const picked = viaAgent ? (agentPick?.id ?? null) : null;
       if (viaAgent) {
-        const other = agentModel && !models.includes(agentModel) ? agentModel : null;
-        items.push({ label: other ? `As Claude Code has it: ${other}` : "Claude Code's own default", checked: !agentModel || Boolean(other), onSelect: () => void setAgentModel("") });
+        items.push({ label: "Claude Code's own default", checked: !picked, onSelect: () => void setAgentModel("") });
+        if (picked && !models.includes(picked)) items.push({ label: `As Claude Code has it: ${agentPick!.raw}`, checked: true, onSelect: () => {} });
       }
       for (const m of models) {
         const known = info(m);
         items.push({
           label: `${known?.name ?? m}${!viaAgent && m === api.defaultModel ? " (default)" : ""}`,
           hint: known?.price,
-          checked: viaAgent ? agentModel === m : recipient.id === `api:${api.id}` && current === m,
+          checked: viaAgent ? picked === m : recipient.id === `api:${api.id}` && current === m,
           onSelect: () => {
             if (viaAgent) {
-              if (m !== agentModel) void setAgentModel(m);
+              const next = `${m}${longContext ? "[1m]" : ""}`;
+              if (next !== agentModel) void setAgentModel(next);
               return;
             }
             setChosen(`api:${api.id}`);
@@ -683,10 +743,35 @@ export function AskPanel({
           },
         });
       }
+      if (viaAgent && picked) {
+        items.push(
+          { kind: "separator" },
+          { kind: "header", label: "Context window" },
+          { label: "Standard", checked: !longContext, onSelect: () => void (longContext && setAgentModel(picked)) },
+          { label: "1M tokens", hint: "[1m]", checked: longContext, onSelect: () => void (!longContext && setAgentModel(`${picked}[1m]`)) },
+        );
+      }
       items.push({ kind: "separator" }, { label: "Another model, or a key", icon: "tool", onSelect: () => router.push("/settings#models") });
     }
     if (provider.id === "facts") items.push({ label: "Facts only, no AI", checked: true, onSelect: () => setChosen("facts") });
     setMenu({ x: box.left, y: box.top - 6, items });
+  };
+  // Past chats: the conversations New chat put away, newest first; opening one puts the current away the same way.
+  const openHistoryMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    const items: MenuItem[] = [{ kind: "header", label: "Past chats" }];
+    for (const past of plan.pastChats) {
+      items.push({
+        label: past.title || "Untitled chat",
+        hint: past.summary !== undefined ? `${when(past.endedAt)}, compacted` : when(past.endedAt),
+        onSelect: () => {
+          dispatch({ type: "openChat", id: past.id, at: now(), agent: agentItems });
+          onToast(items.length ? "Opened a past chat. The one you were in is in Past chats now." : "Opened a past chat.");
+        },
+      });
+    }
+    items.push({ kind: "separator" }, { label: "Forget past chats", icon: "trash", danger: true, onSelect: () => dispatch({ type: "forgetChats" }) });
+    setMenu({ x: box.left, y: box.bottom + 6, items });
   };
   // The ring: what the next message would send (this part's brief, the recent turns, the draft) against the model's window.
   const apiModelInfo = api && !agent ? api.modelInfo?.find((x) => x.id === (api.model || api.defaultModel)) : undefined;
@@ -700,18 +785,19 @@ export function AskPanel({
       CHARS_PER_TOKEN,
   );
 
-  // The bubble names the model alone; the provider bubble already says whose it is.
-  const modelLabel = agent
-    ? agentModel && api
-      ? modelNameOf(api, agentModel)
-      : "Default model"
+  // The bubble names the model alone, with a note for its window or mode; the provider bubble
+  // already says whose it is. A placeholder (no key, facts only) reads quieter than a name.
+  const modelShown: { name: string; note: string | null; placeholder: boolean } = agent
+    ? agentPick?.id
+      ? { name: agentPick.name, note: agentPick.note, placeholder: false }
+      : { name: "Default model", note: null, placeholder: true }
     : provider.id === "facts"
-      ? "Facts only"
+      ? { name: "Facts only", note: null, placeholder: true }
       : api
         ? api.on
-          ? modelNameOf(api, api.model || api.defaultModel || "") || "Default model"
-          : "Needs a key"
-        : recipient.label;
+          ? { name: modelNameOf(api, api.model || api.defaultModel || "") || "Default model", note: null, placeholder: !(api.model || api.defaultModel) }
+          : { name: "Needs a key", note: null, placeholder: true }
+        : { name: recipient.label, note: null, placeholder: true };
 
   const listening = recipient.group === "agent" && (recipient.state === "listening" || recipient.state === "working");
   const starters = [...(slot === "framework" ? APP_STARTERS : PART_STARTERS), ...(listening ? [AGENT_STARTER] : [])];
@@ -732,30 +818,36 @@ export function AskPanel({
       }}
     >
       <header className="ws-ask__top">
-        <span className="ws-ask__plan" title={slot === "framework" ? "This conversation belongs to this plan" : `About ${aboutLabel(slot)}. Right-click a part to ask about it; naming a part in a message works too.`}>
-          {plan.appName.trim() || "Untitled app"}
-          {slot !== "framework" && ` · ${index.slotsById.get(slot)?.label ?? slot}`}
-        </span>
-        <button
-          type="button"
-          className="ws-iconbtn ws-ask__new"
-          disabled={plan.chat.length === 0}
-          aria-label="New chat"
-          title="New chat. Clears the built-in AI's answers in this browser; agent messages stay with the shared plan."
-          onClick={() => {
-            dispatch({ type: "clearChat" });
-            onToast("New chat. Agent messages stay with the shared plan.");
-          }}
-        >
-          <Icon name="plus" size={15} />
+        <button type="button" className="ws-iconbtn ws-ask__hide" onClick={onClose} aria-label="Hide the chat" title={`Hide the chat (${mod}K)`}>
+          <Icon name="sidebar" size={16} />
         </button>
+        <button type="button" className="ws-iconbtn" aria-label="Back" title="Back" onClick={() => router.back()}>
+          <Icon name="back" size={15} />
+        </button>
+        <button type="button" className="ws-iconbtn" aria-label="Forward" title="Forward" onClick={() => router.forward()}>
+          <Icon name="forward" size={15} />
+        </button>
+        <span className="ws-ask__spacer" title={slot === "framework" ? `About ${plan.appName.trim() || "Untitled app"}` : `About ${aboutLabel(slot)}. Right-click a part to ask about it; naming a part in a message works too.`} />
         {mixed && (
           <button type="button" className={cx("ws-iconbtn", onlyThis && "is-on")} aria-pressed={onlyThis} title={onlyThis ? `Showing only ${aboutLabel(slot)}` : `Show only ${aboutLabel(slot)}`} onClick={() => setOnlyThis((v) => !v)}>
             <Icon name="target" size={14} />
           </button>
         )}
-        <button type="button" className="ws-iconbtn ws-ask__hide" onClick={onClose} aria-label="Hide the chat" title={`Hide the chat (${mod}K)`}>
-          <Icon name="sidebar" size={16} />
+        <button type="button" className="ws-iconbtn" aria-haspopup="menu" disabled={plan.pastChats.length === 0} aria-label="Past chats" title={plan.pastChats.length ? `Past chats (${plan.pastChats.length})` : "Past chats: none yet. New chat keeps the old one here."} onClick={openHistoryMenu}>
+          <Icon name="history" size={15} />
+        </button>
+        <button
+          type="button"
+          className="ws-iconbtn ws-ask__new"
+          disabled={items.length === 0}
+          aria-label="New chat"
+          title="New chat. This one goes to Past chats; the agent keeps its own history."
+          onClick={() => {
+            dispatch({ type: "newChat", at: now(), agent: agentItems });
+            onToast("New chat. The last one is in Past chats.");
+          }}
+        >
+          <Icon name="plus" size={15} />
         </button>
       </header>
 
@@ -825,8 +917,9 @@ export function AskPanel({
             <StateDot state={recipient.state} />
             <Icon name="down" size={11} />
           </button>
-          <button type="button" className="ws-answerer ws-answerer--model" aria-haspopup="menu" disabled={savingModel} onClick={openModelMenu} title="Which model, or the agent in your terminal">
-            <span>{modelLabel}</span>
+          <button type="button" className={cx("ws-answerer ws-answerer--model", modelShown.placeholder && "is-placeholder")} aria-haspopup="menu" disabled={savingModel} onClick={openModelMenu} title="Which model, or the agent in your terminal">
+            <span>{modelShown.name}</span>
+            {modelShown.note && <span className="ws-answerer__note">{modelShown.note}</span>}
             <Icon name="down" size={11} />
           </button>
           {apiModelInfo && <ContextRing used={contextUsed} window={apiModelInfo.contextTokens} />}

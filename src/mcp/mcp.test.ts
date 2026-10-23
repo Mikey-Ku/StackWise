@@ -245,7 +245,7 @@ describe("MCP server", () => {
     registry.savePlan("p1", basePlan, "browser");
     await connect("p1");
     await call("compare_options", { part: "login", option_ids: ["login-acme", "login-lib"], stack: { database: "db-hosted" }, answers: { login: "yes" } });
-    expect(registry.read("p1")!.activity.at(-1)).toMatchObject({ tool: "compare_options", summary: "Compared login-acme, login-lib for Login" });
+    expect(registry.read("p1")!.activity.at(-1)).toMatchObject({ tool: "compare_options", summary: "Compared login-acme and login-lib for login" });
   });
 
   it("gives Claude the wiring: what runs between the app and each service, and every variable", async () => {

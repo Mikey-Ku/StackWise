@@ -9,13 +9,16 @@ body:has(.shell) {
 }
 
 .shell {
-  --shell-side: 248px;
-  --shell-gutter: 40px;
+  --shell-side: 224px;
+  --shell-gutter: 32px;
   display: grid;
   grid-template-columns: var(--shell-side) minmax(0, 1fr);
   min-height: 100vh;
   background: var(--mk-bg);
   color: var(--mk-text);
+  /* The same size as the canvas's own text; the body's 15px is for the planner's prose. */
+  font-size: 14px;
+  line-height: 1.5;
   overflow-wrap: break-word;
 }
 
@@ -26,7 +29,7 @@ body:has(.shell) {
   flex-direction: column;
   gap: 18px;
   height: 100vh;
-  padding: 18px 14px 16px;
+  padding: 14px 12px 14px;
   border-right: 1px solid var(--ws-glass-line);
   background: var(--ws-glass);
   -webkit-backdrop-filter: var(--ws-blur);
@@ -38,7 +41,7 @@ body:has(.shell) {
   gap: 9px;
   padding: 4px 8px;
   color: inherit;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 650;
   letter-spacing: -0.015em;
   text-decoration: none;
@@ -56,12 +59,12 @@ body:has(.shell) {
   display: grid;
   flex: none;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--mk-accent), color-mix(in srgb, var(--mk-accent) 55%, #af52de));
   color: #fff;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
 }
 .shell-me__text {
@@ -72,7 +75,7 @@ body:has(.shell) {
 }
 .shell-me__text strong {
   overflow: hidden;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -100,7 +103,7 @@ body:has(.shell) {
   background: none;
   color: var(--mk-text);
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   text-align: left;
   text-decoration: none;
@@ -146,19 +149,19 @@ body:has(.shell) {
 .shell-main {
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  gap: 28px;
   width: 100%;
-  max-width: 1080px;
+  max-width: 960px;
   min-width: 0;
-  padding: 44px var(--shell-gutter) 96px;
+  padding: 32px var(--shell-gutter) 80px;
 }
 .shell-title {
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.025em;
 }
 .shell-h2 {
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 650;
   letter-spacing: -0.015em;
 }
@@ -196,7 +199,7 @@ body:has(.shell) {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 18px 20px;
+  padding: 16px 18px;
   border: 0.5px solid var(--ws-glass-line);
   border-radius: 16px;
   background: var(--mk-surface);
@@ -343,6 +346,28 @@ body:has(.shell) {
   margin-top: 12px;
 }
 
+/* A page's own sections in the sidebar, under the pages. */
+.shell-subnav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 6px;
+  border-top: 0.5px solid var(--ws-glass-line);
+}
+.shell-subnav__title {
+  margin: 8px 0 4px;
+  padding: 0 10px;
+  color: var(--mk-text-faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.shell-subnav__item {
+  width: 100%;
+  font-size: 13px;
+}
+
 /* Found under your folders: a quieter card than a plan. */
 .apps-card--found .apps-icon {
   background: var(--mk-surface-sunk);
@@ -383,7 +408,7 @@ body:has(.shell) {
     padding-top: 24px;
   }
   .shell-title {
-    font-size: 26px;
+    font-size: 22px;
   }
   .shell-search {
     width: 100%;
@@ -400,6 +425,15 @@ html[data-desktop] .shell-side button,
 html[data-desktop] .shell-side .shell-me {
   -webkit-app-region: no-drag;
 }
+/* Full screen hides the traffic lights (preload.cjs sets data-fullscreen; the media query is the fallback). */
+html[data-desktop][data-fullscreen] .shell-side {
+  padding-top: 14px;
+}
+@media (display-mode: fullscreen) {
+  html[data-desktop] .shell-side {
+    padding-top: 14px;
+  }
+}
 @media (max-width: 720px) {
   html[data-desktop] .shell-side {
     padding-top: 10px;
@@ -413,6 +447,9 @@ html[data-desktop] .shell-side .shell-me {
   grid-template-columns: 196px minmax(0, 1fr);
   gap: 40px;
   align-items: start;
+}
+.set-layout--one {
+  grid-template-columns: minmax(0, 1fr);
 }
 .set-nav {
   position: sticky;
@@ -431,7 +468,7 @@ html[data-desktop] .shell-side .shell-me {
   background: none;
   color: var(--mk-text);
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
@@ -487,9 +524,9 @@ html[data-desktop] .shell-side .shell-me {
   gap: 14px;
 }
 .set-me .shell-avatar {
-  width: 48px;
-  height: 48px;
-  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  font-size: 17px;
 }
 .set-seg {
   display: inline-flex;
