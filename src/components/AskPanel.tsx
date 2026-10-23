@@ -853,7 +853,7 @@ export function AskPanel({
         </div>
       </form>
       <ContextMenu request={menu} onClose={() => setMenu(null)} />
-      <PanelEdge side="left" width={width} fallback={fallbackWidth} onResize={onResize} />
+      <PanelEdge side="right" width={width} fallback={fallbackWidth} onResize={onResize} />
     </section>
   );
 }
