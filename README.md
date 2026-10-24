@@ -36,7 +36,7 @@ StackWise lives in the menu bar. Its server runs at `http://127.0.0.1:4310` whil
 
 ### From source
 
-You need Node 22.9 or newer and pnpm.
+You need Node 22.9 or newer and pnpm 12 (`corepack enable` sets it up from `package.json`).
 
 ```bash
 git clone https://github.com/Mikey-Ku/StackWise.git stackwise && cd stackwise
@@ -47,7 +47,7 @@ pnpm dev
 Open http://localhost:4310. Then, if you like:
 
 ```bash
-pnpm link --global   # adds the `stackwise` command
+pnpm link --global   # adds the `stackwise` command (run `pnpm setup` once first on a new machine)
 stackwise setup      # once: connects Claude Code to StackWise
 stackwise            # in any project folder: starts StackWise in the background and opens that project's plan
 stackwise stop

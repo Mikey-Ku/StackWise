@@ -49,6 +49,7 @@
     "vitest": "^4.1.11"
   },
   "packageManager": "pnpm@12.3.4",
+  "engines": { "node": ">=22.9" },
   "bin": {
     "stackwise": "bin/stackwise"
   },
