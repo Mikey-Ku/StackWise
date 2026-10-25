@@ -1,10 +1,10 @@
 # StackWise: orientation for Claude sessions
 
-Planning tool for beginners building web apps with AI builders. A deterministic rules engine checks every connection in a stack against sourced facts, ranks what works, and hands the plan to coding agents over MCP (build tasks, test plans, a project pack). Optional Claude features read descriptions, explain plans and keep facts fresh. It runs on this computer only: a web app on 127.0.0.1:4310, wrapped as a Mac app by `electron/`, with plans and the profile in `~/.stackwise`. Next.js 16 + React 19 + React Flow 12, TypeScript, Zod 4, Vitest 4, Anthropic SDK 0.125, pnpm 12. Styles come from Michael's mk-ui (`src/styles/mk-ui.css`, copied from `Projects/mk-ui`), re-themed to an Apple look by `src/styles/theme-apple.css` (system font, glass, light and dark from the system).
+Planning tool for beginners building web apps with AI builders. A deterministic rules engine checks every connection in a stack against sourced facts, ranks what works, and hands the plan to coding agents over MCP (build tasks, test plans, a project pack). Optional Claude features read descriptions, explain plans and keep facts fresh. It runs on this computer only: a web app on 127.0.0.1:4310, wrapped as a Mac app by `electron/`, with plans and the profile in `~/.stackwise`. Next.js 16 + React 19 + React Flow 12, TypeScript, Zod 4, Vitest 4, Anthropic SDK 0.125, pnpm 12. Styles come from Michael's mk-ui (`src/styles/mk-ui.css`, copied from the mk-ui design system), re-themed to an Apple look by `src/styles/theme-apple.css` (system font, glass, light and dark from the system).
 
 ## Commands
 
-- `pnpm dev` runs on port 4310 (hub launch config name: `stackwise`)
+- `pnpm dev` runs on port 4310 (`.claude/launch.json` config: `stackwise`)
 - `pnpm test`, `pnpm check:data`, `pnpm typecheck`, `pnpm lint`, `pnpm build`
 - `pnpm check:options -- --id <id,id>` checks single option files without loading the catalog (safe while others write data)
 - `pnpm eval:prefill`, `pnpm eval:plain-llm`, `pnpm check:sources [--apply]`, `pnpm draft:option -- ...` (these call Claude; they read `.env.local`)
